@@ -1,0 +1,71 @@
+# SPARKLE
+
+**Strategic Personal AI for Research, Knowledge, Learning, and Execution**
+
+SPARKLE is a model-agnostic personal AI foundation with a configurable model
+registry, provider adapters, specialist agents, persistent memory, a separate
+knowledge index, execution traces, automations, proactive rules, a CLI, an HTTP
+API, and a local dashboard.
+
+Current release: `0.3.0-alpha.1`. This is a tested foundation release, not the
+final system described in the long-term Definition of Done. See
+[`docs/BUILD_STATE.md`](docs/BUILD_STATE.md) and
+[`docs/ACCEPTANCE.md`](docs/ACCEPTANCE.md) for exact evidence and gaps.
+
+## What works now
+
+- Provider-neutral model, request, response, tool, and routing contracts.
+- MiniMax-M3 adapter using MiniMax's recommended Messages endpoint directly
+  over HTTP. There is no OpenAI package or API dependency.
+- Model registry with add, remove, enable, disable, activate, route, inspect,
+  and credential-presence checks.
+- Personal, Learning, Skill, Exam, Research, Coding, Software Engineering,
+  Application Builder, AI Builder, Agent Builder, Project, Data Analysis,
+  Content, Productivity, Automation, and System agents.
+- Single-agent and multi-agent orchestration with bounded tool execution.
+- SQLite memory, knowledge, trace, and automation stores in separate paths.
+- Text/Markdown/source-code ingestion; optional PDF and DOCX ingestion.
+- Dashboard and JSON API served with Python's standard library.
+- Voice and motion/presence interfaces that do not couple the core to hardware.
+- Unit, integration, API, security-boundary, and deterministic end-to-end tests.
+
+## Quick start
+
+Requirements: Python 3.12 or newer.
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install -e .
+sparkle status
+sparkle serve
+```
+
+Open `http://127.0.0.1:8765`.
+
+For PDF and DOCX ingestion:
+
+```bash
+python3 -m pip install -e '.[documents]'
+```
+
+## Configure MiniMax-M3
+
+Set one server-side environment variable. `MINIMAX_API_KEY` is preferred;
+`SPARKLE_LLM_API_KEY` is supported for existing SPARKLE deployments.
+
+```bash
+export MINIMAX_API_KEY='configured-outside-source'
+sparkle smoke-test --live
+```
+
+The smoke test reports presence, provider/model metadata, token usage, latency,
+and an exact response match. It never prints the key.
+
+## Test
+
+```bash
+make check
+```
+
+Full documentation starts at [`docs/USER_GUIDE.md`](docs/USER_GUIDE.md).

@@ -1,0 +1,30 @@
+{
+  "active_model": "minimax-m3-general",
+  "models": [
+    {
+      "id": "minimax-m3-general",
+      "provider": "minimax",
+      "model_id": "MiniMax-M3",
+      "adapter": "minimax_messages",
+      "roles": ["general", "reasoning", "coding", "vision", "tool_use"],
+      "enabled": true,
+      "context_window": 1000000,
+      "max_output_tokens": 131072,
+      "temperature": 1.0,
+      "thinking": true,
+      "service_tier": "standard",
+      "base_url": "https://api.minimax.io/anthropic/v1/messages",
+      "secret_refs": ["MINIMAX_API_KEY", "SPARKLE_LLM_API_KEY"],
+      "timeout_seconds": 120,
+      "retry": {"attempts": 3, "base_delay_seconds": 0.5}
+    }
+  ],
+  "routing": {
+    "default": "minimax-m3-general",
+    "general": "minimax-m3-general",
+    "reasoning": "minimax-m3-general",
+    "coding": "minimax-m3-general",
+    "vision": "minimax-m3-general",
+    "tool_use": "minimax-m3-general"
+  }
+}
