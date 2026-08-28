@@ -15,7 +15,7 @@ and editor checks. Recorded results are in `ENVIRONMENT.md`.
 make check
 ```
 
-Latest post-publication-documentation result: PASS — 32 tests ran in 2.291 seconds; 32 passed,
+Latest post-CI-upgrade result: PASS — 32 tests ran in 2.497 seconds; 32 passed,
 0 failed, 0 errors.
 
 An earlier `make check` attempt failed during test discovery with five
@@ -65,8 +65,6 @@ test fixtures. No credential value was found.
 ## Not verified
 
 - Real MiniMax network response.
-- GitHub Actions execution (workflow is published; no run was visible at the
-  first post-publication check).
 - Production deployment.
 - Voice, wake word, camera, browser automation, GUI computer control, or robots.
 
@@ -88,3 +86,10 @@ Because the target was an empty repository and the connector's commit API
 requires an existing parent, publication includes one bootstrap commit before
 the imported foundation and release-state commits. This changes commit IDs but
 not the verified file trees.
+
+## GitHub Actions
+
+Result: PASS — SPARKLE CI run #5 completed successfully in 15 seconds for
+commit `32be63286ca0ce9b5dd07eea6b07c4942a93a5a9`. Both matrix jobs passed on
+Python 3.12 and Python 3.13. The workflow uses `actions/checkout@v7` and
+`actions/setup-python@v7`; the successful run reported no annotations.
