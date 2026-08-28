@@ -8,7 +8,7 @@ Updated: 2026-08-28 UTC
 | Current phase | Phase 36 — release |
 | Current task | Preserve verified source commit; GitHub publication is externally blocked |
 | Completed | Environment inspection; requirements; architecture; AI environment; model registry; MiniMax adapter; switching; orchestrator; context; tracing; memory; lexical knowledge; 16 agent definitions; safe tool framework; automation store; proactive deadline rules; text API; dashboard; presence interface; test suite; implementation docs |
-| In progress | Local release commit |
+| In progress | None; verified foundation is preserved in local commit `d5c001b` |
 | Blocked | GitHub repository creation; live MiniMax call (no key in build process); voice hardware; browser/computer runtime adapters; public deployment target |
 | Failed tests | None after the recorded test run; rerun before release commit |
 | Next action | Create an empty `pexxoraa/SPARKLE` repository, then publish the already-verified tree through the connected GitHub plugin |

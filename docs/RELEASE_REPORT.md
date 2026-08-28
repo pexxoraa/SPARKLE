@@ -15,7 +15,7 @@ and editor checks. Recorded results are in `ENVIRONMENT.md`.
 make check
 ```
 
-Final result: PASS — 32 tests ran in 2.329 seconds; 32 passed, 0 failed, 0 errors.
+Final post-commit result: PASS — 32 tests ran in 2.351 seconds; 32 passed, 0 failed, 0 errors.
 
 An earlier `make check` attempt failed during test discovery with five
 `ModuleNotFoundError: sparkle` errors because the Makefile omitted
@@ -76,3 +76,6 @@ not provide repository creation, and the separate cloud-browser GitHub session
 remained signed out after secure sign-in was declined/taken over. No unrelated
 repository was modified. Source publication is therefore blocked on creation of
 an empty repository for the connected account.
+
+The verified foundation is preserved locally in commit
+`d5c001be05193411d7b90b03d09390e2702f8e82`.

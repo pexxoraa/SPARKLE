@@ -23,6 +23,6 @@ sparkle smoke-test --live
 Never report the live test as passed when the credential is absent or the exact
 `SPARKLE_LIVE_OK` response is not observed.
 
-Latest local result on 2026-08-28: 32 tests passed in 2.329 seconds. See
+Latest post-commit result on 2026-08-28: 32 tests passed in 2.351 seconds. See
 `RELEASE_REPORT.md` for the executed commands, the corrected failed attempt, and
 the live-provider blocker.
