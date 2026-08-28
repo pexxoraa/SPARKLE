@@ -15,7 +15,8 @@ and editor checks. Recorded results are in `ENVIRONMENT.md`.
 make check
 ```
 
-Final post-commit result: PASS — 32 tests ran in 2.351 seconds; 32 passed, 0 failed, 0 errors.
+Latest post-publication-documentation result: PASS — 32 tests ran in 2.291 seconds; 32 passed,
+0 failed, 0 errors.
 
 An earlier `make check` attempt failed during test discovery with five
 `ModuleNotFoundError: sparkle` errors because the Makefile omitted
@@ -64,18 +65,26 @@ test fixtures. No credential value was found.
 ## Not verified
 
 - Real MiniMax network response.
-- GitHub Actions execution (workflow not yet published).
+- GitHub Actions execution (workflow is published; no run was visible at the
+  first post-publication check).
 - Production deployment.
 - Voice, wake word, camera, browser automation, GUI computer control, or robots.
 
 ## GitHub publication
 
-The connected GitHub account is `pexxoraa` and the plugin has write access to
-existing repositories. No owned SPARKLE repository exists. The connector does
-not provide repository creation, and the separate cloud-browser GitHub session
-remained signed out after secure sign-in was declined/taken over. No unrelated
-repository was modified. Source publication is therefore blocked on creation of
-an empty repository for the connected account.
+Result: PASS — the source is published to the private repository
+`pexxoraa/SPARKLE` on branch `main`. Connector access was limited to the
+authorized account and the target repository; no unrelated repository was
+modified.
 
-The verified foundation is preserved locally in commit
-`d5c001be05193411d7b90b03d09390e2702f8e82`.
+The remote foundation tree
+`dd4bd9833f9675cc8333065d2487d5dfb2317312` exactly matches local foundation
+commit `d5c001be05193411d7b90b03d09390e2702f8e82`. The imported release-state tree
+`66ccd2f802d93e6a0e91494db693936141e64aa9` exactly matches local commit
+`01f8e816a55513e647674c21ea12c1ef6e495db2` and is recorded remotely in commit
+`9561b1208e5c44d744bf7293fef8a7c6f7ee7361`.
+
+Because the target was an empty repository and the connector's commit API
+requires an existing parent, publication includes one bootstrap commit before
+the imported foundation and release-state commits. This changes commit IDs but
+not the verified file trees.
