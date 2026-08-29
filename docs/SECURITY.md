@@ -25,10 +25,18 @@
   to three attempts; arbitrary commands are not accepted.
 - Shell and web tools are disabled by default and not registered in this release.
 - The HTTP server binds to localhost by default and supplies defensive headers.
+- Every API route supports optional bearer authentication resolved from
+  environment secret references. Comparison is constant-time; failures and
+  status never contain the supplied or configured value.
+- Same-origin API requests are allowed; cross-origin requests require an exact
+  configured HTTP(S) origin. Wildcard origins are rejected. Preflight responses
+  advertise only GET, POST, OPTIONS, Authorization, and Content-Type.
+- Server startup fails if authentication is required but its token is absent,
+  or if a non-loopback bind is requested without configured authentication.
 - Provider reasoning blocks are preserved only for provider continuity and are
   neither displayed nor traced.
 
-Production deployment still needs authentication, authorization, TLS at the
-edge, rate limiting, audit retention, backup encryption, dependency scanning,
+Production deployment still needs role/owner authorization, TLS at the edge,
+rate limiting, audit retention, backup encryption, dependency scanning,
 process/network isolation for future test and build execution, and a
 threat-model review.

@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.6.0-alpha.1 - 2026-08-29
+
+- Added optional bearer authentication using secret references and constant-time
+  credential comparison.
+- Added exact same-origin/allowlist enforcement and explicit CORS preflight
+  responses without wildcard origins.
+- Added fail-closed startup for missing required tokens and non-loopback binds
+  without configured authentication.
+- Added security status containing presence booleans/counts only.
+- Added a console entrypoint that reports operational refusals without a
+  traceback.
+- Expanded the deterministic regression suite from 47 to 54 tests.
+
 ## 0.5.0-alpha.1 - 2026-08-29
 
 - Added approval-gated static verification for generated application workspaces.

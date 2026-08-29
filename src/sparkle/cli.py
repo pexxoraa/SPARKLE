@@ -9,6 +9,7 @@ from pathlib import Path
 from sparkle.api import serve
 from sparkle.contracts import Message, ModelRequest
 from sparkle.model import ModelError
+from sparkle.secrets import SecretNotFoundError
 from sparkle.system import SparkleSystem
 from sparkle.tooling import ToolError
 
@@ -172,9 +173,21 @@ def main(argv: list[str] | None = None) -> int:
     return 2
 
 
-if __name__ == "__main__":
+def entrypoint(argv: list[str] | None = None) -> int:
     try:
-        raise SystemExit(main())
-    except (ModelError, ValueError, KeyError, TypeError, ToolError, FileExistsError) as exc:
+        return main(argv)
+    except (
+        ModelError,
+        SecretNotFoundError,
+        ValueError,
+        KeyError,
+        TypeError,
+        ToolError,
+        FileExistsError,
+    ) as exc:
         print(str(exc), file=sys.stderr)
-        raise SystemExit(1)
+        return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(entrypoint())

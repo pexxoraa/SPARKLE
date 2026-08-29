@@ -18,6 +18,8 @@ from sparkle.contracts import ModelRequest, ModelResponse, TokenUsage, ToolCall
 from sparkle.model import ModelAdapter
 from sparkle.providers.mock import DeterministicAdapter
 from sparkle.registry import ModelRegistry
+from sparkle.secrets import SecretResolver
+from sparkle.security import APIAccessPolicy
 from sparkle.system import SparkleSystem
 
 
@@ -96,9 +98,23 @@ class APITests(SystemCase):
         self.thread.join(timeout=2)
         super().tearDown()
 
-    def request(self, path: str, value: dict | None = None):
+    def request(
+        self,
+        path: str,
+        value: dict | None = None,
+        *,
+        headers: dict[str, str] | None = None,
+        method: str | None = None,
+    ):
         data = json.dumps(value).encode() if value is not None else None
-        request = urllib.request.Request(self.base + path, data=data, headers={"Content-Type": "application/json"} if data else {}, method="POST" if data else "GET")
+        request_headers = {"Content-Type": "application/json"} if data else {}
+        request_headers.update(headers or {})
+        request = urllib.request.Request(
+            self.base + path,
+            data=data,
+            headers=request_headers,
+            method=method or ("POST" if data else "GET"),
+        )
         try:
             with urllib.request.urlopen(request, timeout=3) as response:
                 return response.status, response.headers, response.read()
@@ -110,6 +126,51 @@ class APITests(SystemCase):
         self.assertEqual(status, 200)
         self.assertEqual(headers["X-Content-Type-Options"], "nosniff")
         self.assertTrue(json.loads(body)["ok"])
+
+    def test_origin_and_preflight_policy(self):
+        status, headers, _ = self.request(
+            "/api/health", headers={"Origin": self.base},
+        )
+        self.assertEqual(status, 200)
+        self.assertEqual(headers["Access-Control-Allow-Origin"], self.base)
+        self.assertEqual(self.request(
+            "/api/health", headers={"Origin": "https://evil.example"},
+        )[0], 403)
+        preflight = self.request(
+            "/api/chat",
+            headers={
+                "Origin": self.base,
+                "Access-Control-Request-Method": "POST",
+            },
+            method="OPTIONS",
+        )
+        self.assertEqual(preflight[0], 204)
+        self.assertEqual(preflight[1]["Access-Control-Allow-Origin"], self.base)
+        self.assertNotEqual(preflight[1]["Access-Control-Allow-Origin"], "*")
+
+    def test_required_bearer_auth_rejects_without_mutation(self):
+        self.system.api_access = APIAccessPolicy(
+            SecretResolver({"SPARKLE_API_TOKEN": "unit-test-token"}),
+            required=True,
+        )
+        status, headers, body = self.request("/api/health")
+        self.assertEqual(status, 401)
+        self.assertEqual(headers["WWW-Authenticate"], 'Bearer realm="SPARKLE"')
+        self.assertNotIn(b"unit-test-token", body)
+        self.assertEqual(self.request(
+            "/api/memory",
+            {"category": "goals", "key": "blocked", "value": "must not store"},
+        )[0], 401)
+        self.assertEqual(self.system.memory.recent(), [])
+        self.assertEqual(self.request(
+            "/api/health", headers={"Authorization": "Bearer wrong"},
+        )[0], 401)
+        authenticated = self.request(
+            "/api/health",
+            headers={"Authorization": "Bearer unit-test-token"},
+        )
+        self.assertEqual(authenticated[0], 200)
+        self.assertNotIn(b"unit-test-token", authenticated[2])
 
     def test_chat_endpoint(self):
         status, _, body = self.request("/api/chat", {"message": "Teach Python"})

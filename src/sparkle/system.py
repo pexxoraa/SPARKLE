@@ -13,6 +13,8 @@ from sparkle.knowledge import KnowledgeIngestor
 from sparkle.orchestrator import Orchestrator
 from sparkle.presence import PresenceEngine
 from sparkle.registry import ModelRegistry, ModelRouter
+from sparkle.secrets import SecretResolver
+from sparkle.security import APIAccessPolicy
 from sparkle.storage import KnowledgeStore, MemoryStore
 from sparkle.tooling import (
     AgentInstallTool,
@@ -32,6 +34,13 @@ from sparkle.voice import VoiceService
 class SparkleSystem:
     def __init__(self, *, config: AppConfig | None = None, model_registry: ModelRegistry | None = None):
         self.config = config or AppConfig.load()
+        self.secret_resolver = SecretResolver()
+        self.api_access = APIAccessPolicy(
+            self.secret_resolver,
+            required=self.config.api_auth_required,
+            token_refs=self.config.api_token_refs,
+            allowed_origins=self.config.allowed_origins,
+        )
         self.memory = MemoryStore()
         self.knowledge = KnowledgeStore()
         self.knowledge_ingestor = KnowledgeIngestor(self.knowledge)
@@ -77,7 +86,7 @@ class SparkleSystem:
         models = self.models.list()
         return {
             "name": "SPARKLE",
-            "version": "0.5.0-alpha.1",
+            "version": "0.6.0-alpha.1",
             "status": "ready" if any(model["configured"] for model in models) else "limited",
             "active_model": self.models.active_id,
             "models": models,
@@ -90,6 +99,7 @@ class SparkleSystem:
                 "count": sum(1 for agent in self.agents.list() if agent["source"] == "generated"),
             },
             "tools": self.tools.status(),
+            "api_security": self.api_access.status(),
             "voice": self.voice.status(),
             "automation": {
                 "status": "ready", "count": len(self.automations.list()),

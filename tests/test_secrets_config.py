@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 from sparkle.config import AppConfig
@@ -36,10 +37,19 @@ class ConfigTests(unittest.TestCase):
                 "orchestrator": {"max_tool_rounds": 2},
                 "context": {"memory_results": 3, "knowledge_results": 4},
                 "tools": {"allow_shell": False, "allow_web": False},
+                "security": {
+                    "api_auth_required": False,
+                    "api_token_refs": ["SPARKLE_API_TOKEN"],
+                    "allowed_origins": ["https://console.example"],
+                },
             }))
-            config = AppConfig.load(path)
+            with patch.dict("os.environ", {"SPARKLE_API_AUTH_REQUIRED": "true"}):
+                config = AppConfig.load(path)
         self.assertEqual(config.port, 1234)
         self.assertFalse(config.allow_shell)
+        self.assertTrue(config.api_auth_required)
+        self.assertEqual(config.api_token_refs, ("SPARKLE_API_TOKEN",))
+        self.assertEqual(config.allowed_origins, ("https://console.example",))
 
     def test_model_registry_switch_enable_add_remove(self):
         with tempfile.TemporaryDirectory() as directory:

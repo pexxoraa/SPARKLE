@@ -38,3 +38,9 @@ Workspace verification follows approval → project/path/type/size validation �
 non-executing parser/compiler check → bounded result → persistent verification
 record. The Node syntax checker receives a minimal environment with no provider
 credentials and cannot select an arbitrary executable or argument list.
+
+Every `/api/` request first passes exact-origin validation and, when enabled,
+bearer authentication before its body is read or any state is accessed. Token
+values come from the secrets resolver, are compared in constant time, and are
+never placed in response bodies, status, traces, or logs. OPTIONS preflight is
+origin-gated but does not require the browser to transmit a credential.

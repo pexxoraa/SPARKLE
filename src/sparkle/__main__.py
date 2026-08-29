@@ -1,4 +1,4 @@
-from sparkle.cli import main
+from sparkle.cli import entrypoint
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(entrypoint())

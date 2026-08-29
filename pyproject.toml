@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sparkle-personal-ai"
-version = "0.5.0a1"
+version = "0.6.0a1"
 description = "Strategic Personal AI for Research, Knowledge, Learning, and Execution"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -16,7 +16,7 @@ dependencies = []
 documents = ["pypdf>=6.0", "python-docx>=1.2"]
 
 [project.scripts]
-sparkle = "sparkle.cli:main"
+sparkle = "sparkle.cli:entrypoint"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

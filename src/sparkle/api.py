@@ -18,13 +18,19 @@ MAX_BODY_BYTES = 1_000_000
 class SparkleHandler(BaseHTTPRequestHandler):
     system: SparkleSystem
     dashboard_root = Path(__file__).with_name("dashboard")
-    server_version = "SPARKLE/0.5"
+    server_version = "SPARKLE/0.6"
 
     def log_message(self, format: str, *args: object) -> None:
         # Avoid request bodies, headers, query values, and secrets in logs.
         print(f"{self.address_string()} - {format % args}")
 
-    def _headers(self, status: int, content_type: str, length: int) -> None:
+    def _headers(
+        self,
+        status: int,
+        content_type: str,
+        length: int,
+        extra_headers: dict[str, str] | None = None,
+    ) -> None:
         self.send_response(status)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(length))
@@ -33,12 +39,42 @@ class SparkleHandler(BaseHTTPRequestHandler):
         self.send_header("X-Frame-Options", "DENY")
         self.send_header("Referrer-Policy", "no-referrer")
         self.send_header("Content-Security-Policy", "default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self' data:; connect-src 'self'")
+        for name, value in (extra_headers or {}).items():
+            self.send_header(name, value)
         self.end_headers()
 
-    def _json(self, value: Any, status: int = 200) -> None:
+    def _json(
+        self,
+        value: Any,
+        status: int = 200,
+        *,
+        headers: dict[str, str] | None = None,
+    ) -> None:
         body = json.dumps(value, ensure_ascii=False, separators=(",", ":"), default=str).encode("utf-8")
-        self._headers(status, "application/json; charset=utf-8", len(body))
+        response_headers = self.system.api_access.cors_headers(
+            self.headers.get("Origin"), self.headers.get("Host"),
+        )
+        response_headers.update(headers or {})
+        self._headers(
+            status, "application/json; charset=utf-8", len(body), response_headers,
+        )
         self.wfile.write(body)
+
+    def _guard_api(self) -> bool:
+        policy = self.system.api_access
+        if not policy.origin_allowed(
+            self.headers.get("Origin"), self.headers.get("Host"),
+        ):
+            self._json({"ok": False, "error": "origin_not_allowed"}, 403)
+            return False
+        if not policy.authorize(self.headers.get("Authorization")):
+            self._json(
+                {"ok": False, "error": "unauthorized"},
+                401,
+                headers={"WWW-Authenticate": 'Bearer realm="SPARKLE"'},
+            )
+            return False
+        return True
 
     def _read_json(self) -> dict[str, Any]:
         length = int(self.headers.get("Content-Length", "0"))
@@ -68,6 +104,8 @@ class SparkleHandler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
         query = parse_qs(parsed.query)
+        if parsed.path.startswith("/api/") and not self._guard_api():
+            return
         if parsed.path == "/":
             return self._static("index.html")
         if parsed.path.startswith("/assets/"):
@@ -113,6 +151,8 @@ class SparkleHandler(BaseHTTPRequestHandler):
         self._json({"error": "not_found"}, 404)
 
     def do_POST(self) -> None:
+        if self.path.startswith("/api/") and not self._guard_api():
+            return
         try:
             data = self._read_json()
             if self.path == "/api/chat":
@@ -215,8 +255,27 @@ class SparkleHandler(BaseHTTPRequestHandler):
             self.system.presence.update("error", "Execution failed")
             self._json({"ok": False, "error": "Internal execution failure", "error_type": type(exc).__name__}, 500)
 
+    def do_OPTIONS(self) -> None:
+        parsed = urlparse(self.path)
+        if not parsed.path.startswith("/api/"):
+            self._json({"error": "not_found"}, 404)
+            return
+        origin = self.headers.get("Origin")
+        host = self.headers.get("Host")
+        if not origin or not self.system.api_access.origin_allowed(origin, host):
+            self._json({"ok": False, "error": "origin_not_allowed"}, 403)
+            return
+        headers = self.system.api_access.cors_headers(origin, host)
+        headers.update({
+            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type",
+            "Access-Control-Max-Age": "600",
+        })
+        self._headers(204, "text/plain; charset=utf-8", 0, headers)
+
 
 def serve(system: SparkleSystem, host: str, port: int) -> None:
+    system.api_access.validate_bind(host)
     handler = type("ConfiguredSparkleHandler", (SparkleHandler,), {"system": system})
     server = ThreadingHTTPServer((host, port), handler)
     print(f"SPARKLE dashboard: http://{host}:{port}")

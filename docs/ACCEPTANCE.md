@@ -11,7 +11,7 @@ means an external dependency is unavailable.
 | Model registry works | PASS | Validation/list/add/remove/enable/disable/activate tests |
 | Model switching works | PASS | Registry activation test; routes remain configurable |
 | Separate AI environment | PASS | Dedicated config/provider/registry boundary |
-| Separate secrets environment | PASS | Env resolver, presence-only status, redaction tests |
+| Separate secrets environment | PASS | Provider/API secret references, presence-only status, redaction and fail-closed tests |
 | Separate memory environment | PASS | Independent SQLite CRUD/search/archive/restore/delete/export/backup tests |
 | Separate knowledge environment | PASS | Independent source/chunk ingest/search/list/delete/backup tests |
 | Separate data environment | PASS | Independent automation, generated-agent, build-record, and verification stores |
@@ -26,11 +26,11 @@ means an external dependency is unavailable.
 | Browser capabilities | BLOCKED | No browser executable/runtime adapter in SPARKLE environment |
 | Computer capabilities | PARTIAL | Safe file read exists; GUI/shell control intentionally unavailable |
 | Voice works | BLOCKED | Interfaces exist; no microphone/speaker or STT/TTS adapter |
-| Text works | PASS | CLI, HTTP API, and dashboard integration tests |
+| Text works | PASS | CLI, HTTP API, dashboard, bearer-auth, origin, and preflight integration tests |
 | Voice/text share context | PARTIAL | Shared architecture exists; voice cannot execute here |
 | Automation works | PARTIAL | Due/conditional claiming, agent execution, retry, recurrence, cooldown, history, enable/disable/delete, CLI worker and traces are tested; packaged service and external delivery are absent |
 | Proactive intelligence | PARTIAL | Evidence-backed deadline rules tested; more conditions absent |
-| Dashboard works | PASS | Static, API, build, automation, and verification integration tests |
+| Dashboard works | PASS | Local static/API/build/automation/verification integration tests; secured remote session UI remains partial |
 | Data tracing works | PASS | Success/tool/failure metadata implemented; trace tests |
 | Motion/presence architecture | PASS | Independent presence engine; physical motion intentionally absent |
 | Multimodal architecture prepared | PARTIAL | M3 registry role and model contracts ready; image/video input contract not exposed yet |
@@ -38,4 +38,4 @@ means an external dependency is unavailable.
 | Documentation complete for implementation | PASS | Requested implementation documents present |
 | Installation reproducible | PASS | Python 3.12 core has zero mandatory third-party dependencies |
 | End-to-end workflows | PARTIAL | Deterministic local flows pass; live provider and external actions blocked |
-| Release | PASS | Private v0.5 commit/tree publication and Python 3.12/3.13 CI run #9 verified; see the release report |
+| Release | PARTIAL | v0.5 is published and green; v0.6 publication/CI is pending in the release report |

@@ -8,6 +8,9 @@ sparkle status
 
 This shows whether a provider key exists without exposing it.
 
+It also reports whether API authentication is required and whether its token
+reference is configured, never the token value.
+
 ## Chat
 
 ```bash
@@ -131,6 +134,19 @@ sparkle serve
 The dashboard displays model/configuration state, built-in and generated
 agents, memory, automation runs, application builds, static verifications, and
 traces.
+
+## Secure API access
+
+Local loopback use remains unauthenticated by default. For a non-loopback bind,
+set `SPARKLE_API_AUTH_REQUIRED=true` and provide `SPARKLE_API_TOKEN` through the
+hosting or OS secret manager before starting the server. API clients then send
+that value in the standard `Authorization: Bearer …` header.
+
+All `/api/` routes, including health, require the token in this mode. Cross-
+origin browser clients must also use an exact origin listed in
+`security.allowed_origins`; no wildcard is accepted. The built-in dashboard
+does not accept or persist bearer tokens, so use it with the default local
+configuration.
 
 ## Data ownership
 

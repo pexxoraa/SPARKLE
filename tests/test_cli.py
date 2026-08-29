@@ -4,12 +4,14 @@ import contextlib
 import io
 import json
 import os
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from sparkle.cli import main
+from sparkle.cli import entrypoint, main
 
 
 class CLITests(unittest.TestCase):
@@ -44,3 +46,39 @@ class CLITests(unittest.TestCase):
             lines = output.getvalue()
             self.assertIn('"status": "scaffolded"', lines)
             self.assertIn('"status": "passed"', lines)
+
+    def test_entrypoint_reports_approval_error_without_traceback(self):
+        with tempfile.TemporaryDirectory() as directory:
+            manifest = Path(directory) / "scaffold.json"
+            manifest.write_text(json.dumps({
+                "project_name": "blocked_app",
+                "files": {"README.md": "blocked"},
+            }), encoding="utf-8")
+            error = io.StringIO()
+            with (
+                patch.dict(os.environ, {"SPARKLE_DATA_DIR": directory}, clear=False),
+                contextlib.redirect_stderr(error),
+            ):
+                self.assertEqual(entrypoint(["scaffold", str(manifest)]), 1)
+            self.assertIn("requires explicit approval", error.getvalue())
+            self.assertNotIn("Traceback", error.getvalue())
+
+    def test_module_entrypoint_reports_bind_refusal_without_traceback(self):
+        with tempfile.TemporaryDirectory() as directory:
+            environment = {
+                **os.environ,
+                "SPARKLE_DATA_DIR": directory,
+                "SPARKLE_HOST": "0.0.0.0",
+                "SPARKLE_API_AUTH_REQUIRED": "false",
+            }
+            completed = subprocess.run(
+                [sys.executable, "-m", "sparkle", "serve"],
+                capture_output=True,
+                text=True,
+                env=environment,
+                timeout=10,
+                check=False,
+            )
+            self.assertEqual(completed.returncode, 1)
+            self.assertIn("requires authentication", completed.stderr)
+            self.assertNotIn("Traceback", completed.stderr)

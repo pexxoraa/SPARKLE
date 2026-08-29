@@ -1,3 +1,82 @@
+# 0.6.0-alpha.1 verification report
+
+Date: 2026-08-29 UTC
+
+## Executed commands
+
+### Compile and regression suite
+
+```bash
+make check
+```
+
+Result: PASS — 54 tests ran in 6.953 seconds; 54 passed, 0 failed,
+0 errors. Added evidence covers bearer success/failure, no secret in status or
+responses, unauthorized non-mutation, exact same-origin and explicit allowlist
+behavior, wildcard/invalid-origin rejection, preflight, boolean configuration,
+non-loopback/missing-token startup refusal, and traceback-free console errors.
+
+### Static release checks
+
+```bash
+node --check src/sparkle/dashboard/app.js
+git diff --check
+```
+
+Result: PASS — dashboard JavaScript parsed and the working diff contained no
+whitespace errors.
+
+### API-security command smoke
+
+Authenticated `sparkle status` with a fake test token exited 0 and reported only
+`authentication_required: true`, `token_configured: true`, an allowed-origin
+count, and `credentials_exposed: false`. The token text was absent from output.
+
+`python -m sparkle serve` with a non-loopback host and no authentication exited
+1 before binding with `Non-loopback API binding requires authentication`.
+Required authentication with no token also exited 1 before binding. Both
+refusals contained no traceback or secret value.
+
+### Live-provider smoke test
+
+```bash
+SPARKLE_DATA_DIR=<fresh-directory> PYTHONPATH=src python3 -m sparkle smoke-test --live
+```
+
+Result: BLOCKED — process exited 2 at `credential_presence`, reported
+`configured: false` and `secret_value_exposed: false`, and made no MiniMax
+request. This is not a live-provider PASS.
+
+## Verified v0.6 capability paths
+
+- Optional bearer authentication protects every `/api/` route before request
+  bodies are read or state is accessed.
+- Tokens are resolved only from configured environment secret references and
+  compared in constant time; status returns presence booleans only.
+- Same-origin requests are allowed; cross-origin requests require an exact
+  configured HTTP(S) origin; wildcard and malformed origins are rejected.
+- Origin-approved preflight advertises only GET, POST, OPTIONS, Authorization,
+  and Content-Type.
+- Required authentication without a token fails server startup, and a
+  non-loopback bind is refused unless authentication is required and configured.
+
+## Not verified
+
+- A real MiniMax-M3 network response.
+- Role/owner authorization, authenticated browser sessions, TLS termination,
+  rate limiting, or production deployment.
+- Execution of generated applications/tests, builds, packaging, or deployment.
+- Real voice, wake word, camera, browser automation, GUI computer control, or
+  robots.
+
+## GitHub publication and CI
+
+The v0.6 commit is awaiting publication and GitHub Actions verification. This
+section will be updated only after the remote Git tree and both Python matrix
+jobs are verified.
+
+---
+
 # 0.5.0-alpha.1 verification report
 
 Date: 2026-08-29 UTC

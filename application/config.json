@@ -3,6 +3,11 @@
   "orchestrator": {"max_tool_rounds": 4},
   "context": {"memory_results": 5, "knowledge_results": 5},
   "tools": {"allow_shell": false, "allow_web": false},
+  "security": {
+    "api_auth_required": false,
+    "api_token_refs": ["SPARKLE_API_TOKEN"],
+    "allowed_origins": []
+  },
   "voice": {"stt": "disabled", "tts": "disabled"},
   "presence": {"mode": "dashboard"}
 }
