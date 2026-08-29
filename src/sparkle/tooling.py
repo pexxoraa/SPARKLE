@@ -12,6 +12,7 @@ from sparkle.agents import AgentRegistry, AgentSpec
 from sparkle.builders import WorkspaceManager
 from sparkle.contracts import ToolDefinition
 from sparkle.development import DevelopmentVerifier, WorkspaceTestRunner
+from sparkle.external_worker import ExternalWorkerClient
 from sparkle.storage import KnowledgeStore, MemoryStore
 
 
@@ -292,6 +293,36 @@ class WorkspaceTestTool(Tool):
         if arguments.get("approved") is not True:
             raise ToolError("Workspace test execution requires explicit approval")
         return self.runner.run(str(arguments.get("project_name", "")))
+
+
+class ExternalWorkspaceTestTool(Tool):
+    """Operator-only facade; intentionally not registered for model tool use."""
+
+    name = "external_workspace_test"
+    description = "Submit a bounded workspace to the configured signed HTTPS test worker."
+    parameters = {
+        "type": "object",
+        "properties": {
+            "project_name": {"type": "string"},
+            "approved": {"type": "boolean"},
+        },
+        "required": ["project_name", "approved"],
+        "additionalProperties": False,
+    }
+
+    def __init__(self, client: ExternalWorkerClient):
+        self.client = client
+
+    def run(self, arguments: dict[str, Any]) -> Any:
+        unknown_fields = set(arguments) - {"project_name", "approved"}
+        if unknown_fields:
+            raise ToolError(
+                "Unsupported external workspace test fields: "
+                + ", ".join(sorted(unknown_fields))
+            )
+        if arguments.get("approved") is not True:
+            raise ToolError("External workspace test requires explicit approval")
+        return self.client.run(str(arguments.get("project_name", "")))
 
 
 class AgentInstallTool(Tool):

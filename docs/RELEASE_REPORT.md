@@ -1,3 +1,75 @@
+# 0.10.0-alpha.1 verification report
+
+Date: 2026-08-29 UTC
+
+## Executed commands
+
+### Compile and regression suite
+
+```bash
+make check
+```
+
+Result: PASS — the final release-state run executed 81 tests in 13.819 seconds;
+81 passed, 0 failed, 0 errors. New evidence covers signed request/response exchange, source hashes
+and bounds, strict result validation, safe failure persistence, operator-only
+approval, API/CLI/dashboard integration, and explicit non-verification of
+remote sandbox claims. Adversarial cases include bad signatures, stale
+timestamps, wrong job IDs, unknown fields, inconsistent status, oversized
+responses, transport failures, symlinks, hidden/credential-like/binary/
+oversized files, and source containing the configured signing key.
+
+Editable installation with build isolation disabled also succeeded for package
+`sparkle-personal-ai==0.10.0a1`. Dashboard JavaScript syntax and Git whitespace
+checks passed.
+
+A first compact status-evidence formatter failed with a `TypeError` because it
+tried to sort tool-record dictionaries. SPARKLE itself had exited 0 and written
+valid JSON. The formatter was corrected and the status check was rerun
+successfully; this was an evidence-script error, not a product test failure.
+
+### External worker live/isolation status
+
+Result: BLOCKED — the repository implements and tests the client protocol with
+a deterministic signed worker double. No compatible external worker endpoint,
+container image, or signing secret is configured in this build process. No
+source was transferred and no remote code was executed. Worker sandbox fields
+remain claims and `isolation_verified` is false.
+
+## Verified v0.10 capability paths
+
+- External execution is disabled by default, accepts only the fixed
+  `python_unittest` operation, and requires explicit approval per submission.
+- The operator facade is not in the agent/model tool registry, preventing a
+  model from manufacturing source-transfer approval.
+- Source packaging is workspace-confined, deterministic, UTF-8-only, hashed,
+  and bounded; symlinks and sensitive/hidden/key-containing inputs are rejected.
+- The endpoint must be credential-free HTTPS. Canonical requests and responses
+  carry fresh timestamped HMAC-SHA256 authentication with a secret-resolved
+  key that is never persisted or returned.
+- Responses are size-bounded, schema-exact, job-matched, type-checked,
+  status-consistent, HTTP/JSON/protocol-checked, output-redacted, and safely
+  recorded. Redirects are denied. Transport and
+  protocol failures store only bounded metadata and error type.
+- CLI, authenticated API, read-only dashboard history, system status, data map,
+  security guidance, and development guidance expose the actual boundary.
+
+## Not verified
+
+- A deployed compatible worker, hostile-code container isolation, network
+  denial, ephemeral filesystem, cgroup/seccomp limits, job deduplication, or a
+  real remote test. Authenticated worker claims are not proof of those controls.
+- A real MiniMax-M3 response, production TLS/reverse proxy, multi-user role
+  authorization, packaging/deployment, real voice, browser/computer control,
+  sensors, or robotics hardware.
+
+## GitHub publication and CI
+
+Result: IN PROGRESS — local verification passes. Exact-tree publication and
+Python 3.12/3.13 GitHub Actions evidence will be recorded after the remote run.
+
+---
+
 # 0.9.0-alpha.1 verification report
 
 Date: 2026-08-29 UTC

@@ -51,12 +51,20 @@ class ConfigTests(unittest.TestCase):
                 "development": {
                     "workspace_tests_enabled": False,
                     "workspace_test_timeout_seconds": 12,
+                    "external_worker_enabled": False,
+                    "external_worker_url": "",
+                    "external_worker_secret_refs": ["WORKER_KEY"],
+                    "external_worker_request_timeout_seconds": 22,
+                    "external_worker_job_timeout_seconds": 14,
+                    "external_worker_max_payload_bytes": 7000000,
                 },
             }))
             with patch.dict("os.environ", {
                 "SPARKLE_API_AUTH_REQUIRED": "true",
                 "SPARKLE_SESSION_COOKIE_SECURE": "true",
                 "SPARKLE_WORKSPACE_TESTS_ENABLED": "true",
+                "SPARKLE_EXTERNAL_WORKER_ENABLED": "true",
+                "SPARKLE_EXTERNAL_WORKER_URL": "https://worker.example/jobs",
             }):
                 config = AppConfig.load(path)
         self.assertEqual(config.port, 1234)
@@ -72,6 +80,12 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(config.session_max_active, 16)
         self.assertTrue(config.workspace_tests_enabled)
         self.assertEqual(config.workspace_test_timeout_seconds, 12)
+        self.assertTrue(config.external_worker_enabled)
+        self.assertEqual(config.external_worker_url, "https://worker.example/jobs")
+        self.assertEqual(config.external_worker_secret_refs, ("WORKER_KEY",))
+        self.assertEqual(config.external_worker_request_timeout_seconds, 22)
+        self.assertEqual(config.external_worker_job_timeout_seconds, 14)
+        self.assertEqual(config.external_worker_max_payload_bytes, 7000000)
 
     def test_rejects_invalid_api_rate_limit(self):
         with tempfile.TemporaryDirectory() as directory:

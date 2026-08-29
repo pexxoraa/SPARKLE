@@ -47,6 +47,14 @@ The worker reports that filesystem/network isolation is absent and refuses
 non-allowlisted parent environments; production hostile-code execution still
 requires a separately deployed hardened container worker.
 
+External worker submission follows operator approval → enabled/configured
+check → secret-key resolution → confined workspace scan → hidden/sensitive/
+binary/symlink/size/key-value rejection → canonical bounded source payload →
+timestamped HMAC HTTPS request → bounded response read → HMAC/freshness/job/
+schema/status verification → output redaction → result record. The signing key,
+endpoint, and submitted bundle are not persisted. Sandbox fields are stored as
+claims; isolation remains unverified until separate deployment evidence exists.
+
 Every `/api/` request first consumes a bounded in-memory per-client quota, then
 passes exact-origin validation and, when enabled, bearer or browser-session
 authentication before its body is read or any application state is accessed.

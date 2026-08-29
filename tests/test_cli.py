@@ -92,6 +92,19 @@ class CLITests(unittest.TestCase):
             self.assertIn("requires explicit approval", error.getvalue())
             self.assertNotIn("Traceback", error.getvalue())
 
+    def test_external_workspace_cli_requires_approval_before_configuration(self):
+        with tempfile.TemporaryDirectory() as directory:
+            error = io.StringIO()
+            with (
+                patch.dict(os.environ, {"SPARKLE_DATA_DIR": directory}, clear=False),
+                contextlib.redirect_stderr(error),
+            ):
+                self.assertEqual(
+                    entrypoint(["test-workspace-external", "worker_app"]), 1,
+                )
+            self.assertIn("requires explicit approval", error.getvalue())
+            self.assertNotIn("Traceback", error.getvalue())
+
     def test_module_entrypoint_reports_bind_refusal_without_traceback(self):
         with tempfile.TemporaryDirectory() as directory:
             environment = {

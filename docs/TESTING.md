@@ -29,6 +29,16 @@ POSIX resource limits, a stripped child environment, credential-pattern output
 redaction, parent-secret refusal, symlink and arbitrary-field rejection,
 process-group wall timeout, pre-persistence output bounding, persistence, CLI/API/dashboard integration, and
 explicit status that filesystem/network isolation is absent.
+External-worker coverage uses an in-memory signed worker double; no network or
+code execution occurs. It verifies request signatures, source digests and
+bounds, response signatures, freshness, job identity, exact schemas, status
+consistency, output redaction, safe persistence, disabled/default behavior,
+operator approval, non-registration as a model tool, and API/CLI integration.
+Adversarial cases cover signature tampering, stale responses, mismatched job
+IDs, unknown fields, oversized responses, transport failures, symlinks, hidden
+and credential-like files, non-UTF-8 files, oversized files, and source that
+contains the configured signing key. Worker sandbox booleans remain explicitly
+unverified claims.
 
 The deterministic adapter avoids provider cost and network flakiness. The live
 smoke test is intentionally separate:
@@ -40,6 +50,6 @@ sparkle smoke-test --live
 Never report the live test as passed when the credential is absent or the exact
 `SPARKLE_LIVE_OK` response is not observed.
 
-Latest v0.9 pre-release result on 2026-08-29: 72 tests passed in 8.634 seconds.
+Latest v0.10 pre-release result on 2026-08-29: 81 tests passed in 13.819 seconds.
 Dashboard JavaScript syntax and Git whitespace checks also passed. See
 `RELEASE_REPORT.md` for the complete release evidence and live-provider blocker.

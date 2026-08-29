@@ -9,6 +9,7 @@ from pathlib import Path
 from sparkle.api import serve
 from sparkle.contracts import Message, ModelRequest
 from sparkle.model import ModelError
+from sparkle.external_worker import ExternalWorkerError
 from sparkle.secrets import SecretNotFoundError
 from sparkle.system import SparkleSystem
 from sparkle.tooling import ToolError
@@ -62,6 +63,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     test_workspace.add_argument("project_name")
     test_workspace.add_argument("--approve", action="store_true")
+    external_test = sub.add_parser(
+        "test-workspace-external",
+        help="Submit a workspace to the configured signed HTTPS test worker",
+    )
+    external_test.add_argument("project_name")
+    external_test.add_argument("--approve", action="store_true")
     return parser
 
 
@@ -183,6 +190,13 @@ def main(argv: list[str] | None = None) -> int:
         )
         _print({"ok": result["status"] == "passed", "test_run": result})
         return 0 if result["status"] == "passed" else 1
+    if args.command == "test-workspace-external":
+        result = system.external_worker_tool.run({
+            "project_name": args.project_name,
+            "approved": bool(args.approve),
+        })
+        _print({"ok": result["status"] == "passed", "external_test_run": result})
+        return 0 if result["status"] == "passed" else 1
     return 2
 
 
@@ -191,6 +205,7 @@ def entrypoint(argv: list[str] | None = None) -> int:
         return main(argv)
     except (
         ModelError,
+        ExternalWorkerError,
         SecretNotFoundError,
         ValueError,
         KeyError,

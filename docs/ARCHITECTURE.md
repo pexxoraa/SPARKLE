@@ -22,6 +22,9 @@ No agent imports a MiniMax class.
 `SparkleSystem` constructs independent stores, registries, the context builder,
 tool registry, orchestrator, voice service, presence engine, proactive engine,
 automation store, static verifier, and opt-in fixed workspace test runner.
+It also composes an operator-only external-worker client outside the model tool
+registry. That client owns bounded source packaging, HTTPS/HMAC protocol
+validation, and result persistence; it does not implement the remote sandbox.
 Interfaces call this object; they do not own intelligence.
 
 The HTTP boundary composes an independent bearer access policy, bounded rate
@@ -37,6 +40,7 @@ and orchestration do not depend on cookie or browser implementation details.
 - `var/data_environment/builds.sqlite3`
 - `var/data_environment/verifications.sqlite3`
 - `var/data_environment/test_runs.sqlite3`
+- `var/data_environment/external_worker_runs.sqlite3`
 - `var/trace_environment/api_audit.sqlite3`
 - `var/trace_environment/traces.sqlite3`
 

@@ -85,6 +85,7 @@ async function refresh() {
       metric('Application builds', state.builders.workspaces),
       metric('Static verifications', state.builders.verifications),
       metric('Workspace test runs', state.builders.test_runs),
+      metric('External worker runs', state.builders.external_worker_runs),
       metric('API audit records', state.api_security.recent_audit_records),
     ].join('');
     qs('#agentList').innerHTML = state.agents.map((agent) => (
@@ -135,6 +136,14 @@ async function loadPanel(panel) {
         `<div class="list-item"><strong>${escapeHtml(run.project_name)} · ${escapeHtml(run.status)}</strong><small>${escapeHtml(run.framework)} · exit ${escapeHtml(run.returncode)} · ${escapeHtml(run.duration_ms)} ms${run.timed_out ? ' · timed out' : ''}</small></div>`
       )).join('')
       : empty('No workspace tests executed yet.');
+  }
+  if (panel === 'external-tests') {
+    const data = await api('/api/external-test-runs?limit=50');
+    qs('#externalTestRunList').innerHTML = data.external_test_runs.length
+      ? data.external_test_runs.map((run) => (
+        `<div class="list-item"><strong>${escapeHtml(run.project_name)} · ${escapeHtml(run.status)}</strong><small>${escapeHtml(run.framework)} · signed response ${escapeHtml(run.response_verified)} · isolation verified ${escapeHtml(run.isolation_verified)} · ${escapeHtml(run.duration_ms)} ms</small></div>`
+      )).join('')
+      : empty('No external worker submissions recorded yet.');
   }
   if (panel === 'traces') {
     const data = await api('/api/traces?limit=50');

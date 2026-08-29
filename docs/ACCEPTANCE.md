@@ -21,8 +21,8 @@ means an external dependency is unavailable.
 | 16 initial agents | PARTIAL | All route and run; domain-specific evaluation suites are incomplete |
 | Agent Builder deploys new agents | PARTIAL | Approval-gated manifests persist, hot-load, route, replace, and remove agents; autonomous requirements-to-evaluation generation remains incomplete |
 | AI system builder | PARTIAL | Specialist exists; full build/deploy toolchain absent |
-| Application builder | PARTIAL | Approval-gated workspaces, static verification, and fixed Python unittest execution are tested; hardened hostile-code isolation, packaging, and deployment remain absent |
-| Tool framework | PASS | Registry, schemas, allowlists, bounds, scaffold, static-verifier, and fixed test-runner tools tested |
+| Application builder | PARTIAL | Approval-gated workspaces, static verification, fixed local tests, and a signed/bounded external-worker client boundary are tested; no hardened worker has been deployed or isolation-verified, and packaging/deployment remain absent |
+| Tool framework | PASS | Registry, schemas, allowlists, bounds, scaffold, static verifier, and fixed local test tools pass; source-transfer tool is intentionally operator-only and excluded from the agent registry |
 | Browser capabilities | BLOCKED | No browser executable/runtime adapter in SPARKLE environment |
 | Computer capabilities | PARTIAL | Safe file read exists; GUI/shell control intentionally unavailable |
 | Voice works | BLOCKED | Interfaces exist; no microphone/speaker or STT/TTS adapter |
@@ -34,8 +34,8 @@ means an external dependency is unavailable.
 | Data tracing works | PASS | Success/tool/failure metadata implemented; trace tests |
 | Motion/presence architecture | PASS | Independent presence engine; physical motion intentionally absent |
 | Multimodal architecture prepared | PARTIAL | M3 registry role and model contracts ready; image/video input contract not exposed yet |
-| Tests pass | PASS | See latest command/result in `TESTING.md` and release report |
+| Tests pass | PASS | 81 local tests pass; see `TESTING.md` and release report |
 | Documentation complete for implementation | PASS | Requested implementation documents present |
 | Installation reproducible | PASS | Python 3.12 core has zero mandatory third-party dependencies |
 | End-to-end workflows | PARTIAL | Deterministic local flows pass; live provider and external actions blocked |
-| Release | PASS | v0.9 capability commit has an exact local/remote tree match; CI run #17 passed on Python 3.12 and 3.13 |
+| Release | IN PROGRESS | v0.10 local suite passes; GitHub publication/tree comparison and Python 3.12/3.13 CI are pending |

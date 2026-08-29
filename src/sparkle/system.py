@@ -9,6 +9,7 @@ from sparkle.builders import WorkspaceManager
 from sparkle.config import AppConfig, data_root, project_root
 from sparkle.context import ContextBuilder
 from sparkle.development import DevelopmentVerifier, WorkspaceTestRunner
+from sparkle.external_worker import ExternalWorkerClient
 from sparkle.knowledge import KnowledgeIngestor
 from sparkle.orchestrator import Orchestrator
 from sparkle.presence import PresenceEngine
@@ -30,6 +31,7 @@ from sparkle.tooling import (
     MemoryWriteTool,
     ToolRegistry,
     WorkspaceScaffoldTool,
+    ExternalWorkspaceTestTool,
     WorkspaceTestTool,
     WorkspaceVerifyTool,
 )
@@ -83,6 +85,19 @@ class SparkleSystem:
             enabled=self.config.workspace_tests_enabled,
             timeout_seconds=self.config.workspace_test_timeout_seconds,
         )
+        self.external_worker = ExternalWorkerClient(
+            self.workspaces.root,
+            enabled=self.config.external_worker_enabled,
+            endpoint=self.config.external_worker_url,
+            secret_refs=self.config.external_worker_secret_refs,
+            request_timeout_seconds=self.config.external_worker_request_timeout_seconds,
+            job_timeout_seconds=self.config.external_worker_job_timeout_seconds,
+            max_payload_bytes=self.config.external_worker_max_payload_bytes,
+            secret_resolver=self.secret_resolver,
+        )
+        # This operator-only facade is deliberately excluded from ToolRegistry so a
+        # model cannot manufacture the approval needed to transfer workspace source.
+        self.external_worker_tool = ExternalWorkspaceTestTool(self.external_worker)
         self.tools = ToolRegistry()
         self.tools.register(CalculatorTool())
         self.tools.register(MemorySearchTool(self.memory))
@@ -112,7 +127,7 @@ class SparkleSystem:
         models = self.models.list()
         return {
             "name": "SPARKLE",
-            "version": "0.9.0-alpha.1",
+            "version": "0.10.0-alpha.1",
             "status": "ready" if any(model["configured"] for model in models) else "limited",
             "active_model": self.models.active_id,
             "models": models,
@@ -142,6 +157,8 @@ class SparkleSystem:
                 "static_verification": True,
                 "test_runs": len(self.workspace_tests.list(limit=100)),
                 "workspace_tests": self.workspace_tests.status(),
+                "external_worker_runs": len(self.external_worker.list(limit=100)),
+                "external_worker": self.external_worker.status(),
                 "arbitrary_command_execution": False,
             },
             "proactive_alerts": self.proactive.inspect(),

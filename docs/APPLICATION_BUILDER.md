@@ -42,3 +42,33 @@ reported as such. Use only a disposable, secret-free worker. Arbitrary shell,
 application, package-install, and build commands remain unavailable. A hardened
 container worker, packager, and deployment adapter are still required before
 autonomous application delivery can be marked complete.
+
+## Signed external worker boundary
+
+SPARKLE also implements the client boundary needed to move the same fixed test
+operation out of the API process. It is disabled by default and is intentionally
+not registered as an agent-visible tool. After a compatible worker has been
+deployed and independently hardened, configure its HTTPS endpoint and
+secret-managed signing key, then invoke it as an operator:
+
+```bash
+export SPARKLE_EXTERNAL_WORKER_ENABLED=true
+export SPARKLE_EXTERNAL_WORKER_URL='https://worker.example/v1/jobs'
+export SPARKLE_WORKER_SIGNING_KEY='set-through-a-secret-manager'
+sparkle test-workspace-external robot_dashboard --approve
+```
+
+The request uses protocol `SPARKLE-WORKER/1`, a unique job ID, a fixed
+`python_unittest` operation, requested limits, and a bounded base64-encoded
+UTF-8 source bundle with per-file SHA-256 digests. Timestamped HMAC-SHA256
+headers authenticate both directions. Responses must be fresh, correctly
+signed, schema-exact, job-matched, type-bounded, and status-consistent.
+
+Submitting a workspace transfers its accepted source files to the configured
+endpoint. Hidden, symlinked, binary, oversized, secret/credential-like, and
+signing-key-containing files are refused; this does not prove the absence of
+all application secrets, so approval must follow a source review. Results live
+in `data_environment/external_worker_runs.sqlite3`. Sandbox fields are retained
+as worker **claims**, while `isolation_verified` remains false until a real
+deployment has separate end-to-end isolation evidence. This repository does
+not yet contain or claim a hardened container-worker deployment.

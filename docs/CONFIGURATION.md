@@ -23,6 +23,12 @@ Environment overrides:
 | `SPARKLE_SESSION_MAX_ACTIVE` | Bounded in-memory session capacity (1–1000) | No |
 | `SPARKLE_WORKSPACE_TESTS_ENABLED` | Opt in to fixed Python workspace tests | No |
 | `SPARKLE_WORKSPACE_TEST_TIMEOUT_SECONDS` | Test wall/CPU limit (1–60 seconds) | No |
+| `SPARKLE_EXTERNAL_WORKER_ENABLED` | Opt in to external workspace transfer/execution | No |
+| `SPARKLE_EXTERNAL_WORKER_URL` | Signed worker HTTPS job endpoint | No |
+| `SPARKLE_WORKER_SIGNING_KEY` | Default request/response HMAC key reference | Yes |
+| `SPARKLE_EXTERNAL_WORKER_REQUEST_TIMEOUT_SECONDS` | HTTP request timeout (1–120 seconds) | No |
+| `SPARKLE_EXTERNAL_WORKER_JOB_TIMEOUT_SECONDS` | Requested fixed-test timeout (1–60 seconds) | No |
+| `SPARKLE_EXTERNAL_WORKER_MAX_PAYLOAD_BYTES` | Serialized request bound (1–20 MB) | No |
 
 Configuration files may contain secret *names* such as `MINIMAX_API_KEY`; they
 must never contain secret values. Shell and web tools default to disabled.
@@ -64,3 +70,18 @@ The `development` section keeps workspace test execution disabled by default.
 Enable it only in a dedicated POSIX worker whose parent environment contains
 only SPARKLE's narrow runtime/configuration allowlist. SPARKLE refuses execution otherwise. This process-level
 runner does not provide filesystem or network isolation.
+
+The separate external worker is also disabled by default. Enabling it requires
+an HTTPS URL and a signing key of at least 32 bytes supplied through one of the
+configured `external_worker_secret_refs`. The URL may not contain credentials,
+a query, or a fragment. Status reports only configuration booleans—not the URL,
+secret-reference names, or secret value.
+
+The client sends one fixed `python_unittest` operation and does not retry. It
+caps the workspace at 500 UTF-8 regular files, 500 KB per file, 5 MB total, and
+the configured serialized payload limit. Symlinks, hidden paths,
+credential/secret-like paths, credential-file suffixes, and source containing
+the configured signing-key value are rejected before transfer. Each invocation
+still requires explicit operator approval. Deploying and validating a
+compatible hardened worker is separate work; setting these values alone does
+not make filesystem or network isolation verified.

@@ -47,3 +47,21 @@ filesystem or network, so it is not suitable for hostile code or a production
 multi-tenant service. Bubblewrap and user namespaces are present but unusable
 in the verified container (`Operation not permitted`); do not claim container
 isolation until a deployment supplies and tests it.
+
+## External worker protocol
+
+`ExternalWorkerClient` is an operator-only client boundary, not a sandbox. Keep
+`ExternalWorkspaceTestTool` out of `ToolRegistry`: a model must never create its
+own approval for source transfer. The wire contract is fixed at
+`SPARKLE-WORKER/1` and `python_unittest`; do not add executable, argument,
+environment, dependency-install, or general command fields.
+
+Requests and responses use canonical JSON and a timestamped HMAC-SHA256 over
+`timestamp + "." + body`. Preserve exact response-field validation, clock-skew
+checking, job matching, bounds, safe-error wrapping, and output redaction. Do
+not enable redirects or treat authenticated sandbox declarations as isolation
+evidence. A future
+worker deployment needs its own threat model, immutable image, unprivileged
+runtime, read-only root, ephemeral workspace, denied network, cgroup/seccomp
+limits, job-id deduplication, secret-free environment, and destructive escape
+tests before `isolation_verified` can change.

@@ -7,7 +7,7 @@ registry, provider adapters, specialist agents, persistent memory, a separate
 knowledge index, execution traces, automations, proactive rules, a CLI, an HTTP
 API, and a local dashboard.
 
-Current release: `0.9.0-alpha.1`. This is a tested foundation release, not the
+Current release: `0.10.0-alpha.1`. This is a tested foundation release, not the
 final system described in the long-term Definition of Done. See
 [`docs/BUILD_STATE.md`](docs/BUILD_STATE.md) and
 [`docs/ACCEPTANCE.md`](docs/ACCEPTANCE.md) for exact evidence and gaps.
@@ -33,6 +33,10 @@ final system described in the long-term Definition of Done. See
   compile, JavaScript syntax, and JSON parse checks.
 - Disabled-by-default, approval-gated Python unittest execution for dedicated
   secret-free POSIX workers, with fixed commands and bounded evidence.
+- A second, disabled-by-default external-worker boundary that transfers only a
+  bounded UTF-8 workspace over HTTPS, authenticates requests and responses with
+  secret-resolved HMAC-SHA256, rejects untrusted results, and records declared
+  sandbox claims without misreporting them as verified isolation.
 - Text/Markdown/source-code ingestion; optional PDF and DOCX ingestion.
 - Dashboard and JSON API served with Python's standard library.
 - Optional secret-resolved bearer authentication, exact origin controls, and

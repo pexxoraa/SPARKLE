@@ -29,6 +29,25 @@
   and credential-pattern redacted. Filesystem and
   network isolation remain explicitly false; this boundary is for disposable,
   dedicated workers and is not a hardened sandbox for hostile code.
+- External worker submission is a separate disabled-by-default, operator-only
+  boundary and is not registered for model tool use. It requires per-run
+  approval, an HTTPS URL without embedded credentials/query/fragment, and a
+  secret-resolved signing key of at least 32 bytes.
+- Source transfer is bounded to UTF-8 regular files and rejects symlinks,
+  hidden paths, credential/secret-like paths and suffixes, oversized input, and
+  any file containing the configured signing-key value. Accepted files are
+  base64 encoded with SHA-256 digests; source bundles are not persisted in the
+  result database.
+- Requests and responses are timestamped and HMAC-SHA256 authenticated.
+  Responses must be fresh, job-matched, exact-schema, bounded, and internally
+  consistent, with HTTP 200, JSON content type, and the protocol header.
+  Redirects are rejected so signed source cannot be forwarded to another
+  origin. Transport failures are wrapped without endpoint or exception detail.
+  Output is bounded and credential-pattern redacted before persistence.
+- Worker-reported filesystem, network, ephemeral, and resource-limit fields are
+  untrusted declarations. SPARKLE records them as `sandbox_claims` and always
+  reports `isolation_verified: false` in this release. The repository has no
+  deployed hardened worker and performs no automatic submission retries.
 - Permanent memory, knowledge-source, and automation deletion requires an
   explicit API approval flag.
 - Automation actions are limited to validated SPARKLE agent requests with one

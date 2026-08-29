@@ -11,6 +11,7 @@ from typing import Any
 from urllib.parse import parse_qs, urlparse
 
 from sparkle.model import ModelError
+from sparkle.external_worker import ExternalWorkerError
 from sparkle.security import APIAuditStore
 from sparkle.system import SparkleSystem
 from sparkle.tooling import ToolError
@@ -21,7 +22,7 @@ MAX_BODY_BYTES = 1_000_000
 class SparkleHandler(BaseHTTPRequestHandler):
     system: SparkleSystem
     dashboard_root = Path(__file__).with_name("dashboard")
-    server_version = "SPARKLE/0.9"
+    server_version = "SPARKLE/0.10"
 
     def log_message(self, format: str, *args: object) -> None:
         # Avoid request bodies, headers, query values, and secrets in logs.
@@ -313,6 +314,12 @@ class SparkleHandler(BaseHTTPRequestHandler):
                     limit=int(query.get("limit", [20])[0])
                 )
             })
+        if parsed.path == "/api/external-test-runs":
+            return self._json({
+                "external_test_runs": self.system.external_worker.list(
+                    limit=int(query.get("limit", [20])[0])
+                )
+            })
         if parsed.path == "/api/audit":
             return self._json({
                 "audit": self.system.api_audit.recent(
@@ -425,10 +432,19 @@ class SparkleHandler(BaseHTTPRequestHandler):
                     "workspace_test", data, allowed={"workspace_test"},
                 )
                 return self._json({"ok": result["status"] == "passed", "test_run": result}, 201)
+            if self.path == "/api/builds/test-external":
+                result = self.system.external_worker_tool.run(data)
+                return self._json({
+                    "ok": result["status"] == "passed", "external_test_run": result,
+                }, 201)
             self._json({"error": "not_found"}, 404)
         except ModelError as exc:
             self.system.presence.update("error", "Model unavailable")
             self._json({"ok": False, "error": str(exc), "retryable": exc.retryable}, 503 if exc.retryable else 424)
+        except ExternalWorkerError as exc:
+            self._json({
+                "ok": False, "error": str(exc), "error_type": type(exc).__name__,
+            }, 424)
         except FileExistsError as exc:
             self._json({"ok": False, "error": str(exc), "error_type": type(exc).__name__}, 409)
         except (ValueError, KeyError, TypeError, ToolError, json.JSONDecodeError) as exc:

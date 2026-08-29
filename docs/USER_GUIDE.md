@@ -127,6 +127,27 @@ This is process-bounded execution, not filesystem or network isolation. Never
 enable it in the MiniMax/API server process or any process carrying credentials.
 Use a disposable worker and do not run hostile or untrusted code.
 
+## Submit fixed tests to an external worker
+
+This boundary is disabled until an operator configures a compatible HTTPS
+worker and a secret-managed HMAC key. It sends the accepted UTF-8 source files,
+so review the workspace before approving the transfer.
+
+```bash
+export SPARKLE_EXTERNAL_WORKER_ENABLED=true
+export SPARKLE_EXTERNAL_WORKER_URL='https://worker.example/v1/jobs'
+export SPARKLE_WORKER_SIGNING_KEY='configured-outside-source'
+sparkle test-workspace-external robot_dashboard --approve
+```
+
+The equivalent authenticated API route is `POST /api/builds/test-external`
+with `project_name` and `approved: true`; history is available from
+`GET /api/external-test-runs`. The dashboard history is intentionally read-only.
+SPARKLE verifies response authenticity and protocol consistency. It stores
+worker sandbox flags only as claims and reports `isolation_verified: false`
+until a deployed worker is independently validated. No compatible live worker
+has been deployed or verified by this release.
+
 ## Execute automations
 
 Run all currently due internal agent actions once:
@@ -151,8 +172,9 @@ sparkle serve
 ```
 
 The dashboard displays model/configuration state, built-in and generated
-agents, memory, automation runs, application builds, static verifications, and
-bounded test runs and traces. The API audit panel shows only route outcomes and durations; it never
+agents, memory, automation runs, application builds, static verifications,
+bounded local test runs, signed external-worker evidence, and traces. The API
+audit panel shows only route outcomes and durations; it never
 shows client identities, request content, queries, origins, headers, or tokens.
 
 ## Secure API access

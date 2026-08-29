@@ -70,3 +70,14 @@ allowlist and refused to execute generated code. Do not remove credentials from 
 just to bypass this control. Start a separate sanitized worker containing only
 the data-root and workspace-test configuration variables. Filesystem and
 network isolation are still absent, so use non-hostile code only.
+
+## External workspace worker is unavailable
+
+The external path is disabled unless `SPARKLE_EXTERNAL_WORKER_ENABLED=true`, a
+valid credential-free HTTPS URL is configured, and the configured signing-key
+reference resolves to at least 32 bytes. Every CLI/API submission also needs
+explicit approval. Do not paste the key into configuration, logs, issues, or
+chat. A signature, timestamp, job-ID, schema, size, or status mismatch is a
+hard failure and should be investigated at the worker; SPARKLE does not retry
+or accept an unsigned fallback. This release has no deployed reference worker,
+so a live external test remains blocked until one is independently provisioned.

@@ -16,7 +16,13 @@
   },
   "development": {
     "workspace_tests_enabled": false,
-    "workspace_test_timeout_seconds": 10
+    "workspace_test_timeout_seconds": 10,
+    "external_worker_enabled": false,
+    "external_worker_url": "",
+    "external_worker_secret_refs": ["SPARKLE_WORKER_SIGNING_KEY"],
+    "external_worker_request_timeout_seconds": 15,
+    "external_worker_job_timeout_seconds": 10,
+    "external_worker_max_payload_bytes": 8000000
   },
   "voice": {"stt": "disabled", "tts": "disabled"},
   "presence": {"mode": "dashboard"}

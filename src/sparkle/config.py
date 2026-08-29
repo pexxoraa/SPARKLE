@@ -63,6 +63,12 @@ class AppConfig:
     session_max_active: int = 32
     workspace_tests_enabled: bool = False
     workspace_test_timeout_seconds: int = 10
+    external_worker_enabled: bool = False
+    external_worker_url: str = ""
+    external_worker_secret_refs: tuple[str, ...] = ("SPARKLE_WORKER_SIGNING_KEY",)
+    external_worker_request_timeout_seconds: int = 15
+    external_worker_job_timeout_seconds: int = 10
+    external_worker_max_payload_bytes: int = 8_000_000
 
     @classmethod
     def load(cls, path: Path | None = None) -> "AppConfig":
@@ -75,6 +81,9 @@ class AppConfig:
             raise ValueError("development configuration must be an object")
         token_refs = security.get("api_token_refs", ["SPARKLE_API_TOKEN"])
         allowed_origins = security.get("allowed_origins", [])
+        worker_secret_refs = development.get(
+            "external_worker_secret_refs", ["SPARKLE_WORKER_SIGNING_KEY"],
+        )
         if not isinstance(token_refs, list) or not token_refs or not all(
             isinstance(item, str) and item for item in token_refs
         ):
@@ -83,6 +92,12 @@ class AppConfig:
             isinstance(item, str) and item for item in allowed_origins
         ):
             raise ValueError("security.allowed_origins must be a string array")
+        if not isinstance(worker_secret_refs, list) or not worker_secret_refs or not all(
+            isinstance(item, str) and item for item in worker_secret_refs
+        ):
+            raise ValueError(
+                "development.external_worker_secret_refs must contain secret reference names"
+            )
         return cls(
             host=os.environ.get("SPARKLE_HOST", str(source["server"]["host"])),
             port=int(os.environ.get("SPARKLE_PORT", source["server"]["port"])),
@@ -138,5 +153,32 @@ class AppConfig:
                 int(development.get("workspace_test_timeout_seconds", 10)),
                 minimum=1,
                 maximum=60,
+            ),
+            external_worker_enabled=environment_bool(
+                "SPARKLE_EXTERNAL_WORKER_ENABLED",
+                bool(development.get("external_worker_enabled", False)),
+            ),
+            external_worker_url=os.environ.get(
+                "SPARKLE_EXTERNAL_WORKER_URL",
+                str(development.get("external_worker_url", "")),
+            ).strip(),
+            external_worker_secret_refs=tuple(worker_secret_refs),
+            external_worker_request_timeout_seconds=environment_int(
+                "SPARKLE_EXTERNAL_WORKER_REQUEST_TIMEOUT_SECONDS",
+                int(development.get("external_worker_request_timeout_seconds", 15)),
+                minimum=1,
+                maximum=120,
+            ),
+            external_worker_job_timeout_seconds=environment_int(
+                "SPARKLE_EXTERNAL_WORKER_JOB_TIMEOUT_SECONDS",
+                int(development.get("external_worker_job_timeout_seconds", 10)),
+                minimum=1,
+                maximum=60,
+            ),
+            external_worker_max_payload_bytes=environment_int(
+                "SPARKLE_EXTERNAL_WORKER_MAX_PAYLOAD_BYTES",
+                int(development.get("external_worker_max_payload_bytes", 8_000_000)),
+                minimum=1_000_000,
+                maximum=20_000_000,
             ),
         )

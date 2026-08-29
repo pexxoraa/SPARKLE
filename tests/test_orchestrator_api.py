@@ -21,6 +21,7 @@ from sparkle.registry import ModelRegistry
 from sparkle.secrets import SecretResolver
 from sparkle.security import APIAccessPolicy, APISessionManager, FixedWindowRateLimiter
 from sparkle.system import SparkleSystem
+from sparkle.tooling import ExternalWorkspaceTestTool
 
 
 class ToolCallingAdapter(ModelAdapter):
@@ -148,6 +149,32 @@ class APITests(SystemCase):
         self.assertEqual(headers["X-RateLimit-Limit"], "120")
         self.assertEqual(headers["X-RateLimit-Remaining"], "119")
         self.assertTrue(json.loads(body)["ok"])
+
+    def test_external_worker_route_is_operator_approved(self):
+        class StubClient:
+            def run(self, project_name):
+                return {
+                    "project_name": project_name, "status": "passed",
+                    "response_verified": True, "isolation_verified": False,
+                }
+
+        self.system.external_worker_tool = ExternalWorkspaceTestTool(StubClient())
+        self.assertNotIn("external_workspace_test", self.system.tools.names)
+        worker_status = self.system.status()["builders"]["external_worker"]
+        self.assertFalse(worker_status["agent_tool_registered"])
+        self.assertFalse(worker_status["live_worker_verified"])
+        self.assertFalse(worker_status["isolation_verified"])
+        self.assertEqual(self.request(
+            "/api/builds/test-external", {"project_name": "worker_app"},
+        )[0], 400)
+        status, _, body = self.request(
+            "/api/builds/test-external",
+            {"project_name": "worker_app", "approved": True},
+        )
+        self.assertEqual(status, 201)
+        result = json.loads(body)
+        self.assertTrue(result["ok"])
+        self.assertFalse(result["external_test_run"]["isolation_verified"])
 
     def test_rate_limit_precedes_authentication_and_is_audited(self):
         self.system.api_rate_limiter = FixedWindowRateLimiter(2, 60)
