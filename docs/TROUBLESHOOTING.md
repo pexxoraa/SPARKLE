@@ -22,9 +22,11 @@ remain visible as failures and are traced by error type.
 Run `sparkle serve`, confirm the printed bind address, and check that the port is
 free. Do not expose the alpha server directly to the public internet.
 
-If API authentication is enabled, the built-in dashboard cannot submit or store
-the bearer token and API requests return 401. Use an authenticated API client or
-return to a loopback-only local configuration.
+If API authentication is enabled, the dashboard displays its authentication
+gate. Enter the configured API access token; the page exchanges it for an
+HttpOnly session cookie and does not retain it in browser storage. Repeated 401
+responses mean the token is wrong, the bounded session expired/was evicted, or
+the server restarted. Authenticate again without printing the token.
 
 ## API startup refuses the bind
 
@@ -32,6 +34,11 @@ A non-loopback host requires `SPARKLE_API_AUTH_REQUIRED=true` and a configured
 `SPARKLE_API_TOKEN` secret reference. Required authentication also fails closed
 on loopback if the token is absent. Use `sparkle status` to inspect presence
 only; never print the value.
+
+If dashboard sessions are enabled, non-loopback startup also requires
+`SPARKLE_SESSION_COOKIE_SECURE=true` and a trusted TLS-terminating reverse proxy.
+For a bearer-only API, set `SPARKLE_SESSION_AUTH_ENABLED=false`. Do not disable
+secure cookies to expose the dashboard over plain HTTP.
 
 ## API returns 403 origin_not_allowed
 

@@ -1,3 +1,87 @@
+# 0.9.0-alpha.1 verification report
+
+Date: 2026-08-29 UTC
+
+## Executed commands
+
+### Compile and regression suite
+
+```bash
+make check
+```
+
+Result: PASS — 72 tests ran in 8.634 seconds; 72 passed, 0 failed,
+0 errors. New evidence covers session creation, hashed-ID storage, absolute
+expiry, bounded capacity/eviction, cookie attributes, CSRF rejection and
+acceptance, session restoration after dashboard reload, logout/revocation,
+bearer compatibility, configuration bounds, and secret-free audit/status paths.
+
+### Static release checks
+
+```bash
+node --check src/sparkle/dashboard/app.js
+git diff --check
+```
+
+Result: PASS — the dashboard JavaScript parsed and the working diff contained
+no whitespace errors.
+
+### Sanitized runtime and bind-policy checks
+
+A fresh process with an empty environment except the documented runtime paths
+ran `sparkle status` with exit 0. It reported version `0.9.0-alpha.1`, no
+configured provider key, sessions disabled while API authentication is off,
+zero active sessions, non-persistent session state, and
+`credentials_exposed: false`.
+
+A separate sanitized process supplied a placeholder API token, required API
+authentication, requested a non-loopback bind, and deliberately left secure
+cookies disabled. Startup failed closed with exit 1 and the exact policy error
+`Non-loopback dashboard sessions require secure cookies and TLS termination`.
+The placeholder credential did not appear in output.
+
+The live provider smoke in a sanitized environment exited 2 at
+`credential_presence`, with `configured: false` and
+`secret_value_exposed: false`. No MiniMax request was made; this remains
+BLOCKED rather than PASS.
+
+## Verified v0.9 capability paths
+
+- The existing secret-resolved bearer credential can be exchanged for an
+  opaque 256-bit dashboard session without exposing it in response bodies,
+  status, audit, or browser storage.
+- Session IDs are represented only by SHA-256 digests in bounded process memory;
+  sessions expire absolutely, evict the oldest entry at capacity, revoke on
+  logout, and disappear on restart.
+- Cookies are host-only, HttpOnly, `SameSite=Strict`, path `/`, and optionally
+  `Secure`; a non-loopback session bind fails unless secure cookies are enabled.
+- Every cookie-authenticated mutation requires a separate per-session CSRF
+  token. The same-origin session endpoint recovers it after reload without
+  exposing the HttpOnly session ID.
+- Bearer clients remain compatible, session/login/logout routes are rate-,
+  origin-, and audit-gated, and the audit schema still cannot accept headers,
+  cookies, bodies, client identity, or credentials.
+- The dashboard clears the credential field after submission, uses neither
+  `localStorage` nor `sessionStorage`, restores valid sessions, and explicitly
+  revokes them through **End session**.
+
+## Not verified
+
+- TLS termination, reverse-proxy forwarding policy, public deployment, or a
+  real remote browser session. Secure-cookie configuration is enforced, but
+  the standard-library server cannot provide or validate edge TLS.
+- Multi-user identity, role/owner authorization, distributed session/rate-limit
+  state, or session revocation across multiple processes.
+- A real MiniMax-M3 response, hardened hostile-code container worker, real
+  voice, browser/computer control, sensors, or robotics hardware.
+
+## GitHub publication and CI
+
+Pending — the locally verified v0.9 tree has not yet been published. Exact
+commit, tree, workflow run, and matrix-job evidence will replace this paragraph.
+
+---
+
 # 0.8.0-alpha.1 verification report
 
 Date: 2026-08-29 UTC
@@ -79,6 +163,11 @@ exactly matches the locally tested tree in commit
 SPARKLE CI run #15 (`33239100793`) completed successfully in 19 seconds. Both
 matrix jobs, `test (3.12)` and `test (3.13)`, completed successfully, including
 the `Compile and test` step.
+
+The v0.8 documentation checkpoint commit
+`cd0fdfb96365122985081614184e3af3d7157a39` was then verified by SPARKLE CI
+run #16 (`33239280620`) in 18 seconds; both Python matrix jobs and their
+`Compile and test` steps completed successfully.
 
 ---
 

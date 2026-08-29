@@ -4,6 +4,7 @@
 |---|---|---|---|---|---|
 | API key | Hosting/OS secret manager | Provider authentication | User | Until rotated/deleted | Secret resolver, provider adapter |
 | API bearer token | Hosting/OS secret manager | SPARKLE API authentication | User | Until rotated/deleted | API access policy |
+| Dashboard session ID digest and CSRF token | Bounded process memory only | Same-origin dashboard authentication | API server | Absolute TTL, eviction, logout, or restart | Session manager/API guard |
 | Model config | `ai_environment/configurations/models.json` | Registry and routing | System owner | Versioned | Model registry/router |
 | App config | `application/config.json` | Runtime policy | System owner | Versioned | System composition |
 | User profile/goals | Memory SQLite | Personal context | User | Until archived/deleted | Context and personal agents |

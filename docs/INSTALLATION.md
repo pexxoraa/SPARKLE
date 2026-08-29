@@ -38,8 +38,12 @@ or service arguments.
 
 ```bash
 export SPARKLE_API_AUTH_REQUIRED=true
+export SPARKLE_SESSION_COOKIE_SECURE=true
 sparkle serve --host 0.0.0.0
 ```
 
-Startup refuses this bind if the token reference is absent. This control does
-not provide TLS; terminate TLS at a trusted edge before any network exposure.
+Startup refuses this bind if the token reference is absent or session
+authentication is enabled without secure cookies. The built-in server does not
+provide TLS; terminate TLS at a trusted edge before any network exposure and
+forward only from that trusted edge. A bearer-only API can explicitly set
+`SPARKLE_SESSION_AUTH_ENABLED=false` instead of enabling dashboard sessions.

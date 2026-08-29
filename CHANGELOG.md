@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.9.0-alpha.1 - 2026-08-29
+
+- Added bounded, process-local dashboard sessions exchanged from the existing
+  secret-resolved API bearer credential.
+- Added host-only HttpOnly `SameSite=Strict` cookies, configurable `Secure`,
+  absolute expiry, capacity eviction, CSRF tokens for mutations, reload
+  recovery, logout/revocation, and credential-free session status.
+- Added a dashboard authentication gate that never writes tokens to local or
+  session storage, while preserving bearer authentication for API clients.
+- Added fail-closed non-loopback session binding without secure cookies and
+  expanded the deterministic regression suite from 68 to 72 tests.
+
 ## 0.8.0-alpha.1 - 2026-08-29
 
 - Added a disabled-by-default Python unittest workspace runner with a fixed

@@ -38,6 +38,14 @@
 - Every API route supports optional bearer authentication resolved from
   environment secret references. Comparison is constant-time; failures and
   status never contain the supplied or configured value.
+- When API authentication is required, the dashboard can exchange that bearer
+  credential for a 256-bit opaque, process-local session. Only a SHA-256 digest
+  of the session ID is held in bounded memory; sessions have absolute expiry,
+  oldest-entry eviction, explicit revocation, and no database representation.
+- Browser cookies are host-only, HttpOnly, `SameSite=Strict`, path `/`, and
+  configurable `Secure`. Every cookie-authenticated mutation requires a separate
+  256-bit CSRF token held only in page/server memory. The dashboard never uses
+  localStorage or sessionStorage for credentials.
 - Same-origin API requests are allowed; cross-origin requests require an exact
   configured HTTP(S) origin. Wildcard origins are rejected. Preflight responses
   advertise only GET, POST, OPTIONS, Authorization, and Content-Type.
@@ -53,10 +61,13 @@
   cannot become an accidental credential channel.
 - Server startup fails if authentication is required but its token is absent,
   or if a non-loopback bind is requested without configured authentication.
+- Session-enabled non-loopback startup also fails unless secure cookies are
+  configured. A trusted TLS reverse proxy remains mandatory because the built-
+  in server does not terminate or validate TLS.
 - Provider reasoning blocks are preserved only for provider continuity and are
   neither displayed nor traced.
 
-Production deployment still needs role/owner authorization, TLS at the edge,
+Production deployment still needs multi-user role/owner authorization, TLS at the edge,
 distributed/edge rate limiting, audit retention, backup encryption, dependency scanning,
 containerized filesystem/network isolation for test/build execution, and a
 threat-model review.

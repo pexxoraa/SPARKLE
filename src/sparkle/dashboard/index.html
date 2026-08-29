@@ -7,6 +7,17 @@
   <link rel="stylesheet" href="/assets/styles.css">
 </head>
 <body>
+  <div id="authGate" class="auth-gate" hidden>
+    <form id="loginForm" class="auth-card" autocomplete="off">
+      <div class="brand"><span class="mark">✦</span><div><strong>SPARKLE</strong><small>SECURE SESSION</small></div></div>
+      <h2>Authenticate this dashboard</h2>
+      <p>Enter the server-side API access token once. It is exchanged for an HttpOnly session cookie and is never stored by this page.</p>
+      <label for="loginToken">API access token</label>
+      <input id="loginToken" name="token" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" required>
+      <p id="loginError" class="auth-error" aria-live="polite"></p>
+      <button type="submit">Start secure session</button>
+    </form>
+  </div>
   <div class="shell">
     <aside>
       <div class="brand"><span class="mark">✦</span><div><strong>SPARKLE</strong><small>PERSONAL INTELLIGENCE</small></div></div>
@@ -24,7 +35,7 @@
       <div class="aside-foot"><span id="statusDot" class="dot"></span><span id="systemLabel">Connecting</span></div>
     </aside>
     <main>
-      <header><div><p class="eyebrow">STRATEGIC PERSONAL AI</p><h1 id="panelTitle">Command console</h1></div><div class="model-chip"><span>ACTIVE MODEL</span><strong id="activeModel">—</strong></div></header>
+      <header><div><p class="eyebrow">STRATEGIC PERSONAL AI</p><h1 id="panelTitle">Command console</h1></div><div class="header-actions"><button id="logoutButton" class="quiet-button" type="button" hidden>End session</button><div class="model-chip"><span>ACTIVE MODEL</span><strong id="activeModel">—</strong></div></div></header>
       <section id="console" class="panel active">
         <div class="hero-card">
           <div class="orb" aria-hidden="true"><i></i><i></i><i></i><span>✦</span></div>

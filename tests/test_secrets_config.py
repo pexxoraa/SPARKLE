@@ -43,6 +43,10 @@ class ConfigTests(unittest.TestCase):
                     "allowed_origins": ["https://console.example"],
                     "rate_limit_requests": 80,
                     "rate_limit_window_seconds": 30,
+                    "session_auth_enabled": True,
+                    "session_cookie_secure": False,
+                    "session_ttl_seconds": 900,
+                    "session_max_active": 16,
                 },
                 "development": {
                     "workspace_tests_enabled": False,
@@ -51,6 +55,7 @@ class ConfigTests(unittest.TestCase):
             }))
             with patch.dict("os.environ", {
                 "SPARKLE_API_AUTH_REQUIRED": "true",
+                "SPARKLE_SESSION_COOKIE_SECURE": "true",
                 "SPARKLE_WORKSPACE_TESTS_ENABLED": "true",
             }):
                 config = AppConfig.load(path)
@@ -61,6 +66,10 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(config.allowed_origins, ("https://console.example",))
         self.assertEqual(config.api_rate_limit_requests, 80)
         self.assertEqual(config.api_rate_limit_window_seconds, 30)
+        self.assertTrue(config.session_auth_enabled)
+        self.assertTrue(config.session_cookie_secure)
+        self.assertEqual(config.session_ttl_seconds, 900)
+        self.assertEqual(config.session_max_active, 16)
         self.assertTrue(config.workspace_tests_enabled)
         self.assertEqual(config.workspace_test_timeout_seconds, 12)
 
@@ -75,6 +84,19 @@ class ConfigTests(unittest.TestCase):
                 "security": {"rate_limit_requests": 0},
             }))
             with self.assertRaisesRegex(ValueError, "from 1 to 10000"):
+                AppConfig.load(path)
+
+    def test_rejects_invalid_session_bounds(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "config.json"
+            path.write_text(json.dumps({
+                "server": {"host": "localhost", "port": 1234},
+                "orchestrator": {"max_tool_rounds": 2},
+                "context": {"memory_results": 3, "knowledge_results": 4},
+                "tools": {"allow_shell": False, "allow_web": False},
+                "security": {"session_ttl_seconds": 59},
+            }))
+            with self.assertRaisesRegex(ValueError, "from 60 to 86400"):
                 AppConfig.load(path)
 
     def test_model_registry_switch_enable_add_remove(self):

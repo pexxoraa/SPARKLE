@@ -1,6 +1,8 @@
 const qs = (selector) => document.querySelector(selector);
 const qsa = (selector) => [...document.querySelectorAll(selector)];
 let state = null;
+let csrfToken = null;
+let sessionRequired = false;
 
 const escapeHtml = (value) => String(value).replace(
   /[&<>'"]/g,
@@ -8,13 +10,54 @@ const escapeHtml = (value) => String(value).replace(
 );
 
 async function api(path, options = {}) {
+  const method = (options.method || 'GET').toUpperCase();
+  const headers = {'Content-Type': 'application/json', ...(options.headers || {})};
+  if (csrfToken && !['GET', 'HEAD', 'OPTIONS'].includes(method)) {
+    headers['X-SPARKLE-CSRF'] = csrfToken;
+  }
   const response = await fetch(path, {
-    headers: {'Content-Type': 'application/json'},
+    credentials: 'same-origin',
     ...options,
+    headers,
   });
   const data = await response.json();
+  if (response.status === 401 && path !== '/api/session/login') {
+    csrfToken = null;
+    showAuthGate('Your session is missing or expired.');
+  }
   if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
   return data;
+}
+
+function showAuthGate(message = '') {
+  qs('#loginError').textContent = message;
+  qs('#authGate').hidden = false;
+  qs('#logoutButton').hidden = true;
+  qs('#loginToken').focus();
+}
+
+function hideAuthGate() {
+  qs('#loginError').textContent = '';
+  qs('#authGate').hidden = true;
+}
+
+async function initializeSession() {
+  try {
+    const session = await api('/api/session');
+    sessionRequired = session.authentication_required;
+    csrfToken = session.csrf_token || null;
+    if (sessionRequired && !session.authenticated) {
+      showAuthGate(session.session_auth_enabled
+        ? ''
+        : 'Dashboard sessions are disabled; use a bearer-authenticated API client.');
+      return;
+    }
+    hideAuthGate();
+    qs('#logoutButton').hidden = session.authentication_mode !== 'session';
+    await refresh();
+  } catch (error) {
+    showAuthGate('Unable to check the server session.');
+  }
 }
 
 function metric(label, value) {
@@ -160,4 +203,37 @@ qs('#chatForm').addEventListener('submit', async (event) => {
   }
 });
 
-refresh();
+qs('#loginForm').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const input = qs('#loginToken');
+  const button = event.currentTarget.querySelector('button');
+  const token = input.value;
+  input.value = '';
+  button.disabled = true;
+  try {
+    const session = await api('/api/session/login', {
+      method: 'POST',
+      headers: {Authorization: `Bearer ${token}`},
+    });
+    csrfToken = session.csrf_token;
+    sessionRequired = true;
+    hideAuthGate();
+    qs('#logoutButton').hidden = false;
+    await refresh();
+  } catch (error) {
+    showAuthGate('Authentication failed.');
+  } finally {
+    button.disabled = false;
+  }
+});
+
+qs('#logoutButton').addEventListener('click', async () => {
+  try {
+    await api('/api/session/logout', {method: 'POST'});
+  } finally {
+    csrfToken = null;
+    if (sessionRequired) showAuthGate('Session ended.');
+  }
+});
+
+initializeSession();

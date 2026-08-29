@@ -24,6 +24,11 @@ tool registry, orchestrator, voice service, presence engine, proactive engine,
 automation store, static verifier, and opt-in fixed workspace test runner.
 Interfaces call this object; they do not own intelligence.
 
+The HTTP boundary composes an independent bearer access policy, bounded rate
+limiter, secret-free audit store, and process-local browser-session manager.
+Dashboard sessions wrap the API boundary only; agents, models, memory, tools,
+and orchestration do not depend on cookie or browser implementation details.
+
 ## Storage boundaries
 
 - `var/memory_environment/memory.sqlite3`

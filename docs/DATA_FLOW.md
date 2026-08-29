@@ -48,10 +48,14 @@ non-allowlisted parent environments; production hostile-code execution still
 requires a separately deployed hardened container worker.
 
 Every `/api/` request first consumes a bounded in-memory per-client quota, then
-passes exact-origin validation and, when enabled, bearer authentication before
-its body is read or any application state is accessed. Token values come from
-the secrets resolver, are compared in constant time, and are never placed in
-response bodies, status, traces, or logs. OPTIONS preflight is rate- and
+passes exact-origin validation and, when enabled, bearer or browser-session
+authentication before its body is read or any application state is accessed.
+Token values come from the secrets resolver, are compared in constant time, and
+are never placed in status, traces, or logs. The login route exchanges a valid
+bearer credential for a host-only HttpOnly cookie; the raw session ID is sent
+only in `Set-Cookie`, hashed in process memory, and never persisted. A separate
+CSRF token is returned only to the authenticated same-origin page and is
+required on every cookie-authenticated mutation. OPTIONS preflight is rate- and
 origin-gated but does not require the browser to transmit a credential.
 
 Before response headers are sent, one query-free audit record is written with

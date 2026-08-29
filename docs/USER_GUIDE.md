@@ -159,14 +159,22 @@ shows client identities, request content, queries, origins, headers, or tokens.
 
 Local loopback use remains unauthenticated by default. For a non-loopback bind,
 set `SPARKLE_API_AUTH_REQUIRED=true` and provide `SPARKLE_API_TOKEN` through the
-hosting or OS secret manager before starting the server. API clients then send
-that value in the standard `Authorization: Bearer …` header.
+hosting or OS secret manager before starting the server. For dashboard sessions
+on a non-loopback bind, also set `SPARKLE_SESSION_COOKIE_SECURE=true` and place a
+trusted TLS-terminating reverse proxy in front of SPARKLE. API clients continue
+to send the token in the standard `Authorization: Bearer …` header.
 
 All `/api/` routes, including health, require the token in this mode. Cross-
 origin browser clients must also use an exact origin listed in
-`security.allowed_origins`; no wildcard is accepted. The built-in dashboard
-does not accept or persist bearer tokens, so use it with the default local
-configuration.
+`security.allowed_origins`; no wildcard is accepted.
+
+The same-origin dashboard presents an authentication gate. The supplied bearer
+credential is exchanged once for an expiring, bounded, process-local session;
+the page clears the field and uses no browser storage. HttpOnly same-site
+cookies protect reads, an in-memory CSRF token protects mutations, reload can
+recover that CSRF token through the authenticated session endpoint, and **End
+session** revokes the server record. Server restarts intentionally invalidate
+all sessions.
 
 All API requests are subject to the configured fixed-window quota. Successful
 and rejected responses include `X-RateLimit-Limit` and

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import hashlib
 import hmac
 import ipaddress
+import secrets
 import sqlite3
 import threading
 import time
@@ -114,6 +116,165 @@ class APIAccessPolicy:
 
 
 @dataclass(frozen=True, slots=True)
+class SessionCredentials:
+    token: str
+    csrf_token: str
+    expires_in: int
+
+
+@dataclass(slots=True)
+class _SessionRecord:
+    csrf_token: str
+    created_at: float
+    expires_at: float
+
+
+class APISessionManager:
+    """Bounded, process-local browser sessions; raw session IDs are not persisted."""
+
+    cookie_name = "SPARKLE_SESSION"
+
+    def __init__(
+        self,
+        *,
+        enabled: bool = False,
+        ttl_seconds: int = 3_600,
+        max_active: int = 32,
+        cookie_secure: bool = False,
+    ):
+        if not 60 <= ttl_seconds <= 86_400:
+            raise ValueError("API session TTL must be from 60 to 86400 seconds")
+        if not 1 <= max_active <= 1_000:
+            raise ValueError("API session capacity must be from 1 to 1000")
+        self.enabled = enabled
+        self.ttl_seconds = ttl_seconds
+        self.max_active = max_active
+        self.cookie_secure = cookie_secure
+        self._sessions: dict[bytes, _SessionRecord] = {}
+        self._lock = threading.Lock()
+
+    @staticmethod
+    def _digest(token: str) -> bytes:
+        return hashlib.sha256(token.encode("utf-8")).digest()
+
+    def _prune(self, now: float) -> None:
+        expired = [
+            key for key, record in self._sessions.items()
+            if now >= record.expires_at or now < record.created_at
+        ]
+        for key in expired:
+            self._sessions.pop(key, None)
+
+    def create(self, *, now: float | None = None) -> SessionCredentials:
+        if not self.enabled:
+            raise ValueError("Dashboard session authentication is disabled")
+        current = time.time() if now is None else now
+        token = secrets.token_urlsafe(32)
+        csrf_token = secrets.token_urlsafe(32)
+        with self._lock:
+            self._prune(current)
+            if len(self._sessions) >= self.max_active:
+                oldest = min(
+                    self._sessions,
+                    key=lambda key: self._sessions[key].created_at,
+                )
+                self._sessions.pop(oldest, None)
+            self._sessions[self._digest(token)] = _SessionRecord(
+                csrf_token=csrf_token,
+                created_at=current,
+                expires_at=current + self.ttl_seconds,
+            )
+        return SessionCredentials(token, csrf_token, self.ttl_seconds)
+
+    def authenticate(
+        self,
+        session_token: str | None,
+        *,
+        csrf_token: str | None = None,
+        require_csrf: bool = False,
+        now: float | None = None,
+    ) -> bool:
+        if (
+            not self.enabled
+            or not session_token
+            or len(session_token) > 256
+        ):
+            return False
+        current = time.time() if now is None else now
+        with self._lock:
+            self._prune(current)
+            record = self._sessions.get(self._digest(session_token))
+            if record is None:
+                return False
+            if require_csrf and (
+                not csrf_token
+                or len(csrf_token) > 256
+                or not hmac.compare_digest(csrf_token, record.csrf_token)
+            ):
+                return False
+            return True
+
+    def csrf_for(self, session_token: str | None, *, now: float | None = None) -> str | None:
+        if not self.enabled or not session_token or len(session_token) > 256:
+            return None
+        current = time.time() if now is None else now
+        with self._lock:
+            self._prune(current)
+            record = self._sessions.get(self._digest(session_token))
+            return record.csrf_token if record is not None else None
+
+    def revoke(self, session_token: str | None) -> bool:
+        if not session_token or len(session_token) > 256:
+            return False
+        with self._lock:
+            return self._sessions.pop(self._digest(session_token), None) is not None
+
+    def cookie_header(self, token: str) -> str:
+        attributes = [
+            f"{self.cookie_name}={token}",
+            "Path=/",
+            "HttpOnly",
+            "SameSite=Strict",
+            f"Max-Age={self.ttl_seconds}",
+        ]
+        if self.cookie_secure:
+            attributes.append("Secure")
+        return "; ".join(attributes)
+
+    def expired_cookie_header(self) -> str:
+        attributes = [
+            f"{self.cookie_name}=",
+            "Path=/",
+            "HttpOnly",
+            "SameSite=Strict",
+            "Max-Age=0",
+        ]
+        if self.cookie_secure:
+            attributes.append("Secure")
+        return "; ".join(attributes)
+
+    def validate_bind(self, host: str) -> None:
+        if self.enabled and not is_loopback_host(host) and not self.cookie_secure:
+            raise ValueError(
+                "Non-loopback dashboard sessions require secure cookies and TLS termination"
+            )
+
+    def status(self) -> dict[str, object]:
+        with self._lock:
+            self._prune(time.time())
+            active = len(self._sessions)
+        return {
+            "enabled": self.enabled,
+            "cookie_secure": self.cookie_secure,
+            "ttl_seconds": self.ttl_seconds,
+            "max_active": self.max_active,
+            "active_sessions": active,
+            "persistent": False,
+            "credentials_exposed": False,
+        }
+
+
+@dataclass(frozen=True, slots=True)
 class RateLimitDecision:
     allowed: bool
     limit: int
@@ -181,7 +342,8 @@ class APIAuditStore(SQLiteStore):
     """Stores secret-free API access outcomes without client identifiers."""
 
     ROUTES = frozenset({
-        "/api/health", "/api/models", "/api/models/activate", "/api/agents",
+        "/api/health", "/api/session", "/api/session/login",
+        "/api/session/logout", "/api/models", "/api/models/activate", "/api/agents",
         "/api/agents/remove", "/api/memory", "/api/memory/archive",
         "/api/memory/restore", "/api/memory/delete", "/api/knowledge",
         "/api/knowledge/search", "/api/knowledge/sources",

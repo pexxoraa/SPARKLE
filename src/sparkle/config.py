@@ -57,6 +57,10 @@ class AppConfig:
     allowed_origins: tuple[str, ...] = ()
     api_rate_limit_requests: int = 120
     api_rate_limit_window_seconds: int = 60
+    session_auth_enabled: bool = True
+    session_cookie_secure: bool = False
+    session_ttl_seconds: int = 3_600
+    session_max_active: int = 32
     workspace_tests_enabled: bool = False
     workspace_test_timeout_seconds: int = 10
 
@@ -104,6 +108,26 @@ class AppConfig:
                 int(security.get("rate_limit_window_seconds", 60)),
                 minimum=1,
                 maximum=3_600,
+            ),
+            session_auth_enabled=environment_bool(
+                "SPARKLE_SESSION_AUTH_ENABLED",
+                bool(security.get("session_auth_enabled", True)),
+            ),
+            session_cookie_secure=environment_bool(
+                "SPARKLE_SESSION_COOKIE_SECURE",
+                bool(security.get("session_cookie_secure", False)),
+            ),
+            session_ttl_seconds=environment_int(
+                "SPARKLE_SESSION_TTL_SECONDS",
+                int(security.get("session_ttl_seconds", 3_600)),
+                minimum=60,
+                maximum=86_400,
+            ),
+            session_max_active=environment_int(
+                "SPARKLE_SESSION_MAX_ACTIVE",
+                int(security.get("session_max_active", 32)),
+                minimum=1,
+                maximum=1_000,
             ),
             workspace_tests_enabled=environment_bool(
                 "SPARKLE_WORKSPACE_TESTS_ENABLED",

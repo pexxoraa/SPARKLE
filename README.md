@@ -7,7 +7,7 @@ registry, provider adapters, specialist agents, persistent memory, a separate
 knowledge index, execution traces, automations, proactive rules, a CLI, an HTTP
 API, and a local dashboard.
 
-Current release: `0.8.0-alpha.1`. This is a tested foundation release, not the
+Current release: `0.9.0-alpha.1`. This is a tested foundation release, not the
 final system described in the long-term Definition of Done. See
 [`docs/BUILD_STATE.md`](docs/BUILD_STATE.md) and
 [`docs/ACCEPTANCE.md`](docs/ACCEPTANCE.md) for exact evidence and gaps.
@@ -37,6 +37,8 @@ final system described in the long-term Definition of Done. See
 - Dashboard and JSON API served with Python's standard library.
 - Optional secret-resolved bearer authentication, exact origin controls, and
   fail-closed non-loopback binding policy for the JSON API.
+- Bounded, expiring dashboard sessions with HttpOnly same-site cookies, per-
+  session CSRF protection, logout/revocation, and no browser token storage.
 - Bounded per-client API rate limiting and a separate secret-free API audit
   database with dashboard visibility.
 - Voice and motion/presence interfaces that do not couple the core to hardware.

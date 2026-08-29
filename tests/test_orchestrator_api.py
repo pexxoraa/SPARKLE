@@ -19,7 +19,7 @@ from sparkle.model import ModelAdapter
 from sparkle.providers.mock import DeterministicAdapter
 from sparkle.registry import ModelRegistry
 from sparkle.secrets import SecretResolver
-from sparkle.security import APIAccessPolicy, FixedWindowRateLimiter
+from sparkle.security import APIAccessPolicy, APISessionManager, FixedWindowRateLimiter
 from sparkle.system import SparkleSystem
 
 
@@ -180,6 +180,9 @@ class APITests(SystemCase):
         self.assertEqual(preflight[0], 204)
         self.assertEqual(preflight[1]["Access-Control-Allow-Origin"], self.base)
         self.assertNotEqual(preflight[1]["Access-Control-Allow-Origin"], "*")
+        self.assertIn(
+            "X-SPARKLE-CSRF", preflight[1]["Access-Control-Allow-Headers"],
+        )
 
     def test_required_bearer_auth_rejects_without_mutation(self):
         self.system.api_access = APIAccessPolicy(
@@ -204,6 +207,83 @@ class APITests(SystemCase):
         )
         self.assertEqual(authenticated[0], 200)
         self.assertNotIn(b"unit-test-token", authenticated[2])
+
+    def test_dashboard_session_login_csrf_reload_and_logout(self):
+        token = "unit-test-dashboard-token"
+        self.system.api_access = APIAccessPolicy(
+            SecretResolver({"SPARKLE_API_TOKEN": token}), required=True,
+        )
+        self.system.api_sessions = APISessionManager(
+            enabled=True, ttl_seconds=300, max_active=4,
+        )
+
+        anonymous = self.request("/api/session")
+        self.assertEqual(anonymous[0], 200)
+        self.assertFalse(json.loads(anonymous[2])["authenticated"])
+        self.assertEqual(self.request(
+            "/api/session/login",
+            headers={"Authorization": "Bearer wrong"},
+            method="POST",
+        )[0], 401)
+        self.assertEqual(self.system.api_sessions.status()["active_sessions"], 0)
+
+        login_status, login_headers, login_body = self.request(
+            "/api/session/login",
+            headers={"Authorization": f"Bearer {token}"},
+            method="POST",
+        )
+        self.assertEqual(login_status, 200)
+        cookie_header = login_headers["Set-Cookie"]
+        self.assertIn("HttpOnly", cookie_header)
+        self.assertIn("SameSite=Strict", cookie_header)
+        cookie = cookie_header.split(";", 1)[0]
+        session_id = cookie.split("=", 1)[1]
+        login = json.loads(login_body)
+        csrf = login["csrf_token"]
+        self.assertNotEqual(csrf, session_id)
+        self.assertNotIn(token.encode(), login_body)
+        self.assertNotIn(session_id.encode(), login_body)
+
+        restored = json.loads(self.request(
+            "/api/session", headers={"Cookie": cookie},
+        )[2])
+        self.assertTrue(restored["authenticated"])
+        self.assertEqual(restored["authentication_mode"], "session")
+        self.assertEqual(restored["csrf_token"], csrf)
+        health = self.request(
+            "/api/health", headers={"Cookie": cookie},
+        )
+        self.assertEqual(health[0], 200)
+        self.assertNotIn(session_id.encode(), health[2])
+        self.assertNotIn(csrf.encode(), health[2])
+
+        memory = {"category": "goals", "key": "secure", "value": "session"}
+        self.assertEqual(self.request(
+            "/api/memory", memory, headers={"Cookie": cookie},
+        )[0], 401)
+        self.assertEqual(self.request(
+            "/api/memory", memory,
+            headers={"Cookie": cookie, "X-SPARKLE-CSRF": "wrong"},
+        )[0], 401)
+        self.assertEqual(self.request(
+            "/api/memory", memory,
+            headers={"Cookie": cookie, "X-SPARKLE-CSRF": csrf},
+        )[0], 201)
+
+        logout_status, logout_headers, _ = self.request(
+            "/api/session/logout",
+            headers={"Cookie": cookie, "X-SPARKLE-CSRF": csrf},
+            method="POST",
+        )
+        self.assertEqual(logout_status, 200)
+        self.assertIn("Max-Age=0", logout_headers["Set-Cookie"])
+        self.assertEqual(self.request(
+            "/api/health", headers={"Cookie": cookie},
+        )[0], 401)
+        audit = json.dumps(self.system.api_audit.recent(limit=100))
+        self.assertNotIn(token, audit)
+        self.assertNotIn(session_id, audit)
+        self.assertNotIn(csrf, audit)
 
     def test_api_audit_drops_query_credentials_headers_and_client_identity(self):
         token = "unit-test-token-private"
@@ -276,6 +356,12 @@ class APITests(SystemCase):
         status, _, body = self.request("/")
         self.assertEqual(status, 200)
         self.assertIn(b"SPARKLE", body)
+        self.assertIn(b'<form id="loginForm" class="auth-card" autocomplete="off">', body)
+        _, _, script = self.request("/assets/app.js")
+        self.assertIn(b"X-SPARKLE-CSRF", script)
+        self.assertIn(b"credentials: 'same-origin'", script)
+        self.assertNotIn(b"localStorage", script)
+        self.assertNotIn(b"sessionStorage", script)
 
     def test_generated_agent_build_and_automation_endpoints(self):
         agent = {

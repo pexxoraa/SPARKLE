@@ -8,6 +8,7 @@ from sparkle.secrets import SecretNotFoundError, SecretResolver
 from sparkle.security import (
     APIAccessPolicy,
     APIAuditStore,
+    APISessionManager,
     FixedWindowRateLimiter,
     is_loopback_host,
 )
@@ -87,6 +88,60 @@ class RateLimiterTests(unittest.TestCase):
         limiter.allow("three", now=2)
         self.assertEqual(len(limiter._buckets), 2)
         self.assertNotIn("one", limiter._buckets)
+
+
+class APISessionManagerTests(unittest.TestCase):
+    def test_session_requires_csrf_expires_and_never_reports_credentials(self):
+        manager = APISessionManager(
+            enabled=True, ttl_seconds=60, max_active=2, cookie_secure=True,
+        )
+        credentials = manager.create(now=100)
+        self.assertTrue(manager.authenticate(credentials.token, now=101))
+        self.assertFalse(manager.authenticate(
+            credentials.token, require_csrf=True, now=101,
+        ))
+        self.assertFalse(manager.authenticate(
+            credentials.token, csrf_token="wrong", require_csrf=True, now=101,
+        ))
+        self.assertTrue(manager.authenticate(
+            credentials.token,
+            csrf_token=credentials.csrf_token,
+            require_csrf=True,
+            now=101,
+        ))
+        self.assertEqual(manager.csrf_for(credentials.token, now=101), credentials.csrf_token)
+        self.assertFalse(manager.authenticate(credentials.token, now=160))
+
+        current = APISessionManager(enabled=True)
+        active = current.create()
+        status = current.status()
+        self.assertEqual(status["active_sessions"], 1)
+        self.assertFalse(status["persistent"])
+        self.assertNotIn(active.token, str(status))
+        self.assertNotIn(active.csrf_token, str(status))
+
+    def test_session_capacity_revoke_cookie_and_remote_bind_policy(self):
+        manager = APISessionManager(enabled=True, ttl_seconds=60, max_active=2)
+        first = manager.create(now=100)
+        second = manager.create(now=101)
+        third = manager.create(now=102)
+        self.assertFalse(manager.authenticate(first.token, now=103))
+        self.assertTrue(manager.authenticate(second.token, now=103))
+        self.assertTrue(manager.authenticate(third.token, now=103))
+        self.assertTrue(manager.revoke(second.token))
+        self.assertFalse(manager.authenticate(second.token, now=103))
+
+        secure = APISessionManager(enabled=True, cookie_secure=True)
+        cookie = secure.cookie_header(secure.create().token)
+        self.assertIn("HttpOnly", cookie)
+        self.assertIn("SameSite=Strict", cookie)
+        self.assertIn("Secure", cookie)
+        self.assertNotIn("Domain=", cookie)
+        self.assertIn("Max-Age=0", secure.expired_cookie_header())
+        secure.validate_bind("0.0.0.0")
+        with self.assertRaisesRegex(ValueError, "secure cookies"):
+            APISessionManager(enabled=True).validate_bind("0.0.0.0")
+        APISessionManager(enabled=False).validate_bind("0.0.0.0")
 
 
 class APIAuditStoreTests(unittest.TestCase):

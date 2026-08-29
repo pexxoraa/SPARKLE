@@ -14,7 +14,12 @@ from sparkle.orchestrator import Orchestrator
 from sparkle.presence import PresenceEngine
 from sparkle.registry import ModelRegistry, ModelRouter
 from sparkle.secrets import SecretResolver
-from sparkle.security import APIAccessPolicy, APIAuditStore, FixedWindowRateLimiter
+from sparkle.security import (
+    APIAccessPolicy,
+    APIAuditStore,
+    APISessionManager,
+    FixedWindowRateLimiter,
+)
 from sparkle.storage import KnowledgeStore, MemoryStore
 from sparkle.tooling import (
     AgentInstallTool,
@@ -45,6 +50,15 @@ class SparkleSystem:
         self.api_rate_limiter = FixedWindowRateLimiter(
             self.config.api_rate_limit_requests,
             self.config.api_rate_limit_window_seconds,
+        )
+        self.api_sessions = APISessionManager(
+            enabled=(
+                self.config.api_auth_required
+                and self.config.session_auth_enabled
+            ),
+            ttl_seconds=self.config.session_ttl_seconds,
+            max_active=self.config.session_max_active,
+            cookie_secure=self.config.session_cookie_secure,
         )
         self.api_audit = APIAuditStore()
         self.memory = MemoryStore()
@@ -98,7 +112,7 @@ class SparkleSystem:
         models = self.models.list()
         return {
             "name": "SPARKLE",
-            "version": "0.8.0-alpha.1",
+            "version": "0.9.0-alpha.1",
             "status": "ready" if any(model["configured"] for model in models) else "limited",
             "active_model": self.models.active_id,
             "models": models,
@@ -114,6 +128,7 @@ class SparkleSystem:
             "api_security": {
                 **self.api_access.status(),
                 "rate_limit": self.api_rate_limiter.status(),
+                "sessions": self.api_sessions.status(),
                 "recent_audit_records": len(self.api_audit.recent(limit=100)),
             },
             "voice": self.voice.status(),
