@@ -75,9 +75,15 @@ harness error, not an application failure.
 
 ## GitHub publication and CI
 
-Pending — the locally verified v0.7 tree has not yet been published. This
-section will be replaced with exact commit, tree, workflow run, and matrix-job
-evidence after publication.
+Result: PASS — private repository `pexxoraa/SPARKLE` received v0.7 capability
+commit `c379ec4b01f00cf03de6ede7028b7df5bd704a3f` on `main` without a force
+update. Its Git tree `42f6ed82862757c88cd989f6b9b7069806b69bbe`
+exactly matches the locally tested tree in commit
+`1f7bbea8811a259ed2ac06dd00e1bfe784327428`.
+
+SPARKLE CI run #13 (`33228183633`) completed successfully in 24 seconds. Both
+matrix jobs, `test (3.12)` and `test (3.13)`, completed successfully, including
+the `Compile and test` step.
 
 ---
 
@@ -163,6 +169,11 @@ exactly matches the locally tested tree in commit
 SPARKLE CI run #11 (`33227542117`) completed successfully in 17 seconds. Both
 matrix jobs, `test (3.12)` and `test (3.13)`, completed successfully, including
 the `Compile and test` step.
+
+Documentation evidence commit
+`a2d31ca84693ab3884b99ac81d5aca70ffabf822` also passed SPARKLE CI run #12
+(`33227624913`) in 14 seconds; both Python matrix jobs and their compile/test
+steps succeeded.
 
 ---
 
