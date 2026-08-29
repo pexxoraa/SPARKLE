@@ -6,7 +6,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from sparkle.config import load_json, project_root
+from sparkle.config import load_json, model_config_path
 from sparkle.model import ModelAdapter
 from sparkle.providers.minimax import MiniMaxMessagesAdapter
 from sparkle.secrets import SecretResolver
@@ -27,7 +27,7 @@ class ModelRegistry:
     ADAPTERS = {"minimax_messages": MiniMaxMessagesAdapter}
 
     def __init__(self, path: Path | None = None, secrets: SecretResolver | None = None):
-        self.path = path or project_root() / "ai_environment" / "configurations" / "models.json"
+        self.path = path or model_config_path()
         self.secrets = secrets or SecretResolver()
         self._config = load_json(self.path)
         self._records: dict[str, ModelRecord] = {}

@@ -12,11 +12,16 @@ Date: 2026-08-29 UTC
   release-state `make check` passed all 114 tests in 21.288 seconds with no
   failures or errors. Dashboard JavaScript
   syntax and Git whitespace checks also passed.
-- Offline editable installation succeeded without dependencies or an index as
-  `sparkle-personal-ai==0.13.0a1`. The installed `sparkle-automations`
+- Offline editable installation initially succeeded as
+  `sparkle-personal-ai==0.13.0a1`, and its entrypoints passed from the checkout.
+  CI then correctly showed that this was insufficient wheel evidence. After
+  the fix, a non-editable wheel was built without dependencies or an index,
+  installed into a fresh virtual environment, and its `sparkle-automations`
   check → once → status workflow returned ready, one cycle, stopped state, and
-  `credentials_exposed: false`; `sparkle status` reported the same stopped
-  service state and `0.13.0-alpha.1`.
+  `credentials_exposed: false`. Both separate mode-0600 runtime configuration
+  files were materialized from bundled defaults. With `SPARKLE_DATA_DIR`
+  absent, the wheel also used `XDG_STATE_HOME/sparkle` rather than an installed
+  code directory. The final corrected suite passed 116 tests in 20.023 seconds.
 
 ## Verified v0.13 capability paths
 
@@ -47,8 +52,14 @@ Date: 2026-08-29 UTC
 
 ## GitHub publication and CI
 
-Status: IN PROGRESS — local release verification is active; the exact remote
-commit/tree and CI run will be recorded after publication.
+Status: CORRECTION IN PROGRESS — capability commit
+`01050be68ffa8915c414f2fc181a380a24bbb0c5` has exact local/remote tree
+`442d2b3ef5f6301b6b8d1471c538ecc949302e43`. CI run #26
+(`33265181873`) passed Python 3.12, Python 3.13, and worker-image jobs, but its
+new automation-service job failed: the built wheel omitted top-level
+application/model configuration, so `--check` passed but `--once` raised
+`FileNotFoundError`. Bundled separated defaults plus installed-runtime
+materialization now fix that packaging defect; replacement CI is pending.
 
 ---
 

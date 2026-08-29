@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import json
+import os
+import stat
 import tempfile
 import unittest
 from unittest.mock import patch
 from pathlib import Path
 
 from sparkle.config import AppConfig
+from sparkle import config as sparkle_config
 from sparkle.registry import ModelRegistry
 from sparkle.secrets import SecretNotFoundError, SecretResolver
 
@@ -29,6 +32,62 @@ class SecretTests(unittest.TestCase):
 
 
 class ConfigTests(unittest.TestCase):
+    def test_installed_default_uses_xdg_state_root(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with (
+                patch.dict(os.environ, {"XDG_STATE_HOME": directory}, clear=True),
+                patch.object(
+                    sparkle_config,
+                    "project_root",
+                    return_value=Path(directory) / "no-checkout",
+                ),
+            ):
+                self.assertEqual(
+                    sparkle_config.data_root(), Path(directory) / "sparkle",
+                )
+
+    def test_packaged_defaults_match_checkout_and_materialize_when_installed(self):
+        root = Path(__file__).resolve().parents[1]
+        bundled_application = (
+            root / "src/sparkle/defaults/application/config.json"
+        )
+        bundled_models = (
+            root
+            / "src/sparkle/defaults/ai_environment/configurations/models.json"
+        )
+        self.assertEqual(
+            json.loads(bundled_application.read_text(encoding="utf-8")),
+            json.loads((root / "application/config.json").read_text(encoding="utf-8")),
+        )
+        self.assertEqual(
+            json.loads(bundled_models.read_text(encoding="utf-8")),
+            json.loads(
+                (root / "ai_environment/configurations/models.json").read_text(
+                    encoding="utf-8"
+                )
+            ),
+        )
+
+        with tempfile.TemporaryDirectory() as directory:
+            runtime = Path(directory)
+            with (
+                patch.dict(os.environ, {"SPARKLE_DATA_DIR": directory}, clear=True),
+                patch.object(
+                    sparkle_config, "project_root", return_value=runtime / "no-checkout",
+                ),
+            ):
+                config = AppConfig.load()
+                registry = ModelRegistry()
+            application_path = runtime / "application/config.json"
+            model_path = runtime / "ai_environment/configurations/models.json"
+            self.assertEqual(config.port, 8765)
+            self.assertEqual(registry.active_id, "minimax-m3-general")
+            self.assertEqual(registry.path, model_path)
+            self.assertTrue(application_path.is_file())
+            self.assertTrue(model_path.is_file())
+            self.assertEqual(stat.S_IMODE(application_path.stat().st_mode), 0o600)
+            self.assertEqual(stat.S_IMODE(model_path.stat().st_mode), 0o600)
+
     def test_loads_app_config(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "config.json"

@@ -35,7 +35,7 @@ means an external dependency is unavailable.
 | Data tracing works | PASS | Success/tool/failure metadata implemented; trace tests |
 | Motion/presence architecture | PASS | Independent presence engine; physical motion intentionally absent |
 | Multimodal architecture prepared | PARTIAL | M3 registry role and model contracts ready; image/video input contract not exposed yet |
-| Tests pass | PASS | 114 local tests pass; see `TESTING.md` and release report |
+| Tests pass | PASS | 116 corrected local tests pass; see `TESTING.md` and release report |
 | Documentation complete for implementation | PASS | Requested implementation documents present |
 | Installation reproducible | PASS | Python 3.12 core has zero mandatory third-party dependencies |
 | End-to-end workflows | PARTIAL | Deterministic local flows pass; live provider and external actions blocked |

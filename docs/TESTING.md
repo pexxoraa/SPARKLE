@@ -29,6 +29,12 @@ execution and traces, singleton lock refusal, mode-0600/no-follow lock policy,
 bounded degraded cycles, fresh/stale lifecycle status, pre-requested shutdown,
 installed-style CLI check/once/status/health behavior, a real subprocess
 SIGTERM drain, and systemd hardening inspection.
+Configuration packaging coverage verifies that checkout defaults and bundled
+defaults are identical, an installed runtime materializes separate mode-0600
+application/model configuration, and the writable model registry remains
+outside the installed package. The release checkpoint also builds and installs
+a real non-editable wheel in a fresh virtual environment before running the
+service lifecycle.
 Request-log coverage verifies that query names and values are stripped.
 Workspace-runner coverage executes a real fixed unittest suite and verifies
 POSIX resource limits, a stripped child environment, credential-pattern output
@@ -74,7 +80,7 @@ sparkle smoke-test --live
 Never report the live test as passed when the credential is absent or the exact
 `SPARKLE_LIVE_OK` response is not observed.
 
-Latest v0.13 release-state result on 2026-08-29: 114 tests passed in 21.288
-seconds. Dashboard JavaScript syntax, Git whitespace, offline installation, and
-the installed automation check/once/status lifecycle also passed. See
-`RELEASE_REPORT.md` for remote evidence and external blockers.
+Latest corrected v0.13 release-state result on 2026-08-29: 116 tests passed in
+20.023 seconds. Dashboard JavaScript syntax, Git whitespace, and a fresh
+offline wheel build/install plus automation check/once/status lifecycle also
+passed. See `RELEASE_REPORT.md` for remote evidence and external blockers.

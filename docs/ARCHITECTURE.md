@@ -69,7 +69,9 @@ The worker owns a separate deployment state root containing only its bounded
 job replay database. It does not read the application memory, knowledge, trace,
 provider, or secrets databases.
 
-`var/` is excluded from Git. Override its parent with `SPARKLE_DATA_DIR`.
+`var/` is excluded from Git and is the source-checkout default. Installed POSIX
+packages use the user's XDG state directory. Override either with
+`SPARKLE_DATA_DIR`.
 
 ## Tool loop
 

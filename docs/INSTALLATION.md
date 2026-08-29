@@ -26,6 +26,12 @@ Core execution uses Python 3.12 standard-library modules. Optional document
 extras specify minimum versions in `pyproject.toml`. Runtime databases are
 created automatically on first start.
 
+The wheel contains separated, secret-free application and model defaults.
+Outside a source checkout they are copied on first use to mode-0600 files under
+`SPARKLE_DATA_DIR`, where model add/remove/switch operations remain writable.
+Use `SPARKLE_APPLICATION_CONFIG` and `SPARKLE_MODEL_CONFIG` for explicit
+operator-managed locations.
+
 The verified repository is private. Cloning `pexxoraa/SPARKLE` requires an
 authorized GitHub account.
 

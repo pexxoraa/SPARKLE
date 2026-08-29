@@ -1,8 +1,13 @@
 # Configuration
 
-Application behavior is configured in `application/config.json`. Model/provider
-records and routes are configured in
-`ai_environment/configurations/models.json`.
+In a source checkout, application behavior is configured in
+`application/config.json` and model/provider records in
+`ai_environment/configurations/models.json`. A wheel installation materializes
+the same bundled defaults beneath `SPARKLE_DATA_DIR/application/` and
+`SPARKLE_DATA_DIR/ai_environment/configurations/` on first use, with mode 0600;
+the model registry therefore remains writable outside installed package code.
+Without an explicit data root, source checkouts use `var/`; installed POSIX
+packages use `$XDG_STATE_HOME/sparkle` or the user's `.local/state/sparkle`.
 
 Environment overrides:
 
@@ -11,6 +16,8 @@ Environment overrides:
 | `MINIMAX_API_KEY` | Preferred MiniMax credential reference | Yes |
 | `SPARKLE_LLM_API_KEY` | Existing deployment alias | Yes |
 | `SPARKLE_DATA_DIR` | Runtime database root | No |
+| `SPARKLE_APPLICATION_CONFIG` | Explicit application configuration file | No |
+| `SPARKLE_MODEL_CONFIG` | Explicit writable model-registry file | No |
 | `SPARKLE_HOST` | HTTP bind host | No |
 | `SPARKLE_PORT` | HTTP bind port | No |
 | `SPARKLE_API_AUTH_REQUIRED` | Override API bearer-auth policy | No |

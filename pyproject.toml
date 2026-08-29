@@ -27,7 +27,11 @@ package-dir = {"" = "src"}
 where = ["src"]
 
 [tool.setuptools.package-data]
-sparkle = ["dashboard/*"]
+sparkle = [
+  "dashboard/*",
+  "defaults/application/*.json",
+  "defaults/ai_environment/configurations/*.json",
+]
 
 [tool.coverage.run]
 branch = true

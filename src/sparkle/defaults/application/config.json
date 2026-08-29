@@ -1,0 +1,29 @@
+{
+  "server": {"host": "127.0.0.1", "port": 8765},
+  "orchestrator": {"max_tool_rounds": 4},
+  "context": {"memory_results": 5, "knowledge_results": 5},
+  "tools": {"allow_shell": false, "allow_web": false},
+  "security": {
+    "api_auth_required": false,
+    "api_token_refs": ["SPARKLE_API_TOKEN"],
+    "allowed_origins": [],
+    "rate_limit_requests": 120,
+    "rate_limit_window_seconds": 60,
+    "session_auth_enabled": true,
+    "session_cookie_secure": false,
+    "session_ttl_seconds": 3600,
+    "session_max_active": 32
+  },
+  "development": {
+    "workspace_tests_enabled": false,
+    "workspace_test_timeout_seconds": 10,
+    "external_worker_enabled": false,
+    "external_worker_url": "",
+    "external_worker_secret_refs": ["SPARKLE_WORKER_SIGNING_KEY"],
+    "external_worker_request_timeout_seconds": 15,
+    "external_worker_job_timeout_seconds": 10,
+    "external_worker_max_payload_bytes": 8000000
+  },
+  "voice": {"stt": "disabled", "tts": "disabled"},
+  "presence": {"mode": "dashboard"}
+}

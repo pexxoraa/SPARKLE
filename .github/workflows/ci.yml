@@ -43,7 +43,8 @@ jobs:
       - name: Verify installed service lifecycle
         run: |
           service_state="$(mktemp -d)"
-          export SPARKLE_DATA_DIR="$service_state"
+          export XDG_STATE_HOME="$service_state"
+          unset SPARKLE_DATA_DIR
           sparkle-automations --check
           sparkle-automations --once
           sparkle-automations --status

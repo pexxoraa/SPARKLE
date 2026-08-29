@@ -13,7 +13,61 @@ def project_root() -> Path:
 
 def data_root() -> Path:
     configured = os.environ.get("SPARKLE_DATA_DIR")
-    return Path(configured).expanduser().resolve() if configured else project_root() / "var"
+    if configured:
+        return Path(configured).expanduser().resolve()
+    checkout = project_root()
+    if (checkout / "application" / "config.json").is_file():
+        return checkout / "var"
+    state_home = os.environ.get("XDG_STATE_HOME")
+    base = Path(state_home).expanduser() if state_home else Path.home() / ".local" / "state"
+    return (base / "sparkle").resolve()
+
+
+def _materialize_default(target: Path, bundled: Path) -> Path:
+    target.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    if target.exists() or target.is_symlink():
+        if target.is_symlink() or not target.is_file():
+            raise ValueError("SPARKLE configuration must be a regular non-symlink file")
+        return target
+    content = bundled.read_text(encoding="utf-8")
+    try:
+        with target.open("x", encoding="utf-8") as handle:
+            handle.write(content)
+        target.chmod(0o600)
+    except FileExistsError:
+        if target.is_symlink() or not target.is_file():
+            raise ValueError("SPARKLE configuration must be a regular non-symlink file")
+    return target
+
+
+def application_config_path() -> Path:
+    explicit = os.environ.get("SPARKLE_APPLICATION_CONFIG")
+    if explicit:
+        return Path(explicit).expanduser().resolve()
+    checkout = project_root() / "application" / "config.json"
+    if checkout.is_file() and not checkout.is_symlink():
+        return checkout
+    bundled = Path(__file__).with_name("defaults") / "application" / "config.json"
+    return _materialize_default(
+        data_root() / "application" / "config.json", bundled,
+    )
+
+
+def model_config_path() -> Path:
+    explicit = os.environ.get("SPARKLE_MODEL_CONFIG")
+    if explicit:
+        return Path(explicit).expanduser().resolve()
+    checkout = project_root() / "ai_environment" / "configurations" / "models.json"
+    if checkout.is_file() and not checkout.is_symlink():
+        return checkout
+    bundled = (
+        Path(__file__).with_name("defaults")
+        / "ai_environment" / "configurations" / "models.json"
+    )
+    return _materialize_default(
+        data_root() / "ai_environment" / "configurations" / "models.json",
+        bundled,
+    )
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -72,7 +126,7 @@ class AppConfig:
 
     @classmethod
     def load(cls, path: Path | None = None) -> "AppConfig":
-        source = load_json(path or project_root() / "application" / "config.json")
+        source = load_json(path or application_config_path())
         security = source.get("security") or {}
         development = source.get("development") or {}
         if not isinstance(security, dict):
