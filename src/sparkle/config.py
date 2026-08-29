@@ -36,6 +36,13 @@ def environment_bool(name: str, default: bool) -> bool:
     raise ValueError(f"{name} must be a boolean value")
 
 
+def environment_int(name: str, default: int, *, minimum: int, maximum: int) -> int:
+    value = int(os.environ.get(name, default))
+    if not minimum <= value <= maximum:
+        raise ValueError(f"{name} must be from {minimum} to {maximum}")
+    return value
+
+
 @dataclass(frozen=True, slots=True)
 class AppConfig:
     host: str
@@ -48,6 +55,8 @@ class AppConfig:
     api_auth_required: bool = False
     api_token_refs: tuple[str, ...] = ("SPARKLE_API_TOKEN",)
     allowed_origins: tuple[str, ...] = ()
+    api_rate_limit_requests: int = 120
+    api_rate_limit_window_seconds: int = 60
 
     @classmethod
     def load(cls, path: Path | None = None) -> "AppConfig":
@@ -79,4 +88,16 @@ class AppConfig:
             ),
             api_token_refs=tuple(token_refs),
             allowed_origins=tuple(allowed_origins),
+            api_rate_limit_requests=environment_int(
+                "SPARKLE_API_RATE_LIMIT_REQUESTS",
+                int(security.get("rate_limit_requests", 120)),
+                minimum=1,
+                maximum=10_000,
+            ),
+            api_rate_limit_window_seconds=environment_int(
+                "SPARKLE_API_RATE_LIMIT_WINDOW_SECONDS",
+                int(security.get("rate_limit_window_seconds", 60)),
+                minimum=1,
+                maximum=3_600,
+            ),
         )

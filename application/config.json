@@ -6,7 +6,9 @@
   "security": {
     "api_auth_required": false,
     "api_token_refs": ["SPARKLE_API_TOKEN"],
-    "allowed_origins": []
+    "allowed_origins": [],
+    "rate_limit_requests": 120,
+    "rate_limit_window_seconds": 60
   },
   "voice": {"stt": "disabled", "tts": "disabled"},
   "presence": {"mode": "dashboard"}

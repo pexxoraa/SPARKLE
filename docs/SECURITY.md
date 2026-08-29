@@ -31,12 +31,22 @@
 - Same-origin API requests are allowed; cross-origin requests require an exact
   configured HTTP(S) origin. Wildcard origins are rejected. Preflight responses
   advertise only GET, POST, OPTIONS, Authorization, and Content-Type.
+- A fixed-window limiter runs before origin and authentication checks. Its
+  client buckets are thread-safe, expire by window, and are capped at 10,000;
+  every API response includes limit/remaining headers and rejected requests
+  receive HTTP 429 plus `Retry-After`.
+- API outcomes are stored separately in `trace_environment/api_audit.sqlite3`.
+  Records contain only method, query-free path, status, coarse outcome,
+  duration, and timestamp. IPs, origins, headers, queries, bodies, and tokens
+  are neither accepted by the store interface nor serialized by the handler.
+  Unrecognized API paths are normalized to `/api/[unknown]` so path segments
+  cannot become an accidental credential channel.
 - Server startup fails if authentication is required but its token is absent,
   or if a non-loopback bind is requested without configured authentication.
 - Provider reasoning blocks are preserved only for provider continuity and are
   neither displayed nor traced.
 
 Production deployment still needs role/owner authorization, TLS at the edge,
-rate limiting, audit retention, backup encryption, dependency scanning,
+distributed/edge rate limiting, audit retention, backup encryption, dependency scanning,
 process/network isolation for future test and build execution, and a
 threat-model review.

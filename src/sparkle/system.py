@@ -14,7 +14,7 @@ from sparkle.orchestrator import Orchestrator
 from sparkle.presence import PresenceEngine
 from sparkle.registry import ModelRegistry, ModelRouter
 from sparkle.secrets import SecretResolver
-from sparkle.security import APIAccessPolicy
+from sparkle.security import APIAccessPolicy, APIAuditStore, FixedWindowRateLimiter
 from sparkle.storage import KnowledgeStore, MemoryStore
 from sparkle.tooling import (
     AgentInstallTool,
@@ -41,6 +41,11 @@ class SparkleSystem:
             token_refs=self.config.api_token_refs,
             allowed_origins=self.config.allowed_origins,
         )
+        self.api_rate_limiter = FixedWindowRateLimiter(
+            self.config.api_rate_limit_requests,
+            self.config.api_rate_limit_window_seconds,
+        )
+        self.api_audit = APIAuditStore()
         self.memory = MemoryStore()
         self.knowledge = KnowledgeStore()
         self.knowledge_ingestor = KnowledgeIngestor(self.knowledge)
@@ -86,7 +91,7 @@ class SparkleSystem:
         models = self.models.list()
         return {
             "name": "SPARKLE",
-            "version": "0.6.0-alpha.1",
+            "version": "0.7.0-alpha.1",
             "status": "ready" if any(model["configured"] for model in models) else "limited",
             "active_model": self.models.active_id,
             "models": models,
@@ -99,7 +104,11 @@ class SparkleSystem:
                 "count": sum(1 for agent in self.agents.list() if agent["source"] == "generated"),
             },
             "tools": self.tools.status(),
-            "api_security": self.api_access.status(),
+            "api_security": {
+                **self.api_access.status(),
+                "rate_limit": self.api_rate_limiter.status(),
+                "recent_audit_records": len(self.api_audit.recent(limit=100)),
+            },
             "voice": self.voice.status(),
             "automation": {
                 "status": "ready", "count": len(self.automations.list()),

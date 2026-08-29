@@ -39,8 +39,16 @@ non-executing parser/compiler check → bounded result → persistent verificati
 record. The Node syntax checker receives a minimal environment with no provider
 credentials and cannot select an arbitrary executable or argument list.
 
-Every `/api/` request first passes exact-origin validation and, when enabled,
-bearer authentication before its body is read or any state is accessed. Token
-values come from the secrets resolver, are compared in constant time, and are
-never placed in response bodies, status, traces, or logs. OPTIONS preflight is
+Every `/api/` request first consumes a bounded in-memory per-client quota, then
+passes exact-origin validation and, when enabled, bearer authentication before
+its body is read or any application state is accessed. Token values come from
+the secrets resolver, are compared in constant time, and are never placed in
+response bodies, status, traces, or logs. OPTIONS preflight is rate- and
 origin-gated but does not require the browser to transmit a credential.
+
+Before response headers are sent, one query-free audit record is written with
+method, route path, status, coarse outcome, duration, and timestamp. The audit
+boundary deliberately has no fields for client identity, origin, headers,
+query values, bodies, or credentials. An audit write failure cannot interrupt
+the response path. Unknown API paths are stored and logged only as
+`/api/[unknown]`.

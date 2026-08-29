@@ -1,3 +1,86 @@
+# 0.7.0-alpha.1 verification report
+
+Date: 2026-08-29 UTC
+
+## Executed commands
+
+### Compile and regression suite
+
+```bash
+make check
+```
+
+Result: PASS — 61 tests ran in 8.744 seconds; 61 passed, 0 failed,
+0 errors. Added evidence covers deterministic fixed-window enforcement/reset,
+bounded client state, rate limiting before authentication, response quota
+headers, HTTP 429 behavior, query-free audit paths and request logs, and absence of tokens,
+query values, origins, headers, and client identifiers from audit records.
+
+### Static release checks
+
+```bash
+node --check src/sparkle/dashboard/app.js
+git diff --check
+```
+
+Result: PASS — dashboard JavaScript parsed and the working diff contained no
+whitespace errors.
+
+### Runtime security and provider smoke
+
+Authenticated `sparkle status` with a placeholder test token exited 0. Output
+reported authentication required/configured, `credentials_exposed: false`, and
+the 120-request/60-second quota; the placeholder value was absent.
+
+`python -m sparkle serve` with a non-loopback host and authentication disabled
+exited 1 before binding. Required authentication with no token also exited 1
+before binding. Both messages were concise and contained no traceback or
+credential value.
+
+The live MiniMax smoke command exited 2 at credential presence with
+`configured: false` and `secret_value_exposed: false`; no provider request was
+made, so this remains BLOCKED rather than PASS.
+
+The first composite smoke wrapper had a shell quoting error after its successful
+status command. The simpler rerun produced all results above; this was a test
+harness error, not an application failure.
+
+## Verified v0.7 capability paths
+
+- Every API method consumes a per-client fixed-window quota before origin or
+  authentication checks, including OPTIONS requests.
+- Client buckets are protected by a lock, expire by window, and are capped at
+  10,000 entries with deterministic stale/oldest eviction.
+- Quota headers accompany API responses; blocked requests return HTTP 429 and
+  `Retry-After` without reaching authorization or application state.
+- One API audit record is attempted before each API response. The store accepts
+  only method, query-free `/api/` path, status, coarse outcome, bounded
+  duration, and timestamp.
+- Unknown API paths are normalized to `/api/[unknown]` in both audit records
+  and request logs so attacker-controlled path segments are not retained.
+- Audit storage is separate from execution traces, and audit failures cannot
+  interrupt response delivery.
+- System status, `GET /api/audit`, and the dashboard expose only aggregate quota
+  configuration and secret-free audit fields.
+
+## Not verified
+
+- A real MiniMax-M3 network response.
+- Role/owner authorization, authenticated browser sessions, TLS termination,
+  distributed edge rate limiting, configured audit retention, or production
+  deployment.
+- Execution of generated applications/tests, builds, packaging, or deployment.
+- Real voice, wake word, camera, browser automation, GUI computer control, or
+  robots.
+
+## GitHub publication and CI
+
+Pending — the locally verified v0.7 tree has not yet been published. This
+section will be replaced with exact commit, tree, workflow run, and matrix-job
+evidence after publication.
+
+---
+
 # 0.6.0-alpha.1 verification report
 
 Date: 2026-08-29 UTC

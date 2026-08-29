@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.7.0-alpha.1 - 2026-08-29
+
+- Added a thread-safe fixed-window API limiter applied before origin and bearer
+  checks, with bounded in-memory client state and standard quota headers.
+- Added a separate SQLite API audit store containing only method, query-free
+  path, status, coarse outcome, duration, and timestamp.
+- Added API audit and aggregate quota status endpoints/dashboard views without
+  client identities, origins, headers, query values, request bodies, or tokens.
+- Added configuration/environment overrides, query-stripped and unknown-route-normalized request logging,
+  and expanded deterministic tests from 54 to 61.
+
 ## 0.6.0-alpha.1 - 2026-08-29
 
 - Added optional bearer authentication using secret references and constant-time

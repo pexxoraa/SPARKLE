@@ -133,7 +133,8 @@ sparkle serve
 
 The dashboard displays model/configuration state, built-in and generated
 agents, memory, automation runs, application builds, static verifications, and
-traces.
+traces. The API audit panel shows only route outcomes and durations; it never
+shows client identities, request content, queries, origins, headers, or tokens.
 
 ## Secure API access
 
@@ -147,6 +148,11 @@ origin browser clients must also use an exact origin listed in
 `security.allowed_origins`; no wildcard is accepted. The built-in dashboard
 does not accept or persist bearer tokens, so use it with the default local
 configuration.
+
+All API requests are subject to the configured fixed-window quota. Successful
+and rejected responses include `X-RateLimit-Limit` and
+`X-RateLimit-Remaining`; HTTP 429 also includes `Retry-After`. Inspect recent
+secret-free outcomes at `GET /api/audit`.
 
 ## Data ownership
 

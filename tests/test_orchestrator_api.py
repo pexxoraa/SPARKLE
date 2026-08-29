@@ -19,7 +19,7 @@ from sparkle.model import ModelAdapter
 from sparkle.providers.mock import DeterministicAdapter
 from sparkle.registry import ModelRegistry
 from sparkle.secrets import SecretResolver
-from sparkle.security import APIAccessPolicy
+from sparkle.security import APIAccessPolicy, FixedWindowRateLimiter
 from sparkle.system import SparkleSystem
 
 
@@ -121,11 +121,44 @@ class APITests(SystemCase):
         except urllib.error.HTTPError as exc:
             return exc.code, exc.headers, exc.read()
 
+    def test_request_log_strips_query_values(self):
+        handler = SparkleHandler.__new__(SparkleHandler)
+        handler.client_address = ("127.0.0.1", 12345)
+        handler.command = "GET"
+        handler.path = "/api/health?secret_query=private-value"
+        handler.request_version = "HTTP/1.1"
+        with patch("builtins.print") as printed:
+            handler.log_request(200, 10)
+        log_line = str(printed.call_args)
+        self.assertIn("/api/health", log_line)
+        self.assertNotIn("secret_query", log_line)
+        self.assertNotIn("private-value", log_line)
+        handler.path = "/api/private-route-value"
+        with patch("builtins.print") as printed:
+            handler.log_request(404, 10)
+        self.assertEqual(
+            SparkleHandler._safe_log_path(handler.path), "/api/[unknown]",
+        )
+        self.assertNotIn("private-route-value", str(printed.call_args))
+
     def test_health_and_security_headers(self):
         status, headers, body = self.request("/api/health")
         self.assertEqual(status, 200)
         self.assertEqual(headers["X-Content-Type-Options"], "nosniff")
+        self.assertEqual(headers["X-RateLimit-Limit"], "120")
+        self.assertEqual(headers["X-RateLimit-Remaining"], "119")
         self.assertTrue(json.loads(body)["ok"])
+
+    def test_rate_limit_precedes_authentication_and_is_audited(self):
+        self.system.api_rate_limiter = FixedWindowRateLimiter(2, 60)
+        self.assertEqual(self.request("/api/health")[0], 200)
+        self.assertEqual(self.request("/api/health")[0], 200)
+        status, headers, body = self.request("/api/health")
+        self.assertEqual(status, 429)
+        self.assertEqual(headers["X-RateLimit-Remaining"], "0")
+        self.assertGreaterEqual(int(headers["Retry-After"]), 1)
+        self.assertEqual(json.loads(body)["error"], "rate_limited")
+        self.assertEqual(self.system.api_audit.recent()[0]["outcome"], "rate_limited")
 
     def test_origin_and_preflight_policy(self):
         status, headers, _ = self.request(
@@ -171,6 +204,32 @@ class APITests(SystemCase):
         )
         self.assertEqual(authenticated[0], 200)
         self.assertNotIn(b"unit-test-token", authenticated[2])
+
+    def test_api_audit_drops_query_credentials_headers_and_client_identity(self):
+        token = "unit-test-token-private"
+        self.system.api_access = APIAccessPolicy(
+            SecretResolver({"SPARKLE_API_TOKEN": token}), required=True,
+        )
+        status, _, _ = self.request(
+            "/api/health?secret_query=private-value",
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Origin": self.base,
+            },
+        )
+        self.assertEqual(status, 200)
+        record = self.system.api_audit.recent()[0]
+        self.assertEqual(record["path"], "/api/health")
+        encoded = json.dumps(record)
+        self.assertNotIn(token, encoded)
+        self.assertNotIn("private-value", encoded)
+        self.assertNotIn(self.base, encoded)
+        self.assertNotIn("127.0.0.1", encoded)
+        audit_response = self.request(
+            "/api/audit", headers={"Authorization": f"Bearer {token}"},
+        )
+        self.assertEqual(audit_response[0], 200)
+        self.assertEqual(json.loads(audit_response[2])["audit"][0]["path"], "/api/health")
 
     def test_chat_endpoint(self):
         status, _, body = self.request("/api/chat", {"message": "Teach Python"})

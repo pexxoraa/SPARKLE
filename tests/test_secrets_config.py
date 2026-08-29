@@ -41,6 +41,8 @@ class ConfigTests(unittest.TestCase):
                     "api_auth_required": False,
                     "api_token_refs": ["SPARKLE_API_TOKEN"],
                     "allowed_origins": ["https://console.example"],
+                    "rate_limit_requests": 80,
+                    "rate_limit_window_seconds": 30,
                 },
             }))
             with patch.dict("os.environ", {"SPARKLE_API_AUTH_REQUIRED": "true"}):
@@ -50,6 +52,21 @@ class ConfigTests(unittest.TestCase):
         self.assertTrue(config.api_auth_required)
         self.assertEqual(config.api_token_refs, ("SPARKLE_API_TOKEN",))
         self.assertEqual(config.allowed_origins, ("https://console.example",))
+        self.assertEqual(config.api_rate_limit_requests, 80)
+        self.assertEqual(config.api_rate_limit_window_seconds, 30)
+
+    def test_rejects_invalid_api_rate_limit(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "config.json"
+            path.write_text(json.dumps({
+                "server": {"host": "localhost", "port": 1234},
+                "orchestrator": {"max_tool_rounds": 2},
+                "context": {"memory_results": 3, "knowledge_results": 4},
+                "tools": {"allow_shell": False, "allow_web": False},
+                "security": {"rate_limit_requests": 0},
+            }))
+            with self.assertRaisesRegex(ValueError, "from 1 to 10000"):
+                AppConfig.load(path)
 
     def test_model_registry_switch_enable_add_remove(self):
         with tempfile.TemporaryDirectory() as directory:

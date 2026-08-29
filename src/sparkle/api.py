@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import mimetypes
+import time
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -9,6 +10,7 @@ from typing import Any
 from urllib.parse import parse_qs, urlparse
 
 from sparkle.model import ModelError
+from sparkle.security import APIAuditStore
 from sparkle.system import SparkleSystem
 from sparkle.tooling import ToolError
 
@@ -18,11 +20,61 @@ MAX_BODY_BYTES = 1_000_000
 class SparkleHandler(BaseHTTPRequestHandler):
     system: SparkleSystem
     dashboard_root = Path(__file__).with_name("dashboard")
-    server_version = "SPARKLE/0.6"
+    server_version = "SPARKLE/0.7"
 
     def log_message(self, format: str, *args: object) -> None:
         # Avoid request bodies, headers, query values, and secrets in logs.
-        print(f"{self.address_string()} - {format % args}")
+        message = format % args
+        raw_target = getattr(self, "path", "")
+        if raw_target:
+            message = message.replace(raw_target, self._safe_log_path(raw_target))
+        print(f"{self.address_string()} - {message}")
+
+    @staticmethod
+    def _safe_log_path(raw_target: str) -> str:
+        path = urlparse(raw_target).path
+        return APIAuditStore.normalize_path(path) if path.startswith("/api/") else path
+
+    def log_request(self, code: int | str = "-", size: int | str = "-") -> None:
+        self.log_message(
+            '"%s %s %s" %s %s',
+            self.command,
+            self._safe_log_path(self.path),
+            self.request_version,
+            str(code),
+            str(size),
+        )
+
+    def _start_request(self) -> None:
+        self._request_started = time.monotonic()
+        self._audit_recorded = False
+        self._rate_limit_headers: dict[str, str] = {}
+
+    def _record_api_audit(self, status: int) -> None:
+        if getattr(self, "_audit_recorded", False):
+            return
+        path = urlparse(self.path).path
+        if not path.startswith("/api/"):
+            return
+        self._audit_recorded = True
+        outcome = (
+            "success" if 200 <= status < 400 else
+            "unauthorized" if status == 401 else
+            "origin_denied" if status == 403 else
+            "rate_limited" if status == 429 else
+            "client_error" if 400 <= status < 500 else
+            "server_error"
+        )
+        duration_ms = (
+            time.monotonic() - getattr(self, "_request_started", time.monotonic())
+        ) * 1000
+        try:
+            self.system.api_audit.record(
+                self.command, path, status, outcome, duration_ms,
+            )
+        except Exception:
+            # Observability must never interrupt the response path.
+            pass
 
     def _headers(
         self,
@@ -31,6 +83,7 @@ class SparkleHandler(BaseHTTPRequestHandler):
         length: int,
         extra_headers: dict[str, str] | None = None,
     ) -> None:
+        self._record_api_audit(status)
         self.send_response(status)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(length))
@@ -39,7 +92,9 @@ class SparkleHandler(BaseHTTPRequestHandler):
         self.send_header("X-Frame-Options", "DENY")
         self.send_header("Referrer-Policy", "no-referrer")
         self.send_header("Content-Security-Policy", "default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self' data:; connect-src 'self'")
-        for name, value in (extra_headers or {}).items():
+        response_headers = dict(getattr(self, "_rate_limit_headers", {}))
+        response_headers.update(extra_headers or {})
+        for name, value in response_headers.items():
             self.send_header(name, value)
         self.end_headers()
 
@@ -61,6 +116,8 @@ class SparkleHandler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def _guard_api(self) -> bool:
+        if not self._check_rate_limit():
+            return False
         policy = self.system.api_access
         if not policy.origin_allowed(
             self.headers.get("Origin"), self.headers.get("Host"),
@@ -75,6 +132,18 @@ class SparkleHandler(BaseHTTPRequestHandler):
             )
             return False
         return True
+
+    def _check_rate_limit(self) -> bool:
+        decision = self.system.api_rate_limiter.allow(self.client_address[0])
+        self._rate_limit_headers = {
+            "X-RateLimit-Limit": str(decision.limit),
+            "X-RateLimit-Remaining": str(decision.remaining),
+        }
+        if decision.allowed:
+            return True
+        self._rate_limit_headers["Retry-After"] = str(decision.retry_after)
+        self._json({"ok": False, "error": "rate_limited"}, 429)
+        return False
 
     def _read_json(self) -> dict[str, Any]:
         length = int(self.headers.get("Content-Length", "0"))
@@ -102,6 +171,7 @@ class SparkleHandler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_GET(self) -> None:
+        self._start_request()
         parsed = urlparse(self.path)
         query = parse_qs(parsed.query)
         if parsed.path.startswith("/api/") and not self._guard_api():
@@ -148,9 +218,16 @@ class SparkleHandler(BaseHTTPRequestHandler):
                     limit=int(query.get("limit", [20])[0])
                 )
             })
+        if parsed.path == "/api/audit":
+            return self._json({
+                "audit": self.system.api_audit.recent(
+                    limit=int(query.get("limit", [20])[0])
+                )
+            })
         self._json({"error": "not_found"}, 404)
 
     def do_POST(self) -> None:
+        self._start_request()
         if self.path.startswith("/api/") and not self._guard_api():
             return
         try:
@@ -256,9 +333,12 @@ class SparkleHandler(BaseHTTPRequestHandler):
             self._json({"ok": False, "error": "Internal execution failure", "error_type": type(exc).__name__}, 500)
 
     def do_OPTIONS(self) -> None:
+        self._start_request()
         parsed = urlparse(self.path)
         if not parsed.path.startswith("/api/"):
             self._json({"error": "not_found"}, 404)
+            return
+        if not self._check_rate_limit():
             return
         origin = self.headers.get("Origin")
         host = self.headers.get("Host")

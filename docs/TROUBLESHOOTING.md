@@ -39,6 +39,14 @@ Use the same origin as the API, or add the exact trusted HTTP(S) origin to
 `security.allowed_origins`. Wildcards, URL paths, credentials, queries, and
 fragments are intentionally invalid.
 
+## API returns 429 rate_limited
+
+Honor the response's `Retry-After` value before retrying. For a trusted local
+deployment, adjust `security.rate_limit_requests` and
+`security.rate_limit_window_seconds` within the documented bounds, then restart
+the server. Repeated unauthorized and origin-denied attempts also consume the
+quota by design.
+
 ## PDF/DOCX ingestion unavailable
 
 Install `python3 -m pip install -e '.[documents]'`.

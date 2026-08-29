@@ -41,6 +41,7 @@ async function refresh() {
       metric('Automation runs', state.automation.recent_runs),
       metric('Application builds', state.builders.workspaces),
       metric('Static verifications', state.builders.verifications),
+      metric('API audit records', state.api_security.recent_audit_records),
     ].join('');
     qs('#agentList').innerHTML = state.agents.map((agent) => (
       `<span>${escapeHtml(agent.name)}${agent.source === 'generated' ? ' · generated' : ''}</span>`
@@ -90,6 +91,14 @@ async function loadPanel(panel) {
         `<div class="list-item"><strong>${escapeHtml(trace.trace_id)} · ${escapeHtml(trace.status)}</strong><small>${escapeHtml(trace.agent || '—')} · ${escapeHtml(trace.model || '—')} · ${escapeHtml(trace.duration_ms || 0)} ms</small></div>`
       )).join('')
       : empty('No executions traced yet.');
+  }
+  if (panel === 'audit') {
+    const data = await api('/api/audit?limit=50');
+    qs('#auditList').innerHTML = data.audit.length
+      ? data.audit.map((record) => (
+        `<div class="list-item"><strong>${escapeHtml(record.method)} ${escapeHtml(record.path)} · ${escapeHtml(record.status)}</strong><small>${escapeHtml(record.outcome)} · ${escapeHtml(record.duration_ms)} ms · ${escapeHtml(record.created_at)}</small></div>`
+      )).join('')
+      : empty('No API requests audited yet.');
   }
 }
 
