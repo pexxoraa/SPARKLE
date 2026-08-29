@@ -65,8 +65,15 @@ remain claims and `isolation_verified` is false.
 
 ## GitHub publication and CI
 
-Result: IN PROGRESS — local verification passes. Exact-tree publication and
-Python 3.12/3.13 GitHub Actions evidence will be recorded after the remote run.
+Result: PASS — private repository `pexxoraa/SPARKLE` received v0.10 capability
+commit `d26ba2bb951d6943ad305c187d99d86f66d0b57a` on `main` without a force
+update. Its Git tree `c440cfb9f01acadd2043b03dde21cfd61349d066`
+exactly matches the locally tested tree in commit
+`4691b09a5a3c989c309fdb55b2c10cce4aa305ef`.
+
+SPARKLE CI run #19 (`33251219676`) completed successfully in 22 seconds. Both
+matrix jobs, `test (3.12)` and `test (3.13)`, completed successfully, including
+the `Compile and test` step.
 
 ---
 
