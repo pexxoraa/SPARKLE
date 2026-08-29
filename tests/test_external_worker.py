@@ -102,6 +102,7 @@ class ExternalWorkerTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.root = Path(self.temp.name)
+        self.run_db_index = 0
         self.apps = self.root / "applications"
         project = self.apps / "worker_app"
         (project / "tests").mkdir(parents=True)
@@ -125,8 +126,10 @@ class ExternalWorkerTests(unittest.TestCase):
             "job_id_factory": lambda: JOB_ID,
         }
         options.update(overrides)
+        database = self.root / f"runs-{self.run_db_index}.sqlite3"
+        self.run_db_index += 1
         return ExternalWorkerClient(
-            self.apps, self.root / f"runs-{len(list(self.root.glob('runs-*')))}.sqlite3",
+            self.apps, database,
             **options,
         )
 

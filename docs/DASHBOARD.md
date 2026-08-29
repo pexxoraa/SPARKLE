@@ -8,6 +8,7 @@ Implemented panels:
 - System state, active model, storage counts, voice state, and agents.
 - Durable memory records.
 - Automation, application-build, static-verification, bounded test-run,
+  external-worker, immutable artifact, unverified deployment-event,
   execution-trace, and secret-free API-audit lists.
 
 The server sets no-store on JSON, denies framing, disables MIME sniffing, uses a

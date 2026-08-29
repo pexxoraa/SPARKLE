@@ -86,6 +86,8 @@ async function refresh() {
       metric('Static verifications', state.builders.verifications),
       metric('Workspace test runs', state.builders.test_runs),
       metric('External worker runs', state.builders.external_worker_runs),
+      metric('Application artifacts', state.builders.artifacts),
+      metric('Deployment records', state.builders.deployment_records),
       metric('API audit records', state.api_security.recent_audit_records),
     ].join('');
     qs('#agentList').innerHTML = state.agents.map((agent) => (
@@ -144,6 +146,22 @@ async function loadPanel(panel) {
         `<div class="list-item"><strong>${escapeHtml(run.project_name)} · ${escapeHtml(run.status)}</strong><small>${escapeHtml(run.framework)} · signed response ${escapeHtml(run.response_verified)} · isolation verified ${escapeHtml(run.isolation_verified)} · ${escapeHtml(run.duration_ms)} ms</small></div>`
       )).join('')
       : empty('No external worker submissions recorded yet.');
+  }
+  if (panel === 'releases') {
+    const [artifactData, deploymentData] = await Promise.all([
+      api('/api/artifacts?limit=50'),
+      api('/api/deployments?limit=50'),
+    ]);
+    qs('#artifactList').innerHTML = artifactData.artifacts.length
+      ? artifactData.artifacts.map((artifact) => (
+        `<div class="list-item"><strong>${escapeHtml(artifact.project_name)} · ${escapeHtml(artifact.status)}</strong><small>${escapeHtml(artifact.file_count)} files · SHA-256 ${escapeHtml(artifact.artifact_sha256)}</small></div>`
+      )).join('')
+      : empty('No application artifacts packaged yet.');
+    qs('#deploymentList').innerHTML = deploymentData.deployments.length
+      ? deploymentData.deployments.map((deployment) => (
+        `<div class="list-item"><strong>${escapeHtml(deployment.project_name)} · ${escapeHtml(deployment.reported_outcome)}</strong><small>${escapeHtml(deployment.environment_name)} · ${escapeHtml(deployment.target_kind)} · ${escapeHtml(deployment.verification_status)}</small></div>`
+      )).join('')
+      : empty('No deployment events recorded yet.');
   }
   if (panel === 'traces') {
     const data = await api('/api/traces?limit=50');

@@ -51,6 +51,13 @@ reports ready only when its real namespace/canary/environment/network preflight
 succeeds. Worker sandbox booleans remain explicitly unverified claims at the
 application client.
 
+Artifact coverage verifies byte-for-byte deterministic ZIP output, canonical
+embedded manifests, normalized archive metadata, immutable content-addressed
+reuse, new artifacts after source changes, tamper refusal, stable no-follow
+file reads, symlink/sensitive/reserved/portable-name/size rejection, approval
+gates, CLI/API/dashboard integration, and append-only deployment reports that
+remain explicitly unverified and execute no external action.
+
 The deterministic adapter avoids provider cost and network flakiness. The live
 smoke test is intentionally separate:
 
@@ -61,8 +68,8 @@ sparkle smoke-test --live
 Never report the live test as passed when the credential is absent or the exact
 `SPARKLE_LIVE_OK` response is not observed.
 
-Latest v0.11 release-state result on 2026-08-29: 96 tests passed in 24.139
-seconds. Dashboard JavaScript syntax and Git whitespace checks are rerun for
-the release checkpoint. GitHub CI run #22 passed on Python 3.12 and 3.13 and
-also built and invoked the separately deployable worker image. See
+Latest v0.12 pre-publication result on 2026-08-29: 104 tests passed in 19.728
+seconds after a temporary-database fixture defect exposed by the full run was
+corrected. Dashboard JavaScript syntax, Git whitespace, offline editable
+installation, and remote CI are rerun for the release checkpoint. See
 `RELEASE_REPORT.md` for complete evidence and external blockers.

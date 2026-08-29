@@ -148,6 +148,24 @@ worker sandbox flags only as claims and reports `isolation_verified: false`
 until a deployed worker is independently validated. No compatible live worker
 has been deployed or verified by this release.
 
+## Package a workspace
+
+Create a deterministic, content-addressed ZIP without executing project code:
+
+```bash
+sparkle package-workspace robot_dashboard --approve
+```
+
+Artifacts and their SHA-256 manifests are listed by `GET /api/artifacts` and
+the dashboard. A target action performed outside SPARKLE can be logged with:
+
+```bash
+sparkle record-deployment 1 staging server reported_success --approve
+```
+
+The record is append-only but explicitly unverified. It is not evidence that
+SPARKLE executed, observed, or validated the deployment.
+
 ## Execute automations
 
 Run all currently due internal agent actions once:
@@ -173,7 +191,8 @@ sparkle serve
 
 The dashboard displays model/configuration state, built-in and generated
 agents, memory, automation runs, application builds, static verifications,
-bounded local test runs, signed external-worker evidence, and traces. The API
+bounded local test runs, signed external-worker evidence, immutable artifacts,
+unverified deployment events, and traces. The API
 audit panel shows only route outcomes and durations; it never
 shows client identities, request content, queries, origins, headers, or tokens.
 

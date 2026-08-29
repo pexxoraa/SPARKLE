@@ -22,7 +22,7 @@ MAX_BODY_BYTES = 1_000_000
 class SparkleHandler(BaseHTTPRequestHandler):
     system: SparkleSystem
     dashboard_root = Path(__file__).with_name("dashboard")
-    server_version = "SPARKLE/0.11"
+    server_version = "SPARKLE/0.12"
 
     def log_message(self, format: str, *args: object) -> None:
         # Avoid request bodies, headers, query values, and secrets in logs.
@@ -320,6 +320,18 @@ class SparkleHandler(BaseHTTPRequestHandler):
                     limit=int(query.get("limit", [20])[0])
                 )
             })
+        if parsed.path == "/api/artifacts":
+            return self._json({
+                "artifacts": self.system.artifacts.list(
+                    limit=int(query.get("limit", [20])[0])
+                )
+            })
+        if parsed.path == "/api/deployments":
+            return self._json({
+                "deployments": self.system.artifacts.list_deployments(
+                    limit=int(query.get("limit", [20])[0])
+                )
+            })
         if parsed.path == "/api/audit":
             return self._json({
                 "audit": self.system.api_audit.recent(
@@ -437,6 +449,30 @@ class SparkleHandler(BaseHTTPRequestHandler):
                 return self._json({
                     "ok": result["status"] == "passed", "external_test_run": result,
                 }, 201)
+            if self.path == "/api/builds/package":
+                result = self.system.tools.execute(
+                    "workspace_package", data, allowed={"workspace_package"},
+                )
+                return self._json({"ok": True, "artifact": result}, 201)
+            if self.path == "/api/deployments":
+                if data.get("approved") is not True:
+                    raise ValueError("Deployment recording requires explicit approval")
+                unknown_fields = set(data) - {
+                    "artifact_id", "environment_name", "target_kind",
+                    "reported_outcome", "approved",
+                }
+                if unknown_fields:
+                    raise ValueError(
+                        "Unsupported deployment fields: "
+                        + ", ".join(sorted(unknown_fields))
+                    )
+                result = self.system.artifacts.record_deployment(
+                    int(data["artifact_id"]),
+                    str(data["environment_name"]),
+                    str(data["target_kind"]),
+                    str(data["reported_outcome"]),
+                )
+                return self._json({"ok": True, "deployment": result}, 201)
             self._json({"error": "not_found"}, 404)
         except ModelError as exc:
             self.system.presence.update("error", "Model unavailable")

@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any
 
 from sparkle.agents import AgentRegistry, AgentRouter, GeneratedAgentStore
+from sparkle.artifacts import ArtifactManager
 from sparkle.automation import AutomationRunner, AutomationStore, ProactiveEngine
 from sparkle.builders import WorkspaceManager
 from sparkle.config import AppConfig, data_root, project_root
@@ -31,6 +32,7 @@ from sparkle.tooling import (
     MemoryWriteTool,
     ToolRegistry,
     WorkspaceScaffoldTool,
+    WorkspacePackageTool,
     ExternalWorkspaceTestTool,
     WorkspaceTestTool,
     WorkspaceVerifyTool,
@@ -80,6 +82,7 @@ class SparkleSystem:
         )
         self.workspaces = WorkspaceManager()
         self.development = DevelopmentVerifier(self.workspaces.root)
+        self.artifacts = ArtifactManager(self.workspaces.root)
         self.workspace_tests = WorkspaceTestRunner(
             self.workspaces.root,
             enabled=self.config.workspace_tests_enabled,
@@ -106,6 +109,7 @@ class SparkleSystem:
         self.tools.register(FileReadTool(project_root()))
         self.tools.register(WorkspaceScaffoldTool(self.workspaces))
         self.tools.register(WorkspaceVerifyTool(self.development))
+        self.tools.register(WorkspacePackageTool(self.artifacts))
         self.tools.register(WorkspaceTestTool(self.workspace_tests))
         self.generated_agents = GeneratedAgentStore()
         self.agents = AgentRegistry(
@@ -127,7 +131,7 @@ class SparkleSystem:
         models = self.models.list()
         return {
             "name": "SPARKLE",
-            "version": "0.11.0-alpha.1",
+            "version": "0.12.0-alpha.1",
             "status": "ready" if any(model["configured"] for model in models) else "limited",
             "active_model": self.models.active_id,
             "models": models,
@@ -159,6 +163,10 @@ class SparkleSystem:
                 "workspace_tests": self.workspace_tests.status(),
                 "external_worker_runs": len(self.external_worker.list(limit=100)),
                 "external_worker": self.external_worker.status(),
+                "artifacts": len(self.artifacts.list(limit=100)),
+                "deployment_records": len(
+                    self.artifacts.list_deployments(limit=100)
+                ),
                 "arbitrary_command_execution": False,
             },
             "proactive_alerts": self.proactive.inspect(),

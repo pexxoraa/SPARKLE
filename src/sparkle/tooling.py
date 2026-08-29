@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from sparkle.agents import AgentRegistry, AgentSpec
+from sparkle.artifacts import ArtifactManager
 from sparkle.builders import WorkspaceManager
 from sparkle.contracts import ToolDefinition
 from sparkle.development import DevelopmentVerifier, WorkspaceTestRunner
@@ -293,6 +294,35 @@ class WorkspaceTestTool(Tool):
         if arguments.get("approved") is not True:
             raise ToolError("Workspace test execution requires explicit approval")
         return self.runner.run(str(arguments.get("project_name", "")))
+
+
+class WorkspacePackageTool(Tool):
+    name = "workspace_package"
+    description = (
+        "Create a deterministic, content-addressed ZIP from a bounded application workspace."
+    )
+    parameters = {
+        "type": "object",
+        "properties": {
+            "project_name": {"type": "string"},
+            "approved": {"type": "boolean"},
+        },
+        "required": ["project_name", "approved"],
+        "additionalProperties": False,
+    }
+
+    def __init__(self, manager: ArtifactManager):
+        self.manager = manager
+
+    def run(self, arguments: dict[str, Any]) -> Any:
+        unknown_fields = set(arguments) - {"project_name", "approved"}
+        if unknown_fields:
+            raise ToolError(
+                f"Unsupported workspace package fields: {', '.join(sorted(unknown_fields))}"
+            )
+        if arguments.get("approved") is not True:
+            raise ToolError("Workspace packaging requires explicit approval")
+        return self.manager.package(str(arguments.get("project_name", "")))
 
 
 class ExternalWorkspaceTestTool(Tool):

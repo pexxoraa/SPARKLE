@@ -39,9 +39,10 @@ to start unless the parent environment matches a narrow explicit allowlist.
 
 This is not a container sandbox: filesystem and network isolation are false and
 reported as such. Use only a disposable, secret-free worker. Arbitrary shell,
-application, package-install, and build commands remain unavailable. A hardened
-container worker, packager, and deployment adapter are still required before
-autonomous application delivery can be marked complete.
+application, package-install, and build commands remain unavailable. The
+separate worker and deterministic packager exist; target-specific build and
+deployment adapters are still required before autonomous delivery can be
+marked complete.
 
 ## Signed external worker boundary
 
@@ -70,5 +71,37 @@ signing-key-containing files are refused; this does not prove the absence of
 all application secrets, so approval must follow a source review. Results live
 in `data_environment/external_worker_runs.sqlite3`. Sandbox fields are retained
 as worker **claims**, while `isolation_verified` remains false until a real
-deployment has separate end-to-end isolation evidence. This repository does
-not yet contain or claim a hardened container-worker deployment.
+deployment has separate end-to-end isolation evidence. The repository includes
+a fail-closed Bubblewrap worker plus container/Caddy and systemd deployment
+profiles; no named remote worker has been deployed or validated by this
+release.
+
+## Deterministic application artifacts
+
+Package an approved workspace without executing its code:
+
+```bash
+sparkle package-workspace robot_dashboard --approve
+```
+
+The packager rejects symlinks, non-regular files, hidden/sensitive/reserved
+paths, portable-filesystem name collisions, more than 500 files, files over
+1 MB, and sources over 10 MB. Files are read without following symlinks and
+must remain stable during the read. Output is an immutable, content-addressed
+ZIP beneath `data_environment/artifacts/` with sorted entries, fixed timestamps
+and permissions, an embedded `SPARKLE-ARTIFACT/1` manifest, per-file SHA-256
+digests, and a whole-archive digest. Repackaging identical source reuses the
+same verified bytes; a changed source produces a new artifact. Existing bytes
+that fail their recorded digest are refused rather than overwritten.
+
+An operator can append a deployment event after an external action:
+
+```bash
+sparkle record-deployment 1 staging server reported_success --approve
+```
+
+This command records only the supplied report. Every event states
+`verification_status: unverified` and `external_action_executed: false` because
+SPARKLE did not perform or independently attest the deployment. The equivalent
+API routes are `POST /api/builds/package`, `GET /api/artifacts`, and
+`GET`/`POST /api/deployments`.

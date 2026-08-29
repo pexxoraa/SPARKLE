@@ -34,6 +34,12 @@ persistence → in-process registry load. Application scaffolding follows
 approval → name/path/size validation → confined file writes → SHA-256 build
 record. Neither path stores a secret or executes an arbitrary command.
 
+Artifact packaging follows approval → confined workspace selection → stable
+no-follow regular-file reads → portable path and size checks → per-file/source
+digests → deterministic ZIP and embedded manifest → immutable target integrity
+check → package record. Deployment reporting is a separate approval-gated
+append-only record; it never invokes a target and always remains unverified.
+
 Workspace verification follows approval → project/path/type/size validation →
 non-executing parser/compiler check → bounded result → persistent verification
 record. The Node syntax checker receives a minimal environment with no provider

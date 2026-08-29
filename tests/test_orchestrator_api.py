@@ -389,6 +389,8 @@ class APITests(SystemCase):
         self.assertIn(b"credentials: 'same-origin'", script)
         self.assertNotIn(b"localStorage", script)
         self.assertNotIn(b"sessionStorage", script)
+        self.assertIn(b"/api/artifacts?limit=50", script)
+        self.assertIn(b"Artifacts & deployment", body)
 
     def test_generated_agent_build_and_automation_endpoints(self):
         agent = {
@@ -461,6 +463,45 @@ class APITests(SystemCase):
         self.assertEqual(
             json.loads(self.request("/api/test-runs")[2])["test_runs"][0]["status"],
             "passed",
+        )
+
+        self.assertEqual(self.request(
+            "/api/builds/package",
+            {"project_name": "robot_console", "approved": False},
+        )[0], 400)
+        packaged = json.loads(self.request(
+            "/api/builds/package",
+            {"project_name": "robot_console", "approved": True},
+        )[2])["artifact"]
+        self.assertEqual(packaged["status"], "packaged_unverified")
+        self.assertEqual(
+            json.loads(self.request("/api/artifacts")[2])["artifacts"][0][
+                "artifact_sha256"
+            ],
+            packaged["artifact_sha256"],
+        )
+        deployment = {
+            "artifact_id": packaged["artifact_id"],
+            "environment_name": "staging",
+            "target_kind": "server",
+            "reported_outcome": "reported_success",
+            "approved": True,
+        }
+        unapproved_deployment = dict(deployment)
+        unapproved_deployment["approved"] = False
+        self.assertEqual(
+            self.request("/api/deployments", unapproved_deployment)[0], 400,
+        )
+        recorded = json.loads(self.request("/api/deployments", deployment)[2])[
+            "deployment"
+        ]
+        self.assertEqual(recorded["verification_status"], "unverified")
+        self.assertFalse(recorded["external_action_executed"])
+        self.assertEqual(
+            json.loads(self.request("/api/deployments")[2])["deployments"][0][
+                "reported_outcome"
+            ],
+            "reported_success",
         )
 
         now = datetime.now(UTC)

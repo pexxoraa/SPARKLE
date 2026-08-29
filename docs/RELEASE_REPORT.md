@@ -1,3 +1,84 @@
+# 0.12.0-alpha.1 verification report
+
+Date: 2026-08-29 UTC
+
+## Executed commands
+
+### Focused artifact/API regression
+
+```bash
+PYTHONPATH=src python3 -m unittest \
+  tests.test_external_worker tests.test_artifacts tests.test_orchestrator_api
+```
+
+Result: PASS — 30 tests passed in 7.690 seconds after the database fixture fix.
+
+### Compile and full regression suite
+
+```bash
+make check
+```
+
+Result: PASS — the final release-state run passed 104 tests in 19.728 seconds;
+0 failures and 0 errors.
+The first full run exposed a test-only database allocator that counted SQLite
+WAL/SHM sidecars and could reopen an earlier database. The fixture now assigns
+a monotonic database index. Production job IDs remain UUID4 values and the
+append-only uniqueness constraint remains intact.
+
+### Offline editable installation and installed modules
+
+```bash
+python3 -m pip install -e . --no-build-isolation --no-deps --no-index
+python3 -m sparkle status
+python3 -m sparkle.worker_service --check
+```
+
+Result: PASS — the zero-dependency core built and installed as
+`sparkle-personal-ai==0.12.0a1` without an index. Application and worker modules
+both reported `0.12.0-alpha.1`; the application truthfully reported `limited`
+without a live model credential, while the explicitly unsafe process-worker
+check reported ready with filesystem/network isolation false and credential
+exposure false. An initial bare `sparkle` lookup exited 127 because this
+executor omits its user script directory from `PATH`; direct installed-module
+execution succeeded. A first result formatter also addressed isolation fields
+at the response root instead of the `executor` object and exited with
+`KeyError`; the corrected formatter passed. Neither failure was a product
+execution failure.
+
+## Verified v0.12 capability paths
+
+- Approval-gated application packaging accepts no command, arguments,
+  dependencies, target credentials, or environment input and never executes
+  workspace code.
+- Stable no-follow reads, strict count/size bounds, sensitive/reserved path
+  rejection, and case-fold collision detection protect portable archive input.
+- Canonical per-file manifests, source digests, fixed ZIP timestamps/modes,
+  stored compression, sorted entries, and whole-artifact SHA-256 hashes make
+  identical inputs byte reproducible.
+- Artifacts are content-addressed and immutable. Identical source reuses verified
+  bytes, changed source creates a new artifact, and tampering is refused.
+- Deployment records are append-only reports only. They always expose
+  `verification_status: unverified` and `external_action_executed: false`.
+- CLI, authenticated API, dashboard, system status, builder-agent tool access,
+  storage map, and documentation expose the same honest boundary.
+
+## Not verified
+
+- Target-specific application builds, package installation, signing/notarizing,
+  cloud credentials, an external deployment action, or independent deployment
+  attestation.
+- Named remote worker/TLS deployment and live hostile-code namespace isolation.
+- A real MiniMax-M3 response, real voice, browser/computer control, sensors, or
+  robotics hardware.
+
+## GitHub publication and CI
+
+Status: IN PROGRESS — the local release state passes; exact-tree publication
+and GitHub Actions evidence will be appended after the remote run completes.
+
+---
+
 # 0.11.0-alpha.1 verification report
 
 Date: 2026-08-29 UTC

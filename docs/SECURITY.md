@@ -14,6 +14,12 @@
 - Application scaffolding requires explicit approval, confines every path to a
   dedicated application root, rejects traversal and symlinks, enforces file and
   manifest size limits, and protects existing files by default.
+- Artifact packaging requires explicit approval, accepts only stable regular
+  non-symlink files, rejects hidden/sensitive/reserved and non-portable paths,
+  enforces file/count/total limits, and writes immutable content-addressed ZIPs
+  with canonical manifests. Existing artifacts are digest-checked and never
+  silently replaced. Deployment records execute no action and always remain
+  explicitly unverified.
 - Workspace verification requires explicit approval; supports only
   non-executing Python compile, Node `--check`, and JSON parse; rejects
   traversal, symlinks, undeclared fields, wrong types, and oversized inputs.
@@ -46,8 +52,9 @@
   Output is bounded and credential-pattern redacted before persistence.
 - Worker-reported filesystem, network, ephemeral, and resource-limit fields are
   untrusted declarations. SPARKLE records them as `sandbox_claims` and always
-  reports `isolation_verified: false` in this release. The repository has no
-  deployed hardened worker and performs no automatic submission retries.
+  reports `isolation_verified: false` in this release. The repository contains
+  hardened deployment profiles but no named validated remote worker and
+  performs no automatic submission retries.
 - Permanent memory, knowledge-source, and automation deletion requires an
   explicit API approval flag.
 - Automation actions are limited to validated SPARKLE agent requests with one

@@ -18,6 +18,8 @@
 | External worker signing key | Hosting/OS secret manager | HMAC request/response authentication | User | Until rotated/deleted | Operator-only external worker client |
 | External worker source transfer | Configured HTTPS worker request only; not persisted as a bundle | Fixed-test job input | User/operator | Worker policy; absent from SPARKLE result store | External worker |
 | External worker runs | `data_environment/external_worker_runs.sqlite3` | Signed-response evidence, bounded output, and declared sandbox claims | System owner | Policy not yet configured | Operator CLI/API/dashboard |
+| Application artifacts | `data_environment/artifacts/` | Immutable content-addressed ZIPs with embedded source manifests | System owner | Until operator deletion policy is implemented | Application/AI/Agent Builders, operator CLI/API/dashboard |
+| Artifact and deployment records | `data_environment/artifacts.sqlite3` | Package hashes/manifests and append-only unverified external-action reports | System owner | Policy not yet configured | Builders, operator CLI/API/dashboard |
 | Execution trace | Trace SQLite | Verification/diagnosis | System owner | Policy not yet configured | Dashboard/system agent |
 | API audit | `trace_environment/api_audit.sqlite3` | Secret-free HTTP outcome evidence | System owner | Policy not yet configured | API/dashboard/system status |
 | Rate-limit buckets | Bounded process memory only | Per-client request quota | API server | One fixed window/eviction | API guard |

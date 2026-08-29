@@ -33,6 +33,8 @@ built-in definitions from replacement or deletion. Generated-agent lifecycle
 operations are available through the CLI and local HTTP API.
 
 Coding, Software Engineering, Application Builder, AI Builder, and Agent Builder
-can request the approval-gated `workspace_verify` tool. The tool provides static
-syntax/parse evidence only; agents must not describe it as application or test
-execution.
+can request the approval-gated `workspace_verify` and `workspace_package`
+tools. Verification provides static syntax/parse evidence only. Packaging
+creates deterministic bytes without executing source. Agents must not describe
+either as application execution or deployment; deployment records remain an
+operator/API boundary rather than a model tool.

@@ -7,7 +7,7 @@ registry, provider adapters, specialist agents, persistent memory, a separate
 knowledge index, execution traces, automations, proactive rules, a CLI, an HTTP
 API, and a local dashboard.
 
-Current release: `0.11.0-alpha.1`. This is a tested foundation release, not the
+Current release: `0.12.0-alpha.1`. This is a tested foundation release, not the
 final system described in the long-term Definition of Done. See
 [`docs/BUILD_STATE.md`](docs/BUILD_STATE.md) and
 [`docs/ACCEPTANCE.md`](docs/ACCEPTANCE.md) for exact evidence and gaps.
@@ -38,6 +38,10 @@ final system described in the long-term Definition of Done. See
   fail-closed Bubblewrap preflight, and a deliberately unisolated loopback-only
   development executor. Container/Caddy and hardened systemd profiles are
   included; live namespace isolation still requires deployment-host evidence.
+- Deterministic, content-addressed application ZIP artifacts with embedded
+  SHA-256 manifests, immutable integrity checks, portable-path validation, and
+  explicit approval. Append-only deployment events remain unverified evidence;
+  they do not execute or claim an external deployment.
 - Text/Markdown/source-code ingestion; optional PDF and DOCX ingestion.
 - Dashboard and JSON API served with Python's standard library.
 - Optional secret-resolved bearer authentication, exact origin controls, and

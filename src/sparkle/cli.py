@@ -69,6 +69,19 @@ def build_parser() -> argparse.ArgumentParser:
     )
     external_test.add_argument("project_name")
     external_test.add_argument("--approve", action="store_true")
+    package_workspace = sub.add_parser(
+        "package-workspace", help="Create a deterministic application ZIP artifact",
+    )
+    package_workspace.add_argument("project_name")
+    package_workspace.add_argument("--approve", action="store_true")
+    deployment = sub.add_parser(
+        "record-deployment", help="Record an immutable unverified deployment event",
+    )
+    deployment.add_argument("artifact_id", type=int)
+    deployment.add_argument("environment_name")
+    deployment.add_argument("target_kind")
+    deployment.add_argument("reported_outcome")
+    deployment.add_argument("--approve", action="store_true")
     return parser
 
 
@@ -197,6 +210,25 @@ def main(argv: list[str] | None = None) -> int:
         })
         _print({"ok": result["status"] == "passed", "external_test_run": result})
         return 0 if result["status"] == "passed" else 1
+    if args.command == "package-workspace":
+        result = system.tools.execute(
+            "workspace_package",
+            {"project_name": args.project_name, "approved": bool(args.approve)},
+            allowed={"workspace_package"},
+        )
+        _print({"ok": True, "artifact": result})
+        return 0
+    if args.command == "record-deployment":
+        if not args.approve:
+            raise ValueError("Deployment recording requires --approve")
+        result = system.artifacts.record_deployment(
+            args.artifact_id,
+            args.environment_name,
+            args.target_kind,
+            args.reported_outcome,
+        )
+        _print({"ok": True, "deployment": result})
+        return 0
     return 2
 
 
