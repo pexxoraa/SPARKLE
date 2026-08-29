@@ -68,15 +68,21 @@ assigned to the v0.11 GitHub CI worker-image job and is not yet marked verified.
 
 ## GitHub publication and CI
 
-Status: IN PROGRESS — capability commit `de9b1c7f2c58178ea691982c231ab4a13358eba0`
-has the exact locally tested tree `a94eb92258ad971184a610546eea00b1160ae510`.
+Result: PASS — capability commit `de9b1c7f2c58178ea691982c231ab4a13358eba0`
+published the worker and tree `a94eb92258ad971184a610546eea00b1160ae510`.
 CI run #21 built the worker image and verified its entrypoint successfully, but
 the Python 3.13 job exposed an environment-dependent test assumption: the fake
 command-construction preflight still required an installed `bwrap` executable.
 The implementation was not executed on that path. The test now supplies an
 inert existing binary to its injected runner; the separate real-preflight case
-continues to cover dependency discovery and fail-closed behavior. Full local
-and remote reruns are required before release status changes to PASS.
+continues to cover dependency discovery and fail-closed behavior.
+
+The corrected remote commit is
+`e1b014b2530d0ae5ee762573d81e093fb46aa834`. Its tree
+`9db377f73b86589c34c50d5174fd5cf20ea727d1` exactly matches local commit
+`55d897e0738fd3f4e52a3b41fcafd0bc2eeb4201`. SPARKLE CI run #22
+(`33253329992`) completed successfully: `test (3.12)`, `test (3.13)`, the
+worker-image build, and the installed image entrypoint check all passed.
 
 ---
 

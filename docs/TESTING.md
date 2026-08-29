@@ -63,5 +63,6 @@ Never report the live test as passed when the credential is absent or the exact
 
 Latest v0.11 release-state result on 2026-08-29: 96 tests passed in 24.139
 seconds. Dashboard JavaScript syntax and Git whitespace checks are rerun for
-the release checkpoint. See `RELEASE_REPORT.md` for complete evidence and
-external blockers.
+the release checkpoint. GitHub CI run #22 passed on Python 3.12 and 3.13 and
+also built and invoked the separately deployable worker image. See
+`RELEASE_REPORT.md` for complete evidence and external blockers.
