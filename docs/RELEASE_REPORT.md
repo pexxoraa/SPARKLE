@@ -77,8 +77,15 @@ BLOCKED rather than PASS.
 
 ## GitHub publication and CI
 
-Pending — the locally verified v0.9 tree has not yet been published. Exact
-commit, tree, workflow run, and matrix-job evidence will replace this paragraph.
+Result: PASS — private repository `pexxoraa/SPARKLE` received v0.9 capability
+commit `e8d988f8627c83e32b888a3bd7ab93e525542b12` on `main` without a force
+update. Its Git tree `92b6ab3240de1cfbbe46e73947320d388d47ef5b`
+exactly matches the locally tested tree in commit
+`697927c47a98d964230d88944323361d2e0be0aa`.
+
+SPARKLE CI run #17 (`33245128813`) completed successfully in 26 seconds. Both
+matrix jobs, `test (3.12)` and `test (3.13)`, completed successfully, including
+the `Compile and test` step.
 
 ---
 
