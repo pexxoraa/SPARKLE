@@ -52,14 +52,21 @@ Date: 2026-08-29 UTC
 
 ## GitHub publication and CI
 
-Status: CORRECTION IN PROGRESS — capability commit
+The initial capability commit
 `01050be68ffa8915c414f2fc181a380a24bbb0c5` has exact local/remote tree
 `442d2b3ef5f6301b6b8d1471c538ecc949302e43`. CI run #26
 (`33265181873`) passed Python 3.12, Python 3.13, and worker-image jobs, but its
 new automation-service job failed: the built wheel omitted top-level
 application/model configuration, so `--check` passed but `--once` raised
 `FileNotFoundError`. Bundled separated defaults plus installed-runtime
-materialization now fix that packaging defect; replacement CI is pending.
+materialization fix that packaging defect; replacement evidence follows.
+
+Result: PASS AFTER CORRECTION — remote commit
+`c223942a5b01c132629930f1735b7ba1a729a418` points to corrected tree
+`6e097298640407b704e3ec2390de9aa010c44b31`, exactly matching local commit
+`7e0b53a1b353f86e4cf50aeb59c610ba2a680226`. CI run #27
+(`33265747867`) passed `test (3.12)`, `test (3.13)`, `worker-image`, and the
+non-editable installed `automation-service` check/once/status lifecycle.
 
 ---
 

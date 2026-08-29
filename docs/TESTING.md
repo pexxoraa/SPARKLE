@@ -83,4 +83,6 @@ Never report the live test as passed when the credential is absent or the exact
 Latest corrected v0.13 release-state result on 2026-08-29: 116 tests passed in
 20.023 seconds. Dashboard JavaScript syntax, Git whitespace, and a fresh
 offline wheel build/install plus automation check/once/status lifecycle also
-passed. See `RELEASE_REPORT.md` for remote evidence and external blockers.
+passed. Corrected GitHub CI run #27 passed Python 3.12, Python 3.13,
+worker-image, and installed automation-service lifecycle jobs. See
+`RELEASE_REPORT.md` for remote evidence and external blockers.
