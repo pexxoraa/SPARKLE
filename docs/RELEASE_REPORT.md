@@ -71,9 +71,15 @@ made; this is not a live-provider PASS.
 
 ## GitHub publication and CI
 
-The v0.5 commit is awaiting publication and GitHub Actions verification. This
-section will be updated only after the remote Git tree and both Python matrix
-jobs are verified.
+Result: PASS — private repository `pexxoraa/SPARKLE` received v0.5 capability
+commit `f0f880e3c011fd8ecae33a572347c399e40a80a6` on `main` without a force
+update. Its Git tree `bfaaec45474c385327bc430b5be2cddd9124a16b`
+exactly matches the locally tested tree in commit
+`d0f31c9b8f0c03f155032b48b25c57bf9c5690cc`.
+
+SPARKLE CI run #9 (`33227000794`) completed successfully in 14 seconds. Both
+matrix jobs, `test (3.12)` and `test (3.13)`, completed successfully, including
+the `Compile and test` step.
 
 ---
 
