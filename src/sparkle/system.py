@@ -8,6 +8,7 @@ from sparkle.automation import AutomationRunner, AutomationStore, ProactiveEngin
 from sparkle.builders import WorkspaceManager
 from sparkle.config import AppConfig, data_root, project_root
 from sparkle.context import ContextBuilder
+from sparkle.development import DevelopmentVerifier
 from sparkle.knowledge import KnowledgeIngestor
 from sparkle.orchestrator import Orchestrator
 from sparkle.presence import PresenceEngine
@@ -22,6 +23,7 @@ from sparkle.tooling import (
     MemoryWriteTool,
     ToolRegistry,
     WorkspaceScaffoldTool,
+    WorkspaceVerifyTool,
 )
 from sparkle.trace import TraceStore
 from sparkle.voice import VoiceService
@@ -46,6 +48,7 @@ class SparkleSystem:
             knowledge_limit=self.config.knowledge_results,
         )
         self.workspaces = WorkspaceManager()
+        self.development = DevelopmentVerifier(self.workspaces.root)
         self.tools = ToolRegistry()
         self.tools.register(CalculatorTool())
         self.tools.register(MemorySearchTool(self.memory))
@@ -53,6 +56,7 @@ class SparkleSystem:
         self.tools.register(KnowledgeSearchTool(self.knowledge))
         self.tools.register(FileReadTool(project_root()))
         self.tools.register(WorkspaceScaffoldTool(self.workspaces))
+        self.tools.register(WorkspaceVerifyTool(self.development))
         self.generated_agents = GeneratedAgentStore()
         self.agents = AgentRegistry(
             self.generated_agents,
@@ -73,7 +77,7 @@ class SparkleSystem:
         models = self.models.list()
         return {
             "name": "SPARKLE",
-            "version": "0.4.0-alpha.1",
+            "version": "0.5.0-alpha.1",
             "status": "ready" if any(model["configured"] for model in models) else "limited",
             "active_model": self.models.active_id,
             "models": models,
@@ -93,6 +97,8 @@ class SparkleSystem:
             },
             "builders": {
                 "status": "ready", "workspaces": len(self.workspaces.list(limit=100)),
+                "verifications": len(self.development.list(limit=100)),
+                "static_verification": True,
                 "arbitrary_command_execution": False,
             },
             "proactive_alerts": self.proactive.inspect(),

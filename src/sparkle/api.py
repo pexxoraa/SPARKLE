@@ -18,7 +18,7 @@ MAX_BODY_BYTES = 1_000_000
 class SparkleHandler(BaseHTTPRequestHandler):
     system: SparkleSystem
     dashboard_root = Path(__file__).with_name("dashboard")
-    server_version = "SPARKLE/0.4"
+    server_version = "SPARKLE/0.5"
 
     def log_message(self, format: str, *args: object) -> None:
         # Avoid request bodies, headers, query values, and secrets in logs.
@@ -101,6 +101,12 @@ class SparkleHandler(BaseHTTPRequestHandler):
         if parsed.path == "/api/builds":
             return self._json({
                 "builds": self.system.workspaces.list(
+                    limit=int(query.get("limit", [20])[0])
+                )
+            })
+        if parsed.path == "/api/verifications":
+            return self._json({
+                "verifications": self.system.development.list(
                     limit=int(query.get("limit", [20])[0])
                 )
             })
@@ -192,6 +198,11 @@ class SparkleHandler(BaseHTTPRequestHandler):
                     "workspace_scaffold", data, allowed={"workspace_scaffold"},
                 )
                 return self._json({"ok": True, "build": result}, 201)
+            if self.path == "/api/builds/verify":
+                result = self.system.tools.execute(
+                    "workspace_verify", data, allowed={"workspace_verify"},
+                )
+                return self._json({"ok": True, "verification": result}, 201)
             self._json({"error": "not_found"}, 404)
         except ModelError as exc:
             self.system.presence.update("error", "Model unavailable")

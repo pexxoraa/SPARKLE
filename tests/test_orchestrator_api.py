@@ -187,6 +187,22 @@ class APITests(SystemCase):
             json.loads(self.request("/api/builds")[2])["builds"][0]["project_name"],
             "robot_console",
         )
+        verification = {
+            "project_name": "robot_console",
+            "checks": [{"type": "python_compile", "path": "main.py"}],
+            "approved": True,
+        }
+        unapproved_verification = dict(verification)
+        unapproved_verification["approved"] = False
+        self.assertEqual(
+            self.request("/api/builds/verify", unapproved_verification)[0], 400,
+        )
+        verified = json.loads(self.request("/api/builds/verify", verification)[2])
+        self.assertEqual(verified["verification"]["status"], "passed")
+        self.assertEqual(
+            json.loads(self.request("/api/verifications")[2])["verifications"][0]["passed"],
+            1,
+        )
 
         now = datetime.now(UTC)
         automation = {

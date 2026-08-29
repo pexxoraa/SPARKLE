@@ -1,3 +1,82 @@
+# 0.5.0-alpha.1 verification report
+
+Date: 2026-08-29 UTC
+
+## Executed commands
+
+### Compile and regression suite
+
+```bash
+make check
+```
+
+Result: PASS — 47 tests ran in 4.910 seconds; 47 passed, 0 failed,
+0 errors. The added coverage verifies Python compilation without execution,
+JavaScript and JSON validation, syntax-failure evidence, missing-Node handling,
+path traversal and symlink rejection, undeclared-field/type rejection, explicit
+approval, API integration, persistence, and a CLI scaffold-to-verify workflow.
+
+### Static release checks
+
+```bash
+node --check src/sparkle/dashboard/app.js
+git diff --check
+```
+
+Result: PASS — dashboard JavaScript parsed and the working diff contained no
+whitespace errors.
+
+### Isolated runtime status
+
+```bash
+SPARKLE_DATA_DIR=<fresh-directory> PYTHONPATH=src python3 -m sparkle status
+```
+
+Result: PASS — process exited 0 and reported version `0.5.0-alpha.1`, 16
+built-in agents, eight registered tools, ready verification storage,
+`static_verification: true`, and `arbitrary_command_execution: false`.
+
+### Live-provider smoke test
+
+```bash
+SPARKLE_DATA_DIR=<fresh-directory> PYTHONPATH=src python3 -m sparkle smoke-test --live
+```
+
+Result: BLOCKED — process exited 2 at `credential_presence` with
+`configured: false` and `secret_value_exposed: false`. No MiniMax request was
+made; this is not a live-provider PASS.
+
+## Verified v0.5 capability paths
+
+- Generated workspaces can be checked with `python_compile`,
+  `javascript_syntax`, and `json_parse` only.
+- Python is compiled without module execution; JavaScript uses Node `--check`;
+  JSON uses the standard parser.
+- Project paths reject traversal, missing files, symlinks, wrong file types,
+  undeclared fields, more than 50 checks, and files over 500 KB.
+- Node runs from an absolute discovered binary, without a shell or inherited
+  provider secrets, with a five-second timeout and 8,000-character output cap.
+- Verification results and durations persist outside source code and appear in
+  the CLI, API, dashboard, agent tools, and system status.
+
+## Not verified
+
+- A real MiniMax-M3 network response.
+- Execution of generated applications or tests, package installation, builds,
+  packaging, or deployment.
+- Production service scheduling or external notification delivery.
+- Production deployment, authentication, and authorization.
+- Real voice, wake word, camera, browser automation, GUI computer control, or
+  robots.
+
+## GitHub publication and CI
+
+The v0.5 commit is awaiting publication and GitHub Actions verification. This
+section will be updated only after the remote Git tree and both Python matrix
+jobs are verified.
+
+---
+
 # 0.4.0-alpha.1 verification report
 
 Date: 2026-08-29 UTC

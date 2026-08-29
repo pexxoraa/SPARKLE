@@ -51,6 +51,11 @@ def build_parser() -> argparse.ArgumentParser:
     scaffold.add_argument("manifest")
     scaffold.add_argument("--approve", action="store_true")
     scaffold.add_argument("--overwrite", action="store_true")
+    verify_workspace = sub.add_parser(
+        "verify-workspace", help="Run bounded static checks in an application workspace",
+    )
+    verify_workspace.add_argument("manifest")
+    verify_workspace.add_argument("--approve", action="store_true")
     return parser
 
 
@@ -156,6 +161,14 @@ def main(argv: list[str] | None = None) -> int:
         )
         _print({"ok": True, "build": result})
         return 0
+    if args.command == "verify-workspace":
+        manifest = _load_manifest(args.manifest)
+        manifest["approved"] = bool(args.approve)
+        result = system.tools.execute(
+            "workspace_verify", manifest, allowed={"workspace_verify"},
+        )
+        _print({"ok": result["status"] == "passed", "verification": result})
+        return 0 if result["status"] == "passed" else 1
     return 2
 
 

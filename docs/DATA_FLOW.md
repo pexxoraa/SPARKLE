@@ -33,3 +33,8 @@ Generated-agent installation follows approval → manifest validation → SQLite
 persistence → in-process registry load. Application scaffolding follows
 approval → name/path/size validation → confined file writes → SHA-256 build
 record. Neither path stores a secret or executes an arbitrary command.
+
+Workspace verification follows approval → project/path/type/size validation →
+non-executing parser/compiler check → bounded result → persistent verification
+record. The Node syntax checker receives a minimal environment with no provider
+credentials and cannot select an arbitrary executable or argument list.

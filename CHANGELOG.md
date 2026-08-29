@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.0-alpha.1 - 2026-08-29
+
+- Added approval-gated static verification for generated application workspaces.
+- Added non-executing Python compile, JavaScript syntax, and JSON parse checks.
+- Added verification path/symlink/type/size/count bounds, five-second Node timeout,
+  bounded output, a secret-free subprocess environment, and persistent evidence.
+- Added CLI, API, dashboard, system-status, agent-tool, and end-to-end coverage.
+- Expanded the deterministic regression suite from 41 to 47 tests.
+
 ## 0.4.0-alpha.1 - 2026-08-29
 
 - Added persistent generated-agent installation, hot-loading, removal, and routing.

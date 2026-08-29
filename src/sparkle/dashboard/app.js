@@ -40,6 +40,7 @@ async function refresh() {
       metric('Generated agents', state.generated_agents.count),
       metric('Automation runs', state.automation.recent_runs),
       metric('Application builds', state.builders.workspaces),
+      metric('Static verifications', state.builders.verifications),
     ].join('');
     qs('#agentList').innerHTML = state.agents.map((agent) => (
       `<span>${escapeHtml(agent.name)}${agent.source === 'generated' ? ' · generated' : ''}</span>`
@@ -73,6 +74,14 @@ async function loadPanel(panel) {
         `<div class="list-item"><strong>${escapeHtml(build.project_name)} · ${escapeHtml(build.status)}</strong><small>${escapeHtml(build.files.length)} files · ${escapeHtml(build.total_bytes)} bytes</small></div>`
       )).join('')
       : empty('No application workspaces generated yet.');
+  }
+  if (panel === 'verifications') {
+    const data = await api('/api/verifications?limit=50');
+    qs('#verificationList').innerHTML = data.verifications.length
+      ? data.verifications.map((verification) => (
+        `<div class="list-item"><strong>${escapeHtml(verification.project_name)} · ${escapeHtml(verification.status)}</strong><small>${escapeHtml(verification.passed)} passed · ${escapeHtml(verification.failed)} failed · ${escapeHtml(verification.duration_ms)} ms</small></div>`
+      )).join('')
+      : empty('No workspace verifications recorded yet.');
   }
   if (panel === 'traces') {
     const data = await api('/api/traces?limit=50');

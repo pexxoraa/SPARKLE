@@ -16,7 +16,16 @@ over 1 MB. Each write records its byte count and SHA-256 digest in
 sparkle scaffold app.json --approve
 ```
 
-Current limitation: SPARKLE intentionally cannot execute arbitrary shell or
-build commands through its runtime API. A permissioned development runner,
-test-evidence collector, packager, and deployment adapter are still required
-before autonomous application delivery can be marked complete.
+An approved verification manifest can statically compile Python without
+execution, ask Node.js to check JavaScript syntax, and parse JSON. Every check
+is confined to the project, bounded, and recorded in
+`data_environment/verifications.sqlite3`.
+
+```bash
+sparkle verify-workspace verification.json --approve
+```
+
+Current limitation: SPARKLE intentionally cannot execute arbitrary shell,
+application, test, package-install, or build commands through its runtime API.
+An isolated executable test runner, packager, and deployment adapter are still
+required before autonomous application delivery can be marked complete.

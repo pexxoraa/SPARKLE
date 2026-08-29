@@ -78,6 +78,33 @@ sparkle scaffold app.json --approve
 Existing files are protected unless `--overwrite` is also supplied. Scaffolding
 does not run the generated code or any shell command.
 
+## Verify a generated workspace
+
+Create `verification.json`:
+
+```json
+{
+  "project_name": "robot_dashboard",
+  "checks": [
+    {"type": "python_compile", "path": "src/main.py"},
+    {"type": "javascript_syntax", "path": "assets/app.js"},
+    {"type": "json_parse", "path": "config/settings.json"}
+  ]
+}
+```
+
+Run the bounded checks with:
+
+```bash
+sparkle verify-workspace verification.json --approve
+```
+
+The command exits 0 only when every check passes. It records results and
+durations even when syntax is invalid. It does not execute Python or JavaScript
+application code, run tests, install packages, or invoke a shell. The equivalent
+API endpoint is `POST /api/builds/verify`; history is available from
+`GET /api/verifications`.
+
 ## Execute automations
 
 Run all currently due internal agent actions once:
@@ -102,7 +129,8 @@ sparkle serve
 ```
 
 The dashboard displays model/configuration state, built-in and generated
-agents, memory, automation runs, application builds, and traces.
+agents, memory, automation runs, application builds, static verifications, and
+traces.
 
 ## Data ownership
 

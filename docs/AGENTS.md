@@ -31,3 +31,8 @@ manifests are validated against registered tools, persisted outside source code,
 hot-loaded immediately, and reloaded on restart. The registry protects all 16
 built-in definitions from replacement or deletion. Generated-agent lifecycle
 operations are available through the CLI and local HTTP API.
+
+Coding, Software Engineering, Application Builder, AI Builder, and Agent Builder
+can request the approval-gated `workspace_verify` tool. The tool provides static
+syntax/parse evidence only; agents must not describe it as application or test
+execution.

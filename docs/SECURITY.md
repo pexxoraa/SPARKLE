@@ -14,6 +14,11 @@
 - Application scaffolding requires explicit approval, confines every path to a
   dedicated application root, rejects traversal and symlinks, enforces file and
   manifest size limits, and protects existing files by default.
+- Workspace verification requires explicit approval; supports only
+  non-executing Python compile, Node `--check`, and JSON parse; rejects
+  traversal, symlinks, undeclared fields, wrong types, and oversized inputs.
+  Node runs without a shell, receives no inherited provider secrets, times out
+  after five seconds, and produces bounded recorded output.
 - Permanent memory, knowledge-source, and automation deletion requires an
   explicit API approval flag.
 - Automation actions are limited to validated SPARKLE agent requests with one
@@ -25,4 +30,5 @@
 
 Production deployment still needs authentication, authorization, TLS at the
 edge, rate limiting, audit retention, backup encryption, dependency scanning,
-process isolation for future build execution, and a threat-model review.
+process/network isolation for future test and build execution, and a
+threat-model review.

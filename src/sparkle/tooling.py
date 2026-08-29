@@ -11,6 +11,7 @@ from typing import Any
 from sparkle.agents import AgentRegistry, AgentSpec
 from sparkle.builders import WorkspaceManager
 from sparkle.contracts import ToolDefinition
+from sparkle.development import DevelopmentVerifier
 from sparkle.storage import KnowledgeStore, MemoryStore
 
 
@@ -222,6 +223,46 @@ class WorkspaceScaffoldTool(Tool):
             files,
             overwrite=bool(arguments.get("overwrite", False)),
         )
+
+
+class WorkspaceVerifyTool(Tool):
+    name = "workspace_verify"
+    description = "Run bounded static checks against files in a generated application workspace."
+    parameters = {
+        "type": "object",
+        "properties": {
+            "project_name": {"type": "string"},
+            "checks": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string",
+                            "enum": sorted(DevelopmentVerifier.VALID_CHECKS),
+                        },
+                        "path": {"type": "string"},
+                    },
+                    "required": ["type", "path"],
+                    "additionalProperties": False,
+                },
+            },
+            "approved": {"type": "boolean"},
+        },
+        "required": ["project_name", "checks", "approved"],
+        "additionalProperties": False,
+    }
+
+    def __init__(self, verifier: DevelopmentVerifier):
+        self.verifier = verifier
+
+    def run(self, arguments: dict[str, Any]) -> Any:
+        if arguments.get("approved") is not True:
+            raise ToolError("Workspace verification requires explicit approval")
+        checks = arguments.get("checks")
+        if not isinstance(checks, list):
+            raise ToolError("Workspace checks must be an array")
+        return self.verifier.verify(str(arguments.get("project_name", "")), checks)
 
 
 class AgentInstallTool(Tool):

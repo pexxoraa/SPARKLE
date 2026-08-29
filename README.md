@@ -7,7 +7,7 @@ registry, provider adapters, specialist agents, persistent memory, a separate
 knowledge index, execution traces, automations, proactive rules, a CLI, an HTTP
 API, and a local dashboard.
 
-Current release: `0.4.0-alpha.1`. This is a tested foundation release, not the
+Current release: `0.5.0-alpha.1`. This is a tested foundation release, not the
 final system described in the long-term Definition of Done. See
 [`docs/BUILD_STATE.md`](docs/BUILD_STATE.md) and
 [`docs/ACCEPTANCE.md`](docs/ACCEPTANCE.md) for exact evidence and gaps.
@@ -29,6 +29,8 @@ final system described in the long-term Definition of Done. See
   run history, and automation-origin traces.
 - Bounded application workspace scaffolding with path confinement, size limits,
   overwrite protection, and explicit approval.
+- Persistent, approval-gated workspace verification with non-executing Python
+  compile, JavaScript syntax, and JSON parse checks.
 - Text/Markdown/source-code ingestion; optional PDF and DOCX ingestion.
 - Dashboard and JSON API served with Python's standard library.
 - Voice and motion/presence interfaces that do not couple the core to hardware.
