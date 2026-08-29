@@ -10,8 +10,8 @@ Date: 2026-08-29 UTC
 make check
 ```
 
-Result: PASS — the first full v0.11 release-candidate run executed 96 tests in
-23.233 seconds; 96 passed, 0 failed, 0 errors. Fifteen new cases cover the
+Result: PASS — the corrected final v0.11 release-state run executed 96 tests in
+24.139 seconds; 96 passed, 0 failed, 0 errors. Fifteen new cases cover the
 worker server, real fixed child execution, application imports, timeout and
 process-group termination, exact HMAC/schema/digest/path/limit validation,
 private no-follow key files, replay and job conflicts, concurrency refusal,
@@ -68,8 +68,15 @@ assigned to the v0.11 GitHub CI worker-image job and is not yet marked verified.
 
 ## GitHub publication and CI
 
-Status: IN PROGRESS — local evidence is complete; v0.11 publication and its
-Python 3.12/3.13 plus worker-image CI jobs are the next release action.
+Status: IN PROGRESS — capability commit `de9b1c7f2c58178ea691982c231ab4a13358eba0`
+has the exact locally tested tree `a94eb92258ad971184a610546eea00b1160ae510`.
+CI run #21 built the worker image and verified its entrypoint successfully, but
+the Python 3.13 job exposed an environment-dependent test assumption: the fake
+command-construction preflight still required an installed `bwrap` executable.
+The implementation was not executed on that path. The test now supplies an
+inert existing binary to its injected runner; the separate real-preflight case
+continues to cover dependency discovery and fail-closed behavior. Full local
+and remote reruns are required before release status changes to PASS.
 
 ---
 

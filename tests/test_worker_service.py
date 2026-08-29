@@ -339,7 +339,12 @@ class WorkerServiceTests(unittest.TestCase):
             captured.append(command)
             return subprocess.CompletedProcess(command, 0, "", "")
 
-        executor = BubblewrapExecutor(preflight_runner=successful)
+        # This test exercises command construction, not host dependency discovery.
+        # The injected runner never executes the inert existing binary.
+        executor = BubblewrapExecutor(
+            bubblewrap_binary="/usr/bin/true",
+            preflight_runner=successful,
+        )
         status = executor.status()
         self.assertTrue(status["available"])
         command = captured[0]

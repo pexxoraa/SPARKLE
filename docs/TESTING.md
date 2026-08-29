@@ -61,7 +61,7 @@ sparkle smoke-test --live
 Never report the live test as passed when the credential is absent or the exact
 `SPARKLE_LIVE_OK` response is not observed.
 
-Latest v0.11 release-state result on 2026-08-29: 96 tests passed in 23.233
+Latest v0.11 release-state result on 2026-08-29: 96 tests passed in 24.139
 seconds. Dashboard JavaScript syntax and Git whitespace checks are rerun for
 the release checkpoint. See `RELEASE_REPORT.md` for complete evidence and
 external blockers.
