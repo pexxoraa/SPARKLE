@@ -30,3 +30,20 @@ jobs:
         run: docker build --file worker_environment/Dockerfile --tag sparkle-worker:ci .
       - name: Verify installed worker entrypoint
         run: docker run --rm sparkle-worker:ci --help
+
+  automation-service:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install zero-dependency automation service
+        run: python -m pip install . --no-deps
+      - name: Verify installed service lifecycle
+        run: |
+          service_state="$(mktemp -d)"
+          export SPARKLE_DATA_DIR="$service_state"
+          sparkle-automations --check
+          sparkle-automations --once
+          sparkle-automations --status

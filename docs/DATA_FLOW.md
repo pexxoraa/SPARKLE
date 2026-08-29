@@ -29,6 +29,13 @@ trace ID, and bounded result summary are stored separately in the automation
 database. Daily and weekly records are rescheduled only after the run is
 recorded.
 
+The supervised path is lock → stale-claim recovery record → service heartbeat
+→ expiring tokenized claim → normal orchestrator run → token-fenced finish.
+SIGTERM sets a signal-safe drain event and prevents another cycle; terminal
+state is persisted after the active bounded operation returns. If forced
+termination occurs, a later instance records lease recovery before retrying;
+the old token can no longer commit.
+
 Generated-agent installation follows approval → manifest validation → SQLite
 persistence → in-process registry load. Application scaffolding follows
 approval → name/path/size validation → confined file writes → SHA-256 build

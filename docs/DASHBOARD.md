@@ -10,6 +10,7 @@ Implemented panels:
 - Automation, application-build, static-verification, bounded test-run,
   external-worker, immutable artifact, unverified deployment-event,
   execution-trace, and secret-free API-audit lists.
+- Persisted automation-service lifecycle state in system metrics.
 
 The server sets no-store on JSON, denies framing, disables MIME sniffing, uses a
 self-only Content Security Policy, limits JSON bodies to 1 MB, and does not log

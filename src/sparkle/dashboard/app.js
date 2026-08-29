@@ -82,6 +82,7 @@ async function refresh() {
       metric('Knowledge', `${state.knowledge.sources} sources`),
       metric('Generated agents', state.generated_agents.count),
       metric('Automation runs', state.automation.recent_runs),
+      metric('Automation service', state.automation.service.state),
       metric('Application builds', state.builders.workspaces),
       metric('Static verifications', state.builders.verifications),
       metric('Workspace test runs', state.builders.test_runs),

@@ -1,3 +1,57 @@
+# 0.13.0-alpha.1 verification report
+
+Date: 2026-08-29 UTC
+
+## Executed evidence
+
+- The focused automation/API set passed 27 tests in 9.234 seconds.
+- The dedicated service set passed 10 tests in 0.899 seconds, including a real
+  foreground subprocess heartbeat → SIGTERM → draining → exit-0 workflow.
+- The first full pre-release run passed 113 tests in 20.231 seconds before the
+  SIGTERM case was added. After the signal-safety refinement, the final
+  release-state `make check` passed all 114 tests in 21.288 seconds with no
+  failures or errors. Dashboard JavaScript
+  syntax and Git whitespace checks also passed.
+- Offline editable installation succeeded without dependencies or an index as
+  `sparkle-personal-ai==0.13.0a1`. The installed `sparkle-automations`
+  check → once → status workflow returned ready, one cycle, stopped state, and
+  `credentials_exposed: false`; `sparkle status` reported the same stopped
+  service state and `0.13.0-alpha.1`.
+
+## Verified v0.13 capability paths
+
+- The existing scheduler remains the execution core; the new
+  `sparkle-automations` entrypoint adds supervision rather than a parallel
+  scheduling implementation.
+- Atomic claims carry bounded expiring tokens. Startup and each cycle recover
+  expired claims, append an `AutomationLeaseExpired` run, and make work eligible
+  again. A recovered/cancelled token cannot commit a result.
+- A no-follow, mode-0600 POSIX flock prevents concurrent local service
+  instances. Lifecycle state records only heartbeats, counts, timestamps,
+  bounds, and safe error types.
+- `--check`, `--once`, `--status`, and `--healthcheck` are exercised. The
+  signal-safe SIGTERM handler performs no I/O, prevents another cycle, and
+  normal control flow persists a clean stop after the active bounded operation.
+- The non-root systemd profile supplies restart policy, forced-stop bound,
+  read-only host protection, one writable state path, empty capabilities, and
+  no embedded provider credential.
+
+## Honest limits
+
+- Recovery is at least once, not exactly once. Future external actions need
+  independent idempotency keys.
+- The systemd profile is inspected and the service lifecycle runs locally, but
+  no named persistent host has installed the unit.
+- Notification/calendar/webhook connectors, live MiniMax scheduled execution,
+  and external delivery remain unavailable or unverified.
+
+## GitHub publication and CI
+
+Status: IN PROGRESS — local release verification is active; the exact remote
+commit/tree and CI run will be recorded after publication.
+
+---
+
 # 0.12.0-alpha.1 verification report
 
 Date: 2026-08-29 UTC

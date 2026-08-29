@@ -29,6 +29,8 @@ Environment overrides:
 | `SPARKLE_EXTERNAL_WORKER_REQUEST_TIMEOUT_SECONDS` | HTTP request timeout (1–120 seconds) | No |
 | `SPARKLE_EXTERNAL_WORKER_JOB_TIMEOUT_SECONDS` | Requested fixed-test timeout (1–60 seconds) | No |
 | `SPARKLE_EXTERNAL_WORKER_MAX_PAYLOAD_BYTES` | Serialized request bound (1–20 MB) | No |
+| `SPARKLE_AUTOMATION_INTERVAL_SECONDS` | Supervised service poll interval (1–3600 seconds) | No |
+| `SPARKLE_AUTOMATION_LEASE_SECONDS` | Claim recovery/fencing lease (30–86400 seconds) | No |
 
 Configuration files may contain secret *names* such as `MINIMAX_API_KEY`; they
 must never contain secret values. Shell and web tools default to disabled.
@@ -108,3 +110,9 @@ The separate `sparkle-worker` process uses its own environment:
 Non-loopback startup requires direct TLS or explicit trusted termination. The
 key file is opened without symlink following and must deny group/other access.
 Health/status reports only presence and control state. See `WORKER.md`.
+
+The separately installed `sparkle-automations` process reads its two bounds
+from the variables above or equivalent CLI flags. The lease should exceed the
+longest expected bounded model/retry cycle. Its lock and status remain beneath
+`SPARKLE_DATA_DIR/data_environment`; no secret value is written there. See
+`AUTOMATION.md` and `automation_environment/README.md`.

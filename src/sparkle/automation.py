@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import uuid
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -9,6 +10,10 @@ from typing import Any
 from sparkle.config import data_root
 from sparkle.orchestrator import Orchestrator
 from sparkle.storage import MemoryStore, SQLiteStore, utc_now
+
+
+class AutomationLeaseLostError(RuntimeError):
+    """A recovered or cancelled claim can no longer commit a run result."""
 
 
 class AutomationStore(SQLiteStore):
@@ -36,6 +41,17 @@ class AutomationStore(SQLiteStore):
                     updated_at TEXT NOT NULL
                 )
             """)
+            columns = {
+                row["name"] for row in connection.execute(
+                    "PRAGMA table_info(automations)"
+                ).fetchall()
+            }
+            if "claim_token" not in columns:
+                connection.execute("ALTER TABLE automations ADD COLUMN claim_token TEXT")
+            if "claim_expires_at" not in columns:
+                connection.execute(
+                    "ALTER TABLE automations ADD COLUMN claim_expires_at TEXT"
+                )
             connection.execute("""
                 CREATE TABLE IF NOT EXISTS automation_runs (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -52,6 +68,22 @@ class AutomationStore(SQLiteStore):
             connection.execute(
                 "CREATE INDEX IF NOT EXISTS idx_automation_runs_automation ON automation_runs(automation_id, id)"
             )
+            connection.execute("""
+                CREATE TABLE IF NOT EXISTS automation_service_state (
+                    singleton INTEGER PRIMARY KEY CHECK(singleton=1),
+                    instance_id TEXT NOT NULL,
+                    state TEXT NOT NULL,
+                    started_at TEXT NOT NULL,
+                    heartbeat_at TEXT NOT NULL,
+                    stopped_at TEXT,
+                    last_cycle_at TEXT,
+                    last_error_type TEXT,
+                    interval_seconds REAL NOT NULL,
+                    lease_seconds INTEGER NOT NULL,
+                    cycles INTEGER NOT NULL,
+                    recovered_claims INTEGER NOT NULL
+                )
+            """)
 
     def create(
         self, name: str, kind: str, action: dict[str, Any], *, schedule: str | None = None,
@@ -99,8 +131,37 @@ class AutomationStore(SQLiteStore):
             ).fetchall()
         return [self._public(row) for row in rows]
 
-    def claim_due(self, now: str | None = None) -> list[dict[str, Any]]:
+    @staticmethod
+    def _claim_values(
+        now: str | None, claim_token: str | None, lease_seconds: int,
+    ) -> tuple[str, str, str]:
+        if isinstance(lease_seconds, bool) or not isinstance(lease_seconds, int):
+            raise ValueError("Automation lease_seconds must be an integer")
+        if not 30 <= lease_seconds <= 86_400:
+            raise ValueError("Automation lease_seconds must be from 30 to 86400")
         current = now or utc_now()
+        try:
+            current_time = datetime.fromisoformat(current.replace("Z", "+00:00"))
+        except (AttributeError, ValueError) as exc:
+            raise ValueError("Automation claim time must be ISO-8601") from exc
+        if current_time.tzinfo is None:
+            current_time = current_time.replace(tzinfo=UTC)
+        token = claim_token or uuid.uuid4().hex
+        if not isinstance(token, str) or not 16 <= len(token) <= 128 or not token.isalnum():
+            raise ValueError("Automation claim token must be 16-128 alphanumeric characters")
+        expires = (current_time + timedelta(seconds=lease_seconds)).isoformat()
+        return current_time.isoformat(), token, expires
+
+    def claim_due(
+        self,
+        now: str | None = None,
+        *,
+        claim_token: str | None = None,
+        lease_seconds: int = 3_600,
+    ) -> list[dict[str, Any]]:
+        current, token, expires = self._claim_values(
+            now, claim_token, lease_seconds,
+        )
         with self.connect() as connection:
             connection.execute("BEGIN IMMEDIATE")
             rows = connection.execute("""
@@ -109,13 +170,28 @@ class AutomationStore(SQLiteStore):
             """, (current,)).fetchall()
             for row in rows:
                 connection.execute(
-                    "UPDATE automations SET enabled=0, last_status='running', updated_at=? WHERE id=?",
-                    (current, row["id"]),
+                    """UPDATE automations SET enabled=0, last_status='running',
+                       claim_token=?, claim_expires_at=?, updated_at=?
+                       WHERE id=? AND enabled=1""",
+                    (token, expires, current, row["id"]),
                 )
-        return [self._public(row) for row in rows]
+        values = [self._public(row) for row in rows]
+        for value in values:
+            value["_claim_token"] = token
+            value["_claim_expires_at"] = expires
+        return values
 
-    def claim_condition(self, automation_id: int, now: str | None = None) -> dict[str, Any] | None:
-        current = now or utc_now()
+    def claim_condition(
+        self,
+        automation_id: int,
+        now: str | None = None,
+        *,
+        claim_token: str | None = None,
+        lease_seconds: int = 3_600,
+    ) -> dict[str, Any] | None:
+        current, token, expires = self._claim_values(
+            now, claim_token, lease_seconds,
+        )
         with self.connect() as connection:
             connection.execute("BEGIN IMMEDIATE")
             row = connection.execute(
@@ -125,10 +201,41 @@ class AutomationStore(SQLiteStore):
             if not row:
                 return None
             connection.execute(
-                "UPDATE automations SET enabled=0, last_status='running', updated_at=? WHERE id=?",
-                (current, automation_id),
+                """UPDATE automations SET enabled=0, last_status='running',
+                   claim_token=?, claim_expires_at=?, updated_at=?
+                   WHERE id=? AND enabled=1""",
+                (token, expires, current, automation_id),
             )
-        return self._public(row)
+        value = self._public(row)
+        value["_claim_token"] = token
+        value["_claim_expires_at"] = expires
+        return value
+
+    def recover_stale_claims(self, now: str | None = None) -> int:
+        current = now or utc_now()
+        with self.connect() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            rows = connection.execute("""
+                SELECT id, updated_at FROM automations
+                WHERE enabled=0 AND last_status='running'
+                  AND claim_expires_at IS NOT NULL AND claim_expires_at <= ?
+                ORDER BY id
+            """, (current,)).fetchall()
+            for row in rows:
+                connection.execute("""
+                    INSERT INTO automation_runs(
+                        automation_id, status, attempts, trace_id,
+                        result_summary, error_type, started_at, finished_at
+                    ) VALUES(?, 'recovered', 0, NULL, NULL,
+                             'AutomationLeaseExpired', ?, ?)
+                """, (row["id"], row["updated_at"], current))
+                connection.execute("""
+                    UPDATE automations
+                    SET enabled=1, last_status='recovered', claim_token=NULL,
+                        claim_expires_at=NULL, updated_at=?
+                    WHERE id=? AND enabled=0 AND last_status='running'
+                """, (current, row["id"]))
+        return len(rows)
 
     @staticmethod
     def _next_run(item: dict[str, Any], now: datetime) -> str | None:
@@ -165,7 +272,24 @@ class AutomationStore(SQLiteStore):
         next_run_at = self._next_run(item, current)
         enabled = item["kind"] in {"daily", "weekly", "condition"}
         safe_summary = result_summary[:1_000] if result_summary else None
+        claim_token = item.get("_claim_token")
+        if not isinstance(claim_token, str):
+            raise AutomationLeaseLostError("Automation run has no active claim token")
         with self.connect() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            updated = connection.execute("""
+                UPDATE automations SET enabled=?, last_status=?, last_run_at=?,
+                    next_run_at=?, claim_token=NULL, claim_expires_at=NULL,
+                    updated_at=?
+                WHERE id=? AND last_status='running' AND claim_token=?
+            """, (
+                int(enabled), status, finished_at, next_run_at, finished_at,
+                item["id"], claim_token,
+            ))
+            if updated.rowcount != 1:
+                raise AutomationLeaseLostError(
+                    "Automation claim expired, was recovered, or was cancelled"
+                )
             cursor = connection.execute("""
                 INSERT INTO automation_runs(
                     automation_id, status, attempts, trace_id, result_summary,
@@ -174,12 +298,6 @@ class AutomationStore(SQLiteStore):
             """, (
                 item["id"], status, attempts, trace_id, safe_summary,
                 error_type, started_at, finished_at,
-            ))
-            connection.execute("""
-                UPDATE automations SET enabled=?, last_status=?, last_run_at=?,
-                    next_run_at=?, updated_at=? WHERE id=?
-            """, (
-                int(enabled), status, finished_at, next_run_at, finished_at, item["id"],
             ))
         return {
             "run_id": int(cursor.lastrowid), "automation_id": item["id"],
@@ -197,10 +315,135 @@ class AutomationStore(SQLiteStore):
     def set_enabled(self, automation_id: int, enabled: bool) -> bool:
         with self.connect() as connection:
             cursor = connection.execute(
-                "UPDATE automations SET enabled=?, updated_at=? WHERE id=?",
+                """UPDATE automations SET enabled=?,
+                   last_status=CASE WHEN last_status='running' THEN 'cancelled'
+                                    ELSE last_status END,
+                   claim_token=NULL, claim_expires_at=NULL, updated_at=? WHERE id=?""",
                 (int(enabled), utc_now(), automation_id),
             )
         return cursor.rowcount == 1
+
+    def service_start(
+        self,
+        instance_id: str,
+        *,
+        interval_seconds: float,
+        lease_seconds: int,
+        recovered_claims: int,
+        now: str | None = None,
+    ) -> None:
+        current = now or utc_now()
+        with self.connect() as connection:
+            connection.execute("""
+                INSERT INTO automation_service_state(
+                    singleton, instance_id, state, started_at, heartbeat_at,
+                    stopped_at, last_cycle_at, last_error_type,
+                    interval_seconds, lease_seconds, cycles, recovered_claims
+                ) VALUES(1,?, 'running',?,?,NULL,NULL,NULL,?,?,0,?)
+                ON CONFLICT(singleton) DO UPDATE SET
+                    instance_id=excluded.instance_id, state='running',
+                    started_at=excluded.started_at,
+                    heartbeat_at=excluded.heartbeat_at, stopped_at=NULL,
+                    last_cycle_at=NULL, last_error_type=NULL,
+                    interval_seconds=excluded.interval_seconds,
+                    lease_seconds=excluded.lease_seconds, cycles=0,
+                    recovered_claims=excluded.recovered_claims
+            """, (
+                instance_id, current, current, float(interval_seconds),
+                lease_seconds, recovered_claims,
+            ))
+
+    def service_heartbeat(
+        self,
+        instance_id: str,
+        *,
+        state: str = "running",
+        cycle_completed: bool = False,
+        recovered_claims: int = 0,
+        last_error_type: str | None = None,
+        now: str | None = None,
+    ) -> None:
+        if state not in {"running", "degraded", "draining"}:
+            raise ValueError("Automation service heartbeat state is invalid")
+        if (
+            isinstance(recovered_claims, bool)
+            or not isinstance(recovered_claims, int)
+            or recovered_claims < 0
+        ):
+            raise ValueError("Recovered automation claim count is invalid")
+        current = now or utc_now()
+        with self.connect() as connection:
+            cursor = connection.execute("""
+                UPDATE automation_service_state
+                SET state=?, heartbeat_at=?,
+                    last_cycle_at=CASE WHEN ? THEN ? ELSE last_cycle_at END,
+                    cycles=cycles+?, recovered_claims=recovered_claims+?,
+                    last_error_type=?
+                WHERE singleton=1 AND instance_id=?
+            """, (
+                state, current, int(cycle_completed), current,
+                int(cycle_completed), recovered_claims, last_error_type,
+                instance_id,
+            ))
+        if cursor.rowcount != 1:
+            raise RuntimeError("Automation service lost ownership of status state")
+
+    def service_stop(
+        self,
+        instance_id: str,
+        *,
+        state: str = "stopped",
+        last_error_type: str | None = None,
+        now: str | None = None,
+    ) -> None:
+        if state not in {"stopped", "error"}:
+            raise ValueError("Automation service stop state is invalid")
+        current = now or utc_now()
+        with self.connect() as connection:
+            connection.execute("""
+                UPDATE automation_service_state
+                SET state=?, heartbeat_at=?, stopped_at=?, last_error_type=?
+                WHERE singleton=1 AND instance_id=?
+            """, (state, current, current, last_error_type, instance_id))
+
+    def service_status(self, now: datetime | None = None) -> dict[str, Any]:
+        with self.connect() as connection:
+            row = connection.execute(
+                "SELECT * FROM automation_service_state WHERE singleton=1"
+            ).fetchone()
+        if row is None:
+            return {
+                "state": "never_started", "active": False, "healthy": False,
+                "stale": False, "cycles": 0, "recovered_claims": 0,
+                "last_error_type": None,
+            }
+        current = now or datetime.now(UTC)
+        heartbeat = datetime.fromisoformat(row["heartbeat_at"].replace("Z", "+00:00"))
+        if heartbeat.tzinfo is None:
+            heartbeat = heartbeat.replace(tzinfo=UTC)
+        stale_after = max(
+            30.0,
+            float(row["interval_seconds"]) * 3,
+            float(row["lease_seconds"]),
+        )
+        active_state = row["state"] in {"running", "degraded", "draining"}
+        stale = active_state and (current - heartbeat).total_seconds() > stale_after
+        state = "stale" if stale else row["state"]
+        return {
+            "state": state,
+            "active": active_state and not stale,
+            "healthy": row["state"] == "running" and not stale,
+            "stale": stale,
+            "started_at": row["started_at"],
+            "heartbeat_at": row["heartbeat_at"],
+            "stopped_at": row["stopped_at"],
+            "last_cycle_at": row["last_cycle_at"],
+            "last_error_type": row["last_error_type"],
+            "interval_seconds": row["interval_seconds"],
+            "lease_seconds": row["lease_seconds"],
+            "cycles": row["cycles"],
+            "recovered_claims": row["recovered_claims"],
+        }
 
     def delete(self, automation_id: int) -> bool:
         with self.connect() as connection:
@@ -319,15 +562,30 @@ class AutomationRunner:
             )
         return result.text, result.trace_id
 
-    def run_due(self, now: datetime | None = None) -> list[dict[str, Any]]:
+    def run_due(
+        self,
+        now: datetime | None = None,
+        *,
+        claim_token: str | None = None,
+        lease_seconds: int = 3_600,
+    ) -> list[dict[str, Any]]:
         current = now or datetime.now(UTC)
         if current.tzinfo is None:
             current = current.replace(tzinfo=UTC)
-        claimed = self.store.claim_due(current.isoformat())
+        claimed = self.store.claim_due(
+            current.isoformat(),
+            claim_token=claim_token,
+            lease_seconds=lease_seconds,
+        )
         alerts = self.proactive.inspect(current)
         for candidate in self.store.conditions():
             if self._condition_matches(candidate, alerts, current):
-                item = self.store.claim_condition(candidate["id"], current.isoformat())
+                item = self.store.claim_condition(
+                    candidate["id"],
+                    current.isoformat(),
+                    claim_token=claim_token,
+                    lease_seconds=lease_seconds,
+                )
                 if item:
                     claimed.append(item)
 

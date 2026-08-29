@@ -29,14 +29,14 @@ means an external dependency is unavailable.
 | Voice works | BLOCKED | Interfaces exist; no microphone/speaker or STT/TTS adapter |
 | Text works | PASS | CLI, HTTP API, dashboard, bearer/session auth, CSRF, origin, preflight, rate-limit, and API-audit integration tests |
 | Voice/text share context | PARTIAL | Shared architecture exists; voice cannot execute here |
-| Automation works | PARTIAL | Due/conditional claiming, agent execution, retry, recurrence, cooldown, history, enable/disable/delete, CLI worker and traces are tested; packaged service and external delivery are absent |
+| Automation works | PASS | Due/conditional execution, retry/recurrence/cooldown, expiring claims, crash recovery records, fencing, singleton service, health, real SIGTERM drain, CLI and systemd profile are tested; external notification/calendar/webhook connectors are separate unfinished capabilities |
 | Proactive intelligence | PARTIAL | Evidence-backed deadline rules tested; more conditions absent |
 | Dashboard works | PASS | Local panels plus bounded login/reload/CSRF/logout session lifecycle are integration tested; deployed TLS/reverse-proxy validation remains absent |
 | Data tracing works | PASS | Success/tool/failure metadata implemented; trace tests |
 | Motion/presence architecture | PASS | Independent presence engine; physical motion intentionally absent |
 | Multimodal architecture prepared | PARTIAL | M3 registry role and model contracts ready; image/video input contract not exposed yet |
-| Tests pass | PASS | 104 local tests pass; see `TESTING.md` and release report |
+| Tests pass | PASS | 114 local tests pass; see `TESTING.md` and release report |
 | Documentation complete for implementation | PASS | Requested implementation documents present |
 | Installation reproducible | PASS | Python 3.12 core has zero mandatory third-party dependencies |
 | End-to-end workflows | PARTIAL | Deterministic local flows pass; live provider and external actions blocked |
-| Release | PASS | v0.12 remote tree matches local; CI run #24 passed Python 3.12/3.13 and the worker-image/entrypoint job |
+| Release | IN PROGRESS | v0.13 passes locally; exact-tree GitHub publication and CI verification are active |

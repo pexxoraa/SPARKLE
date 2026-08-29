@@ -59,6 +59,11 @@
   explicit API approval flag.
 - Automation actions are limited to validated SPARKLE agent requests with one
   to three attempts; arbitrary commands are not accepted.
+- The supervised automation entrypoint uses an owner-only no-follow POSIX lock,
+  one active local instance, expiring claim tokens, recovery records, and
+  token-fenced completion. Its status stores only bounded lifecycle/error-type
+  metadata. Recovery is at least once, so future external actions must supply
+  their own idempotency keys.
 - Shell and web tools are disabled by default and not registered in this release.
 - The HTTP server binds to localhost by default and supplies defensive headers.
 - Every API route supports optional bearer authentication resolved from

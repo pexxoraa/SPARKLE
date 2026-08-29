@@ -174,14 +174,19 @@ Run all currently due internal agent actions once:
 sparkle automations-run
 ```
 
-Run a foreground polling worker:
+Run the supervised service:
 
 ```bash
-sparkle automations-run --watch --interval 60
+sparkle-automations --check
+sparkle-automations --interval 60 --lease-seconds 3600
 ```
 
 The dashboard and `/api/automation-runs` show execution status, attempts,
 trace IDs, and safe result summaries.
+`sparkle-automations --status` shows persisted service state and
+`--healthcheck` requires a fresh running heartbeat. Expired work is recovered
+with an explicit run record; because this is at-least-once processing, future
+external actions must be idempotent.
 
 ## Dashboard
 

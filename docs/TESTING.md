@@ -23,6 +23,12 @@ The API-security cases also cover deterministic fixed-window reset/rejection,
 bounded client state, rate limiting before authorization, quota response
 headers, query stripping, and absence of credentials, origins, headers, and
 client identities from audit records.
+Supervised-automation coverage adds legacy-schema migration, expiring claims,
+explicit recovery records, old-token fencing, real deterministic orchestrator
+execution and traces, singleton lock refusal, mode-0600/no-follow lock policy,
+bounded degraded cycles, fresh/stale lifecycle status, pre-requested shutdown,
+installed-style CLI check/once/status/health behavior, a real subprocess
+SIGTERM drain, and systemd hardening inspection.
 Request-log coverage verifies that query names and values are stripped.
 Workspace-runner coverage executes a real fixed unittest suite and verifies
 POSIX resource limits, a stripped child environment, credential-pattern output
@@ -68,9 +74,7 @@ sparkle smoke-test --live
 Never report the live test as passed when the credential is absent or the exact
 `SPARKLE_LIVE_OK` response is not observed.
 
-Latest v0.12 pre-publication result on 2026-08-29: 104 tests passed in 19.728
-seconds after a temporary-database fixture defect exposed by the full run was
-corrected. Dashboard JavaScript syntax, Git whitespace, and offline editable
-installation also passed. GitHub CI run #24 passed on Python 3.12 and 3.13 and
-built/invoked the worker image. See `RELEASE_REPORT.md` for complete evidence
-and external blockers.
+Latest v0.13 release-state result on 2026-08-29: 114 tests passed in 21.288
+seconds. Dashboard JavaScript syntax, Git whitespace, offline installation, and
+the installed automation check/once/status lifecycle also passed. See
+`RELEASE_REPORT.md` for remote evidence and external blockers.

@@ -56,3 +56,19 @@ authentication is enabled without secure cookies. The built-in server does not
 provide TLS; terminate TLS at a trusted edge before any network exposure and
 forward only from that trusted edge. A bearer-only API can explicitly set
 `SPARKLE_SESSION_AUTH_ENABLED=false` instead of enabling dashboard sessions.
+
+## Supervised automations
+
+The core installation exports `sparkle-automations` separately from the API.
+Run a local lifecycle check with:
+
+```bash
+sparkle-automations --check
+sparkle-automations --once
+sparkle-automations --status
+```
+
+For a persistent POSIX deployment, install the non-root systemd unit in
+`automation_environment/` and provision the runtime data directory and model
+credential through the host secret manager. The automation process must share
+SPARKLE's data directory but should not run inside the API process.

@@ -49,6 +49,7 @@ def build_parser() -> argparse.ArgumentParser:
     automation_run = sub.add_parser("automations-run", help="Execute due automations")
     automation_run.add_argument("--watch", action="store_true")
     automation_run.add_argument("--interval", type=float, default=60.0)
+    automation_run.add_argument("--lease-seconds", type=int, default=3_600)
     scaffold = sub.add_parser("scaffold", help="Create a bounded application workspace")
     scaffold.add_argument("manifest")
     scaffold.add_argument("--approve", action="store_true")
@@ -166,18 +167,23 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "automations-run":
         if not args.watch:
-            _print({"ok": True, "runs": system.automation_runner.run_due()})
+            _print({
+                "ok": True,
+                "runs": system.automation_runner.run_due(
+                    lease_seconds=args.lease_seconds,
+                ),
+            })
             return 0
-        if not 1 <= args.interval <= 3600:
-            raise ValueError("Watch interval must be from 1 to 3600 seconds")
-        try:
-            while True:
-                runs = system.automation_runner.run_due()
-                if runs:
-                    _print({"ok": True, "runs": runs})
-                time.sleep(args.interval)
-        except KeyboardInterrupt:
-            return 0
+        from sparkle.automation_service import AutomationService, run_with_signals
+
+        service = AutomationService(
+            system.automations,
+            system.automation_runner,
+            interval_seconds=args.interval,
+            lease_seconds=args.lease_seconds,
+        )
+        _print({"ok": True, "service_run": run_with_signals(service)})
+        return 0
     if args.command == "scaffold":
         manifest = _load_manifest(args.manifest)
         manifest["approved"] = bool(args.approve)

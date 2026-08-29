@@ -1,0 +1,42 @@
+[Unit]
+Description=SPARKLE supervised automation service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=sparkle
+Group=sparkle
+WorkingDirectory=/opt/sparkle
+EnvironmentFile=-/etc/sparkle/automation.conf
+Environment=SPARKLE_DATA_DIR=/var/lib/sparkle
+Environment=SPARKLE_AUTOMATION_INTERVAL_SECONDS=60
+Environment=SPARKLE_AUTOMATION_LEASE_SECONDS=1800
+ExecStartPre=/opt/sparkle/.venv/bin/sparkle-automations --check
+ExecStart=/opt/sparkle/.venv/bin/sparkle-automations
+Restart=on-failure
+RestartSec=5s
+TimeoutStopSec=1200s
+UMask=0077
+NoNewPrivileges=yes
+PrivateDevices=yes
+PrivateTmp=yes
+ProtectClock=yes
+ProtectControlGroups=yes
+ProtectHome=yes
+ProtectHostname=yes
+ProtectKernelLogs=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+ProtectSystem=strict
+ReadWritePaths=/var/lib/sparkle
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+
+[Install]
+WantedBy=multi-user.target

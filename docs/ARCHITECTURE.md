@@ -24,6 +24,10 @@ tool registry, orchestrator, voice service, presence engine, proactive engine,
 automation store, static verifier, and opt-in fixed workspace test runner.
 An independent artifact manager reads bounded application workspaces and emits
 deterministic content-addressed ZIPs; it never starts an executable.
+The automation service is another independent entrypoint over the existing
+automation runner. It adds a POSIX singleton lock, expiring claim tokens,
+recovery/fencing, persisted lifecycle health, and signal-driven draining; it
+does not duplicate orchestration or introduce command execution.
 It also composes an operator-only external-worker client outside the model tool
 registry. That client owns bounded source packaging, HTTPS/HMAC protocol
 validation, and result persistence. The independently installable
@@ -51,6 +55,7 @@ and orchestration do not depend on cookie or browser implementation details.
 - `var/memory_environment/memory.sqlite3`
 - `var/knowledge_environment/knowledge.sqlite3`
 - `var/data_environment/automations.sqlite3`
+- `var/data_environment/automation-service.lock`
 - `var/data_environment/builds.sqlite3`
 - `var/data_environment/verifications.sqlite3`
 - `var/data_environment/test_runs.sqlite3`
