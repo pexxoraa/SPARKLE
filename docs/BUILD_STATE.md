@@ -5,13 +5,13 @@ Updated: 2026-08-29 UTC
 | Field | State |
 |---|---|
 | SPARKLE version | 0.8.0-alpha.1 |
-| Current phase | Phase 35 — end-to-end validation |
-| Current task | Publish the verified v0.8 capability tree and verify CI |
-| Completed | v0.3-v0.7 private GitHub releases/CI; model abstraction/registry/MiniMax adapter; orchestrator/context/tracing; memory and knowledge lifecycle with backup; 16 built-in agents; persistent generated-agent installation; bounded workspaces, static verification, and opt-in fixed Python tests; executable internal automations; safe tools; text API/CLI/dashboard; optional secret-resolved bearer auth; exact origin/preflight policy; fail-closed network binding; bounded API rate limiting; secret-free API audit; proactive rules; presence interface; 68-test regression suite |
-| In progress | v0.8 private GitHub publication and Python 3.12/3.13 CI |
+| Current phase | Phase 36 — release |
+| Current task | Record the verified v0.8 release and select the next capability increment |
+| Completed | v0.3-v0.8 private GitHub releases/CI; model abstraction/registry/MiniMax adapter; orchestrator/context/tracing; memory and knowledge lifecycle with backup; 16 built-in agents; persistent generated-agent installation; bounded workspaces, static verification, and opt-in fixed Python tests; executable internal automations; safe tools; text API/CLI/dashboard; optional secret-resolved bearer auth; exact origin/preflight policy; fail-closed network binding; bounded API rate limiting; secret-free API audit; proactive rules; presence interface; 68-test regression suite |
+| In progress | None; v0.8 capability publication and Python 3.12/3.13 CI are verified |
 | Blocked | Live MiniMax call (no key in build process); hardened workspace filesystem/network isolation (container namespaces denied); voice hardware; browser/computer runtime adapters; public deployment target |
 | Failed tests | None; latest local `make check` ran 68 tests successfully |
-| Next action | Publish v0.8, then design a hardened external container worker and authenticated remote session UI |
+| Next action | Design a hardened external container worker and authenticated remote session UI |
 | Estimated directive completion | 62% |
 
 The percentage measures the full long-term directive, not code volume. Agent

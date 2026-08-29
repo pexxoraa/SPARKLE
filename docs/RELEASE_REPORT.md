@@ -70,8 +70,15 @@ BLOCKED rather than PASS.
 
 ## GitHub publication and CI
 
-Pending — the locally verified v0.8 tree has not yet been published. Exact
-commit, tree, workflow run, and matrix-job evidence will replace this paragraph.
+Result: PASS — private repository `pexxoraa/SPARKLE` received v0.8 capability
+commit `228c302fa23927356e72723f792530ab1e948cee` on `main` without a force
+update. Its Git tree `c756d7cbdc239fcf1c518b22f5b01dcf7f6e1344`
+exactly matches the locally tested tree in commit
+`155dd04335f82d8edad52c9a9e14430d38954f17`.
+
+SPARKLE CI run #15 (`33239100793`) completed successfully in 19 seconds. Both
+matrix jobs, `test (3.12)` and `test (3.13)`, completed successfully, including
+the `Compile and test` step.
 
 ---
 
@@ -161,6 +168,11 @@ exactly matches the locally tested tree in commit
 SPARKLE CI run #13 (`33228183633`) completed successfully in 24 seconds. Both
 matrix jobs, `test (3.12)` and `test (3.13)`, completed successfully, including
 the `Compile and test` step.
+
+The documentation checkpoint commit
+`d98d90827ac57487b3ffff8b0af6a89fccd2c6e7` was then verified by SPARKLE CI
+run #14 (`33228285510`) in 23 seconds; both Python matrix jobs and their
+`Compile and test` steps completed successfully.
 
 ---
 
