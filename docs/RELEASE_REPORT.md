@@ -1,3 +1,78 @@
+# 0.11.0-alpha.1 verification report
+
+Date: 2026-08-29 UTC
+
+## Executed commands
+
+### Compile and regression suite
+
+```bash
+make check
+```
+
+Result: PASS — the first full v0.11 release-candidate run executed 96 tests in
+23.233 seconds; 96 passed, 0 failed, 0 errors. Fifteen new cases cover the
+worker server, real fixed child execution, application imports, timeout and
+process-group termination, exact HMAC/schema/digest/path/limit validation,
+private no-follow key files, replay and job conflicts, concurrency refusal,
+fail-closed executor recovery, exact-key redaction, signed HTTP exchange,
+Bubblewrap command and real preflight behavior, deployment policy, and the true
+client → service → executor → signed response path.
+
+### Actual isolation preflight
+
+Result: BLOCKED/SAFE REFUSAL — `/usr/bin/bwrap` is installed and the executable
+preflight ran, but this build executor does not permit the nested namespace
+operation. `sparkle-worker` reports `ready: false`, the safe failure type, and
+both filesystem/network isolation fields false. It does not execute submitted
+source in this state. The development process executor completed the end-to-end
+protocol test but correctly reported both isolation fields false.
+
+### Deployment assets
+
+Result: IMPLEMENTED/LOCALLY INSPECTED — the package exports a separate
+`sparkle-worker` entrypoint. `worker_environment/` contains an unprivileged
+image, read-only/capability-dropped Compose policy, private worker network,
+Caddy TLS gateway, file-mounted secret, bounded state/tmp, health preflight,
+and a hardened systemd service. Regression tests inspect the critical policy.
+Docker is unavailable in the local executor, so the actual image build is
+assigned to the v0.11 GitHub CI worker-image job and is not yet marked verified.
+
+## Verified v0.11 capability paths
+
+- The application and service remain separate processes/packages with no
+  application store, model, agent, or provider dependency in the worker.
+- The server accepts only `SPARKLE-WORKER/1` `python_unittest`, exact fields,
+  valid paths/digests/UTF-8 source, fresh signed requests, and requested
+  isolation controls.
+- A SQLite replay store binds job ID to exact request hash. Exact completed
+  duplicates replay one result; changed or in-flight duplicates conflict.
+- The fixed runner applies wall/POSIX resource bounds, receives a cleared
+  environment, imports submitted application code, redacts output, and writes
+  only inside an ephemeral workspace.
+- Production readiness requires a real Bubblewrap host-canary/environment/
+  network preflight. Any dependency, denial, timeout, or failed check refuses
+  jobs. Development process mode requires explicit unsafe opt-in and never
+  reports filesystem/network isolation.
+- Signing keys resolve through existing secret references or private no-follow
+  files and are absent from source, status, logs, request persistence, and
+  deployment configuration.
+
+## Not verified
+
+- A built/pulled container image, named remote deployment, public TLS endpoint,
+  live isolated hostile-code execution, cgroup/seccomp behavior at a target,
+  or independent promotion of sandbox claims to isolation evidence.
+- A real MiniMax-M3 response, public application deployment, multi-user role
+  authorization, real voice, browser/computer control, sensors, or robotics.
+
+## GitHub publication and CI
+
+Status: IN PROGRESS — local evidence is complete; v0.11 publication and its
+Python 3.12/3.13 plus worker-image CI jobs are the next release action.
+
+---
+
 # 0.10.0-alpha.1 verification report
 
 Date: 2026-08-29 UTC

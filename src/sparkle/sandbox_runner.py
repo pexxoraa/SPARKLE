@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import sys
+import unittest
 from pathlib import Path
 
 
@@ -36,21 +37,13 @@ def main(argv: list[str] | None = None) -> int:
 
     _apply_limits(timeout_seconds)
     os.chdir(workspace)
-    command = [
-        sys.executable,
-        "-I",
-        "-B",
-        "-m",
-        "unittest",
-        "discover",
-        "-s",
-        "tests",
-        "-p",
-        "test*.py",
-        "-v",
-    ]
-    os.execve(sys.executable, command, dict(os.environ))
-    return 1  # pragma: no cover - execve replaces the process
+    tests = workspace / "tests"
+    if not tests.is_dir():
+        raise ValueError("Sandbox workspace has no tests directory")
+    sys.path[:] = [str(workspace), str(tests), *sys.path]
+    suite = unittest.defaultTestLoader.discover(str(tests), pattern="test*.py")
+    result = unittest.TextTestRunner(stream=sys.stdout, verbosity=2).run(suite)
+    return 0 if result.wasSuccessful() else 1
 
 
 if __name__ == "__main__":

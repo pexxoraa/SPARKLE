@@ -55,6 +55,14 @@ schema/status verification → output redaction → result record. The signing k
 endpoint, and submitted bundle are not persisted. Sandbox fields are stored as
 claims; isolation remains unverified until separate deployment evidence exists.
 
+At the separate worker, TLS termination → bounded body read → HMAC/freshness
+validation → exact schema/path/digest validation → job-ID/request-digest claim
+→ isolation readiness check → ephemeral materialization → fixed unittest
+runner → bounded/redacted output → signed response → replay record. The worker
+has no model, agent, general shell, dependency installer, application database,
+or provider credential. Its health output contains configuration booleans and
+safe failure types, never the endpoint, key, source, or state path.
+
 Every `/api/` request first consumes a bounded in-memory per-client quota, then
 passes exact-origin validation and, when enabled, bearer or browser-session
 authentication before its body is read or any application state is accessed.

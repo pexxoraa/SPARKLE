@@ -85,3 +85,26 @@ the configured signing-key value are rejected before transfer. Each invocation
 still requires explicit operator approval. Deploying and validating a
 compatible hardened worker is separate work; setting these values alone does
 not make filesystem or network isolation verified.
+
+The separate `sparkle-worker` process uses its own environment:
+
+| Variable | Purpose | Secret |
+|---|---|---|
+| `SPARKLE_WORKER_HOST` / `SPARKLE_WORKER_PORT` | Worker bind address | No |
+| `SPARKLE_WORKER_ID` | Bounded public worker identifier | No |
+| `SPARKLE_WORKER_STATE_DIR` | Independent replay database root | No |
+| `SPARKLE_WORKER_SIGNING_KEY_FILE` | Mode-0600/0400 key file | Reference path |
+| `SPARKLE_WORKER_SIGNING_KEY` | Environment fallback for local secret managers | Yes |
+| `SPARKLE_WORKER_EXECUTOR` | `bubblewrap` (default) or explicit unsafe `process` | No |
+| `SPARKLE_WORKER_BWRAP` / `SPARKLE_WORKER_PYTHON` | Fixed executable paths | No |
+| `SPARKLE_WORKER_ALLOW_UNSAFE_PROCESS_EXECUTOR` | Required opt-in for development process mode | No |
+| `SPARKLE_WORKER_MAX_BODY_BYTES` | Request body bound (1–20 MB) | No |
+| `SPARKLE_WORKER_MAX_CONCURRENCY` | Concurrent jobs (1–32) | No |
+| `SPARKLE_WORKER_REPLAY_TTL_SECONDS` | Replay retention (300–604800 seconds) | No |
+| `SPARKLE_WORKER_MAX_REPLAY_ENTRIES` | Replay capacity (100–1000000) | No |
+| `SPARKLE_WORKER_TLS_CERT_FILE` / `SPARKLE_WORKER_TLS_KEY_FILE` | Optional direct TLS pair | Key file is secret |
+| `SPARKLE_WORKER_TRUSTED_TLS_TERMINATION` | Permit non-loopback HTTP only behind the supplied trusted edge | No |
+
+Non-loopback startup requires direct TLS or explicit trusted termination. The
+key file is opened without symlink following and must deny group/other access.
+Health/status reports only presence and control state. See `WORKER.md`.

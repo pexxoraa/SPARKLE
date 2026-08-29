@@ -29,6 +29,15 @@ created automatically on first start.
 The verified repository is private. Cloning `pexxoraa/SPARKLE` requires an
 authorized GitHub account.
 
+## External worker
+
+Installing the core package also installs `sparkle-worker`, but production
+execution belongs on a separate Linux host or container runtime. Use the
+container/Caddy or systemd profiles in `worker_environment/` and follow
+[`WORKER.md`](WORKER.md). Do not run the production worker inside the main
+SPARKLE API process and do not enable the external-worker client before the
+worker's `--check` reports ready on its actual host.
+
 ## Secured API binding
 
 Keep the default loopback bind for local use. Before binding to a non-loopback

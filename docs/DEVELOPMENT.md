@@ -30,8 +30,9 @@ Do not widen this verifier into a general command runner.
 ## Generated-workspace tests
 
 `WorkspaceTestRunner` is a separate, disabled-by-default boundary. It runs only
-`python -I -B -m unittest discover -s tests -p test*.py -v` through a trusted
-child entrypoint. It accepts a project name and approval—not an executable,
+the trusted isolated-mode `sandbox_runner.py`, which applies limits and performs
+fixed `tests/test*.py` unittest discovery. It accepts a project name and
+approval—not an executable,
 arguments, environment, or package list.
 
 Before execution it validates the workspace name/root, rejects every symlink,
@@ -42,11 +43,9 @@ to the entire process group; output is path-normalized, credential-pattern
 redacted, truncated, and persisted.
 
 The runner refuses any non-empty parent variable outside a narrow explicit
-runtime/configuration allowlist. Run it in a dedicated sanitized worker. It does not isolate the
-filesystem or network, so it is not suitable for hostile code or a production
-multi-tenant service. Bubblewrap and user namespaces are present but unusable
-in the verified container (`Operation not permitted`); do not claim container
-isolation until a deployment supplies and tests it.
+runtime/configuration allowlist. Run it in a dedicated sanitized worker. It
+does not isolate the filesystem or network, so it is not suitable for hostile
+code or a production multi-tenant service.
 
 ## External worker protocol
 
@@ -60,8 +59,16 @@ Requests and responses use canonical JSON and a timestamped HMAC-SHA256 over
 `timestamp + "." + body`. Preserve exact response-field validation, clock-skew
 checking, job matching, bounds, safe-error wrapping, and output redaction. Do
 not enable redirects or treat authenticated sandbox declarations as isolation
-evidence. A future
-worker deployment needs its own threat model, immutable image, unprivileged
-runtime, read-only root, ephemeral workspace, denied network, cgroup/seccomp
-limits, job-id deduplication, secret-free environment, and destructive escape
-tests before `isolation_verified` can change.
+evidence.
+
+The reference server lives in `worker_service.py`, its fixed executor in
+`worker_executor.py`, and deployment assets in `worker_environment/`. Do not
+widen the request schema. The default executor must fail closed when its
+Bubblewrap preflight cannot prove filesystem/environment/network boundaries.
+The `process` executor requires an explicit unsafe opt-in and must never report
+isolation. Replay records bind each job ID to one request digest; the same body
+is idempotent, while a changed body or in-flight duplicate conflicts.
+
+See `WORKER.md` for the threat model and executed evidence. `isolation_verified`
+remains false on the application side until a named deployment has separate,
+host-specific validation evidence.

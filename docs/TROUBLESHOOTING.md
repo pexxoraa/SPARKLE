@@ -79,5 +79,24 @@ reference resolves to at least 32 bytes. Every CLI/API submission also needs
 explicit approval. Do not paste the key into configuration, logs, issues, or
 chat. A signature, timestamp, job-ID, schema, size, or status mismatch is a
 hard failure and should be investigated at the worker; SPARKLE does not retry
-or accept an unsigned fallback. This release has no deployed reference worker,
-so a live external test remains blocked until one is independently provisioned.
+or accept an unsigned fallback. This release includes a reference worker but no
+instance is deployed in the verified environment, so a live remote test remains
+blocked until one is independently provisioned.
+
+## `sparkle-worker --check` exits 2
+
+This is a safe isolation refusal. Inspect the structured `executor.failure_type`
+without exposing the signing key. Confirm Linux user namespaces and Bubblewrap
+are permitted for the unprivileged service account. Container runtimes must
+allow nested unprivileged namespaces; never fix this with `--privileged`.
+
+The current build executor exposes Bubblewrap but denies the required namespace
+operation, so readiness is false here. Use `process` mode only for loopback
+protocol development; it intentionally reports both isolation fields false.
+
+## Worker returns conflict
+
+A job ID is bound to the SHA-256 digest of its exact canonical request. An exact
+completed duplicate replays the signed result. A different body using the same
+ID, or a duplicate while the first job is running, returns HTTP 409. Generate a
+new job ID instead of deleting replay records.

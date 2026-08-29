@@ -4,22 +4,24 @@ Updated: 2026-08-29 UTC
 
 | Field | State |
 |---|---|
-| SPARKLE version | 0.10.0-alpha.1 |
+| SPARKLE version | 0.11.0-alpha.1 |
 | Current phase | Phase 36 — release |
-| Current task | Record the verified v0.10 release and design the deployable hardened worker service |
-| Completed | v0.3-v0.10 private GitHub releases/CI; model abstraction/registry/MiniMax adapter; orchestrator/context/tracing; memory and knowledge lifecycle with backup; 16 built-in agents; persistent generated-agent installation; bounded workspaces, static verification, opt-in fixed local Python tests, and a disabled/operator-only signed external-worker client protocol; executable internal automations; safe tools; text API/CLI/dashboard; secret-resolved bearer auth; bounded process-local dashboard sessions with CSRF and revocation; exact origin/preflight policy; fail-closed network/session binding; bounded API rate limiting; secret-free API audit; proactive rules; presence interface; 81-test regression suite |
-| In progress | None; v0.10 capability publication and Python 3.12/3.13 CI are verified |
-| Blocked | Deployed compatible hardened external worker and live isolation validation; live MiniMax call (no key in build process); deployed TLS/reverse-proxy validation; voice hardware; browser/computer runtime adapters; public deployment target |
-| Failed tests | None; latest local `make check` ran 81 tests successfully |
-| Next action | Implement a separately deployable reference worker with hardened deployment policy and executable isolation tests |
-| Estimated directive completion | 67% |
+| Current task | Publish and independently verify the v0.11 external-worker service increment |
+| Completed | v0.3-v0.10 private GitHub releases/CI; model abstraction/registry/MiniMax adapter; orchestrator/context/tracing; memory and knowledge lifecycle with backup; 16 built-in agents; persistent generated-agent installation; bounded workspaces/static verification/fixed local tests; signed external-worker client; separately installable server with strict validation, replay protection, concurrency bounds, key-file hardening, fixed executors, fail-closed Bubblewrap preflight, container/TLS and systemd deployment profiles; executable internal automations; safe tools; text API/CLI/dashboard; bearer/session/CSRF/origin/rate/audit security; proactive rules; presence interface; 96-test regression suite |
+| In progress | v0.11 capability publication, worker-image build, and Python 3.12/3.13 CI verification |
+| Blocked | Real Bubblewrap isolation on this executor (namespace setup denied); named remote worker/TLS target and live hostile-code validation; live MiniMax call (no key in build process); voice hardware; browser/computer runtime adapters; public application deployment target |
+| Failed tests | None; latest local `make check` ran 96 tests successfully |
+| Next action | After v0.11 release verification, implement reproducible application artifact packaging and deployment records without adding a general command runner |
+| Estimated directive completion | 70% |
 
 The percentage measures the full long-term directive, not code volume. Agent
-specifications are operational through the common orchestrator, and generated
-agents, internal automation execution, bounded workspace creation, and static
-workspace verification and the signed external-worker protocol boundary now
-have runtime evidence. Autonomous code generation and hardened build/package
-execution, live
+specifications are operational through the common orchestrator. Generated
+agents, internal automations, bounded workspace creation/static verification,
+and the full external-worker protocol/service loop now have runtime evidence.
+The reference production executor and deployment profiles exist, but this host
+cannot validate their namespaces and no remote instance is provisioned, so
+isolation remains blocked. Autonomous code generation and general application
+packaging/deployment, live
 research/browser control, real voice, physical embodiment, service-managed
 scheduling, multi-user role authorization, TLS/edge rate limiting, and deployment are not
 complete.

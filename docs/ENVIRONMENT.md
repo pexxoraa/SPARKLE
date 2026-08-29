@@ -1,6 +1,6 @@
 # Build environment
 
-Inspected on 2026-08-28 UTC. These are observed values, not target
+Inspected on 2026-08-29 UTC. These are observed values, not target
 requirements.
 
 | Area | Observed state |
@@ -22,8 +22,9 @@ requirements.
 | Editor | VS Code CLI shim exists; editor runtime is not installed |
 | Internet | Controlled internet access available to the build environment |
 | Connected GitHub | Account `pexxoraa`; existing repositories are accessible with write permission |
-| Existing SPARKLE GitHub repo | None found; unrelated repositories were not modified |
-| Existing workspace files | Workspace was empty before this repository was created |
+| Existing SPARKLE GitHub repo | Private `pexxoraa/SPARKLE`; v0.10 local/remote tree parity and CI were verified before v0.11 work |
+| Isolation runtime | Bubblewrap 0.9.0 is installed; actual preflight fails closed because this executor denies nested namespaces |
+| Existing workspace files | Current SPARKLE repository resumed; no new project was created |
 
 The build environment also exposed a controlled cloud browser to the build
 agent. That is not a runtime dependency or automatically available to SPARKLE.

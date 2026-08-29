@@ -1,0 +1,62 @@
+services:
+  worker:
+    build:
+      context: ..
+      dockerfile: worker_environment/Dockerfile
+    restart: unless-stopped
+    read_only: true
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=768m,mode=1777
+    volumes:
+      - worker-state:/var/lib/sparkle-worker
+    secrets:
+      - source: worker-signing-key
+        target: sparkle-worker-signing-key
+        uid: "10001"
+        gid: "10001"
+        mode: 0400
+    expose: ["8770"]
+    healthcheck:
+      test: ["CMD", "python3", "-m", "sparkle.worker_service", "--check"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks: ["worker-internal"]
+
+  gateway:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    depends_on:
+      worker:
+        condition: service_healthy
+    environment:
+      SPARKLE_WORKER_HOSTNAME: "${SPARKLE_WORKER_HOSTNAME:?set a public worker hostname}"
+    ports:
+      - "443:443"
+      - "443:443/udp"
+    read_only: true
+    cap_drop: ["ALL"]
+    cap_add: ["NET_BIND_SERVICE"]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs:
+      - /config:rw,nosuid,nodev,size=16m
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+    networks: ["worker-internal", "gateway-public"]
+
+networks:
+  worker-internal:
+    internal: true
+  gateway-public:
+
+volumes:
+  worker-state:
+  caddy-data:
+
+secrets:
+  worker-signing-key:
+    file: ./secrets/worker-signing-key

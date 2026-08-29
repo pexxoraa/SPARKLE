@@ -21,3 +21,12 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Compile and test
         run: make check
+
+  worker-image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build separately deployable worker image
+        run: docker build --file worker_environment/Dockerfile --tag sparkle-worker:ci .
+      - name: Verify installed worker entrypoint
+        run: docker run --rm sparkle-worker:ci --help

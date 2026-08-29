@@ -24,8 +24,20 @@ tool registry, orchestrator, voice service, presence engine, proactive engine,
 automation store, static verifier, and opt-in fixed workspace test runner.
 It also composes an operator-only external-worker client outside the model tool
 registry. That client owns bounded source packaging, HTTPS/HMAC protocol
-validation, and result persistence; it does not implement the remote sandbox.
+validation, and result persistence. The independently installable
+`sparkle-worker` service implements the other side of the fixed protocol; it
+has its own configuration, secret resolution, replay database, request
+validator, and executor interface. The application never imports or starts the
+worker service.
 Interfaces call this object; they do not own intelligence.
+
+The production executor builds one immutable Bubblewrap command with a
+read-only runtime, a single writable ephemeral workspace, cleared environment,
+all namespaces unshared, no network namespace interface, and the trusted
+unittest runner. Readiness is false unless an executable preflight confirms the
+host filesystem is hidden, the environment is allowlisted, and outbound
+network connection fails. A separate process executor exists for loopback
+protocol testing only and always reports filesystem/network isolation false.
 
 The HTTP boundary composes an independent bearer access policy, bounded rate
 limiter, secret-free audit store, and process-local browser-session manager.
@@ -43,6 +55,10 @@ and orchestration do not depend on cookie or browser implementation details.
 - `var/data_environment/external_worker_runs.sqlite3`
 - `var/trace_environment/api_audit.sqlite3`
 - `var/trace_environment/traces.sqlite3`
+
+The worker owns a separate deployment state root containing only its bounded
+job replay database. It does not read the application memory, knowledge, trace,
+provider, or secrets databases.
 
 `var/` is excluded from Git. Override its parent with `SPARKLE_DATA_DIR`.
 
