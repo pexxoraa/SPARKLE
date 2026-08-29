@@ -13,6 +13,7 @@
 | Application workspaces | Configured applications data root | Bounded generated project files | User | Until operator deletion | Builder agents |
 | Application build records | `data_environment/builds.sqlite3` | File hashes, sizes, and scaffold evidence | System owner | Policy not yet configured | Dashboard/builder |
 | Workspace verifications | `data_environment/verifications.sqlite3` | Static check results and durations | System owner | Policy not yet configured | Builder agents/dashboard |
+| Workspace test runs | `data_environment/test_runs.sqlite3` | Fixed unittest outcomes and bounded redacted output | System owner | Policy not yet configured | Builder agents/API/dashboard |
 | Execution trace | Trace SQLite | Verification/diagnosis | System owner | Policy not yet configured | Dashboard/system agent |
 | API audit | `trace_environment/api_audit.sqlite3` | Secret-free HTTP outcome evidence | System owner | Policy not yet configured | API/dashboard/system status |
 | Rate-limit buckets | Bounded process memory only | Per-client request quota | API server | One fixed window/eviction | API guard |

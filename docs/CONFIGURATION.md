@@ -17,6 +17,8 @@ Environment overrides:
 | `SPARKLE_API_TOKEN` | Default API bearer-token reference | Yes |
 | `SPARKLE_API_RATE_LIMIT_REQUESTS` | Requests allowed per client/window (1–10000) | No |
 | `SPARKLE_API_RATE_LIMIT_WINDOW_SECONDS` | Fixed-window duration (1–3600 seconds) | No |
+| `SPARKLE_WORKSPACE_TESTS_ENABLED` | Opt in to fixed Python workspace tests | No |
+| `SPARKLE_WORKSPACE_TEST_TIMEOUT_SECONDS` | Test wall/CPU limit (1–60 seconds) | No |
 
 Configuration files may contain secret *names* such as `MINIMAX_API_KEY`; they
 must never contain secret values. Shell and web tools default to disabled.
@@ -41,3 +43,8 @@ only whether the token is configured.
 Rate-limit values outside their documented bounds stop configuration loading.
 Client identifiers exist only in bounded process memory and are never written
 to the audit store.
+
+The `development` section keeps workspace test execution disabled by default.
+Enable it only in a dedicated POSIX worker whose parent environment contains
+only SPARKLE's narrow runtime/configuration allowlist. SPARKLE refuses execution otherwise. This process-level
+runner does not provide filesystem or network isolation.

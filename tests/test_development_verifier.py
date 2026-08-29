@@ -5,8 +5,8 @@ import unittest
 from pathlib import Path
 
 from sparkle.builders import WorkspaceManager
-from sparkle.development import DevelopmentVerifier
-from sparkle.tooling import ToolError, WorkspaceVerifyTool
+from sparkle.development import DevelopmentVerifier, WorkspaceTestRunner
+from sparkle.tooling import ToolError, WorkspaceTestTool, WorkspaceVerifyTool
 
 
 class DevelopmentVerifierTests(unittest.TestCase):
@@ -21,9 +21,25 @@ class DevelopmentVerifierTests(unittest.TestCase):
             "assets/app.js": "const answer = 42;\n",
             "config/settings.json": '{"enabled": true}\n',
             "src/broken.py": "if True print('broken')\n",
+            "tests/test_sample.py": (
+                "import os\nimport resource\nimport unittest\n\n"
+                "class SampleTests(unittest.TestCase):\n"
+                "    def test_environment_is_stripped(self):\n"
+                "        print('token=unit-test-value')\n"
+                "        self.assertNotIn('MINIMAX_API_KEY', os.environ)\n"
+                "        self.assertEqual(resource.getrlimit(resource.RLIMIT_NOFILE)[0], 64)\n"
+                "        self.assertEqual(resource.getrlimit(resource.RLIMIT_CORE)[0], 0)\n"
+            ),
         })
         self.verifier = DevelopmentVerifier(
             self.workspaces.root, self.root / "verifications.sqlite3",
+        )
+        self.runner = WorkspaceTestRunner(
+            self.workspaces.root,
+            self.root / "test_runs.sqlite3",
+            enabled=True,
+            timeout_seconds=3,
+            parent_environment={},
         )
 
     def tearDown(self):
@@ -85,3 +101,87 @@ class DevelopmentVerifierTests(unittest.TestCase):
         ])
         self.assertEqual(result["status"], "failed")
         self.assertEqual(result["checks"][0]["output"], "Node.js is unavailable in this runtime")
+
+    def test_fixed_unittest_runner_passes_strips_environment_and_redacts(self):
+        result = self.runner.run("verified_app")
+        self.assertEqual(result["status"], "passed")
+        self.assertEqual(result["framework"], "python_unittest")
+        self.assertEqual(result["test_files"], 1)
+        self.assertIn("[REDACTED]", result["output"])
+        self.assertNotIn("unit-test-value", result["output"])
+        self.assertEqual(self.runner.list()[0]["test_run_id"], result["test_run_id"])
+        self.assertFalse(self.runner.status()["network_isolation"])
+
+    def test_runner_requires_opt_in_and_tool_approval(self):
+        disabled = WorkspaceTestRunner(
+            self.workspaces.root,
+            self.root / "disabled_runs.sqlite3",
+            enabled=False,
+            parent_environment={},
+        )
+        tool = WorkspaceTestTool(disabled)
+        with self.assertRaises(ToolError):
+            tool.run({"project_name": "verified_app"})
+        with self.assertRaisesRegex(ToolError, "Unsupported workspace test fields"):
+            tool.run({
+                "project_name": "verified_app",
+                "approved": True,
+                "command": "arbitrary command",
+            })
+        with self.assertRaisesRegex(ValueError, "disabled"):
+            tool.run({"project_name": "verified_app", "approved": True})
+
+    def test_runner_kills_wall_timeout_and_records_failure(self):
+        self.workspaces.scaffold("slow_app", {
+            "tests/test_slow.py": (
+                "import time\nimport unittest\n\n"
+                "class SlowTests(unittest.TestCase):\n"
+                "    def test_slow(self):\n"
+                "        time.sleep(10)\n"
+            ),
+        })
+        runner = WorkspaceTestRunner(
+            self.workspaces.root,
+            self.root / "slow_runs.sqlite3",
+            enabled=True,
+            timeout_seconds=1,
+            parent_environment={},
+        )
+        result = runner.run("slow_app")
+        self.assertEqual(result["status"], "failed")
+        self.assertTrue(result["timed_out"])
+        self.assertLess(result["duration_ms"], 5_000)
+
+    def test_runner_output_is_bounded_before_persistence(self):
+        self.workspaces.scaffold("noisy_app", {
+            "tests/test_noisy.py": (
+                "import unittest\n\n"
+                "class NoisyTests(unittest.TestCase):\n"
+                "    def test_noisy(self):\n"
+                "        print('x' * 100000)\n"
+            ),
+        })
+        result = self.runner.run("noisy_app")
+        self.assertEqual(result["status"], "passed")
+        self.assertEqual(len(result["output"]), self.runner.MAX_OUTPUT_CHARS)
+        self.assertEqual(len(self.runner.list()[0]["output"]), self.runner.MAX_OUTPUT_CHARS)
+
+    def test_runner_rejects_workspace_symlinks(self):
+        outside = self.root / "outside.txt"
+        outside.write_text("outside", encoding="utf-8")
+        (self.workspaces.root / "verified_app" / "leak.txt").symlink_to(outside)
+        with self.assertRaisesRegex(ValueError, "symlink"):
+            self.runner.run("verified_app")
+
+    def test_runner_refuses_non_allowlisted_parent_environment(self):
+        runner = WorkspaceTestRunner(
+            self.workspaces.root,
+            self.root / "secret_parent_runs.sqlite3",
+            enabled=True,
+            parent_environment={"SERVICE_TOKEN": "must-not-be-readable"},
+        )
+        with self.assertRaisesRegex(ValueError, "dedicated worker"):
+            runner.run("verified_app")
+        status = runner.status()
+        self.assertFalse(status["sanitized_parent"])
+        self.assertEqual(status["unexpected_parent_variables"], 1)

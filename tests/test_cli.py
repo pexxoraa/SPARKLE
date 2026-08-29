@@ -47,6 +47,35 @@ class CLITests(unittest.TestCase):
             self.assertIn('"status": "scaffolded"', lines)
             self.assertIn('"status": "passed"', lines)
 
+    def test_scaffold_then_run_fixed_workspace_tests(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            scaffold = root / "testable.json"
+            scaffold.write_text(json.dumps({
+                "project_name": "testable_app",
+                "files": {
+                    "tests/test_ready.py": (
+                        "import unittest\n\n"
+                        "class ReadyTests(unittest.TestCase):\n"
+                        "    def test_ready(self):\n"
+                        "        self.assertTrue(True)\n"
+                    ),
+                },
+            }), encoding="utf-8")
+            output = io.StringIO()
+            with (
+                patch.dict(os.environ, {
+                    "SPARKLE_DATA_DIR": directory,
+                    "SPARKLE_WORKSPACE_TESTS_ENABLED": "true",
+                }, clear=True),
+                contextlib.redirect_stdout(output),
+            ):
+                self.assertEqual(main(["scaffold", str(scaffold), "--approve"]), 0)
+                self.assertEqual(
+                    main(["test-workspace", "testable_app", "--approve"]), 0,
+                )
+            self.assertIn('"framework": "python_unittest"', output.getvalue())
+
     def test_entrypoint_reports_approval_error_without_traceback(self):
         with tempfile.TemporaryDirectory() as directory:
             manifest = Path(directory) / "scaffold.json"

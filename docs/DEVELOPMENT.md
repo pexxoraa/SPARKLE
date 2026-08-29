@@ -25,6 +25,25 @@ checks, and files over 500 KB. Syntax failures are successful verifier
 executions with a recorded `failed` result; verifier contract violations are
 client errors.
 
-Do not widen this verifier into a general command runner. Executing generated
-code requires a separate isolation design with filesystem, process, network,
-resource, secret, and artifact boundaries.
+Do not widen this verifier into a general command runner.
+
+## Generated-workspace tests
+
+`WorkspaceTestRunner` is a separate, disabled-by-default boundary. It runs only
+`python -I -B -m unittest discover -s tests -p test*.py -v` through a trusted
+child entrypoint. It accepts a project name and approval—not an executable,
+arguments, environment, or package list.
+
+Before execution it validates the workspace name/root, rejects every symlink,
+requires `tests/test*.py`, and bounds files, individual size, and total bytes.
+The child receives a fixed environment and POSIX CPU, address-space, output-
+file, descriptor, process, and core limits. The parent applies a wall timeout
+to the entire process group; output is path-normalized, credential-pattern
+redacted, truncated, and persisted.
+
+The runner refuses any non-empty parent variable outside a narrow explicit
+runtime/configuration allowlist. Run it in a dedicated sanitized worker. It does not isolate the
+filesystem or network, so it is not suitable for hostile code or a production
+multi-tenant service. Bubblewrap and user namespaces are present but unusable
+in the verified container (`Operation not permitted`); do not claim container
+isolation until a deployment supplies and tests it.

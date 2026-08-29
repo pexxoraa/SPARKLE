@@ -39,6 +39,14 @@ non-executing parser/compiler check → bounded result → persistent verificati
 record. The Node syntax checker receives a minimal environment with no provider
 credentials and cannot select an arbitrary executable or argument list.
 
+Workspace test execution follows explicit runtime opt-in → per-run approval →
+strict parent-environment allowlist → complete workspace/symlink/size scan → trusted child
+runner → fixed unittest discovery → POSIX resources and wall timeout → redacted,
+bounded persistent result. No user/model field becomes a command or argument.
+The worker reports that filesystem/network isolation is absent and refuses
+non-allowlisted parent environments; production hostile-code execution still
+requires a separately deployed hardened container worker.
+
 Every `/api/` request first consumes a bounded in-memory per-client quota, then
 passes exact-origin validation and, when enabled, bearer authentication before
 its body is read or any application state is accessed. Token values come from

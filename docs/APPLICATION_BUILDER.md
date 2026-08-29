@@ -25,7 +25,20 @@ is confined to the project, bounded, and recorded in
 sparkle verify-workspace verification.json --approve
 ```
 
-Current limitation: SPARKLE intentionally cannot execute arbitrary shell,
-application, test, package-install, or build commands through its runtime API.
-An isolated executable test runner, packager, and deployment adapter are still
-required before autonomous application delivery can be marked complete.
+An explicitly enabled dedicated worker can execute one fixed test operation:
+
+```bash
+SPARKLE_WORKSPACE_TESTS_ENABLED=true sparkle test-workspace robot_dashboard --approve
+```
+
+The runner accepts no command or argument input. It scans and bounds the whole
+workspace, rejects symlinks, strips the child environment, applies POSIX
+resource limits, kills the process group on wall timeout, redacts bounded
+output, and records results in `data_environment/test_runs.sqlite3`. It refuses
+to start unless the parent environment matches a narrow explicit allowlist.
+
+This is not a container sandbox: filesystem and network isolation are false and
+reported as such. Use only a disposable, secret-free worker. Arbitrary shell,
+application, package-install, and build commands remain unavailable. A hardened
+container worker, packager, and deployment adapter are still required before
+autonomous application delivery can be marked complete.

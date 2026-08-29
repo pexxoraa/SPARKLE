@@ -7,7 +7,7 @@ registry, provider adapters, specialist agents, persistent memory, a separate
 knowledge index, execution traces, automations, proactive rules, a CLI, an HTTP
 API, and a local dashboard.
 
-Current release: `0.7.0-alpha.1`. This is a tested foundation release, not the
+Current release: `0.8.0-alpha.1`. This is a tested foundation release, not the
 final system described in the long-term Definition of Done. See
 [`docs/BUILD_STATE.md`](docs/BUILD_STATE.md) and
 [`docs/ACCEPTANCE.md`](docs/ACCEPTANCE.md) for exact evidence and gaps.
@@ -31,6 +31,8 @@ final system described in the long-term Definition of Done. See
   overwrite protection, and explicit approval.
 - Persistent, approval-gated workspace verification with non-executing Python
   compile, JavaScript syntax, and JSON parse checks.
+- Disabled-by-default, approval-gated Python unittest execution for dedicated
+  secret-free POSIX workers, with fixed commands and bounded evidence.
 - Text/Markdown/source-code ingestion; optional PDF and DOCX ingestion.
 - Dashboard and JSON API served with Python's standard library.
 - Optional secret-resolved bearer authentication, exact origin controls, and

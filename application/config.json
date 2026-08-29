@@ -10,6 +10,10 @@
     "rate_limit_requests": 120,
     "rate_limit_window_seconds": 60
   },
+  "development": {
+    "workspace_tests_enabled": false,
+    "workspace_test_timeout_seconds": 10
+  },
   "voice": {"stt": "disabled", "tts": "disabled"},
   "presence": {"mode": "dashboard"}
 }

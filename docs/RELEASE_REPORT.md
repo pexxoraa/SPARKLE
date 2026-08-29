@@ -1,3 +1,80 @@
+# 0.8.0-alpha.1 verification report
+
+Date: 2026-08-29 UTC
+
+## Executed commands
+
+### Compile and regression suite
+
+```bash
+make check
+```
+
+Result: PASS — 68 tests ran in 9.102 seconds; 68 passed, 0 failed,
+0 errors. Added evidence executes real fixed unittest runs and covers resource
+limits, wall-time process-group termination, strict parent-environment refusal,
+stripped child environment, file-backed pre-persistence output bounds, redaction, symlink/size/command-field
+rejection, persistence, and CLI/API/dashboard integration.
+
+### Static and isolation-capability checks
+
+```bash
+node --check src/sparkle/dashboard/app.js
+git diff --check
+unshare --user --map-root-user true
+bwrap --ro-bind /usr /usr --proc /proc --dev /dev --unshare-net -- /usr/bin/true
+```
+
+Result: PASS for JavaScript and Git whitespace. Both kernel namespace checks
+were BLOCKED with `Operation not permitted`; bubblewrap 0.9.0 is installed but
+cannot create a namespace in this container. The implementation and status
+therefore report `filesystem_isolation: false` and `network_isolation: false`.
+
+### Isolated-status and provider smoke
+
+A fresh, sanitized process ran `sparkle status` with exit 0 and reported
+version `0.8.0-alpha.1`, workspace tests disabled, POSIX resource limits true,
+filesystem/network isolation false, a sanitized parent, and arbitrary
+commands false.
+
+The live provider smoke in the same sanitized environment exited 2 at
+`credential_presence`, with `configured: false` and
+`secret_value_exposed: false`. No MiniMax request was made; this remains
+BLOCKED rather than PASS.
+
+## Verified v0.8 capability paths
+
+- Execution is disabled by default and requires configuration opt-in plus
+  explicit approval for each project run.
+- The model/user cannot choose an executable, arguments, environment, package,
+  or working directory; unsupported fields are rejected.
+- A complete workspace scan rejects symlinks and enforces file-count,
+  individual-file, and total-byte bounds before execution.
+- The trusted child runs only isolated-mode standard-library unittest discovery
+  and receives a fixed environment with no inherited provider/API variables.
+- POSIX CPU, memory, file-size, descriptor, process, and core limits are applied;
+  the parent kills the whole process group on wall timeout.
+- A parent containing any non-allowlisted environment variable is refused, because
+  same-user process access cannot be safely excluded without a real sandbox.
+- Results and bounded credential-pattern-redacted output persist separately and
+  are exposed through the CLI, API, dashboard, system status, and tool registry.
+
+## Not verified
+
+- Hostile-code filesystem or network isolation; the runner is not a container
+  sandbox and must use a disposable, secret-free worker.
+- Package installation, arbitrary application/build execution, packaging, or
+  deployment.
+- A real MiniMax-M3 response, remote authenticated UI, role authorization, TLS,
+  real voice, browser/computer control, sensors, or robotics hardware.
+
+## GitHub publication and CI
+
+Pending — the locally verified v0.8 tree has not yet been published. Exact
+commit, tree, workflow run, and matrix-job evidence will replace this paragraph.
+
+---
+
 # 0.7.0-alpha.1 verification report
 
 Date: 2026-08-29 UTC

@@ -19,6 +19,16 @@
   traversal, symlinks, undeclared fields, wrong types, and oversized inputs.
   Node runs without a shell, receives no inherited provider secrets, times out
   after five seconds, and produces bounded recorded output.
+- Workspace test execution is separately disabled by default and requires
+  configuration opt-in plus per-run approval. It accepts no executable or
+  arguments, runs a fixed isolated-mode Python unittest discovery command,
+  rejects symlinks/oversized workspaces, strips the child environment, applies
+  POSIX resource limits, and kills the process group on wall timeout.
+- The test worker refuses to run unless every non-empty parent environment
+  variable is on a narrow runtime/configuration allowlist. Output is bounded
+  and credential-pattern redacted. Filesystem and
+  network isolation remain explicitly false; this boundary is for disposable,
+  dedicated workers and is not a hardened sandbox for hostile code.
 - Permanent memory, knowledge-source, and automation deletion requires an
   explicit API approval flag.
 - Automation actions are limited to validated SPARKLE agent requests with one
@@ -48,5 +58,5 @@
 
 Production deployment still needs role/owner authorization, TLS at the edge,
 distributed/edge rate limiting, audit retention, backup encryption, dependency scanning,
-process/network isolation for future test and build execution, and a
+containerized filesystem/network isolation for test/build execution, and a
 threat-model review.

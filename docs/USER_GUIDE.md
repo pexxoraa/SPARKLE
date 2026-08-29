@@ -108,6 +108,25 @@ application code, run tests, install packages, or invoke a shell. The equivalent
 API endpoint is `POST /api/builds/verify`; history is available from
 `GET /api/verifications`.
 
+## Run fixed workspace tests
+
+Workspace tests are disabled by default. In a disposable POSIX worker with a
+strictly sanitized, allowlisted environment:
+
+```bash
+export SPARKLE_WORKSPACE_TESTS_ENABLED=true
+sparkle test-workspace robot_dashboard --approve
+```
+
+SPARKLE runs only standard-library unittest discovery beneath `tests/`. It does
+not accept custom commands, arguments, dependencies, or environment values.
+Results are available from `GET /api/test-runs`; the equivalent execution route
+is `POST /api/builds/test` with `project_name` and `approved: true`.
+
+This is process-bounded execution, not filesystem or network isolation. Never
+enable it in the MiniMax/API server process or any process carrying credentials.
+Use a disposable worker and do not run hostile or untrusted code.
+
 ## Execute automations
 
 Run all currently due internal agent actions once:
@@ -133,7 +152,7 @@ sparkle serve
 
 The dashboard displays model/configuration state, built-in and generated
 agents, memory, automation runs, application builds, static verifications, and
-traces. The API audit panel shows only route outcomes and durations; it never
+bounded test runs and traces. The API audit panel shows only route outcomes and durations; it never
 shows client identities, request content, queries, origins, headers, or tokens.
 
 ## Secure API access

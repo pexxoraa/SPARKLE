@@ -57,13 +57,18 @@ class AppConfig:
     allowed_origins: tuple[str, ...] = ()
     api_rate_limit_requests: int = 120
     api_rate_limit_window_seconds: int = 60
+    workspace_tests_enabled: bool = False
+    workspace_test_timeout_seconds: int = 10
 
     @classmethod
     def load(cls, path: Path | None = None) -> "AppConfig":
         source = load_json(path or project_root() / "application" / "config.json")
         security = source.get("security") or {}
+        development = source.get("development") or {}
         if not isinstance(security, dict):
             raise ValueError("security configuration must be an object")
+        if not isinstance(development, dict):
+            raise ValueError("development configuration must be an object")
         token_refs = security.get("api_token_refs", ["SPARKLE_API_TOKEN"])
         allowed_origins = security.get("allowed_origins", [])
         if not isinstance(token_refs, list) or not token_refs or not all(
@@ -99,5 +104,15 @@ class AppConfig:
                 int(security.get("rate_limit_window_seconds", 60)),
                 minimum=1,
                 maximum=3_600,
+            ),
+            workspace_tests_enabled=environment_bool(
+                "SPARKLE_WORKSPACE_TESTS_ENABLED",
+                bool(development.get("workspace_tests_enabled", False)),
+            ),
+            workspace_test_timeout_seconds=environment_int(
+                "SPARKLE_WORKSPACE_TEST_TIMEOUT_SECONDS",
+                int(development.get("workspace_test_timeout_seconds", 10)),
+                minimum=1,
+                maximum=60,
             ),
         )

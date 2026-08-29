@@ -57,6 +57,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     verify_workspace.add_argument("manifest")
     verify_workspace.add_argument("--approve", action="store_true")
+    test_workspace = sub.add_parser(
+        "test-workspace", help="Run the fixed opt-in Python unittest command",
+    )
+    test_workspace.add_argument("project_name")
+    test_workspace.add_argument("--approve", action="store_true")
     return parser
 
 
@@ -169,6 +174,14 @@ def main(argv: list[str] | None = None) -> int:
             "workspace_verify", manifest, allowed={"workspace_verify"},
         )
         _print({"ok": result["status"] == "passed", "verification": result})
+        return 0 if result["status"] == "passed" else 1
+    if args.command == "test-workspace":
+        result = system.tools.execute(
+            "workspace_test",
+            {"project_name": args.project_name, "approved": bool(args.approve)},
+            allowed={"workspace_test"},
+        )
+        _print({"ok": result["status"] == "passed", "test_run": result})
         return 0 if result["status"] == "passed" else 1
     return 2
 

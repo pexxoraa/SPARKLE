@@ -50,3 +50,16 @@ quota by design.
 ## PDF/DOCX ingestion unavailable
 
 Install `python3 -m pip install -e '.[documents]'`.
+
+## Workspace tests are disabled
+
+This is the safe default. Set `SPARKLE_WORKSPACE_TESTS_ENABLED=true` only in a
+dedicated disposable POSIX worker, then pass `--approve` for the individual run.
+
+## Workspace tests require a secret-free worker
+
+SPARKLE detected a non-empty parent variable outside the runner's narrow
+allowlist and refused to execute generated code. Do not remove credentials from the live API process
+just to bypass this control. Start a separate sanitized worker containing only
+the data-root and workspace-test configuration variables. Filesystem and
+network isolation are still absent, so use non-hostile code only.

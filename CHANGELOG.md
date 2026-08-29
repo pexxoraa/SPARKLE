@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.8.0-alpha.1 - 2026-08-29
+
+- Added a disabled-by-default Python unittest workspace runner with a fixed
+  command; arbitrary executables, arguments, and package installation are not
+  accepted.
+- Added explicit enablement and per-run approval, strict parent-environment allowlisting,
+  stripped child environment, workspace/symlink/file bounds, POSIX CPU/memory/
+  file/process/descriptor limits, process-group wall timeout, output redaction,
+  and persistent test-run evidence.
+- Added CLI, API, dashboard, system-status, agent-tool, and configuration paths.
+- Expanded the deterministic regression suite from 61 to 68 tests.
+
 ## 0.7.0-alpha.1 - 2026-08-29
 
 - Added a thread-safe fixed-window API limiter applied before origin and bearer

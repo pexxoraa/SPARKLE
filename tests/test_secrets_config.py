@@ -44,8 +44,15 @@ class ConfigTests(unittest.TestCase):
                     "rate_limit_requests": 80,
                     "rate_limit_window_seconds": 30,
                 },
+                "development": {
+                    "workspace_tests_enabled": False,
+                    "workspace_test_timeout_seconds": 12,
+                },
             }))
-            with patch.dict("os.environ", {"SPARKLE_API_AUTH_REQUIRED": "true"}):
+            with patch.dict("os.environ", {
+                "SPARKLE_API_AUTH_REQUIRED": "true",
+                "SPARKLE_WORKSPACE_TESTS_ENABLED": "true",
+            }):
                 config = AppConfig.load(path)
         self.assertEqual(config.port, 1234)
         self.assertFalse(config.allow_shell)
@@ -54,6 +61,8 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(config.allowed_origins, ("https://console.example",))
         self.assertEqual(config.api_rate_limit_requests, 80)
         self.assertEqual(config.api_rate_limit_window_seconds, 30)
+        self.assertTrue(config.workspace_tests_enabled)
+        self.assertEqual(config.workspace_test_timeout_seconds, 12)
 
     def test_rejects_invalid_api_rate_limit(self):
         with tempfile.TemporaryDirectory() as directory:

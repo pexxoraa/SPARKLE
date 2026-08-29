@@ -41,6 +41,7 @@ async function refresh() {
       metric('Automation runs', state.automation.recent_runs),
       metric('Application builds', state.builders.workspaces),
       metric('Static verifications', state.builders.verifications),
+      metric('Workspace test runs', state.builders.test_runs),
       metric('API audit records', state.api_security.recent_audit_records),
     ].join('');
     qs('#agentList').innerHTML = state.agents.map((agent) => (
@@ -83,6 +84,14 @@ async function loadPanel(panel) {
         `<div class="list-item"><strong>${escapeHtml(verification.project_name)} · ${escapeHtml(verification.status)}</strong><small>${escapeHtml(verification.passed)} passed · ${escapeHtml(verification.failed)} failed · ${escapeHtml(verification.duration_ms)} ms</small></div>`
       )).join('')
       : empty('No workspace verifications recorded yet.');
+  }
+  if (panel === 'tests') {
+    const data = await api('/api/test-runs?limit=50');
+    qs('#testRunList').innerHTML = data.test_runs.length
+      ? data.test_runs.map((run) => (
+        `<div class="list-item"><strong>${escapeHtml(run.project_name)} · ${escapeHtml(run.status)}</strong><small>${escapeHtml(run.framework)} · exit ${escapeHtml(run.returncode)} · ${escapeHtml(run.duration_ms)} ms${run.timed_out ? ' · timed out' : ''}</small></div>`
+      )).join('')
+      : empty('No workspace tests executed yet.');
   }
   if (panel === 'traces') {
     const data = await api('/api/traces?limit=50');

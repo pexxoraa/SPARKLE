@@ -295,7 +295,16 @@ class APITests(SystemCase):
 
         build = {
             "project_name": "robot_console",
-            "files": {"README.md": "# Robot console\n", "main.py": "print('ready')\n"},
+            "files": {
+                "README.md": "# Robot console\n",
+                "main.py": "print('ready')\n",
+                "tests/test_ready.py": (
+                    "import unittest\n\n"
+                    "class ReadyTests(unittest.TestCase):\n"
+                    "    def test_ready(self):\n"
+                    "        self.assertTrue(True)\n"
+                ),
+            },
             "approved": True,
         }
         unapproved_build = dict(build)
@@ -322,6 +331,23 @@ class APITests(SystemCase):
         self.assertEqual(
             json.loads(self.request("/api/verifications")[2])["verifications"][0]["passed"],
             1,
+        )
+        self.assertEqual(self.request(
+            "/api/builds/test", {"project_name": "robot_console", "approved": True},
+        )[0], 400)
+        self.system.workspace_tests.enabled = True
+        self.system.workspace_tests.parent_environment = {}
+        self.assertEqual(self.request(
+            "/api/builds/test",
+            {"project_name": "robot_console", "approved": True, "command": "custom"},
+        )[0], 400)
+        tested = json.loads(self.request(
+            "/api/builds/test", {"project_name": "robot_console", "approved": True},
+        )[2])
+        self.assertEqual(tested["test_run"]["status"], "passed")
+        self.assertEqual(
+            json.loads(self.request("/api/test-runs")[2])["test_runs"][0]["status"],
+            "passed",
         )
 
         now = datetime.now(UTC)

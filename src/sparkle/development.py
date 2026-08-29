@@ -2,10 +2,15 @@ from __future__ import annotations
 
 import json
 import os
+import re
+import signal
 import shutil
 import sqlite3
 import subprocess
+import sys
+import tempfile
 import time
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
@@ -214,6 +219,243 @@ class DevelopmentVerifier(SQLiteStore):
             "checks": json.loads(row["checks_json"]),
             "passed": row["passed"],
             "failed": row["failed"],
+            "duration_ms": row["duration_ms"],
+            "created_at": row["created_at"],
+        }
+
+
+class WorkspaceTestRunner(SQLiteStore):
+    """Runs one fixed Python unittest command behind explicit opt-in controls."""
+
+    MAX_FILES = 500
+    MAX_TOTAL_BYTES = 5_000_000
+    MAX_FILE_BYTES = 500_000
+    MAX_OUTPUT_CHARS = 12_000
+    _SECRET_PATTERN = re.compile(
+        r"(?i)\b(authorization|api[_-]?key|token|secret)(\s*[:=]\s*|\s+)([^\s,;]+)"
+    )
+    _BEARER_PATTERN = re.compile(r"(?i)\bBearer\s+[^\s,;]+")
+    _ALLOWED_PARENT_ENVIRONMENT = frozenset({
+        "PATH", "LANG", "LC_ALL", "LC_CTYPE", "PYTHONPATH", "PYTHONHOME", "VIRTUAL_ENV",
+        "SPARKLE_DATA_DIR", "SPARKLE_WORKSPACE_TESTS_ENABLED",
+        "SPARKLE_WORKSPACE_TEST_TIMEOUT_SECONDS",
+    })
+
+    def __init__(
+        self,
+        root: Path | None = None,
+        path: Path | None = None,
+        *,
+        enabled: bool = False,
+        timeout_seconds: int = 10,
+        python_binary: str | None = None,
+        parent_environment: Mapping[str, str] | None = None,
+    ):
+        if not 1 <= timeout_seconds <= 60:
+            raise ValueError("Workspace test timeout must be from 1 to 60 seconds")
+        self.root = (root or data_root() / "applications").resolve()
+        self.root.mkdir(parents=True, exist_ok=True)
+        self.enabled = enabled
+        self.timeout_seconds = timeout_seconds
+        self.python_binary = str(Path(python_binary or sys.executable).resolve())
+        self.runner_script = Path(__file__).with_name("sandbox_runner.py").resolve()
+        self.parent_environment = (
+            os.environ if parent_environment is None else parent_environment
+        )
+        super().__init__(path or data_root() / "data_environment" / "test_runs.sqlite3")
+        self.initialize()
+
+    def initialize(self) -> None:
+        with self.connect() as connection:
+            connection.execute("""
+                CREATE TABLE IF NOT EXISTS test_runs (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    project_name TEXT NOT NULL,
+                    status TEXT NOT NULL,
+                    framework TEXT NOT NULL,
+                    returncode INTEGER,
+                    timed_out INTEGER NOT NULL,
+                    output TEXT NOT NULL,
+                    duration_ms REAL NOT NULL,
+                    created_at TEXT NOT NULL
+                )
+            """)
+
+    def status(self) -> dict[str, Any]:
+        unexpected_count = self._unexpected_environment_count()
+        return {
+            "enabled": self.enabled,
+            "framework": "python_unittest",
+            "timeout_seconds": self.timeout_seconds,
+            "resource_limits": os.name == "posix",
+            "network_isolation": False,
+            "filesystem_isolation": False,
+            "sanitized_parent": unexpected_count == 0,
+            "unexpected_parent_variables": unexpected_count,
+            "arbitrary_commands": False,
+        }
+
+    def _unexpected_environment_count(self) -> int:
+        return sum(
+            1 for name, value in self.parent_environment.items()
+            if value and name not in self._ALLOWED_PARENT_ENVIRONMENT
+        )
+
+    def _project_root(self, project_name: str) -> Path:
+        if not WorkspaceManager.NAME_PATTERN.fullmatch(project_name):
+            raise ValueError("Project name must be a 2-64 character lowercase identifier")
+        project = self.root / project_name
+        if project.is_symlink():
+            raise ValueError("Application workspace cannot be a symlink")
+        resolved = project.resolve()
+        if resolved.parent != self.root or not resolved.is_dir():
+            raise ValueError(f"Application workspace does not exist: {project_name}")
+        return resolved
+
+    def _inspect_workspace(self, project: Path) -> int:
+        file_count = 0
+        total_bytes = 0
+        test_files = 0
+        for current, directories, files in os.walk(project, followlinks=False):
+            current_path = Path(current)
+            for name in [*directories, *files]:
+                candidate = current_path / name
+                if candidate.is_symlink():
+                    raise ValueError("Workspace tests reject every symlink")
+            for name in files:
+                candidate = current_path / name
+                if not candidate.is_file():
+                    raise ValueError("Workspace tests require regular files")
+                size = candidate.stat().st_size
+                if size > self.MAX_FILE_BYTES:
+                    raise ValueError(
+                        f"Workspace test file exceeds {self.MAX_FILE_BYTES} bytes"
+                    )
+                file_count += 1
+                total_bytes += size
+                if file_count > self.MAX_FILES or total_bytes > self.MAX_TOTAL_BYTES:
+                    raise ValueError("Workspace exceeds test execution bounds")
+                if (
+                    project / "tests" in candidate.parents
+                    and candidate.name.startswith("test")
+                    and candidate.suffix == ".py"
+                ):
+                    test_files += 1
+        if not (project / "tests").is_dir() or test_files == 0:
+            raise ValueError("Workspace requires at least one tests/test*.py file")
+        return test_files
+
+    def _safe_output(self, output: str, project: Path) -> str:
+        sanitized = output.replace(str(project), "<workspace>")
+        sanitized = self._BEARER_PATTERN.sub("Bearer [REDACTED]", sanitized)
+        sanitized = self._SECRET_PATTERN.sub(r"\1\2[REDACTED]", sanitized)
+        return sanitized.strip()[: self.MAX_OUTPUT_CHARS]
+
+    def run(self, project_name: str) -> dict[str, Any]:
+        if not self.enabled:
+            raise ValueError(
+                "Workspace test execution is disabled; set "
+                "SPARKLE_WORKSPACE_TESTS_ENABLED=true only in a dedicated disposable worker"
+            )
+        if os.name != "posix":
+            raise ValueError("Workspace test execution requires POSIX resource limits")
+        if self._unexpected_environment_count():
+            raise ValueError(
+                "Workspace tests require a dedicated worker process with a "
+                "strictly allowlisted parent environment"
+            )
+        project = self._project_root(project_name)
+        test_files = self._inspect_workspace(project)
+        environment = {
+            "PATH": str(Path(self.python_binary).parent),
+            "LANG": "C.UTF-8",
+            "LC_ALL": "C.UTF-8",
+            "PYTHONHASHSEED": "0",
+            "PYTHONDONTWRITEBYTECODE": "1",
+            "SPARKLE_TEST_SANDBOX": "1",
+        }
+        command = [
+            self.python_binary,
+            "-I",
+            str(self.runner_script),
+            str(project),
+            str(self.timeout_seconds),
+        ]
+        started = time.monotonic()
+        timed_out = False
+        with tempfile.TemporaryFile(
+            mode="w+", encoding="utf-8", errors="replace",
+        ) as output_file:
+            process = subprocess.Popen(
+                command,
+                cwd=project,
+                env=environment,
+                stdout=output_file,
+                stderr=subprocess.STDOUT,
+                start_new_session=True,
+            )
+            try:
+                process.wait(timeout=self.timeout_seconds + 1)
+            except subprocess.TimeoutExpired:
+                timed_out = True
+                try:
+                    os.killpg(process.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+                process.wait()
+            output_file.seek(0)
+            output = output_file.read(self.MAX_OUTPUT_CHARS + 1)
+        duration_ms = round((time.monotonic() - started) * 1000, 2)
+        safe_output = self._safe_output(output or "", project)
+        status = "passed" if process.returncode == 0 and not timed_out else "failed"
+        now = utc_now()
+        with self.connect() as connection:
+            cursor = connection.execute("""
+                INSERT INTO test_runs(
+                    project_name, status, framework, returncode, timed_out,
+                    output, duration_ms, created_at
+                ) VALUES(?,?,?,?,?,?,?,?)
+            """, (
+                project_name,
+                status,
+                "python_unittest",
+                process.returncode,
+                int(timed_out),
+                safe_output,
+                duration_ms,
+                now,
+            ))
+        return {
+            "test_run_id": int(cursor.lastrowid),
+            "project_name": project_name,
+            "status": status,
+            "framework": "python_unittest",
+            "test_files": test_files,
+            "returncode": process.returncode,
+            "timed_out": timed_out,
+            "output": safe_output,
+            "duration_ms": duration_ms,
+            "created_at": now,
+        }
+
+    def list(self, *, limit: int = 20) -> list[dict[str, Any]]:
+        with self.connect() as connection:
+            rows = connection.execute(
+                "SELECT * FROM test_runs ORDER BY id DESC LIMIT ?",
+                (max(1, min(limit, 100)),),
+            ).fetchall()
+        return [self._public(row) for row in rows]
+
+    @staticmethod
+    def _public(row: sqlite3.Row) -> dict[str, Any]:
+        return {
+            "test_run_id": row["id"],
+            "project_name": row["project_name"],
+            "status": row["status"],
+            "framework": row["framework"],
+            "returncode": row["returncode"],
+            "timed_out": bool(row["timed_out"]),
+            "output": row["output"],
             "duration_ms": row["duration_ms"],
             "created_at": row["created_at"],
         }
