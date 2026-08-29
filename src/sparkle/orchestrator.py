@@ -39,11 +39,12 @@ class Orchestrator:
         history: Iterable[Message] | None = None,
         user_id: str | None = None,
         additional_context: str | None = None,
+        input_source: str = "text",
     ) -> AgentResult:
         if not text.strip():
             raise ValueError("Request text cannot be empty")
         spec = self.agents.get(agent_name) if agent_name else self.agent_router.select(text)
-        trace_id, started = self.traces.start(input_source="text", agent=spec.name)
+        trace_id, started = self.traces.start(input_source=input_source, agent=spec.name)
         adapter = None
         executed: list[str] = []
         data_accessed = ["memory_environment", "knowledge_environment"]
@@ -108,15 +109,29 @@ class Orchestrator:
                 raise
             raise
 
-    def run_multi(self, text: str, *, agent_names: list[str] | None = None, user_id: str | None = None) -> AgentResult:
+    def run_multi(
+        self,
+        text: str,
+        *,
+        agent_names: list[str] | None = None,
+        user_id: str | None = None,
+        input_source: str = "text",
+    ) -> AgentResult:
         specs = [self.agents.get(name) for name in agent_names] if agent_names else self.agent_router.select_many(text)
         if len(specs) == 1:
-            return self.run(text, agent_name=specs[0].name, user_id=user_id)
+            return self.run(
+                text, agent_name=specs[0].name, user_id=user_id,
+                input_source=input_source,
+            )
         peer_outputs: list[str] = []
         for spec in specs:
-            output = self.run(text, agent_name=spec.name, user_id=user_id)
+            output = self.run(
+                text, agent_name=spec.name, user_id=user_id,
+                input_source=input_source,
+            )
             peer_outputs.append(f"[{spec.name}]\n{output.text}")
         return self.run(
             "Synthesize the specialist analyses into one verified, actionable answer for the original request:\n\n" + text,
-            agent_name="personal", user_id=user_id, additional_context="\n\n".join(peer_outputs),
+            agent_name="personal", user_id=user_id,
+            additional_context="\n\n".join(peer_outputs), input_source=input_source,
         )

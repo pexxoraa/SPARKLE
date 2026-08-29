@@ -14,6 +14,8 @@
         <button class="active" data-panel="console">Command console</button>
         <button data-panel="system">System map</button>
         <button data-panel="memory">Memory</button>
+        <button data-panel="automations">Automations</button>
+        <button data-panel="builds">Application builds</button>
         <button data-panel="traces">Data traces</button>
       </nav>
       <div class="aside-foot"><span id="statusDot" class="dot"></span><span id="systemLabel">Connecting</span></div>
@@ -33,6 +35,8 @@
       </section>
       <section id="system" class="panel"><div id="statusGrid" class="grid"></div><div class="card"><h3>Agent network</h3><div id="agentList" class="agent-list"></div></div></section>
       <section id="memory" class="panel"><div class="card"><h3>Relevant memory records</h3><div id="memoryList" class="list"></div></div></section>
+      <section id="automations" class="panel"><div class="card"><h3>Automation execution history</h3><div id="automationList" class="list"></div></div></section>
+      <section id="builds" class="panel"><div class="card"><h3>Generated application workspaces</h3><div id="buildList" class="list"></div></div></section>
       <section id="traces" class="panel"><div class="card"><h3>Execution traces</h3><div id="traceList" class="list"></div></div></section>
     </main>
   </div>

@@ -5,7 +5,9 @@ import os
 import tempfile
 import threading
 import unittest
+import urllib.error
 import urllib.request
+from datetime import UTC, datetime, timedelta
 from http.server import ThreadingHTTPServer
 from pathlib import Path
 from unittest.mock import patch
@@ -97,8 +99,11 @@ class APITests(SystemCase):
     def request(self, path: str, value: dict | None = None):
         data = json.dumps(value).encode() if value is not None else None
         request = urllib.request.Request(self.base + path, data=data, headers={"Content-Type": "application/json"} if data else {}, method="POST" if data else "GET")
-        with urllib.request.urlopen(request, timeout=3) as response:
-            return response.status, response.headers, response.read()
+        try:
+            with urllib.request.urlopen(request, timeout=3) as response:
+                return response.status, response.headers, response.read()
+        except urllib.error.HTTPError as exc:
+            return exc.code, exc.headers, exc.read()
 
     def test_health_and_security_headers(self):
         status, headers, body = self.request("/api/health")
@@ -114,14 +119,85 @@ class APITests(SystemCase):
         self.assertRegex(result["trace_id"], r"SPK-\d{4}-\d{6}")
 
     def test_memory_and_knowledge_endpoints(self):
-        self.assertEqual(self.request("/api/memory", {"category": "goals", "key": "robotics", "value": "Learn ROS 2"})[0], 201)
-        self.assertEqual(self.request("/api/knowledge", {"title": "ROS", "content": "ROS 2 uses nodes and topics."})[0], 201)
+        memory_body = json.loads(self.request(
+            "/api/memory", {"category": "goals", "key": "robotics", "value": "Learn ROS 2"},
+        )[2])
+        knowledge_body = json.loads(self.request(
+            "/api/knowledge", {"title": "ROS", "content": "ROS 2 uses nodes and topics."},
+        )[2])
         memories = json.loads(self.request("/api/memory?q=ROS")[2])["memories"]
         knowledge = json.loads(self.request("/api/knowledge/search?q=nodes")[2])["results"]
         self.assertEqual(memories[0]["key"], "robotics")
         self.assertEqual(knowledge[0]["title"], "ROS")
+        memory_id = memory_body["memory_id"]
+        source_id = knowledge_body["source_id"]
+        self.assertTrue(json.loads(self.request(
+            "/api/memory/archive", {"memory_id": memory_id},
+        )[2])["archived"])
+        self.assertTrue(json.loads(self.request(
+            "/api/memory/restore", {"memory_id": memory_id},
+        )[2])["restored"])
+        self.assertEqual(self.request(
+            "/api/memory/delete", {"memory_id": memory_id},
+        )[0], 400)
+        self.assertTrue(json.loads(self.request(
+            "/api/memory/delete", {"memory_id": memory_id, "approved": True},
+        )[2])["deleted"])
+        sources = json.loads(self.request("/api/knowledge/sources")[2])["sources"]
+        self.assertEqual(sources[0]["source_id"], source_id)
+        self.assertEqual(self.request(
+            "/api/knowledge/delete", {"source_id": source_id},
+        )[0], 400)
+        self.assertTrue(json.loads(self.request(
+            "/api/knowledge/delete", {"source_id": source_id, "approved": True},
+        )[2])["deleted"])
 
     def test_dashboard_serves(self):
         status, _, body = self.request("/")
         self.assertEqual(status, 200)
         self.assertIn(b"SPARKLE", body)
+
+    def test_generated_agent_build_and_automation_endpoints(self):
+        agent = {
+            "name": "robotics_research", "capability": "reasoning",
+            "purpose": "Research robotics with evidence and engineering constraints.",
+            "instructions": "Cross-check evidence and produce testable engineering recommendations.",
+            "tools": ["calculator"], "keywords": ["robotics research"],
+            "approved": True,
+        }
+        unapproved_agent = dict(agent)
+        unapproved_agent["approved"] = False
+        self.assertEqual(self.request("/api/agents", unapproved_agent)[0], 400)
+        self.assertEqual(self.request("/api/agents", agent)[0], 201)
+        agents = json.loads(self.request("/api/agents")[2])["agents"]
+        generated = next(item for item in agents if item["name"] == "robotics_research")
+        self.assertEqual(generated["source"], "generated")
+
+        build = {
+            "project_name": "robot_console",
+            "files": {"README.md": "# Robot console\n", "main.py": "print('ready')\n"},
+            "approved": True,
+        }
+        unapproved_build = dict(build)
+        unapproved_build["approved"] = False
+        self.assertEqual(self.request("/api/builds", unapproved_build)[0], 400)
+        self.assertEqual(self.request("/api/builds", build)[0], 201)
+        self.assertEqual(self.request("/api/builds", build)[0], 409)
+        self.assertEqual(
+            json.loads(self.request("/api/builds")[2])["builds"][0]["project_name"],
+            "robot_console",
+        )
+
+        now = datetime.now(UTC)
+        automation = {
+            "name": "API focus review", "kind": "once",
+            "action": {"type": "agent", "prompt": "Review my focus", "agent": "personal"},
+            "next_run_at": (now - timedelta(minutes=1)).isoformat(),
+        }
+        self.assertEqual(self.request("/api/automations", automation)[0], 201)
+        run = json.loads(self.request("/api/automations/run", {})[2])["runs"][0]
+        self.assertEqual(run["status"], "success")
+        self.assertEqual(
+            json.loads(self.request("/api/automation-runs")[2])["runs"][0]["status"],
+            "success",
+        )

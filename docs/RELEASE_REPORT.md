@@ -1,3 +1,84 @@
+# 0.4.0-alpha.1 verification report
+
+Date: 2026-08-29 UTC
+
+## Executed commands
+
+### Compile and regression suite
+
+```bash
+make check
+```
+
+Result: PASS — 41 tests ran in 4.165 seconds; 41 passed, 0 failed,
+0 errors. Coverage added for persistent generated-agent lifecycle, bounded
+application workspaces, automation claiming/execution/retry/recurrence/cooldown
+and history, memory restore/export/delete/backup, and knowledge
+list/delete/backup.
+
+### Static release checks
+
+```bash
+node --check src/sparkle/dashboard/app.js
+git diff --check
+```
+
+Result: PASS — dashboard JavaScript parsed successfully and the working diff
+contained no whitespace errors.
+
+### Isolated runtime status
+
+```bash
+SPARKLE_DATA_DIR=<fresh-directory> PYTHONPATH=src python3 -m sparkle status
+```
+
+Result: PASS — process exited 0 and reported version `0.4.0-alpha.1`, 16
+built-in agents, seven registered tools, ready generated-agent/automation/build
+stores, zero initial records, and `arbitrary_command_execution: false`. Overall
+status was correctly `limited` because the MiniMax credential was absent.
+
+### Live-provider smoke test
+
+```bash
+SPARKLE_DATA_DIR=<fresh-directory> PYTHONPATH=src python3 -m sparkle smoke-test --live
+```
+
+Result: BLOCKED — process exited 2 at `credential_presence` with
+`configured: false` and `secret_value_exposed: false`. No provider request was
+made. This is not a live-provider PASS.
+
+## Verified v0.4 capability paths
+
+- Generated agents validate, persist outside source, hot-load, route, reload,
+  replace, and remove while built-ins remain protected.
+- Agent installation and workspace scaffolding require explicit approval.
+- Workspaces reject traversal, symlinks, unsafe names, unapproved overwrite,
+  oversized files, and oversized manifests; file hashes are recorded.
+- Once/daily/weekly/conditional automations claim work, run single or multiple
+  agents, retry within bounds, record execution evidence, reschedule, and honor
+  condition cooldowns.
+- Automation execution traces use input source `automation`.
+- Memory supports archive, restore, permanent delete, export, and database
+  backup; knowledge supports source listing, source deletion, and backup.
+- The CLI, HTTP API, system status, and dashboard expose the new capabilities.
+
+## Not verified
+
+- A real MiniMax-M3 network response.
+- Arbitrary build/test execution, packaging, or deployment.
+- Production service scheduling or external notification delivery.
+- Production deployment, authentication, and authorization.
+- Real voice, wake word, camera, browser automation, GUI computer control, or
+  robots.
+
+## GitHub publication and CI
+
+The v0.4 capability commit is awaiting publication and GitHub Actions
+verification. This section will be updated only after the remote tree and both
+Python matrix jobs are verified.
+
+---
+
 # 0.3.0-alpha.1 verification report
 
 Date: 2026-08-28 UTC

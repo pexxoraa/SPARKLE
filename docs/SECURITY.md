@@ -9,6 +9,15 @@
 - Calculator expressions use a restricted AST; calls and names are rejected.
 - Tool definitions and executions are allowlisted per agent.
 - Tool-call rounds and tool-result sizes are bounded.
+- Generated-agent installation and removal require explicit approval; manifests
+  cannot replace built-in agents or reference unregistered tools.
+- Application scaffolding requires explicit approval, confines every path to a
+  dedicated application root, rejects traversal and symlinks, enforces file and
+  manifest size limits, and protects existing files by default.
+- Permanent memory, knowledge-source, and automation deletion requires an
+  explicit API approval flag.
+- Automation actions are limited to validated SPARKLE agent requests with one
+  to three attempts; arbitrary commands are not accepted.
 - Shell and web tools are disabled by default and not registered in this release.
 - The HTTP server binds to localhost by default and supplies defensive headers.
 - Provider reasoning blocks are preserved only for provider continuity and are
@@ -16,4 +25,4 @@
 
 Production deployment still needs authentication, authorization, TLS at the
 edge, rate limiting, audit retention, backup encryption, dependency scanning,
-and a threat-model review.
+process isolation for future build execution, and a threat-model review.

@@ -12,23 +12,23 @@ means an external dependency is unavailable.
 | Model switching works | PASS | Registry activation test; routes remain configurable |
 | Separate AI environment | PASS | Dedicated config/provider/registry boundary |
 | Separate secrets environment | PASS | Env resolver, presence-only status, redaction tests |
-| Separate memory environment | PASS | Independent SQLite CRUD/search/archive tests |
-| Separate knowledge environment | PASS | Independent source/chunk store and retrieval tests |
-| Separate data environment | PASS | Independent automation store |
+| Separate memory environment | PASS | Independent SQLite CRUD/search/archive/restore/delete/export/backup tests |
+| Separate knowledge environment | PASS | Independent source/chunk ingest/search/list/delete/backup tests |
+| Separate data environment | PASS | Independent automation, generated-agent, and build-record stores |
 | Trace environment | PASS | Sequential IDs, outcomes, durations, redaction tests |
 | Core orchestrator | PASS | Single-agent, tool-loop, failure-trace paths implemented and tested |
 | Context system | PASS | Memory and knowledge retrieval integrated before calls |
 | 16 initial agents | PARTIAL | All route and run; domain-specific evaluation suites are incomplete |
-| Agent Builder deploys new agents | PARTIAL | Designs agents; persistent generated-agent installation is absent |
+| Agent Builder deploys new agents | PARTIAL | Approval-gated manifests persist, hot-load, route, replace, and remove agents; autonomous requirements-to-evaluation generation remains incomplete |
 | AI system builder | PARTIAL | Specialist exists; full build/deploy toolchain absent |
-| Application builder | PARTIAL | Specialist exists; isolated build runner absent |
+| Application builder | PARTIAL | Approval-gated, path-confined workspaces and build records are tested; arbitrary build/test execution and deployment remain absent |
 | Tool framework | PASS | Registry, schemas, allowlists, bounds, safe tools tested |
 | Browser capabilities | BLOCKED | No browser executable/runtime adapter in SPARKLE environment |
 | Computer capabilities | PARTIAL | Safe file read exists; GUI/shell control intentionally unavailable |
 | Voice works | BLOCKED | Interfaces exist; no microphone/speaker or STT/TTS adapter |
 | Text works | PASS | CLI, HTTP API, and dashboard integration tests |
 | Voice/text share context | PARTIAL | Shared architecture exists; voice cannot execute here |
-| Automation works | PARTIAL | Persistence and due selection tested; daemon/delivery absent |
+| Automation works | PARTIAL | Due/conditional claiming, agent execution, retry, recurrence, cooldown, history, enable/disable/delete, CLI worker and traces are tested; packaged service and external delivery are absent |
 | Proactive intelligence | PARTIAL | Evidence-backed deadline rules tested; more conditions absent |
 | Dashboard works | PASS | Static and API integration tests |
 | Data tracing works | PASS | Success/tool/failure metadata implemented; trace tests |
@@ -38,4 +38,4 @@ means an external dependency is unavailable.
 | Documentation complete for implementation | PASS | Requested implementation documents present |
 | Installation reproducible | PASS | Python 3.12 core has zero mandatory third-party dependencies |
 | End-to-end workflows | PARTIAL | Deterministic local flows pass; live provider and external actions blocked |
-| Release | BLOCKED | GitHub repository has not yet been created/published |
+| Release | PASS | Private GitHub publication and Python 3.12/3.13 CI were verified for v0.3; v0.4 publication evidence is recorded in the release report |

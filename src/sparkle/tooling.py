@@ -8,6 +8,8 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any
 
+from sparkle.agents import AgentRegistry, AgentSpec
+from sparkle.builders import WorkspaceManager
 from sparkle.contracts import ToolDefinition
 from sparkle.storage import KnowledgeStore, MemoryStore
 
@@ -52,6 +54,10 @@ class ToolRegistry:
 
     def status(self) -> list[dict[str, Any]]:
         return [{"name": name, "enabled": True} for name in self._tools]
+
+    @property
+    def names(self) -> set[str]:
+        return set(self._tools)
 
 
 class CalculatorTool(Tool):
@@ -185,6 +191,91 @@ class FileReadTool(Tool):
             return {"path": str(target.relative_to(self.root)), "content": target.read_text(encoding="utf-8")}
         except UnicodeDecodeError as exc:
             raise ToolError("File is not UTF-8 text") from exc
+
+
+class WorkspaceScaffoldTool(Tool):
+    name = "workspace_scaffold"
+    description = "Create a bounded application workspace from an explicit UTF-8 file manifest."
+    parameters = {
+        "type": "object",
+        "properties": {
+            "project_name": {"type": "string"},
+            "files": {"type": "object", "additionalProperties": {"type": "string"}},
+            "overwrite": {"type": "boolean"},
+            "approved": {"type": "boolean"},
+        },
+        "required": ["project_name", "files", "approved"],
+        "additionalProperties": False,
+    }
+
+    def __init__(self, manager: WorkspaceManager):
+        self.manager = manager
+
+    def run(self, arguments: dict[str, Any]) -> Any:
+        if arguments.get("approved") is not True:
+            raise ToolError("Workspace creation requires explicit approval")
+        files = arguments.get("files")
+        if not isinstance(files, dict):
+            raise ToolError("Workspace files must be an object")
+        return self.manager.scaffold(
+            str(arguments.get("project_name", "")),
+            files,
+            overwrite=bool(arguments.get("overwrite", False)),
+        )
+
+
+class AgentInstallTool(Tool):
+    name = "agent_install"
+    description = "Validate, persist, and hot-load a generated SPARKLE agent specification."
+    parameters = {
+        "type": "object",
+        "properties": {
+            "name": {"type": "string"},
+            "capability": {
+                "type": "string",
+                "enum": sorted(AgentRegistry.CAPABILITIES),
+            },
+            "purpose": {"type": "string"},
+            "instructions": {"type": "string"},
+            "tools": {"type": "array", "items": {"type": "string"}},
+            "keywords": {"type": "array", "items": {"type": "string"}},
+            "replace": {"type": "boolean"},
+            "approved": {"type": "boolean"},
+        },
+        "required": [
+            "name", "capability", "purpose", "instructions", "tools",
+            "keywords", "approved",
+        ],
+        "additionalProperties": False,
+    }
+
+    def __init__(self, registry: AgentRegistry):
+        self.registry = registry
+
+    def run(self, arguments: dict[str, Any]) -> Any:
+        if arguments.get("approved") is not True:
+            raise ToolError("Agent installation requires explicit approval")
+        tools = arguments.get("tools")
+        keywords = arguments.get("keywords")
+        if not isinstance(tools, list) or not all(isinstance(item, str) for item in tools):
+            raise ToolError("Agent tools must be a string array")
+        if not isinstance(keywords, list) or not all(isinstance(item, str) for item in keywords):
+            raise ToolError("Agent keywords must be a string array")
+        spec = AgentSpec(
+            name=str(arguments.get("name", "")),
+            capability=str(arguments.get("capability", "")),
+            purpose=str(arguments.get("purpose", "")),
+            instructions=str(arguments.get("instructions", "")),
+            tools=frozenset(tools),
+            keywords=tuple(keywords),
+        )
+        installed = self.registry.install(spec, replace=bool(arguments.get("replace", False)))
+        return {
+            "installed": True,
+            "name": installed.name,
+            "capability": installed.capability,
+            "tools": sorted(installed.tools),
+        }
 
 
 def safe_tool_result(value: Any, *, max_chars: int = 30_000) -> str:

@@ -3,8 +3,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from sparkle.agents import AgentRegistry, AgentRouter
-from sparkle.automation import AutomationStore, ProactiveEngine
+from sparkle.agents import AgentRegistry, AgentRouter, GeneratedAgentStore
+from sparkle.automation import AutomationRunner, AutomationStore, ProactiveEngine
+from sparkle.builders import WorkspaceManager
 from sparkle.config import AppConfig, data_root, project_root
 from sparkle.context import ContextBuilder
 from sparkle.knowledge import KnowledgeIngestor
@@ -12,7 +13,16 @@ from sparkle.orchestrator import Orchestrator
 from sparkle.presence import PresenceEngine
 from sparkle.registry import ModelRegistry, ModelRouter
 from sparkle.storage import KnowledgeStore, MemoryStore
-from sparkle.tooling import CalculatorTool, FileReadTool, KnowledgeSearchTool, MemorySearchTool, MemoryWriteTool, ToolRegistry
+from sparkle.tooling import (
+    AgentInstallTool,
+    CalculatorTool,
+    FileReadTool,
+    KnowledgeSearchTool,
+    MemorySearchTool,
+    MemoryWriteTool,
+    ToolRegistry,
+    WorkspaceScaffoldTool,
+)
 from sparkle.trace import TraceStore
 from sparkle.voice import VoiceService
 
@@ -30,30 +40,40 @@ class SparkleSystem:
         self.voice = VoiceService()
         self.models = model_registry or ModelRegistry()
         self.model_router = ModelRouter(self.models)
-        self.agents = AgentRegistry()
-        self.agent_router = AgentRouter(self.agents)
         self.context = ContextBuilder(
             self.memory, self.knowledge,
             memory_limit=self.config.memory_results,
             knowledge_limit=self.config.knowledge_results,
         )
+        self.workspaces = WorkspaceManager()
         self.tools = ToolRegistry()
         self.tools.register(CalculatorTool())
         self.tools.register(MemorySearchTool(self.memory))
         self.tools.register(MemoryWriteTool(self.memory))
         self.tools.register(KnowledgeSearchTool(self.knowledge))
         self.tools.register(FileReadTool(project_root()))
+        self.tools.register(WorkspaceScaffoldTool(self.workspaces))
+        self.generated_agents = GeneratedAgentStore()
+        self.agents = AgentRegistry(
+            self.generated_agents,
+            allowed_tools=self.tools.names | {"agent_install"},
+        )
+        self.tools.register(AgentInstallTool(self.agents))
+        self.agent_router = AgentRouter(self.agents)
         self.orchestrator = Orchestrator(
             models=self.model_router, agents=self.agents, agent_router=self.agent_router,
             context=self.context, tools=self.tools, traces=self.traces,
             max_tool_rounds=self.config.max_tool_rounds,
+        )
+        self.automation_runner = AutomationRunner(
+            self.automations, self.orchestrator, self.proactive,
         )
 
     def status(self) -> dict[str, Any]:
         models = self.models.list()
         return {
             "name": "SPARKLE",
-            "version": "0.3.0-alpha.1",
+            "version": "0.4.0-alpha.1",
             "status": "ready" if any(model["configured"] for model in models) else "limited",
             "active_model": self.models.active_id,
             "models": models,
@@ -61,9 +81,20 @@ class SparkleSystem:
             "knowledge": {"status": "ready", **self.knowledge.stats()},
             "trace": {"status": "ready", "recent": len(self.traces.recent(limit=100))},
             "agents": self.agents.list(),
+            "generated_agents": {
+                "status": "ready",
+                "count": sum(1 for agent in self.agents.list() if agent["source"] == "generated"),
+            },
             "tools": self.tools.status(),
             "voice": self.voice.status(),
-            "automation": {"status": "ready", "count": len(self.automations.list())},
+            "automation": {
+                "status": "ready", "count": len(self.automations.list()),
+                "recent_runs": len(self.automations.list_runs(limit=100)),
+            },
+            "builders": {
+                "status": "ready", "workspaces": len(self.workspaces.list(limit=100)),
+                "arbitrary_command_execution": False,
+            },
             "proactive_alerts": self.proactive.inspect(),
             "presence": self.presence.status(),
             "data_root": str(data_root()),

@@ -28,6 +28,14 @@ class MemoryTests(unittest.TestCase):
         self.assertEqual(matches[0]["value"], "Build a Python application")
         self.assertTrue(self.store.archive(memory_id))
         self.assertEqual(self.store.search("Python"), [])
+        self.assertTrue(self.store.restore(memory_id))
+        self.assertEqual(self.store.search("Python")[0]["id"], memory_id)
+        exported = self.store.export()
+        self.assertEqual(exported[0]["key"], "python")
+        backup = self.store.backup(Path(self.temp.name) / "backups" / "memory.sqlite3")
+        self.assertEqual(MemoryStore(backup).search("Python")[0]["id"], memory_id)
+        self.assertTrue(self.store.delete(memory_id))
+        self.assertEqual(self.store.export(), [])
 
     def test_rejects_unknown_category(self):
         with self.assertRaises(ValueError):
@@ -43,6 +51,11 @@ class KnowledgeTests(unittest.TestCase):
             self.assertEqual(matches[0]["source_id"], source_id)
             self.assertIn("kinematics", matches[0]["content"])
             self.assertEqual(store.stats(), {"sources": 1, "chunks": 2})
+            self.assertEqual(store.list_sources()[0]["source_id"], source_id)
+            backup = store.backup(Path(directory) / "backups" / "knowledge.sqlite3")
+            self.assertEqual(KnowledgeStore(backup).stats(), {"sources": 1, "chunks": 2})
+            self.assertTrue(store.delete_source(source_id))
+            self.assertEqual(store.stats(), {"sources": 0, "chunks": 0})
 
     def test_file_ingestor_supports_markdown_and_rejects_unknown(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -77,6 +90,12 @@ class AutomationTests(unittest.TestCase):
             past = (datetime.now(UTC) - timedelta(minutes=1)).isoformat()
             store.create("Review", "once", {"type": "agent", "prompt": "Review"}, next_run_at=past)
             self.assertEqual(store.due()[0]["name"], "Review")
+            automation_id = store.list()[0]["id"]
+            self.assertTrue(store.set_enabled(automation_id, False))
+            self.assertEqual(store.due(), [])
+            self.assertTrue(store.set_enabled(automation_id, True))
+            self.assertTrue(store.delete(automation_id))
+            self.assertEqual(store.list(), [])
             with self.assertRaises(ValueError):
                 store.create("Broken", "condition", {"type": "agent"})
 

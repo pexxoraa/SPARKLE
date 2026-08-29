@@ -10,6 +10,7 @@ from sparkle.api import serve
 from sparkle.contracts import Message, ModelRequest
 from sparkle.model import ModelError
 from sparkle.system import SparkleSystem
+from sparkle.tooling import ToolError
 
 
 def _print(value: object) -> None:
@@ -36,7 +37,29 @@ def build_parser() -> argparse.ArgumentParser:
     knowledge = sub.add_parser("ingest", help="Ingest a UTF-8 text or Markdown file")
     knowledge.add_argument("path")
     knowledge.add_argument("--title")
+    agent_install = sub.add_parser("agent-install", help="Install a generated agent manifest")
+    agent_install.add_argument("manifest")
+    agent_install.add_argument("--approve", action="store_true")
+    agent_install.add_argument("--replace", action="store_true")
+    agent_remove = sub.add_parser("agent-remove", help="Remove a generated agent")
+    agent_remove.add_argument("name")
+    agent_remove.add_argument("--approve", action="store_true")
+    automation_run = sub.add_parser("automations-run", help="Execute due automations")
+    automation_run.add_argument("--watch", action="store_true")
+    automation_run.add_argument("--interval", type=float, default=60.0)
+    scaffold = sub.add_parser("scaffold", help="Create a bounded application workspace")
+    scaffold.add_argument("manifest")
+    scaffold.add_argument("--approve", action="store_true")
+    scaffold.add_argument("--overwrite", action="store_true")
     return parser
+
+
+def _load_manifest(path: str) -> dict[str, object]:
+    source = Path(path).resolve()
+    value = json.loads(source.read_text(encoding="utf-8"))
+    if not isinstance(value, dict):
+        raise ValueError("Manifest root must be a JSON object")
+    return value
 
 
 def live_smoke(system: SparkleSystem) -> int:
@@ -96,12 +119,49 @@ def main(argv: list[str] | None = None) -> int:
         source_id = system.knowledge_ingestor.ingest(path, title=args.title)
         _print({"ok": True, "source_id": source_id})
         return 0
+    if args.command == "agent-install":
+        manifest = _load_manifest(args.manifest)
+        manifest["approved"] = bool(args.approve)
+        manifest["replace"] = bool(args.replace)
+        result = system.tools.execute(
+            "agent_install", manifest, allowed={"agent_install"},
+        )
+        _print({"ok": True, "agent": result})
+        return 0
+    if args.command == "agent-remove":
+        if not args.approve:
+            raise ValueError("Agent removal requires --approve")
+        _print({"ok": True, "removed": system.agents.remove(args.name)})
+        return 0
+    if args.command == "automations-run":
+        if not args.watch:
+            _print({"ok": True, "runs": system.automation_runner.run_due()})
+            return 0
+        if not 1 <= args.interval <= 3600:
+            raise ValueError("Watch interval must be from 1 to 3600 seconds")
+        try:
+            while True:
+                runs = system.automation_runner.run_due()
+                if runs:
+                    _print({"ok": True, "runs": runs})
+                time.sleep(args.interval)
+        except KeyboardInterrupt:
+            return 0
+    if args.command == "scaffold":
+        manifest = _load_manifest(args.manifest)
+        manifest["approved"] = bool(args.approve)
+        manifest["overwrite"] = bool(args.overwrite)
+        result = system.tools.execute(
+            "workspace_scaffold", manifest, allowed={"workspace_scaffold"},
+        )
+        _print({"ok": True, "build": result})
+        return 0
     return 2
 
 
 if __name__ == "__main__":
     try:
         raise SystemExit(main())
-    except ModelError as exc:
+    except (ModelError, ValueError, KeyError, TypeError, ToolError, FileExistsError) as exc:
         print(str(exc), file=sys.stderr)
         raise SystemExit(1)

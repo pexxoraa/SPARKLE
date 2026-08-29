@@ -10,6 +10,7 @@ from urllib.parse import parse_qs, urlparse
 
 from sparkle.model import ModelError
 from sparkle.system import SparkleSystem
+from sparkle.tooling import ToolError
 
 MAX_BODY_BYTES = 1_000_000
 
@@ -17,7 +18,7 @@ MAX_BODY_BYTES = 1_000_000
 class SparkleHandler(BaseHTTPRequestHandler):
     system: SparkleSystem
     dashboard_root = Path(__file__).with_name("dashboard")
-    server_version = "SPARKLE/0.3"
+    server_version = "SPARKLE/0.4"
 
     def log_message(self, format: str, *args: object) -> None:
         # Avoid request bodies, headers, query values, and secrets in logs.
@@ -81,10 +82,28 @@ class SparkleHandler(BaseHTTPRequestHandler):
             return self._json({"memories": self.system.memory.search(query.get("q", [""])[0], limit=int(query.get("limit", [20])[0]))})
         if parsed.path == "/api/knowledge/search":
             return self._json({"results": self.system.knowledge.search(query.get("q", [""])[0], limit=int(query.get("limit", [10])[0]))})
+        if parsed.path == "/api/knowledge/sources":
+            return self._json({
+                "sources": self.system.knowledge.list_sources(
+                    limit=int(query.get("limit", [100])[0])
+                )
+            })
         if parsed.path == "/api/traces":
             return self._json({"traces": self.system.traces.recent(limit=int(query.get("limit", [20])[0]))})
         if parsed.path == "/api/automations":
             return self._json({"automations": self.system.automations.list()})
+        if parsed.path == "/api/automation-runs":
+            return self._json({
+                "runs": self.system.automations.list_runs(
+                    limit=int(query.get("limit", [20])[0])
+                )
+            })
+        if parsed.path == "/api/builds":
+            return self._json({
+                "builds": self.system.workspaces.list(
+                    limit=int(query.get("limit", [20])[0])
+                )
+            })
         self._json({"error": "not_found"}, 404)
 
     def do_POST(self) -> None:
@@ -104,29 +123,82 @@ class SparkleHandler(BaseHTTPRequestHandler):
             if self.path == "/api/models/activate":
                 self.system.models.activate(str(data["model_id"]))
                 return self._json({"ok": True, "active_model": self.system.models.active_id})
+            if self.path == "/api/agents":
+                result = self.system.tools.execute(
+                    "agent_install", data, allowed={"agent_install"},
+                )
+                return self._json({"ok": True, "agent": result}, 201)
+            if self.path == "/api/agents/remove":
+                if data.get("approved") is not True:
+                    raise ValueError("Agent removal requires explicit approval")
+                removed = self.system.agents.remove(str(data["name"]))
+                return self._json({"ok": True, "removed": removed})
             if self.path == "/api/memory":
                 memory_id = self.system.memory.remember(
                     str(data["category"]), str(data["key"]), str(data["value"]),
                     importance=float(data.get("importance", 0.5)), metadata=data.get("metadata") or {},
                 )
                 return self._json({"ok": True, "memory_id": memory_id}, 201)
+            if self.path == "/api/memory/archive":
+                return self._json({
+                    "ok": True, "archived": self.system.memory.archive(int(data["memory_id"])),
+                })
+            if self.path == "/api/memory/restore":
+                return self._json({
+                    "ok": True, "restored": self.system.memory.restore(int(data["memory_id"])),
+                })
+            if self.path == "/api/memory/delete":
+                if data.get("approved") is not True:
+                    raise ValueError("Memory deletion requires explicit approval")
+                return self._json({
+                    "ok": True, "deleted": self.system.memory.delete(int(data["memory_id"])),
+                })
             if self.path == "/api/knowledge":
                 source_id = self.system.knowledge.ingest_text(
                     str(data["title"]), str(data["content"]), source_uri=data.get("source_uri"),
                     media_type=str(data.get("media_type", "text/plain")), metadata=data.get("metadata") or {},
                 )
                 return self._json({"ok": True, "source_id": source_id}, 201)
+            if self.path == "/api/knowledge/delete":
+                if data.get("approved") is not True:
+                    raise ValueError("Knowledge-source deletion requires explicit approval")
+                return self._json({
+                    "ok": True,
+                    "deleted": self.system.knowledge.delete_source(int(data["source_id"])),
+                })
             if self.path == "/api/automations":
                 automation_id = self.system.automations.create(
                     str(data["name"]), str(data["kind"]), dict(data["action"]),
                     schedule=data.get("schedule"), condition=data.get("condition"), next_run_at=data.get("next_run_at"),
                 )
                 return self._json({"ok": True, "automation_id": automation_id}, 201)
+            if self.path == "/api/automations/run":
+                runs = self.system.automation_runner.run_due()
+                return self._json({"ok": True, "runs": runs})
+            if self.path == "/api/automations/enable":
+                changed = self.system.automations.set_enabled(
+                    int(data["automation_id"]), bool(data["enabled"]),
+                )
+                return self._json({"ok": True, "changed": changed})
+            if self.path == "/api/automations/delete":
+                if data.get("approved") is not True:
+                    raise ValueError("Automation deletion requires explicit approval")
+                return self._json({
+                    "ok": True,
+                    "deleted": self.system.automations.delete(int(data["automation_id"])),
+                })
+            if self.path == "/api/builds":
+                result = self.system.tools.execute(
+                    "workspace_scaffold", data, allowed={"workspace_scaffold"},
+                )
+                return self._json({"ok": True, "build": result}, 201)
             self._json({"error": "not_found"}, 404)
         except ModelError as exc:
             self.system.presence.update("error", "Model unavailable")
             self._json({"ok": False, "error": str(exc), "retryable": exc.retryable}, 503 if exc.retryable else 424)
-        except (ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:
+        except FileExistsError as exc:
+            self._json({"ok": False, "error": str(exc), "error_type": type(exc).__name__}, 409)
+        except (ValueError, KeyError, TypeError, ToolError, json.JSONDecodeError) as exc:
             self._json({"ok": False, "error": str(exc), "error_type": type(exc).__name__}, 400)
         except Exception as exc:
             self.system.presence.update("error", "Execution failed")

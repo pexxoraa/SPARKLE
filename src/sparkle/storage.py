@@ -27,6 +27,15 @@ class SQLiteStore:
         connection.execute("PRAGMA foreign_keys=ON")
         return connection
 
+    def backup(self, destination: Path) -> Path:
+        target = destination.expanduser().resolve()
+        if target == self.path.resolve():
+            raise ValueError("Backup destination must differ from the live database")
+        target.parent.mkdir(parents=True, exist_ok=True)
+        with self.connect() as source, sqlite3.connect(target) as backup:
+            source.backup(backup)
+        return target
+
 
 class MemoryStore(SQLiteStore):
     VALID_CATEGORIES = {
@@ -120,13 +129,33 @@ class MemoryStore(SQLiteStore):
             )
         return cursor.rowcount == 1
 
+    def restore(self, memory_id: int) -> bool:
+        with self.connect() as connection:
+            cursor = connection.execute(
+                "UPDATE memories SET archived=0, updated_at=? WHERE id=?", (utc_now(), memory_id)
+            )
+        return cursor.rowcount == 1
+
+    def delete(self, memory_id: int) -> bool:
+        with self.connect() as connection:
+            cursor = connection.execute("DELETE FROM memories WHERE id=?", (memory_id,))
+        return cursor.rowcount == 1
+
+    def export(self, *, include_archived: bool = True) -> list[dict[str, Any]]:
+        where = "" if include_archived else " WHERE archived=0"
+        with self.connect() as connection:
+            rows = connection.execute(
+                f"SELECT * FROM memories{where} ORDER BY id"
+            ).fetchall()
+        return [self._public(row) for row in rows]
+
     @staticmethod
     def _public(row: sqlite3.Row) -> dict[str, Any]:
         return {
             "id": row["id"], "category": row["category"], "key": row["memory_key"],
             "value": row["value"], "importance": row["importance"],
             "metadata": json.loads(row["metadata"]), "created_at": row["created_at"],
-            "updated_at": row["updated_at"],
+            "updated_at": row["updated_at"], "archived": bool(row["archived"]),
         }
 
 
@@ -230,3 +259,25 @@ class KnowledgeStore(SQLiteStore):
             source_count = connection.execute("SELECT COUNT(*) FROM sources").fetchone()[0]
             chunk_count = connection.execute("SELECT COUNT(*) FROM chunks").fetchone()[0]
         return {"sources": int(source_count), "chunks": int(chunk_count)}
+
+    def list_sources(self, *, limit: int = 100) -> list[dict[str, Any]]:
+        with self.connect() as connection:
+            rows = connection.execute("""
+                SELECT sources.*, COUNT(chunks.id) AS chunk_count
+                FROM sources LEFT JOIN chunks ON chunks.source_id=sources.id
+                GROUP BY sources.id ORDER BY sources.id DESC LIMIT ?
+            """, (max(1, min(limit, 1_000)),)).fetchall()
+        return [
+            {
+                "source_id": row["id"], "title": row["title"],
+                "source_uri": row["source_uri"], "media_type": row["media_type"],
+                "metadata": json.loads(row["metadata"]),
+                "created_at": row["created_at"], "chunks": row["chunk_count"],
+            }
+            for row in rows
+        ]
+
+    def delete_source(self, source_id: int) -> bool:
+        with self.connect() as connection:
+            cursor = connection.execute("DELETE FROM sources WHERE id=?", (source_id,))
+        return cursor.rowcount == 1

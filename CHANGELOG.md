@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.0-alpha.1 - 2026-08-29
+
+- Added persistent generated-agent installation, hot-loading, removal, and routing.
+- Added approval-gated Agent Builder and workspace-scaffolding tools.
+- Added bounded application workspaces with path, file-count, byte, symlink, and overwrite controls.
+- Added executable scheduled and conditional automations with claims, retries, rescheduling, run history, and traces.
+- Added CLI and API operations for generated agents, builds, and automation execution.
+- Expanded the dashboard with generated-agent, automation-run, and build status.
+- Expanded the deterministic regression suite from 32 to 41 tests.
+
 ## 0.3.0-alpha.1 — 2026-08-28
 
 - Created the first GitHub-ready SPARKLE foundation.

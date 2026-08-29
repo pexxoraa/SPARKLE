@@ -7,7 +7,7 @@ registry, provider adapters, specialist agents, persistent memory, a separate
 knowledge index, execution traces, automations, proactive rules, a CLI, an HTTP
 API, and a local dashboard.
 
-Current release: `0.3.0-alpha.1`. This is a tested foundation release, not the
+Current release: `0.4.0-alpha.1`. This is a tested foundation release, not the
 final system described in the long-term Definition of Done. See
 [`docs/BUILD_STATE.md`](docs/BUILD_STATE.md) and
 [`docs/ACCEPTANCE.md`](docs/ACCEPTANCE.md) for exact evidence and gaps.
@@ -23,7 +23,12 @@ final system described in the long-term Definition of Done. See
   Application Builder, AI Builder, Agent Builder, Project, Data Analysis,
   Content, Productivity, Automation, and System agents.
 - Single-agent and multi-agent orchestration with bounded tool execution.
+- Persistent generated-agent installation, hot-loading, removal, and routing.
 - SQLite memory, knowledge, trace, and automation stores in separate paths.
+- Executable once/daily/weekly/conditional automations with retry, rescheduling,
+  run history, and automation-origin traces.
+- Bounded application workspace scaffolding with path confinement, size limits,
+  overwrite protection, and explicit approval.
 - Text/Markdown/source-code ingestion; optional PDF and DOCX ingestion.
 - Dashboard and JSON API served with Python's standard library.
 - Voice and motion/presence interfaces that do not couple the core to hardware.

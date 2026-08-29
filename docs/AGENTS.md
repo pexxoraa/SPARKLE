@@ -25,3 +25,9 @@ context, trace, and model systems.
 
 Multi-agent execution runs selected specialists, then asks the Personal Agent to
 synthesize their outputs. Each specialist and synthesis receives its own trace.
+
+Generated agents use the same `AgentSpec` contract and execution path. Approved
+manifests are validated against registered tools, persisted outside source code,
+hot-loaded immediately, and reloaded on restart. The registry protects all 16
+built-in definitions from replacement or deletion. Generated-agent lifecycle
+operations are available through the CLI and local HTTP API.
