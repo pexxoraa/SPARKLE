@@ -38,4 +38,4 @@ means an external dependency is unavailable.
 | Documentation complete for implementation | PASS | Requested implementation documents present |
 | Installation reproducible | PASS | Python 3.12 core has zero mandatory third-party dependencies |
 | End-to-end workflows | PARTIAL | Deterministic local flows pass; live provider and external actions blocked |
-| Release | PASS | Private GitHub publication and Python 3.12/3.13 CI were verified for v0.3; v0.4 publication evidence is recorded in the release report |
+| Release | PASS | Private v0.4 commit/tree publication and Python 3.12/3.13 CI run #7 verified; see the release report |

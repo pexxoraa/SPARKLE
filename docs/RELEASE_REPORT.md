@@ -10,7 +10,8 @@ Date: 2026-08-29 UTC
 make check
 ```
 
-Result: PASS — 41 tests ran in 4.165 seconds; 41 passed, 0 failed,
+Result: PASS — latest release-state run executed 41 tests in 4.293 seconds;
+41 passed, 0 failed,
 0 errors. Coverage added for persistent generated-agent lifecycle, bounded
 application workspaces, automation claiming/execution/retry/recurrence/cooldown
 and history, memory restore/export/delete/backup, and knowledge
@@ -73,9 +74,16 @@ made. This is not a live-provider PASS.
 
 ## GitHub publication and CI
 
-The v0.4 capability commit is awaiting publication and GitHub Actions
-verification. This section will be updated only after the remote tree and both
-Python matrix jobs are verified.
+Result: PASS — the private repository `pexxoraa/SPARKLE` received v0.4
+capability commit `d5984f709b3a0bd67b0131e4306e2c00498ef514` on `main` without
+a force update. Its Git tree
+`f472afe902d8bd902cddf7a7a4eb3f954cd9d555` exactly matches the locally tested
+tree in commit `027c19a4649483086d55a42f0853a0e8c37a0ee8`.
+
+SPARKLE CI run #7 (`33226436851`) completed successfully in 15 seconds. Both
+matrix jobs, `test (3.12)` and `test (3.13)`, completed successfully, including
+the `Compile and test` step. The workflow reported no artifacts and no
+annotations.
 
 ---
 
