@@ -39,4 +39,4 @@ means an external dependency is unavailable.
 | Documentation complete for implementation | PASS | Requested implementation documents present |
 | Installation reproducible | PASS | Python 3.12 core has zero mandatory third-party dependencies |
 | End-to-end workflows | PARTIAL | Deterministic local flows pass; live provider and external actions blocked |
-| Release | IN PROGRESS | v0.12 passes locally; exact-tree GitHub publication and CI verification are the active task |
+| Release | PASS | v0.12 remote tree matches local; CI run #24 passed Python 3.12/3.13 and the worker-image/entrypoint job |

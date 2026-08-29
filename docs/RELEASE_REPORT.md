@@ -74,8 +74,12 @@ execution failure.
 
 ## GitHub publication and CI
 
-Status: IN PROGRESS — the local release state passes; exact-tree publication
-and GitHub Actions evidence will be appended after the remote run completes.
+Result: PASS — remote commit
+`37e4d05a73d0158963fd95ea93af8675fcb976b3` points to tree
+`79969d371a213b1bd92b5a61564d64db9caa2c49`, exactly matching local capability
+commit `3a7f1ed19b065aa834c4c002f90b7029c4283d6d`. SPARKLE CI run #24
+(`33264113348`) completed successfully: `test (3.12)`, `test (3.13)`, and the
+worker-image build/installed-entrypoint job all passed.
 
 ---
 

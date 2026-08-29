@@ -70,6 +70,7 @@ Never report the live test as passed when the credential is absent or the exact
 
 Latest v0.12 pre-publication result on 2026-08-29: 104 tests passed in 19.728
 seconds after a temporary-database fixture defect exposed by the full run was
-corrected. Dashboard JavaScript syntax, Git whitespace, offline editable
-installation, and remote CI are rerun for the release checkpoint. See
-`RELEASE_REPORT.md` for complete evidence and external blockers.
+corrected. Dashboard JavaScript syntax, Git whitespace, and offline editable
+installation also passed. GitHub CI run #24 passed on Python 3.12 and 3.13 and
+built/invoked the worker image. See `RELEASE_REPORT.md` for complete evidence
+and external blockers.
