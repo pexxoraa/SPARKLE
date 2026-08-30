@@ -77,7 +77,11 @@ suite passed 150 tests in 28.012 seconds. A fresh non-editable `0.15.0a1` wheel
 then installed without dependencies or an index and passed installed version,
 content round-trip, exact legacy serialization, honest security/multimodal
 status, automation check/once/status, worker entrypoint, and separate mode-0600
-configuration checks. Final exact-tree publication/CI evidence is pending.
+configuration checks. Local commit
+`81096223b892558f2f6ccd61129ece7c5f3c0122` has tree
+`59658768df608a10fcc6174bb55d95128e511d53`; remote non-force
+fast-forward commit `6ec020a40e9ee6675a4591d5b563f45449507b35` has the
+same tree. CI run #33 (`33290153808`) passed all four required jobs.
 
 ---
 

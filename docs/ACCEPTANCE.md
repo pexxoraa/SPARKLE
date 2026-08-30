@@ -35,8 +35,8 @@ means an external dependency is unavailable.
 | Data tracing works | PASS | Success/tool/failure metadata implemented; trace tests |
 | Motion/presence architecture | PASS | Independent presence engine; physical motion intentionally absent |
 | Multimodal architecture prepared | PASS | `SPARKLE-CONTENT/1` text/image/audio/document contracts flow through API, context, routing, adapters, results, and raw-content-free traces; mixed and failure paths are tested. Live non-text semantic understanding remains a separate provider capability |
-| Tests pass | PASS | 150 local tests pass, including voice/presence, the 16-agent matrix, documentation contracts, and cohesive system E2E; Phase 33 CI run #32 passed all four jobs and final-checkpoint CI is pending |
+| Tests pass | PASS | 150 local tests pass, including voice/presence, the 16-agent matrix, documentation contracts, and cohesive system E2E; final CI run #33 passed all four jobs |
 | Documentation complete for implementation | PASS | All master-directive documents are present; relative links, version consistency, and required truth fields have executable regression tests |
 | Installation reproducible | PASS | Python 3.12 core has zero mandatory third-party dependencies |
 | End-to-end workflows | PARTIAL | A cohesive HTTP → context → mixed content → agent/model → trace/presence workflow and worker/automation/application flows pass; live provider and external actions remain blocked |
-| Release | PASS | v0.15 capability commit `61cab3f`/tree `b7d4365` passed CI #31; Phase 33 checkpoint `cba1510`/tree `b2b437d` passed CI #32 |
+| Release | PASS | v0.15 capability `61cab3f`/`b7d4365` passed CI #31; Phase 33 `cba1510`/`b2b437d` passed CI #32; final checkpoint `6ec020a`/`5965876` passed CI #33 |

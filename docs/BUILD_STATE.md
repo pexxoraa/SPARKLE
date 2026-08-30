@@ -5,13 +5,13 @@ Updated: 2026-08-30 UTC
 | Field | State |
 |---|---|
 | SPARKLE version | 0.15.0-alpha.1 |
-| Current phase | Phase 36 — Release |
-| Current task | Commit/publish the exact final 150-test tree and require all four CI jobs |
+| Current phase | Continuous improvement after verified Phase 36 release |
+| Current task | Implement the first independent acceptance gap: structured schedule-conflict alerts |
 | Completed | v0.3-v0.15 private GitHub releases/CI; model abstraction/registry/MiniMax adapter; orchestrator/context/tracing; memory and knowledge lifecycle with backup; 16 built-in agents; persistent generated-agent installation; bounded workspaces/static verification/fixed local tests; signed external-worker client and deployable worker; reproducible approval-gated application artifacts; supervised automation service; safe tools; text API/CLI/dashboard; bearer/session/CSRF/origin/rate/audit security; six bounded proactive rule types; provider-neutral deterministic text/image/audio/document content contracts with validation, backward-compatible strings, capability routing, API/context/adapter/result flow, raw-content-free trace metadata, fail-closed provider handling, exact-tree publication, and four-job CI; dedicated voice/presence contracts; 16-agent domain matrix; executable documentation audit; cohesive HTTP/context/multimodal/trace E2E; 150-test local evidence |
-| In progress | Phase 36 exact-tree publication and CI verification; final clean wheel gate passed |
+| In progress | Schedule-conflict proactive intelligence; external/hardware dependencies remain blocked |
 | Blocked | Real Bubblewrap isolation on this executor (namespace setup denied); named remote worker/TLS target and live hostile-code validation; live MiniMax call (no key in build process); semantic non-text provider mapping; voice hardware; browser/computer runtime adapters; public application deployment target |
-| Failed tests | None in the current 150-test local suite or CI runs #31/#32. Prior corrected failures remain preserved in the release report |
-| Next action | Commit/publish the exact tree and verify all four CI jobs, then preserve the external blocker list |
+| Failed tests | None in the current 150-test local suite or CI runs #31-#33. Prior corrected failures remain preserved in the release report |
+| Next action | Add a strictly validated structured schedule schema, deterministic conflict evidence, API/dashboard compatibility, and adversarial tests |
 | Estimated directive completion | 84% |
 
 The percentage measures the full long-term directive, not code volume. Agent

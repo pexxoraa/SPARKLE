@@ -148,8 +148,7 @@ seconds. Dashboard JavaScript syntax and Git whitespace checks passed. A zero-de
 non-editable `0.15.0a1` wheel installed in a fresh virtual environment and
 passed status, mixed-content round trip, legacy serialization, automation
 check/once/status, worker-entrypoint, and mode-0600 configuration checks.
-GitHub CI run #32 (`33289795885`) passed the 145-test Phase 33 tree on Python
-3.12 and 3.13, the separately deployable worker image build/entrypoint, and the
-installed automation-service lifecycle. The earlier v0.15 capability run #31
-passed the same four job types on the exact multimodal release tree. Remote CI
-for the 150-test final checkpoint is pending publication.
+GitHub CI run #33 (`33290153808`) passed the 150-test final checkpoint on
+Python 3.12 and 3.13, the separately deployable worker image
+build/entrypoint, and the installed automation-service lifecycle. Runs #31 and
+#32 preserve the earlier exact multimodal and Phase 33 checkpoints.
