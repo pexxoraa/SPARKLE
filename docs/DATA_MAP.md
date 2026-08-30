@@ -11,8 +11,9 @@
 | Documents/papers | Knowledge SQLite | Retrieval | User | Until source deletion | Knowledge/context system |
 | Generated agents | `data_environment/generated_agents.sqlite3` | Persistent runtime agent definitions | User | Until replaced/deleted | Agent registry/router |
 | Automations, claims, runs, and service state | `data_environment/automations.sqlite3` | Schedules, expiring claims, recovery/fencing, execution and lifecycle evidence | User/system owner | Until deleted | Automation engine/service/dashboard |
+| Dashboard notifications | `data_environment/notifications.sqlite3` | Bounded local delivery, deduplication, and read state | User/system owner | Latest 1,000 records | Notification API/dashboard/automation runner |
 | Automation service lock | `data_environment/automation-service.lock` | Prevent concurrent local service instances | System owner | Persistent mode-0600 inode | Automation service |
-| Proactive alerts | Computed in process from active memory metadata; not separately persisted | Bounded evidence-backed prioritization and conditional automation matching | User/system owner | Recomputed per inspection or runner cycle | Proactive API/dashboard/automation runner |
+| Proactive alerts | Computed in process from validated memory and knowledge evidence; not separately persisted | Bounded evidence-backed prioritization and conditional automation matching | User/system owner | Recomputed per inspection or runner cycle | Proactive API/dashboard/automation runner |
 | Multimodal request content | Validated in-process `SPARKLE-CONTENT/1` envelope; sent only to the selected compatible adapter | Bounded text/image/audio/document input | User | Request lifetime unless an explicit separate memory/knowledge action stores it | API/orchestrator/context/model adapter |
 | Application workspaces | Configured applications data root | Bounded generated project files | User | Until operator deletion | Builder agents |
 | Application build records | `data_environment/builds.sqlite3` | File hashes, sizes, and scaffold evidence | System owner | Policy not yet configured | Dashboard/builder |

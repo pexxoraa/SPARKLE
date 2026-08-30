@@ -8,6 +8,8 @@ Implemented panels:
 - System state, active model, storage counts, voice state, and agents.
 - Durable memory records.
 - Evidence-backed proactive alerts and automation execution history.
+- Bounded dashboard notifications with delivery/read state and safe source
+  labels.
 - Application-build, static-verification, bounded test-run,
   external-worker, immutable artifact, unverified deployment-event,
   execution-trace, and secret-free API-audit lists.
@@ -21,6 +23,11 @@ evidence identifiers and classifications; memory free text and knowledge
 source content are not returned to the panel. Memory and knowledge source IDs
 are explicitly labeled. An empty list means no supported rule currently has
 valid evidence, not that the system inferred an all-clear state.
+
+The notification list is read from `GET /api/notifications`. Its title/body are
+intentionally user-visible delivery content; notification content is not copied
+into execution traces or automation run summaries. Read state is available
+through the authenticated API.
 
 The server sets no-store on JSON, denies framing, disables MIME sniffing, uses a
 self-only Content Security Policy, limits JSON bodies to 1 MB, and does not log

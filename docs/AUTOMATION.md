@@ -1,10 +1,11 @@
 # Automation and proactive intelligence
 
 The automation store supports once, daily, weekly, and conditional records with
-agent actions, schedule metadata, next-run time, enabled state, and last-run
-state. The runner atomically claims due work, invokes a single agent or a
-multi-agent workflow, retries up to three times, records every run, and
-reschedules daily and weekly work. Once-only work is disabled after execution.
+agent or dashboard-notification actions, schedule metadata, next-run time,
+enabled state, and last-run state. The runner atomically claims due work,
+executes the validated action, retries up to three times, records every run,
+and reschedules daily and weekly work. Once-only work is disabled after
+execution.
 
 Every claim now carries a random fencing token and expiration. A crashed
 service cannot leave work permanently disabled: the supervised service recovers
@@ -90,6 +91,13 @@ The API can create, run, enable/disable, and delete automations and list run
 history. Automation-triggered model activity is traced with input source
 `automation`.
 
+An action with `"type": "notification"` can deliver through the bounded
+`dashboard` channel without a model call. It requires a 1-200 character title,
+1-2,000 character body, supported severity, and optional safe dedupe key. The
+runner links the automation run to a trace containing only channel, severity,
+opaque notification ID, transformation, and storage destination—not message
+content. See `NOTIFICATIONS.md`.
+
 The service holds a no-follow, mode-0600 POSIX lock, refuses a second local
 instance, persists running/degraded/draining/stopped/stale state, and handles
 SIGINT/SIGTERM without claiming new work. A hardened non-root systemd profile
@@ -98,7 +106,8 @@ an interrupted claim fenced until lease recovery. Signal handlers perform no
 database I/O: they set the drain event, prevent another cycle, and normal
 service control flow persists the terminal state.
 
-External research polling, notification delivery, calendar connectors, and
-external event webhooks are not implemented. Live scheduled model work also
+External research polling, email/SMS/push notification delivery, calendar
+connectors, and external event webhooks are not implemented. Dashboard
+notification delivery is implemented locally. Live scheduled model work also
 requires a configured provider credential; deterministic service execution is
 covered by the test suite.

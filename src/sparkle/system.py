@@ -13,6 +13,7 @@ from sparkle.content import content_contract_status
 from sparkle.development import DevelopmentVerifier, WorkspaceTestRunner
 from sparkle.external_worker import ExternalWorkerClient
 from sparkle.knowledge import KnowledgeIngestor
+from sparkle.notifications import NotificationStore
 from sparkle.orchestrator import Orchestrator
 from sparkle.presence import PresenceEngine
 from sparkle.registry import ModelRegistry, ModelRouter
@@ -71,6 +72,7 @@ class SparkleSystem:
         self.knowledge_ingestor = KnowledgeIngestor(self.knowledge)
         self.traces = TraceStore()
         self.automations = AutomationStore()
+        self.notifications = NotificationStore()
         self.proactive = ProactiveEngine(self.memory, self.knowledge)
         self.presence = PresenceEngine()
         self.voice = VoiceService()
@@ -125,14 +127,18 @@ class SparkleSystem:
             max_tool_rounds=self.config.max_tool_rounds,
         )
         self.automation_runner = AutomationRunner(
-            self.automations, self.orchestrator, self.proactive,
+            self.automations,
+            self.orchestrator,
+            self.proactive,
+            self.notifications,
+            self.traces,
         )
 
     def status(self) -> dict[str, Any]:
         models = self.models.list()
         return {
             "name": "SPARKLE",
-            "version": "0.17.0-alpha.1",
+            "version": "0.18.0-alpha.1",
             "status": "ready" if any(model["configured"] for model in models) else "limited",
             "active_model": self.models.active_id,
             "models": models,
@@ -157,6 +163,12 @@ class SparkleSystem:
                 "status": "ready", "count": len(self.automations.list()),
                 "recent_runs": len(self.automations.list_runs(limit=100)),
                 "service": self.automations.service_status(),
+            },
+            "notifications": {
+                "status": "ready",
+                "protocol_version": self.notifications.PROTOCOL,
+                "channels": sorted(self.notifications.CHANNELS),
+                **self.notifications.stats(),
             },
             "builders": {
                 "status": "ready", "workspaces": len(self.workspaces.list(limit=100)),

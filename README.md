@@ -7,7 +7,7 @@ registry, provider adapters, specialist agents, persistent memory, a separate
 knowledge index, execution traces, automations, proactive rules, a CLI, an HTTP
 API, and a local dashboard.
 
-Current release: `0.17.0-alpha.1`. This is a tested foundation release, not the
+Current release: `0.18.0-alpha.1`. This is a tested foundation release, not the
 final system described in the long-term Definition of Done. See
 [`docs/BUILD_STATE.md`](docs/BUILD_STATE.md) and
 [`docs/ACCEPTANCE.md`](docs/ACCEPTANCE.md) for exact evidence and gaps.
@@ -38,6 +38,9 @@ final system described in the long-term Definition of Done. See
   mistakes. Rules read only validated structured evidence, expose bounded
   metadata without memory or research text, and can trigger strictly validated
   conditional automations with cooldowns.
+- A provider-neutral notification contract with bounded dashboard delivery,
+  deduplication, unread/read state, API/UI access, automation actions, and
+  content-free execution traces.
 - Bounded application workspace scaffolding with path confinement, size limits,
   overwrite protection, and explicit approval.
 - Persistent, approval-gated workspace verification with non-executing Python
@@ -108,3 +111,5 @@ The multimodal contract is specified in
 [`docs/MULTIMODAL.md`](docs/MULTIMODAL.md).
 Worker deployment and security evidence are documented in
 [`docs/WORKER.md`](docs/WORKER.md).
+Dashboard notification contracts are documented in
+[`docs/NOTIFICATIONS.md`](docs/NOTIFICATIONS.md).

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import tempfile
 import unittest
@@ -183,6 +184,50 @@ class AutomationRunnerTests(unittest.TestCase):
         )
         first = self.system.automation_runner.run_due(now)
         self.assertEqual(first[0]["status"], "success")
+        self.assertEqual(
+            self.system.automation_runner.run_due(now + timedelta(minutes=10)),
+            [],
+        )
+
+    def test_proactive_condition_delivers_dashboard_notification_and_trace(self):
+        now = datetime.now(UTC)
+        self.system.memory.remember(
+            "tasks", "robot_report", "Private report details",
+            metadata={"deadline": (now + timedelta(hours=2)).isoformat()},
+        )
+        self.system.automations.create(
+            "Dashboard deadline alert", "condition",
+            {
+                "type": "notification",
+                "channel": "dashboard",
+                "title": "Robot report deadline",
+                "body": "Review the robot report before its deadline.",
+                "severity": "warning",
+                "dedupe_key": "deadline.robot_report",
+            },
+            condition={
+                "type": "proactive_alert",
+                "alert": "deadline_approaching",
+                "category": "tasks",
+                "key": "robot_report",
+                "cooldown_minutes": 60,
+            },
+        )
+        runs = self.system.automation_runner.run_due(now)
+        self.assertEqual(runs[0]["status"], "success")
+        notification = self.system.notifications.list()[0]
+        self.assertEqual(notification["source"], "automation")
+        self.assertEqual(notification["status"], "delivered")
+        trace = self.system.traces.recent()[0]
+        self.assertEqual(trace["trace_id"], runs[0]["trace_id"])
+        self.assertEqual(trace["processing_stage"], "notification_delivered")
+        self.assertEqual(trace["output_modalities"], ["notification"])
+        self.assertEqual(
+            trace["storage_destinations"], ["data_environment/notifications"],
+        )
+        serialized_trace = json.dumps(trace)
+        self.assertNotIn("Review the robot report", serialized_trace)
+        self.assertNotIn("Private report details", serialized_trace)
         self.assertEqual(
             self.system.automation_runner.run_due(now + timedelta(minutes=10)),
             [],

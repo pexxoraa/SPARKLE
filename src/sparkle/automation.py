@@ -10,8 +10,10 @@ from pathlib import Path
 from typing import Any
 
 from sparkle.config import data_root
+from sparkle.notifications import NotificationStore
 from sparkle.orchestrator import Orchestrator
 from sparkle.storage import KnowledgeStore, MemoryStore, SQLiteStore, utc_now
+from sparkle.trace import TraceStore
 
 
 class AutomationLeaseLostError(RuntimeError):
@@ -122,11 +124,36 @@ class AutomationStore(SQLiteStore):
 
     @staticmethod
     def _validate_action(action: dict[str, Any]) -> None:
-        if action.get("type") != "agent":
-            raise ValueError("Automation action type must be 'agent'")
-        prompt = action.get("prompt")
-        if not isinstance(prompt, str) or not prompt.strip() or len(prompt) > 20_000:
-            raise ValueError("Automation agent prompt must contain 1-20000 characters")
+        if not isinstance(action, dict):
+            raise ValueError("Automation action must be an object")
+        action_type = action.get("type")
+        if action_type == "agent":
+            prompt = action.get("prompt")
+            if not isinstance(prompt, str) or not prompt.strip() or len(prompt) > 20_000:
+                raise ValueError("Automation agent prompt must contain 1-20000 characters")
+        elif action_type == "notification":
+            allowed = {
+                "type", "channel", "title", "body", "severity",
+                "dedupe_key", "max_attempts",
+            }
+            unknown = set(action) - allowed
+            if unknown:
+                raise ValueError(
+                    "Unsupported notification action fields: "
+                    + ", ".join(sorted(unknown))
+                )
+            NotificationStore.validate(
+                channel=action.get("channel"),
+                title=action.get("title"),
+                body=action.get("body"),
+                severity=action.get("severity", "info"),
+                dedupe_key=action.get("dedupe_key"),
+                source="automation",
+            )
+        else:
+            raise ValueError(
+                "Automation action type must be 'agent' or 'notification'"
+            )
         attempts = action.get("max_attempts", 1)
         if isinstance(attempts, bool) or not isinstance(attempts, int) or not 1 <= attempts <= 3:
             raise ValueError("Automation max_attempts must be an integer from 1 to 3")
@@ -903,10 +930,19 @@ class ProactiveEngine:
 class AutomationRunner:
     """Claims due work, invokes SPARKLE agents, and persists execution evidence."""
 
-    def __init__(self, store: AutomationStore, orchestrator: Orchestrator, proactive: ProactiveEngine):
+    def __init__(
+        self,
+        store: AutomationStore,
+        orchestrator: Orchestrator,
+        proactive: ProactiveEngine,
+        notifications: NotificationStore | None = None,
+        traces: TraceStore | None = None,
+    ):
         self.store = store
         self.orchestrator = orchestrator
         self.proactive = proactive
+        self.notifications = notifications
+        self.traces = traces
 
     @staticmethod
     def _condition_matches(item: dict[str, Any], alerts: list[dict[str, Any]], now: datetime) -> bool:
@@ -938,8 +974,75 @@ class AutomationRunner:
 
     def _execute(self, item: dict[str, Any]) -> tuple[str, str]:
         action = item["action"]
+        if action.get("type") == "notification":
+            if self.notifications is None or self.traces is None:
+                raise RuntimeError("Notification delivery is unavailable")
+            trace_id, clock = self.traces.start(
+                input_source="automation",
+                agent="automation",
+                input_modalities=["event"],
+                content_identifiers=[f"automation:{item['id']}"],
+                processing_stage="notification_delivery",
+                execution_metadata={
+                    "channel": action.get("channel"),
+                    "severity": action.get("severity", "info"),
+                },
+            )
+            try:
+                notification = self.notifications.deliver(
+                    channel=str(action["channel"]),
+                    title=str(action["title"]),
+                    body=str(action["body"]),
+                    severity=str(action.get("severity", "info")),
+                    dedupe_key=(
+                        str(action["dedupe_key"])
+                        if action.get("dedupe_key") is not None else None
+                    ),
+                    source="automation",
+                )
+            except Exception as exc:
+                self.traces.finish(
+                    trace_id,
+                    clock,
+                    status="failure",
+                    agent="automation",
+                    model=None,
+                    provider=None,
+                    processing_stage="notification_failed",
+                    output_modalities=[],
+                    execution_metadata={
+                        "channel": action.get("channel"),
+                        "severity": action.get("severity", "info"),
+                    },
+                    result_summary="Notification delivery failed",
+                    error_type=type(exc).__name__,
+                )
+                raise
+            self.traces.finish(
+                trace_id,
+                clock,
+                status="success",
+                agent="automation",
+                model=None,
+                provider=None,
+                data_created=[
+                    f"notification:{notification['notification_id']}"
+                ],
+                transformations=["notification_validated", "dashboard_delivered"],
+                storage_destinations=["data_environment/notifications"],
+                processing_stage="notification_delivered",
+                output_modalities=["notification"],
+                execution_metadata={
+                    "channel": notification["channel"],
+                    "severity": notification["severity"],
+                },
+                result_summary="Dashboard notification delivered",
+            )
+            return "Dashboard notification delivered", trace_id
         if action.get("type") != "agent":
-            raise ValueError(f"Unsupported automation action type: {action.get('type')}")
+            raise ValueError(
+                f"Unsupported automation action type: {action.get('type')}"
+            )
         prompt = str(action["prompt"])
         if action.get("multi_agent"):
             result = self.orchestrator.run_multi(

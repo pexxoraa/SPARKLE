@@ -391,8 +391,44 @@ class APITests(SystemCase):
         self.assertNotIn(b"sessionStorage", script)
         self.assertIn(b"/api/artifacts?limit=50", script)
         self.assertIn(b"/api/proactive", script)
+        self.assertIn(b"/api/notifications", script)
+        self.assertIn(b'notificationList', body)
         self.assertIn(b"Artifacts & deployment", body)
         self.assertIn(b"Evidence-backed proactive alerts", body)
+
+    def test_dashboard_notification_delivery_list_and_read_api(self):
+        invalid = self.request("/api/notifications", {
+            "channel": "email", "title": "Invalid", "body": "Not stored",
+        })
+        self.assertEqual(invalid[0], 400)
+        self.assertEqual(self.system.notifications.stats()["total"], 0)
+
+        status, _, body = self.request("/api/notifications", {
+            "channel": "dashboard",
+            "title": "Robotics review",
+            "body": "Review the safe controls milestone",
+            "severity": "warning",
+            "dedupe_key": "robotics.controls",
+        })
+        self.assertEqual(status, 201)
+        delivered = json.loads(body)["notification"]
+        self.assertEqual(delivered["source"], "manual")
+        status, _, body = self.request("/api/notifications?unread=true")
+        self.assertEqual(status, 200)
+        response = json.loads(body)
+        self.assertEqual(response["protocol_version"], "SPARKLE-NOTIFICATION/1")
+        self.assertEqual(len(response["notifications"]), 1)
+        self.assertEqual(self.request("/api/notifications/read", {
+            "notification_id": True,
+        })[0], 400)
+        marked = json.loads(self.request("/api/notifications/read", {
+            "notification_id": delivered["notification_id"],
+        })[2])
+        self.assertTrue(marked["changed"])
+        unread = json.loads(
+            self.request("/api/notifications?unread=true")[2]
+        )["notifications"]
+        self.assertEqual(unread, [])
 
     def test_proactive_endpoint_exposes_metadata_evidence_only(self):
         self.system.memory.remember(

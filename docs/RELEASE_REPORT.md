@@ -1,3 +1,40 @@
+# 0.18.0-alpha.1 verification report
+
+Date: 2026-08-30 UTC
+
+## Executed evidence
+
+- `SPARKLE-NOTIFICATION/1` defines a provider-neutral dashboard delivery
+  channel with strict title/body/severity/dedupe/source validation.
+- The local notification store preserves delivery/read state, updates matching
+  dedupe keys, caps retention at 1,000 records, and exposes bounded lists.
+- Manual API delivery/list/read and dashboard rendering execute. Conditional
+  automations can deliver without a model and link a trace containing only
+  channel, severity, notification ID, transformation, and destination.
+- The focused notification/automation/API/dashboard set passed. The adjacent
+  notification, storage, automation runner/service, and API set passed 52
+  tests in 17.048 seconds.
+- After adding the dedupe-refresh retention boundary, the complete suite passed
+  166 tests in 36.292 seconds. Dashboard JavaScript syntax and Git whitespace
+  checks passed.
+- A zero-dependency non-editable `0.18.0a1` wheel installed without an index in
+  a fresh virtual environment and passed notification automation/read-state,
+  trace non-disclosure, multimodal round trip, automation check/once/status,
+  worker-entrypoint, and mode-0600 configuration checks. Its SHA-256 was
+  `c1df89da337becced79392045737106872435e47f084ac3d1b932778087791c7`.
+
+Publication and CI evidence are pending.
+
+## Honest limits
+
+- Dashboard delivery is local to SPARKLE. Email, SMS, mobile push, calendar,
+  and webhook adapters are not implemented.
+- Notification title/body are intended user-visible data in the notification
+  database and API; they are deliberately excluded from traces and automation
+  result summaries.
+
+---
+
 # 0.17.0-alpha.1 verification report
 
 Date: 2026-08-30 UTC

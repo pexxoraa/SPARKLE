@@ -57,6 +57,12 @@ the knowledge environment → bounded same-key comparison → safe source-ID/tim
 evidence. The digest, URI, title, and source content never enter proactive
 responses. External fetching is outside this flow in the current release.
 
+Dashboard notification delivery is validated action → bounded notification
+record → API/dashboard display → explicit read state. Automation-origin
+delivery adds a linked trace containing only channel, severity, notification
+ID, transformation, and storage destination. Title and body stay in the
+notification data store and are not copied into trace or run-summary fields.
+
 Generated-agent installation follows approval → manifest validation → SQLite
 persistence → in-process registry load. Application scaffolding follows
 approval → name/path/size validation → confined file writes → SHA-256 build

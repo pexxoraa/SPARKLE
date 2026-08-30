@@ -231,6 +231,24 @@ trace IDs, and safe result summaries.
 with an explicit run record; because this is at-least-once processing, future
 external actions must be idempotent.
 
+Automations may use a provider-neutral dashboard notification instead of an
+agent call:
+
+```json
+{
+  "type": "notification",
+  "channel": "dashboard",
+  "title": "Revision due",
+  "body": "Review control systems today.",
+  "severity": "warning",
+  "dedupe_key": "revision.control_systems"
+}
+```
+
+Manual notification delivery uses `POST /api/notifications`; list or mark read
+through `/api/notifications` and `/api/notifications/read`. See
+`NOTIFICATIONS.md` for bounds and the external-channel gap.
+
 Inspect current evidence-backed alerts at `GET /api/proactive` or in the
 dashboard Automation panel. Alerts are computed from explicit metadata fields,
 not from memory prose. To drive an automation from an alert, create a

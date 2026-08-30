@@ -29,14 +29,14 @@ means an external dependency is unavailable.
 | Voice works | BLOCKED | Interfaces exist; no microphone/speaker or STT/TTS adapter |
 | Text works | PASS | CLI, HTTP API, dashboard, bearer/session auth, CSRF, origin, preflight, rate-limit, and API-audit integration tests |
 | Voice/text share context | PARTIAL | Shared architecture exists; voice cannot execute here |
-| Automation works | PASS | Due/conditional execution, retry/recurrence/cooldown, expiring claims, crash recovery records, fencing, singleton service, health, real SIGTERM drain, CLI and systemd profile are tested; external notification/calendar/webhook connectors are separate unfinished capabilities |
-| Proactive intelligence | PARTIAL | Eight bounded evidence-backed rules include structured schedule conflicts and explicit knowledge-revision change detection, with strict conditions/cooldowns and content non-disclosure; external research polling and notification delivery remain absent |
+| Automation works | PASS | Due/conditional execution, retry/recurrence/cooldown, expiring claims, crash recovery, fencing, supervision, and bounded dashboard-notification actions are tested; external email/SMS/push/calendar/webhook connectors remain unfinished |
+| Proactive intelligence | PARTIAL | Eight bounded evidence-backed rules include structured schedule conflicts and explicit knowledge-revision change detection; conditions can now deliver content-safe traced dashboard notifications, while external research polling and external notification channels remain absent |
 | Dashboard works | PASS | Local panels plus bounded login/reload/CSRF/logout session lifecycle are integration tested; deployed TLS/reverse-proxy validation remains absent |
 | Data tracing works | PASS | Success/tool/failure metadata implemented; trace tests |
 | Motion/presence architecture | PASS | Independent presence engine; physical motion intentionally absent |
 | Multimodal architecture prepared | PASS | `SPARKLE-CONTENT/1` text/image/audio/document contracts flow through API, context, routing, adapters, results, and raw-content-free traces; mixed and failure paths are tested. Live non-text semantic understanding remains a separate provider capability |
-| Tests pass | PASS | 160 local v0.17 tests pass, including CLI/API research-revision flow, migration, validation, non-disclosure, automation, and ordering coverage; CI run #37 passed all four jobs |
+| Tests pass | PASS | 166 local v0.18 tests pass, including notification validation, retention, dedupe refresh, API/UI/read state, conditional delivery, and trace non-disclosure; remote v0.18 CI is pending |
 | Documentation complete for implementation | PASS | All master-directive documents are present; relative links, version consistency, and required truth fields have executable regression tests |
 | Installation reproducible | PASS | Python 3.12 core has zero mandatory third-party dependencies |
 | End-to-end workflows | PARTIAL | A cohesive HTTP → context → mixed content → agent/model → trace/presence workflow and worker/automation/application flows pass; live provider and external actions remain blocked |
-| Release | PASS | v0.17 capability `e737c62`/`97dba5c` is on `main` and passed all four jobs in CI run #37 |
+| Release | PARTIAL | v0.17 capability `e737c62`/`97dba5c` passed CI #37; v0.18 notification work is not yet published |

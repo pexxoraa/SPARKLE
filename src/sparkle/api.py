@@ -29,7 +29,7 @@ MAX_MULTIMODAL_BODY_BYTES = 12_000_000
 class SparkleHandler(BaseHTTPRequestHandler):
     system: SparkleSystem
     dashboard_root = Path(__file__).with_name("dashboard")
-    server_version = "SPARKLE/0.17"
+    server_version = "SPARKLE/0.18"
 
     def log_message(self, format: str, *args: object) -> None:
         # Avoid request bodies, headers, query values, and secrets in logs.
@@ -305,6 +305,17 @@ class SparkleHandler(BaseHTTPRequestHandler):
                     limit=int(query.get("limit", [20])[0])
                 )
             })
+        if parsed.path == "/api/notifications":
+            unread_only = query.get("unread", [""])[0].lower() in {
+                "1", "true", "yes",
+            }
+            return self._json({
+                "protocol_version": self.system.notifications.PROTOCOL,
+                "notifications": self.system.notifications.list(
+                    limit=int(query.get("limit", [50])[0]),
+                    unread_only=unread_only,
+                ),
+            })
         if parsed.path == "/api/proactive":
             return self._json({
                 "protocol_version": self.system.proactive.PROTOCOL,
@@ -454,6 +465,28 @@ class SparkleHandler(BaseHTTPRequestHandler):
                 return self._json({
                     "ok": True,
                     "deleted": self.system.knowledge.delete_source(int(data["source_id"])),
+                })
+            if self.path == "/api/notifications":
+                notification = self.system.notifications.deliver(
+                    channel=str(data.get("channel", "dashboard")),
+                    title=data.get("title"),
+                    body=data.get("body"),
+                    severity=str(data.get("severity", "info")),
+                    dedupe_key=(
+                        str(data["dedupe_key"])
+                        if data.get("dedupe_key") is not None else None
+                    ),
+                    source="manual",
+                )
+                return self._json({
+                    "ok": True, "notification": notification,
+                }, 201)
+            if self.path == "/api/notifications/read":
+                return self._json({
+                    "ok": True,
+                    "changed": self.system.notifications.mark_read(
+                        data["notification_id"]
+                    ),
                 })
             if self.path == "/api/automations":
                 automation_id = self.system.automations.create(

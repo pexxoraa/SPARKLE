@@ -31,7 +31,8 @@ See `MULTIMODAL.md` for the exact contract and evidence boundary.
 
 `SparkleSystem` constructs independent stores, registries, the context builder,
 tool registry, orchestrator, voice service, presence engine, proactive engine,
-automation store, static verifier, and opt-in fixed workspace test runner.
+automation store, notification store, static verifier, and opt-in fixed
+workspace test runner.
 An independent artifact manager reads bounded application workspaces and emits
 deterministic content-addressed ZIPs; it never starts an executable.
 The automation service is another independent entrypoint over the existing
@@ -65,6 +66,7 @@ and orchestration do not depend on cookie or browser implementation details.
 - `var/memory_environment/memory.sqlite3`
 - `var/knowledge_environment/knowledge.sqlite3`
 - `var/data_environment/automations.sqlite3`
+- `var/data_environment/notifications.sqlite3`
 - `var/data_environment/automation-service.lock`
 - `var/data_environment/builds.sqlite3`
 - `var/data_environment/verifications.sqlite3`

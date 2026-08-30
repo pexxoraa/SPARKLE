@@ -58,7 +58,13 @@
 - Permanent memory, knowledge-source, and automation deletion requires an
   explicit API approval flag.
 - Automation actions are limited to validated SPARKLE agent requests with one
-  to three attempts; arbitrary commands are not accepted.
+  to three attempts or strict dashboard-notification actions; arbitrary
+  commands are not accepted.
+- Dashboard notifications validate channel, severity, title/body lengths,
+  dedupe keys, retry bounds, and exact automation fields before persistence.
+  The store is capped at 1,000 records. Notification content is intentionally
+  user-visible in its API/UI but is excluded from execution traces and run
+  summaries.
 - Proactive rules inspect only bounded structured metadata in eligible memory
   categories. They do not parse memory free text, expose memory values, or let
   condition records add unknown fields. Condition alert/category/key filters

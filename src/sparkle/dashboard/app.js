@@ -109,10 +109,16 @@ async function loadPanel(panel) {
       : empty('No durable memories stored.');
   }
   if (panel === 'automations') {
-    const [data, proactive] = await Promise.all([
+    const [data, proactive, notifications] = await Promise.all([
       api('/api/automation-runs?limit=50'),
       api('/api/proactive'),
+      api('/api/notifications?limit=50'),
     ]);
+    qs('#notificationList').innerHTML = notifications.notifications.length
+      ? notifications.notifications.map((notification) => (
+        `<div class="list-item"><strong>${escapeHtml(notification.title)} · ${escapeHtml(notification.severity)}</strong><small>${escapeHtml(notification.body)} · ${escapeHtml(notification.status)} · ${escapeHtml(notification.source)}</small></div>`
+      )).join('')
+      : empty('No dashboard notifications delivered.');
     qs('#proactiveList').innerHTML = proactive.alerts.length
       ? proactive.alerts.map((alert) => (
         `<div class="list-item"><strong>${escapeHtml(alert.type)} · ${escapeHtml(alert.severity)}</strong><small>${escapeHtml(alert.category)} · ${escapeHtml(alert.key)} · ${escapeHtml(alert.source_kind || 'memory')} ${escapeHtml(alert.source_id ?? alert.source_memory_id)}</small></div>`
