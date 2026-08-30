@@ -59,7 +59,25 @@ checks all 16 agents' domain contracts, routing, tool boundaries, common safety
 prompts, deterministic orchestrator execution, and trace linkage. Focused runs
 passed 4/4 and 3/3; the complete suite passed 145 tests in 22.919 seconds.
 This does not claim real speech I/O or live-provider response quality. The
-checkpoint awaits exact-tree publication and remote CI.
+local checkpoint is `c3cc1957e60c44c323677008d53b1543a448e7d2`,
+tree `b2b437d2d2a7bed6136af4ee78705aad906f019a`. Remote non-force
+fast-forward commit `cba15105cd50f7d567c1c5a9f19c98a4ed58342c` has the
+same tree. CI run #32 (`33289795885`) passed all four required jobs.
+
+## Phase 34-35 continuation evidence
+
+Four documentation contract tests now require the complete directive inventory,
+resolve repository-relative links, align package/display versions, and retain
+the build-state and honest acceptance fields. The audit corrected one stale
+worker-image claim. A cohesive deterministic system test then exercised HTTP
+memory/knowledge writes, mixed text/document chat, context injection, explicit
+research-agent/model routing, result modalities/identifiers, raw-document-free
+trace retrieval, and final presence linkage. Its focused run passed; the full
+suite passed 150 tests in 28.012 seconds. A fresh non-editable `0.15.0a1` wheel
+then installed without dependencies or an index and passed installed version,
+content round-trip, exact legacy serialization, honest security/multimodal
+status, automation check/once/status, worker entrypoint, and separate mode-0600
+configuration checks. Final exact-tree publication/CI evidence is pending.
 
 ---
 

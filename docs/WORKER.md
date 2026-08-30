@@ -24,7 +24,7 @@ status. It shares no memory, knowledge, trace, provider, or application store.
 | Host filesystem access | Bubblewrap read-only runtime plus one writable ephemeral workspace | Command/preflight tests pass; live host preflight blocked |
 | Network access | All namespaces unshared; preflight attempts an outbound connection and requires failure | Command/preflight tests pass; live host preflight blocked |
 | Resource exhaustion | Body/file/output bounds, semaphore, wall timeout, process-group kill, POSIX CPU/memory/file/FD/process/core limits | Bound/capacity/timeout tests pass |
-| Container misconfiguration | Unprivileged UID, read-only root, no capabilities, no-new-privileges, internal worker port, TLS gateway | Deployment-policy regression test passes; image build awaits CI |
+| Container misconfiguration | Unprivileged UID, read-only root, no capabilities, no-new-privileges, internal worker port, TLS gateway | Deployment-policy regression and repeated CI image build/entrypoint jobs pass |
 
 Authenticated sandbox booleans describe the worker's executor. The main client
 still records `isolation_verified: false`: a signed claim is not independent

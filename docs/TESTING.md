@@ -116,6 +116,18 @@ execution evidence; it is not a live-provider response-quality benchmark.
 `PASS` in this matrix means an executable local path exists and ran. It does
 not convert an external or hardware-dependent requirement into a pass.
 
+Documentation regression coverage verifies the complete master-directive file
+inventory, repository-confined relative Markdown links, package/display version
+consistency, required build-state fields, and continued `PARTIAL`/`BLOCKED`
+honesty in acceptance reporting.
+
+The Phase 35 cohesive system workflow uses the real HTTP server and separate
+memory, knowledge, and trace stores. It writes context through the API, submits
+a mixed text/document request, proves retrieved context reached the selected
+agent/model request, verifies result modalities and IDs, reads the completed
+trace back through the API without raw document content, and confirms the
+presence state links to the same agent and trace.
+
 The deterministic adapter avoids provider cost and network flakiness. The live
 smoke test is intentionally separate:
 
@@ -126,15 +138,18 @@ sparkle smoke-test --live
 Never report the live test as passed when the credential is absent or the exact
 `SPARKLE_LIVE_OK` response is not observed.
 
-Latest Phase 33 continuation result on 2026-08-30: 145 local tests passed in
-22.919 seconds after adding four voice/presence contract cases and three
-data-driven 16-agent evaluation groups. The v0.15 capability release previously
+Latest Phase 35 continuation result on 2026-08-30: 150 local tests passed in
+28.012 seconds after adding the Phase 34 documentation contracts and the
+cohesive Phase 35 system workflow. The Phase 33 checkpoint passed 145 tests in
+22.919 seconds after four voice/presence cases and three data-driven 16-agent
+evaluation groups. The v0.15 capability release previously
 passed 138 tests in 22.472 seconds; an earlier complete run passed in 23.005
 seconds. Dashboard JavaScript syntax and Git whitespace checks passed. A zero-dependency
 non-editable `0.15.0a1` wheel installed in a fresh virtual environment and
 passed status, mixed-content round trip, legacy serialization, automation
 check/once/status, worker-entrypoint, and mode-0600 configuration checks.
-GitHub CI run #31 (`33289468321`) passed the 138-test capability tree on Python 3.12 and 3.13,
-the separately deployable worker image build/entrypoint, and the installed
-automation-service lifecycle. Remote CI for the 145-test Phase 33 checkpoint is
-pending publication.
+GitHub CI run #32 (`33289795885`) passed the 145-test Phase 33 tree on Python
+3.12 and 3.13, the separately deployable worker image build/entrypoint, and the
+installed automation-service lifecycle. The earlier v0.15 capability run #31
+passed the same four job types on the exact multimodal release tree. Remote CI
+for the 150-test final checkpoint is pending publication.

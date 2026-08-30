@@ -7,3 +7,7 @@ animate this state without coupling intelligence to its appearance.
 Camera perception, gesture, spatial state, robot protocols, safety controllers,
 and physical motion are not implemented. Any future physical adapter must sit
 below a permissioned motion interface with independent safety interlocks.
+
+Contract tests verify the exact initial status fields and a working-state
+transition carrying agent and trace linkage. They do not claim camera, gesture,
+robot, or physical-motion execution.
