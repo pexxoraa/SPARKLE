@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import sqlite3
 import tempfile
 import unittest
 from datetime import UTC, datetime, timedelta
@@ -71,6 +72,161 @@ class KnowledgeTests(unittest.TestCase):
             unknown.write_bytes(b"binary")
             with self.assertRaises(KnowledgeIngestError):
                 ingestor.ingest(unknown)
+
+    def test_research_changes_use_bounded_non_disclosing_revision_evidence(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            knowledge = KnowledgeStore(root / "knowledge.sqlite3")
+            memory = MemoryStore(root / "memory.sqlite3")
+            now = datetime(2026, 8, 30, 12, tzinfo=UTC)
+            monitored = {
+                "research_monitor": True, "monitor_key": "robotics.papers",
+            }
+            with patch(
+                "sparkle.storage.utc_now",
+                return_value=(now - timedelta(hours=2)).isoformat(),
+            ):
+                previous_id = knowledge.ingest_text(
+                    "Private paper title", "Private original finding",
+                    source_uri="https://private.example/token",
+                    metadata=monitored,
+                )
+            with patch(
+                "sparkle.storage.utc_now",
+                return_value=(now - timedelta(hours=1)).isoformat(),
+            ):
+                current_id = knowledge.ingest_text(
+                    "Private paper title", "Private revised finding",
+                    source_uri="https://private.example/token",
+                    metadata=monitored,
+                )
+
+            unchanged = {
+                "research_monitor": True, "monitor_key": "unchanged",
+            }
+            for age in (3, 2):
+                with patch(
+                    "sparkle.storage.utc_now",
+                    return_value=(now - timedelta(hours=age)).isoformat(),
+                ):
+                    knowledge.ingest_text(
+                        "Unchanged private", "Identical private content",
+                        metadata=unchanged,
+                    )
+            invalid_cases = (
+                {"research_monitor": False, "monitor_key": "disabled"},
+                {"research_monitor": True, "monitor_key": "INVALID KEY"},
+                {"research_monitor": True},
+                {"research_monitor": "yes", "monitor_key": "invalid_type"},
+                {"padding": "x" * 5_000},
+            )
+            for index, metadata in enumerate(invalid_cases):
+                with self.assertRaises(ValueError):
+                    with patch(
+                        "sparkle.storage.utc_now",
+                        return_value=(now - timedelta(minutes=index)).isoformat(),
+                    ):
+                        knowledge.ingest_text(
+                            f"Invalid {index}", f"Private invalid {index}",
+                            metadata=metadata,
+                        )
+            expired = {
+                "research_monitor": True, "monitor_key": "expired",
+            }
+            for days, content in ((9, "Old one"), (8, "Old two")):
+                with patch(
+                    "sparkle.storage.utc_now",
+                    return_value=(now - timedelta(days=days)).isoformat(),
+                ):
+                    knowledge.ingest_text("Expired", content, metadata=expired)
+
+            alerts = [
+                item for item in ProactiveEngine(memory, knowledge).inspect(now)
+                if item["type"] == "research_change"
+            ]
+            self.assertEqual(len(alerts), 1)
+            alert = alerts[0]
+            self.assertEqual(alert["key"], "robotics.papers")
+            self.assertEqual(alert["source_kind"], "knowledge")
+            self.assertEqual(alert["source_id"], current_id)
+            self.assertEqual(alert["source_knowledge_id"], current_id)
+            self.assertEqual(alert["evidence"]["previous_source_id"], previous_id)
+            self.assertEqual(alert["evidence"]["current_source_id"], current_id)
+            self.assertEqual(alert["evidence"]["age_hours"], 1.0)
+            self.assertEqual(alerts, [
+                item for item in ProactiveEngine(memory, knowledge).inspect(now)
+                if item["type"] == "research_change"
+            ])
+            serialized = json.dumps(alerts)
+            digest = knowledge.monitor_observations()[0]["content_digest"]
+            for private in ("Private", "private.example", "token", "finding", digest):
+                self.assertNotIn(private, serialized)
+
+    def test_knowledge_schema_migrates_content_digest_without_rebuild(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "knowledge.sqlite3"
+            with sqlite3.connect(path) as connection:
+                connection.executescript("""
+                    CREATE TABLE sources (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        title TEXT NOT NULL,
+                        source_uri TEXT,
+                        media_type TEXT NOT NULL,
+                        metadata TEXT NOT NULL DEFAULT '{}',
+                        created_at TEXT NOT NULL
+                    );
+                    CREATE TABLE chunks (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        source_id INTEGER NOT NULL REFERENCES sources(id) ON DELETE CASCADE,
+                        position INTEGER NOT NULL,
+                        content TEXT NOT NULL,
+                        token_terms TEXT NOT NULL,
+                        UNIQUE(source_id, position)
+                    );
+                """)
+            store = KnowledgeStore(path)
+            source_id = store.ingest_text(
+                "Migrated", "Digest created after schema migration",
+                metadata={"research_monitor": True, "monitor_key": "migration"},
+            )
+            observation = store.monitor_observations()[0]
+            self.assertEqual(observation["source_id"], source_id)
+            self.assertRegex(observation["content_digest"], r"^[0-9a-f]{64}$")
+
+    def test_research_change_selection_is_deterministic_and_bounded(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            knowledge = KnowledgeStore(root / "knowledge.sqlite3")
+            memory = MemoryStore(root / "memory.sqlite3")
+            now = datetime(2026, 8, 30, 12, tzinfo=UTC)
+            for monitor_key in ("gamma", "alpha", "beta"):
+                metadata = {
+                    "research_monitor": True, "monitor_key": monitor_key,
+                }
+                for revision in range(2):
+                    with patch(
+                        "sparkle.storage.utc_now",
+                        return_value=(
+                            now - timedelta(minutes=2 - revision)
+                        ).isoformat(),
+                    ):
+                        knowledge.ingest_text(
+                            monitor_key,
+                            f"Private revision {revision} for {monitor_key}",
+                            metadata=metadata,
+                        )
+            engine = ProactiveEngine(memory, knowledge)
+            with patch.object(ProactiveEngine, "MAX_RESEARCH_CHANGES", 2):
+                first = [
+                    item for item in engine.inspect(now)
+                    if item["type"] == "research_change"
+                ]
+                second = [
+                    item for item in engine.inspect(now)
+                    if item["type"] == "research_change"
+                ]
+            self.assertEqual(first, second)
+            self.assertEqual([item["key"] for item in first], ["alpha", "beta"])
 
 
 class TraceTests(unittest.TestCase):

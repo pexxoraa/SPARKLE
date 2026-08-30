@@ -12,9 +12,36 @@ from pathlib import Path
 from unittest.mock import patch
 
 from sparkle.cli import entrypoint, main
+from sparkle.system import SparkleSystem
 
 
 class CLITests(unittest.TestCase):
+    def test_ingest_monitor_key_detects_a_later_file_revision(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "robotics.md"
+            source.write_text("Original private research", encoding="utf-8")
+            output = io.StringIO()
+            with (
+                patch.dict(
+                    os.environ, {"SPARKLE_DATA_DIR": directory}, clear=False,
+                ),
+                contextlib.redirect_stdout(output),
+            ):
+                self.assertEqual(main([
+                    "ingest", str(source), "--monitor-key", "robotics.papers",
+                ]), 0)
+                source.write_text("Revised private research", encoding="utf-8")
+                self.assertEqual(main([
+                    "ingest", str(source), "--monitor-key", "robotics.papers",
+                ]), 0)
+                alerts = SparkleSystem().proactive.inspect()
+            research = next(
+                item for item in alerts if item["type"] == "research_change"
+            )
+            self.assertEqual(research["key"], "robotics.papers")
+            self.assertNotIn("private research", json.dumps(research).lower())
+            self.assertEqual(output.getvalue().count('"source_id"'), 2)
+
     def test_scaffold_then_verify_workspace(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

@@ -17,9 +17,10 @@ Implemented panels:
   release.
 
 The proactive list is read from `GET /api/proactive`. It shows only structured
-evidence identifiers and classifications; memory free text is not returned to
-the panel. An empty list means no supported rule currently has valid evidence,
-not that the system inferred an all-clear state.
+evidence identifiers and classifications; memory free text and knowledge
+source content are not returned to the panel. Memory and knowledge source IDs
+are explicitly labeled. An empty list means no supported rule currently has
+valid evidence, not that the system inferred an all-clear state.
 
 The server sets no-store on JSON, denies framing, disables MIME sniffing, uses a
 self-only Content Security Policy, limits JSON bodies to 1 MB, and does not log

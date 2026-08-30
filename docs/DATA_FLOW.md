@@ -52,6 +52,10 @@ then enter the same tokenized claim and orchestrator path as scheduled work.
 Alerts are computed views, not a second persistent knowledge or memory store.
 Schedule evaluation joins only validated task/exam/project intervals within a
 bounded record count and horizon; pair evidence contains no record values.
+Research revision evaluation is explicit observation → UTF-8 SHA-256 digest in
+the knowledge environment → bounded same-key comparison → safe source-ID/time
+evidence. The digest, URI, title, and source content never enter proactive
+responses. External fetching is outside this flow in the current release.
 
 Generated-agent installation follows approval → manifest validation → SQLite
 persistence → in-process registry load. Application scaffolding follows

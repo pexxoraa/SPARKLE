@@ -154,3 +154,36 @@ class AutomationRunnerTests(unittest.TestCase):
             self.system.automation_runner.run_due(now + timedelta(minutes=10)),
             [],
         )
+
+    def test_research_change_condition_executes_once_per_cooldown(self):
+        now = datetime.now(UTC)
+        metadata = {
+            "research_monitor": True, "monitor_key": "robotics.papers",
+        }
+        with patch("sparkle.storage.utc_now", return_value=now.isoformat()):
+            self.system.knowledge.ingest_text(
+                "Robotics source", "Original bounded research", metadata=metadata,
+            )
+            self.system.knowledge.ingest_text(
+                "Robotics source", "Revised bounded research", metadata=metadata,
+            )
+        self.system.automations.create(
+            "Research change helper", "condition",
+            {
+                "type": "agent", "prompt": "Review the research update",
+                "agent": "research",
+            },
+            condition={
+                "type": "proactive_alert",
+                "alert": "research_change",
+                "category": "research",
+                "key": "robotics.papers",
+                "cooldown_minutes": 60,
+            },
+        )
+        first = self.system.automation_runner.run_due(now)
+        self.assertEqual(first[0]["status"], "success")
+        self.assertEqual(
+            self.system.automation_runner.run_due(now + timedelta(minutes=10)),
+            [],
+        )

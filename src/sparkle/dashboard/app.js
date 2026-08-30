@@ -115,7 +115,7 @@ async function loadPanel(panel) {
     ]);
     qs('#proactiveList').innerHTML = proactive.alerts.length
       ? proactive.alerts.map((alert) => (
-        `<div class="list-item"><strong>${escapeHtml(alert.type)} · ${escapeHtml(alert.severity)}</strong><small>${escapeHtml(alert.category)} · ${escapeHtml(alert.key)} · memory ${escapeHtml(alert.source_memory_id)}</small></div>`
+        `<div class="list-item"><strong>${escapeHtml(alert.type)} · ${escapeHtml(alert.severity)}</strong><small>${escapeHtml(alert.category)} · ${escapeHtml(alert.key)} · ${escapeHtml(alert.source_kind || 'memory')} ${escapeHtml(alert.source_id ?? alert.source_memory_id)}</small></div>`
       )).join('')
       : empty('No structured evidence currently triggers a proactive rule.');
     qs('#automationList').innerHTML = data.runs.length

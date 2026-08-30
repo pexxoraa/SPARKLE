@@ -61,12 +61,19 @@ does not prove semantic non-text understanding. See `MULTIMODAL.md`.
 sparkle remember goals robotics "Build a safe 5-DOF robot-arm prototype"
 sparkle ingest notes/robotics.md
 sparkle ingest paper.pdf --title "Robot manipulation paper"
+sparkle ingest papers/robotics.md --monitor-key robotics.papers
 ```
 
 Memory records can be archived and restored. Permanent memory, knowledge-source,
 and automation deletion is available through the local API and requires
 `"approved": true`. The storage classes also expose consistent SQLite backup
 operations for an operator-controlled destination.
+
+Re-ingesting a changed file with the same `--monitor-key` creates a bounded
+`research_change` alert. API clients can supply equivalent knowledge metadata:
+`{"research_monitor":true,"monitor_key":"robotics.papers"}`. SPARKLE does
+not poll the source by itself; an operator or future connector must submit each
+new observation.
 
 ## Install a generated agent
 
@@ -241,7 +248,8 @@ as:
 ```
 
 Supported alerts are `deadline_approaching`, `overdue`, `schedule_conflict`,
-`weak_learning`, `revision_due`, `project_incomplete`, and `repeated_mistake`.
+`research_change`, `weak_learning`, `revision_due`, `project_incomplete`, and
+`repeated_mistake`.
 Schedule records use bounded ISO-8601 `starts_at` and `ends_at` metadata. The full evidence
 schema is documented in `docs/AUTOMATION.md`.
 

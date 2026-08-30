@@ -1,3 +1,46 @@
+# 0.17.0-alpha.1 verification report
+
+Date: 2026-08-30 UTC
+
+## Executed evidence
+
+- Explicit knowledge observations receive deterministic SHA-256 content
+  digests inside the separate knowledge database. The two latest same-key
+  observations produce a `research_change` view only when content changed.
+- Monitoring metadata is limited to 4 KiB; opt-in must be boolean and monitor
+  keys must be safe 1-64 character identifiers. Existing knowledge databases
+  migrate in place without a rebuild.
+- Evaluation reads at most 200 observations, emits at most 100 changes, expires
+  changes after seven days, and exposes no content, title, URI, or digest.
+- Six focused knowledge-revision/automation/API cases passed. The first pass
+  contained one over-broad test assertion that banned `paper` even though the
+  public monitor key was `robotics.papers`; the assertion was narrowed to the
+  actual private title, and the corrected set passed.
+- The corrected adjacent storage, automation, and API set passed 38 tests in
+  13.418 seconds.
+- After adding the CLI revision flow, the corrected complete suite passed 160
+  tests in 34.371 seconds. Dashboard JavaScript syntax and Git whitespace
+  checks passed.
+- The first clean-wheel command was stopped before execution because the
+  environment classified pip as potentially networked; no build or check ran.
+  Retrying with `PIP_NO_INDEX=1` completed without network access.
+- A zero-dependency non-editable `0.17.0a1` wheel installed in a fresh virtual
+  environment and passed installed status, research-change/non-disclosure,
+  multimodal round trip, automation check/once/status, worker-entrypoint, and
+  mode-0600 configuration checks. Its SHA-256 was
+  `4a545e5f0770247f1fce62c047f1b967544f0f2342f231fd823e7fcf88d79d63`.
+
+Publication and CI evidence are pending.
+
+## Honest limits
+
+- SPARKLE detects changes only when an operator or future connector submits a
+  new observation. It does not poll websites or discover sources in this
+  release.
+- Notification/calendar/webhook delivery remains absent.
+
+---
+
 # 0.16.0-alpha.1 verification report
 
 Date: 2026-08-30 UTC

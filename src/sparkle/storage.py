@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import sqlite3
@@ -160,6 +161,9 @@ class MemoryStore(SQLiteStore):
 
 
 class KnowledgeStore(SQLiteStore):
+    MAX_METADATA_BYTES = 4_096
+    MONITOR_KEY_PATTERN = re.compile(r"[a-z0-9][a-z0-9._-]{0,63}\Z")
+
     def __init__(self, path: Path | None = None):
         super().__init__(path or data_root() / "knowledge_environment" / "knowledge.sqlite3")
         self.initialize()
@@ -173,6 +177,7 @@ class KnowledgeStore(SQLiteStore):
                     source_uri TEXT,
                     media_type TEXT NOT NULL,
                     metadata TEXT NOT NULL DEFAULT '{}',
+                    content_digest TEXT,
                     created_at TEXT NOT NULL
                 );
                 CREATE TABLE IF NOT EXISTS chunks (
@@ -185,6 +190,15 @@ class KnowledgeStore(SQLiteStore):
                 );
                 CREATE INDEX IF NOT EXISTS idx_chunks_source ON chunks(source_id);
             """)
+            columns = {
+                row["name"] for row in connection.execute(
+                    "PRAGMA table_info(sources)"
+                ).fetchall()
+            }
+            if "content_digest" not in columns:
+                connection.execute(
+                    "ALTER TABLE sources ADD COLUMN content_digest TEXT"
+                )
 
     @staticmethod
     def _terms(text: str) -> list[str]:
@@ -202,6 +216,29 @@ class KnowledgeStore(SQLiteStore):
     ) -> int:
         if not title.strip() or not content.strip():
             raise ValueError("Knowledge title and content cannot be empty")
+        if metadata is not None and not isinstance(metadata, dict):
+            raise ValueError("Knowledge metadata must be an object")
+        metadata_value = metadata or {}
+        monitor_flag = metadata_value.get("research_monitor")
+        monitor_key = metadata_value.get("monitor_key")
+        if monitor_flag is not None and not isinstance(monitor_flag, bool):
+            raise ValueError("research_monitor must be a boolean")
+        if monitor_key is not None and (
+            monitor_flag is not True
+            or not isinstance(monitor_key, str)
+            or self.MONITOR_KEY_PATTERN.fullmatch(monitor_key) is None
+        ):
+            raise ValueError(
+                "monitor_key requires research_monitor=true and a 1-64 character safe identifier"
+            )
+        if monitor_flag is True and monitor_key is None:
+            raise ValueError("research_monitor=true requires monitor_key")
+        encoded_metadata = json.dumps(
+            metadata_value, separators=(",", ":"), ensure_ascii=False,
+        )
+        if len(encoded_metadata.encode("utf-8")) > self.MAX_METADATA_BYTES:
+            raise ValueError("Knowledge metadata exceeds 4096 bytes")
+        content_digest = hashlib.sha256(content.encode("utf-8")).hexdigest()
         paragraphs = [part.strip() for part in re.split(r"\n\s*\n", content) if part.strip()]
         chunks: list[str] = []
         current = ""
@@ -216,8 +253,11 @@ class KnowledgeStore(SQLiteStore):
             chunks.append(current)
         with self.connect() as connection:
             cursor = connection.execute(
-                "INSERT INTO sources(title, source_uri, media_type, metadata, created_at) VALUES(?,?,?,?,?)",
-                (title.strip(), source_uri, media_type, json.dumps(metadata or {}), utc_now()),
+                "INSERT INTO sources(title, source_uri, media_type, metadata, content_digest, created_at) VALUES(?,?,?,?,?,?)",
+                (
+                    title.strip(), source_uri, media_type,
+                    encoded_metadata, content_digest, utc_now(),
+                ),
             )
             source_id = int(cursor.lastrowid)
             connection.executemany(
@@ -273,6 +313,24 @@ class KnowledgeStore(SQLiteStore):
                 "source_uri": row["source_uri"], "media_type": row["media_type"],
                 "metadata": json.loads(row["metadata"]),
                 "created_at": row["created_at"], "chunks": row["chunk_count"],
+            }
+            for row in rows
+        ]
+
+    def monitor_observations(self, *, limit: int = 200) -> list[dict[str, Any]]:
+        """Return bounded internal revision evidence without content or source URIs."""
+        with self.connect() as connection:
+            rows = connection.execute("""
+                SELECT id, media_type, metadata, content_digest, created_at
+                FROM sources ORDER BY id DESC LIMIT ?
+            """, (max(1, min(limit, 1_000)),)).fetchall()
+        return [
+            {
+                "source_id": row["id"],
+                "media_type": row["media_type"],
+                "metadata": json.loads(row["metadata"]),
+                "content_digest": row["content_digest"],
+                "created_at": row["created_at"],
             }
             for row in rows
         ]

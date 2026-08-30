@@ -169,3 +169,14 @@ check/once/status, worker-entrypoint, and mode-0600 configuration checks.
 GitHub CI run #35 (`33299313086`) passed the exact v0.16 capability tree on
 Python 3.12 and 3.13, the separately deployable worker image
 build/entrypoint, and the installed automation-service lifecycle.
+
+Latest v0.17 pre-publication result on 2026-08-30: six focused
+knowledge-revision, automation, and API cases passed after correcting one
+over-broad privacy assertion. The corrected adjacent storage, automation, and
+API set passed 38 tests in 13.418 seconds. After adding the CLI revision flow,
+the corrected complete suite passed 160 tests in 34.371 seconds; dashboard
+JavaScript syntax and Git whitespace checks passed. A zero-dependency
+non-editable `0.17.0a1` wheel installed without an index and passed installed
+status, research-change/non-disclosure, multimodal round trip, automation
+check/once/status, worker-entrypoint, and mode-0600 configuration checks.
+Publication and remote CI evidence are pending.

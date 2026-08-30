@@ -39,6 +39,10 @@ def build_parser() -> argparse.ArgumentParser:
     knowledge = sub.add_parser("ingest", help="Ingest a UTF-8 text or Markdown file")
     knowledge.add_argument("path")
     knowledge.add_argument("--title")
+    knowledge.add_argument(
+        "--monitor-key",
+        help="Track later revisions under a safe 1-64 character research key",
+    )
     agent_install = sub.add_parser("agent-install", help="Install a generated agent manifest")
     agent_install.add_argument("manifest")
     agent_install.add_argument("--approve", action="store_true")
@@ -148,7 +152,9 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "ingest":
         path = Path(args.path).resolve()
-        source_id = system.knowledge_ingestor.ingest(path, title=args.title)
+        source_id = system.knowledge_ingestor.ingest(
+            path, title=args.title, monitor_key=args.monitor_key,
+        )
         _print({"ok": True, "source_id": source_id})
         return 0
     if args.command == "agent-install":

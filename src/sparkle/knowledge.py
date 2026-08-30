@@ -47,8 +47,24 @@ class KnowledgeIngestor:
             return "\n\n".join(paragraph.text for paragraph in document.paragraphs if paragraph.text.strip()), "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         raise KnowledgeIngestError(f"Unsupported knowledge format: {extension or 'none'}")
 
-    def ingest(self, path: Path, *, title: str | None = None) -> int:
+    def ingest(
+        self,
+        path: Path,
+        *,
+        title: str | None = None,
+        monitor_key: str | None = None,
+    ) -> int:
         content, media_type = self.extract(path)
         if not content.strip():
             raise KnowledgeIngestError("Knowledge source contains no extractable text")
-        return self.store.ingest_text(title or path.stem, content, source_uri=str(path.resolve()), media_type=media_type)
+        metadata = (
+            {"research_monitor": True, "monitor_key": monitor_key}
+            if monitor_key is not None else None
+        )
+        return self.store.ingest_text(
+            title or path.stem,
+            content,
+            source_uri=str(path.resolve()),
+            media_type=media_type,
+            metadata=metadata,
+        )

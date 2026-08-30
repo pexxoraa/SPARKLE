@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import math
+import re
 import sqlite3
 import uuid
 from datetime import UTC, datetime, timedelta
@@ -10,7 +11,7 @@ from typing import Any
 
 from sparkle.config import data_root
 from sparkle.orchestrator import Orchestrator
-from sparkle.storage import MemoryStore, SQLiteStore, utc_now
+from sparkle.storage import KnowledgeStore, MemoryStore, SQLiteStore, utc_now
 
 
 class AutomationLeaseLostError(RuntimeError):
@@ -22,6 +23,7 @@ PROACTIVE_ALERT_TYPES = frozenset({
     "overdue",
     "project_incomplete",
     "repeated_mistake",
+    "research_change",
     "revision_due",
     "schedule_conflict",
     "weak_learning",
@@ -531,7 +533,7 @@ class AutomationStore(SQLiteStore):
 
 
 class ProactiveEngine:
-    """Produces bounded alerts only from explicit structured memory evidence."""
+    """Produces bounded alerts only from explicit structured evidence."""
 
     PROTOCOL = "SPARKLE-PROACTIVE/1"
     MAX_ALERTS = 200
@@ -539,10 +541,16 @@ class ProactiveEngine:
     MAX_SCHEDULE_CONFLICTS = 200
     MAX_SCHEDULE_DURATION_DAYS = 7
     SCHEDULE_HORIZON_DAYS = 30
+    MAX_RESEARCH_OBSERVATIONS = 200
+    MAX_RESEARCH_CHANGES = 100
+    RESEARCH_CHANGE_HORIZON_DAYS = 7
     _SEVERITY_ORDER = {"urgent": 0, "high": 1, "medium": 2}
 
-    def __init__(self, memory: MemoryStore):
+    def __init__(
+        self, memory: MemoryStore, knowledge: KnowledgeStore | None = None,
+    ):
         self.memory = memory
+        self.knowledge = knowledge
 
     @staticmethod
     def _time(value: Any) -> datetime | None:
@@ -576,6 +584,8 @@ class ProactiveEngine:
             "severity": severity,
             "category": item["category"],
             "key": item["key"],
+            "source_kind": "memory",
+            "source_id": item["id"],
             "source_memory_id": item["id"],
             "evidence": evidence,
             **compatibility,
@@ -783,6 +793,69 @@ class ProactiveEngine:
                     return alerts
         return alerts
 
+    def _research_alerts(self, current: datetime) -> list[dict[str, Any]]:
+        if self.knowledge is None:
+            return []
+        grouped: dict[str, list[dict[str, Any]]] = {}
+        for item in self.knowledge.monitor_observations(
+            limit=self.MAX_RESEARCH_OBSERVATIONS,
+        ):
+            metadata = item.get("metadata")
+            digest = item.get("content_digest")
+            if (
+                not isinstance(metadata, dict)
+                or metadata.get("research_monitor") is not True
+                or not isinstance(metadata.get("monitor_key"), str)
+                or KnowledgeStore.MONITOR_KEY_PATTERN.fullmatch(
+                    metadata["monitor_key"]
+                ) is None
+                or not isinstance(digest, str)
+                or re.fullmatch(r"[0-9a-f]{64}", digest) is None
+            ):
+                continue
+            grouped.setdefault(metadata["monitor_key"], []).append(item)
+
+        alerts: list[dict[str, Any]] = []
+        for monitor_key in sorted(grouped):
+            observations = sorted(
+                grouped[monitor_key], key=lambda item: int(item["source_id"]),
+            )
+            if len(observations) < 2:
+                continue
+            previous, latest = observations[-2:]
+            if previous["content_digest"] == latest["content_digest"]:
+                continue
+            observed_at = self._time(latest.get("created_at"))
+            if observed_at is None:
+                continue
+            observed_at = observed_at.astimezone(UTC)
+            age = current - observed_at
+            if (
+                age < -timedelta(minutes=5)
+                or age > timedelta(days=self.RESEARCH_CHANGE_HORIZON_DAYS)
+            ):
+                continue
+            source_id = int(latest["source_id"])
+            alerts.append({
+                "protocol_version": self.PROTOCOL,
+                "type": "research_change",
+                "severity": "medium",
+                "category": "research",
+                "key": monitor_key,
+                "source_kind": "knowledge",
+                "source_id": source_id,
+                "source_knowledge_id": source_id,
+                "evidence": {
+                    "previous_source_id": int(previous["source_id"]),
+                    "current_source_id": source_id,
+                    "observed_at": observed_at.isoformat(),
+                    "age_hours": round(max(0.0, age.total_seconds() / 3_600), 1),
+                },
+            })
+            if len(alerts) >= self.MAX_RESEARCH_CHANGES:
+                break
+        return alerts
+
     def inspect(self, now: datetime | None = None) -> list[dict[str, Any]]:
         current = now or datetime.now(UTC)
         if current.tzinfo is None:
@@ -816,12 +889,13 @@ class ProactiveEngine:
                     if alert:
                         alerts.append(alert)
         alerts.extend(self._schedule_alerts(schedule_items, current))
+        alerts.extend(self._research_alerts(current))
         alerts.sort(key=lambda alert: (
             self._SEVERITY_ORDER[alert["severity"]],
             alert["type"],
             alert["category"],
             alert["key"],
-            alert["source_memory_id"],
+            alert["source_id"],
         ))
         return alerts[: self.MAX_ALERTS]
 

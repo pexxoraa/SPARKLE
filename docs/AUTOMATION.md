@@ -15,9 +15,10 @@ recovery, not exactly-once delivery; actions with future external effects must
 be idempotent.
 
 The proactive engine implements protocol `SPARKLE-PROACTIVE/1`. It evaluates
-only explicit structured metadata on active memory records and emits at most
-200 deterministically ordered alerts. It never infers conditions from the
-memory value or sends that value in alert evidence.
+only explicit structured memory metadata and bounded knowledge-revision
+evidence, and emits at most 200 deterministically ordered alerts. It never
+infers conditions from free text or sends memory/knowledge content in alert
+evidence.
 
 | Alert | Eligible categories | Required metadata |
 |---|---|---|
@@ -27,12 +28,13 @@ memory value or sends that value in alert evidence.
 | `revision_due` | skills, learning, exams | ISO-8601 `next_review_at` at or before evaluation time |
 | `project_incomplete` | projects | `status` in active, blocked, in_progress, or paused, plus `progress_percent` below 100 |
 | `repeated_mistake` | mistakes | integer `repeat_count` of at least 2 |
+| `research_change` | knowledge revisions | Two explicit observations with `research_monitor: true`, the same safe `monitor_key`, and different content digests |
 
 Numbers, timestamps, categories, keys, evidence counts, and condition fields
 are bounded and type checked. Invalid or incomplete evidence produces no
 alert. GET `/api/proactive` returns the protocol version and safe structured
-alerts; the dashboard renders their type, severity, category, key, and source
-memory ID.
+alerts; the dashboard renders their type, severity, category, key, source kind,
+and source ID.
 
 Schedule evaluation considers at most 200 recent eligible records, looks no
 more than 30 days ahead, and emits at most 200 pair conflicts. Touching but
@@ -40,6 +42,13 @@ non-overlapping intervals are not conflicts. Evidence contains only normalized
 overlap times/duration and the conflicting record's ID/category/key; memory
 free text is never copied. The lower memory ID is the deterministic primary
 record used by category/key condition filters.
+
+Research-change evaluation reads at most 200 recent knowledge observations,
+emits at most 100 changes, and expires each computed alert after seven days.
+Metadata is limited to 4 KiB and monitor keys to 64 safe characters. Evidence
+contains only previous/current knowledge source IDs, normalized observation
+time, and age. Source content, titles, URIs, and digests remain in the separate
+knowledge environment and are never copied into the alert.
 
 Conditional automations accept the backwards-compatible `memory_deadline`
 type for deadline alerts or `proactive_alert` for any supported alert. They can
@@ -89,6 +98,7 @@ an interrupted claim fenced until lease recovery. Signal handlers perform no
 database I/O: they set the drain event, prevent another cycle, and normal
 service control flow persists the terminal state.
 
-Notification delivery, calendar connectors, and external event webhooks are
-not implemented. Live scheduled model work also requires a configured provider
-credential; deterministic service execution is covered by the test suite.
+External research polling, notification delivery, calendar connectors, and
+external event webhooks are not implemented. Live scheduled model work also
+requires a configured provider credential; deterministic service execution is
+covered by the test suite.

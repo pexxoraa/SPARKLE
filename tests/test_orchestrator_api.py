@@ -442,6 +442,47 @@ class APITests(SystemCase):
         )
         self.assertNotIn("Never expose", body.decode())
 
+    def test_knowledge_revisions_flow_to_safe_research_change_alert(self):
+        invalid_status, _, invalid_body = self.request("/api/knowledge", {
+            "title": "Invalid monitor",
+            "content": "Must not be stored",
+            "metadata": {
+                "research_monitor": True, "monitor_key": "INVALID KEY",
+            },
+        })
+        self.assertEqual(invalid_status, 400)
+        self.assertNotIn("Must not be stored", invalid_body.decode())
+        self.assertEqual(self.system.knowledge.stats()["sources"], 0)
+        metadata = {
+            "research_monitor": True, "monitor_key": "robotics.papers",
+        }
+        first = json.loads(self.request("/api/knowledge", {
+            "title": "Private robotics paper",
+            "content": "Never expose original research text",
+            "source_uri": "https://private.example/research",
+            "metadata": metadata,
+        })[2])["source_id"]
+        second = json.loads(self.request("/api/knowledge", {
+            "title": "Private robotics paper",
+            "content": "Never expose revised research text",
+            "source_uri": "https://private.example/research",
+            "metadata": metadata,
+        })[2])["source_id"]
+        status, _, body = self.request("/api/proactive")
+        self.assertEqual(status, 200)
+        alert = next(
+            item for item in json.loads(body)["alerts"]
+            if item["type"] == "research_change"
+        )
+        self.assertEqual(alert["source_kind"], "knowledge")
+        self.assertEqual(alert["source_id"], second)
+        self.assertEqual(alert["evidence"]["previous_source_id"], first)
+        self.assertEqual(alert["evidence"]["current_source_id"], second)
+        for private in (
+            "Never expose", "private.example", "Private robotics paper",
+        ):
+            self.assertNotIn(private, body.decode())
+
     def test_generated_agent_build_and_automation_endpoints(self):
         agent = {
             "name": "robotics_research", "capability": "reasoning",

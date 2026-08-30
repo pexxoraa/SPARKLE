@@ -7,7 +7,7 @@ registry, provider adapters, specialist agents, persistent memory, a separate
 knowledge index, execution traces, automations, proactive rules, a CLI, an HTTP
 API, and a local dashboard.
 
-Current release: `0.16.0-alpha.1`. This is a tested foundation release, not the
+Current release: `0.17.0-alpha.1`. This is a tested foundation release, not the
 final system described in the long-term Definition of Done. See
 [`docs/BUILD_STATE.md`](docs/BUILD_STATE.md) and
 [`docs/ACCEPTANCE.md`](docs/ACCEPTANCE.md) for exact evidence and gaps.
@@ -33,10 +33,11 @@ final system described in the long-term Definition of Done. See
 - A separately installable supervised automation service with a no-follow
   single-instance lock, expiring claims, crash recovery records, stale-runner
   fencing, persisted health, SIGTERM draining, and a hardened systemd profile.
-- Evidence-backed proactive rules for deadlines, schedule conflicts, weak
-  learning, revision, incomplete projects, and repeated mistakes. Rules read only validated
-  structured memory metadata, expose bounded evidence without memory text, and
-  can trigger strictly validated conditional automations with cooldowns.
+- Evidence-backed proactive rules for deadlines, schedule conflicts, research
+  revisions, weak learning, revision, incomplete projects, and repeated
+  mistakes. Rules read only validated structured evidence, expose bounded
+  metadata without memory or research text, and can trigger strictly validated
+  conditional automations with cooldowns.
 - Bounded application workspace scaffolding with path confinement, size limits,
   overwrite protection, and explicit approval.
 - Persistent, approval-gated workspace verification with non-executing Python

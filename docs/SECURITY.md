@@ -67,6 +67,11 @@
   reversed, over-seven-day, and beyond-30-day evidence, and compare at most 200
   recent records. Evidence exposes only normalized overlap data plus the other
   record's ID/category/key; record values are never serialized.
+- Research monitoring requires an explicit boolean opt-in and a validated
+  1-64 character monitor key. Knowledge metadata is capped at 4 KiB and source
+  comparisons are bounded. Content digests remain in the separate knowledge
+  database; proactive output excludes content, title, URI, and digest and
+  exposes only opaque source IDs and normalized timing.
 - The supervised automation entrypoint uses an owner-only no-follow POSIX lock,
   one active local instance, expiring claim tokens, recovery records, and
   token-fenced completion. Its status stores only bounded lifecycle/error-type
