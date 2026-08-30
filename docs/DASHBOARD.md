@@ -7,10 +7,16 @@ Implemented panels:
 - Command console with normal or multi-agent execution.
 - System state, active model, storage counts, voice state, and agents.
 - Durable memory records.
-- Automation, application-build, static-verification, bounded test-run,
+- Evidence-backed proactive alerts and automation execution history.
+- Application-build, static-verification, bounded test-run,
   external-worker, immutable artifact, unverified deployment-event,
   execution-trace, and secret-free API-audit lists.
 - Persisted automation-service lifecycle state in system metrics.
+
+The proactive list is read from `GET /api/proactive`. It shows only structured
+evidence identifiers and classifications; memory free text is not returned to
+the panel. An empty list means no supported rule currently has valid evidence,
+not that the system inferred an all-clear state.
 
 The server sets no-store on JSON, denies framing, disables MIME sniffing, uses a
 self-only Content Security Policy, limits JSON bodies to 1 MB, and does not log

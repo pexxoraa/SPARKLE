@@ -86,3 +86,33 @@ class AutomationRunnerTests(unittest.TestCase):
         )
         self.assertEqual(self.system.automation_runner.run_due(now)[0]["status"], "success")
         self.assertEqual(self.system.automation_runner.run_due(now + timedelta(minutes=10)), [])
+
+    def test_structured_proactive_condition_obeys_cooldown(self):
+        now = datetime.now(UTC)
+        self.system.memory.remember(
+            "skills",
+            "python",
+            "Python evidence",
+            metadata={
+                "evidence_count": 3,
+                "mastery_level": 1,
+                "target_level": 3,
+            },
+        )
+        self.system.automations.create(
+            "Weak skill helper",
+            "condition",
+            {"type": "agent", "prompt": "Plan Python practice", "agent": "learning"},
+            condition={
+                "type": "proactive_alert",
+                "alert": "weak_learning",
+                "category": "skills",
+                "key": "python",
+                "cooldown_minutes": 60,
+            },
+        )
+        first = self.system.automation_runner.run_due(now)
+        self.assertEqual(first[0]["status"], "success")
+        self.assertEqual(
+            self.system.automation_runner.run_due(now + timedelta(minutes=10)), [],
+        )

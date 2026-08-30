@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 import sqlite3
 import uuid
 from datetime import UTC, datetime, timedelta
@@ -14,6 +15,16 @@ from sparkle.storage import MemoryStore, SQLiteStore, utc_now
 
 class AutomationLeaseLostError(RuntimeError):
     """A recovered or cancelled claim can no longer commit a run result."""
+
+
+PROACTIVE_ALERT_TYPES = frozenset({
+    "deadline_approaching",
+    "overdue",
+    "project_incomplete",
+    "repeated_mistake",
+    "revision_due",
+    "weak_learning",
+})
 
 
 class AutomationStore(SQLiteStore):
@@ -95,6 +106,8 @@ class AutomationStore(SQLiteStore):
             raise ValueError("Scheduled automations require next_run_at")
         if kind == "condition" and not condition:
             raise ValueError("Conditional automations require a condition")
+        if kind == "condition":
+            self._validate_condition(condition)
         self._validate_action(action)
         now = utc_now()
         with self.connect() as connection:
@@ -114,6 +127,43 @@ class AutomationStore(SQLiteStore):
         attempts = action.get("max_attempts", 1)
         if isinstance(attempts, bool) or not isinstance(attempts, int) or not 1 <= attempts <= 3:
             raise ValueError("Automation max_attempts must be an integer from 1 to 3")
+
+    @staticmethod
+    def _validate_condition(condition: dict[str, Any] | None) -> None:
+        if not isinstance(condition, dict):
+            raise ValueError("Automation condition must be an object")
+        allowed = {"type", "alert", "category", "key", "cooldown_minutes"}
+        unknown = set(condition) - allowed
+        if unknown:
+            raise ValueError(
+                "Unsupported automation condition fields: "
+                + ", ".join(sorted(unknown))
+            )
+        condition_type = condition.get("type")
+        if condition_type not in {"memory_deadline", "proactive_alert"}:
+            raise ValueError("Automation condition type is unsupported")
+        alert = condition.get("alert")
+        if alert not in PROACTIVE_ALERT_TYPES:
+            raise ValueError("Automation proactive alert type is unsupported")
+        if condition_type == "memory_deadline" and alert not in {
+            "deadline_approaching", "overdue",
+        }:
+            raise ValueError("memory_deadline accepts only deadline alert types")
+        category = condition.get("category")
+        if category is not None and category not in MemoryStore.VALID_CATEGORIES:
+            raise ValueError("Automation condition memory category is unsupported")
+        key = condition.get("key")
+        if key is not None and (
+            not isinstance(key, str) or not key.strip() or len(key) > 200
+        ):
+            raise ValueError("Automation condition key must contain 1-200 characters")
+        cooldown = condition.get("cooldown_minutes", 60)
+        if (
+            isinstance(cooldown, bool)
+            or not isinstance(cooldown, (int, float))
+            or not 1 <= cooldown <= 10_080
+        ):
+            raise ValueError("Condition cooldown_minutes must be from 1 to 10080")
 
     def due(self, now: str | None = None) -> list[dict[str, Any]]:
         current = now or utc_now()
@@ -480,29 +530,207 @@ class AutomationStore(SQLiteStore):
 
 
 class ProactiveEngine:
-    """Produces evidence-backed alerts from stored tasks, goals, exams, and projects."""
+    """Produces bounded alerts only from explicit structured memory evidence."""
+
+    PROTOCOL = "SPARKLE-PROACTIVE/1"
+    MAX_ALERTS = 200
+    _SEVERITY_ORDER = {"urgent": 0, "high": 1, "medium": 2}
 
     def __init__(self, memory: MemoryStore):
         self.memory = memory
 
+    @staticmethod
+    def _time(value: Any) -> datetime | None:
+        if not isinstance(value, str) or not value or len(value) > 100:
+            return None
+        try:
+            parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except ValueError:
+            return None
+        return parsed.replace(tzinfo=UTC) if parsed.tzinfo is None else parsed
+
+    @staticmethod
+    def _number(value: Any, minimum: float, maximum: float) -> float | None:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return None
+        number = float(value)
+        return number if math.isfinite(number) and minimum <= number <= maximum else None
+
+    @classmethod
+    def _alert(
+        cls,
+        item: dict[str, Any],
+        alert_type: str,
+        severity: str,
+        evidence: dict[str, Any],
+        **compatibility: Any,
+    ) -> dict[str, Any]:
+        return {
+            "protocol_version": cls.PROTOCOL,
+            "type": alert_type,
+            "severity": severity,
+            "category": item["category"],
+            "key": item["key"],
+            "source_memory_id": item["id"],
+            "evidence": evidence,
+            **compatibility,
+        }
+
+    @classmethod
+    def _deadline_alert(
+        cls, item: dict[str, Any], current: datetime,
+    ) -> dict[str, Any] | None:
+        metadata = item["metadata"]
+        raw_due = metadata.get("deadline") or metadata.get("due_at")
+        due = cls._time(raw_due)
+        if due is None:
+            return None
+        hours = (due - current).total_seconds() / 3_600
+        rounded = round(hours, 1)
+        evidence = {"due_at": due.isoformat(), "hours_remaining": rounded}
+        if hours < 0:
+            severity = "urgent" if hours <= -24 else "high"
+            return cls._alert(
+                item, "overdue", severity, evidence, hours=rounded,
+            )
+        if hours <= 72:
+            return cls._alert(
+                item, "deadline_approaching", "high", evidence, hours=rounded,
+            )
+        return None
+
+    @classmethod
+    def _weak_learning_alert(cls, item: dict[str, Any]) -> dict[str, Any] | None:
+        metadata = item["metadata"]
+        evidence_count = metadata.get("evidence_count")
+        if (
+            isinstance(evidence_count, bool)
+            or not isinstance(evidence_count, int)
+            or not 1 <= evidence_count <= 1_000_000
+        ):
+            return None
+        evidence: dict[str, Any] = {"evidence_count": evidence_count}
+        gap_score = 0.0
+        mastery = cls._number(metadata.get("mastery_level"), 0, 6)
+        target_mastery = cls._number(metadata.get("target_level"), 0, 6)
+        if mastery is not None and target_mastery is not None and mastery < target_mastery:
+            evidence.update({
+                "mastery_level": int(mastery),
+                "target_level": int(target_mastery),
+                "mastery_gap": int(target_mastery - mastery),
+            })
+            gap_score = max(gap_score, (target_mastery - mastery) / 6)
+        accuracy = cls._number(metadata.get("accuracy"), 0, 1)
+        target_accuracy = cls._number(metadata.get("target_accuracy"), 0, 1)
+        attempts = metadata.get("attempts")
+        if (
+            accuracy is not None
+            and target_accuracy is not None
+            and accuracy < target_accuracy
+            and isinstance(attempts, int)
+            and not isinstance(attempts, bool)
+            and 1 <= attempts <= 1_000_000
+        ):
+            evidence.update({
+                "accuracy": round(accuracy, 4),
+                "target_accuracy": round(target_accuracy, 4),
+                "attempts": attempts,
+                "accuracy_gap": round(target_accuracy - accuracy, 4),
+            })
+            gap_score = max(gap_score, target_accuracy - accuracy)
+        if len(evidence) == 1:
+            return None
+        return cls._alert(
+            item,
+            "weak_learning",
+            "high" if gap_score >= 0.2 else "medium",
+            evidence,
+        )
+
+    @classmethod
+    def _revision_alert(
+        cls, item: dict[str, Any], current: datetime,
+    ) -> dict[str, Any] | None:
+        review = cls._time(item["metadata"].get("next_review_at"))
+        if review is None or review > current:
+            return None
+        overdue_hours = round((current - review).total_seconds() / 3_600, 1)
+        return cls._alert(
+            item,
+            "revision_due",
+            "high" if overdue_hours >= 24 else "medium",
+            {"next_review_at": review.isoformat(), "overdue_hours": overdue_hours},
+        )
+
+    @classmethod
+    def _project_alert(cls, item: dict[str, Any]) -> dict[str, Any] | None:
+        metadata = item["metadata"]
+        status = metadata.get("status")
+        progress = cls._number(metadata.get("progress_percent"), 0, 100)
+        if status not in {"active", "blocked", "in_progress", "paused"}:
+            return None
+        if progress is None or progress >= 100:
+            return None
+        return cls._alert(
+            item,
+            "project_incomplete",
+            "high" if status == "blocked" else "medium",
+            {"status": status, "progress_percent": round(progress, 2)},
+        )
+
+    @classmethod
+    def _mistake_alert(cls, item: dict[str, Any]) -> dict[str, Any] | None:
+        repeat_count = item["metadata"].get("repeat_count")
+        if (
+            isinstance(repeat_count, bool)
+            or not isinstance(repeat_count, int)
+            or not 2 <= repeat_count <= 1_000_000
+        ):
+            return None
+        return cls._alert(
+            item,
+            "repeated_mistake",
+            "high" if repeat_count >= 3 else "medium",
+            {"repeat_count": repeat_count},
+        )
+
     def inspect(self, now: datetime | None = None) -> list[dict[str, Any]]:
         current = now or datetime.now(UTC)
+        if current.tzinfo is None:
+            current = current.replace(tzinfo=UTC)
         alerts: list[dict[str, Any]] = []
-        for category in ("tasks", "exams", "projects", "goals"):
+        categories = (
+            "tasks", "exams", "projects", "goals", "skills", "learning", "mistakes",
+        )
+        for category in categories:
             for item in self.memory.recent(limit=100, category=category):
-                due = item["metadata"].get("deadline") or item["metadata"].get("due_at")
-                if not due:
-                    continue
-                try:
-                    due_time = datetime.fromisoformat(due.replace("Z", "+00:00"))
-                except (ValueError, AttributeError):
-                    continue
-                hours = (due_time - current).total_seconds() / 3600
-                if hours < 0:
-                    alerts.append({"type": "overdue", "category": category, "key": item["key"], "hours": round(hours, 1)})
-                elif hours <= 72:
-                    alerts.append({"type": "deadline_approaching", "category": category, "key": item["key"], "hours": round(hours, 1)})
-        return alerts
+                if category in {"tasks", "exams", "projects", "goals"}:
+                    alert = self._deadline_alert(item, current)
+                    if alert:
+                        alerts.append(alert)
+                if category in {"skills", "learning", "exams"}:
+                    for alert in (
+                        self._weak_learning_alert(item),
+                        self._revision_alert(item, current),
+                    ):
+                        if alert:
+                            alerts.append(alert)
+                if category == "projects":
+                    alert = self._project_alert(item)
+                    if alert:
+                        alerts.append(alert)
+                if category == "mistakes":
+                    alert = self._mistake_alert(item)
+                    if alert:
+                        alerts.append(alert)
+        alerts.sort(key=lambda alert: (
+            self._SEVERITY_ORDER[alert["severity"]],
+            alert["type"],
+            alert["category"],
+            alert["key"],
+            alert["source_memory_id"],
+        ))
+        return alerts[: self.MAX_ALERTS]
 
 
 class AutomationRunner:
@@ -516,7 +744,7 @@ class AutomationRunner:
     @staticmethod
     def _condition_matches(item: dict[str, Any], alerts: list[dict[str, Any]], now: datetime) -> bool:
         condition = item.get("condition") or {}
-        if condition.get("type") != "memory_deadline":
+        if condition.get("type") not in {"memory_deadline", "proactive_alert"}:
             return False
         last_run = item.get("last_run_at")
         cooldown = condition.get("cooldown_minutes", 60)

@@ -1,3 +1,40 @@
+# 0.14.0-alpha.1 verification report
+
+Date: 2026-08-29 UTC
+
+## Executed evidence
+
+- The focused proactive storage/runner/API set passed 28 tests in 8.376 seconds
+  after version and documentation alignment.
+- The final pre-publication `make check` passed 120 tests in 21.283 seconds,
+  including deterministic ordering and the hard 200-alert response bound.
+- A non-editable `0.14.0a1` wheel was built without dependency resolution,
+  installed in a fresh virtual environment, and ran `sparkle status` plus the
+  automation check/once/status lifecycle. Runtime defaults materialized as two
+  separate mode-0600 files, status surfaces reported
+  `credentials_exposed: false`, and the service completed one clean cycle.
+- Dashboard JavaScript syntax and Git whitespace checks passed.
+- The engine emits six bounded alert types exclusively from validated
+  structured memory metadata. Invalid, incomplete, unstructured, non-finite,
+  and out-of-range evidence produces no alert; serialized alerts omit memory
+  free text.
+- Strict conditional-automation schemas reject unknown types, alert names,
+  categories, fields, empty/oversized keys, and invalid cooldowns. A real
+  weak-learning condition executed once and respected its cooldown.
+- `GET /api/proactive` and the dashboard panel are integration tested, and the
+  query-free audit path is recorded separately.
+
+## Honest limits
+
+- Proactive output is deterministic evidence-based prioritization, not
+  prediction or autonomous understanding of unstructured memory text.
+- Schedule-conflict detection, research-change monitoring, notification
+  delivery, and calendar/webhook connectors are not implemented.
+- Remote publication and all-job CI verification are pending for this
+  pre-publication checkpoint. The verified remote baseline remains v0.13.
+
+---
+
 # 0.13.0-alpha.1 verification report
 
 Date: 2026-08-29 UTC

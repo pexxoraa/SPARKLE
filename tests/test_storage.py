@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import tempfile
 import unittest
 from datetime import UTC, datetime, timedelta
@@ -98,6 +99,44 @@ class AutomationTests(unittest.TestCase):
             self.assertEqual(store.list(), [])
             with self.assertRaises(ValueError):
                 store.create("Broken", "condition", {"type": "agent"})
+            invalid_conditions = [
+                {"type": "unknown", "alert": "overdue"},
+                {"type": "memory_deadline", "alert": "weak_learning"},
+                {"type": "proactive_alert", "alert": "invented"},
+                {
+                    "type": "proactive_alert", "alert": "weak_learning",
+                    "category": "secrets",
+                },
+                {
+                    "type": "proactive_alert", "alert": "weak_learning",
+                    "extra": True,
+                },
+                {
+                    "type": "proactive_alert", "alert": "weak_learning",
+                    "key": "",
+                },
+                {
+                    "type": "proactive_alert", "alert": "weak_learning",
+                    "key": "x" * 201,
+                },
+                {
+                    "type": "proactive_alert", "alert": "weak_learning",
+                    "cooldown_minutes": 0,
+                },
+                {
+                    "type": "proactive_alert", "alert": "weak_learning",
+                    "cooldown_minutes": True,
+                },
+            ]
+            for index, condition in enumerate(invalid_conditions):
+                with self.subTest(condition=condition):
+                    with self.assertRaises(ValueError):
+                        store.create(
+                            f"Invalid {index}",
+                            "condition",
+                            {"type": "agent", "prompt": "Review"},
+                            condition=condition,
+                        )
 
     def test_proactive_deadline_alerts(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -106,3 +145,88 @@ class AutomationTests(unittest.TestCase):
             memory.remember("tasks", "report", "Finish report", metadata={"deadline": (now + timedelta(hours=10)).isoformat()})
             alerts = ProactiveEngine(memory).inspect(now)
             self.assertEqual(alerts[0]["type"], "deadline_approaching")
+
+    def test_proactive_rules_require_structured_bounded_evidence(self):
+        with tempfile.TemporaryDirectory() as directory:
+            memory = MemoryStore(Path(directory) / "memory.sqlite3")
+            now = datetime(2026, 8, 28, 12, tzinfo=UTC)
+            memory.remember(
+                "tasks", "late", "Sensitive task details",
+                metadata={"deadline": (now - timedelta(hours=30)).isoformat()},
+            )
+            memory.remember(
+                "skills", "python", "Private learning notes",
+                metadata={
+                    "evidence_count": 4, "mastery_level": 2, "target_level": 4,
+                    "accuracy": 0.55, "target_accuracy": 0.8, "attempts": 12,
+                },
+            )
+            memory.remember(
+                "learning", "control", "Revision material",
+                metadata={"next_review_at": (now - timedelta(hours=2)).isoformat()},
+            )
+            memory.remember(
+                "projects", "robot", "Project details",
+                metadata={"status": "blocked", "progress_percent": 42},
+            )
+            memory.remember(
+                "mistakes", "sign_error", "Mistake details",
+                metadata={"repeat_count": 3},
+            )
+            memory.remember(
+                "goals", "unstructured", "This goal is overdue and weak",
+                metadata={},
+            )
+            memory.remember(
+                "exams", "invalid", "Invalid evidence",
+                metadata={
+                    "evidence_count": 2, "accuracy": "low",
+                    "target_accuracy": 0.9, "attempts": 3,
+                },
+            )
+
+            alerts = ProactiveEngine(memory).inspect(now)
+            by_type = {alert["type"]: alert for alert in alerts}
+            self.assertEqual(set(by_type), {
+                "overdue", "weak_learning", "revision_due",
+                "project_incomplete", "repeated_mistake",
+            })
+            self.assertEqual(
+                by_type["weak_learning"]["evidence"]["mastery_gap"], 2,
+            )
+            self.assertEqual(by_type["project_incomplete"]["severity"], "high")
+            self.assertEqual(by_type["overdue"]["protocol_version"], "SPARKLE-PROACTIVE/1")
+            serialized = json.dumps(alerts)
+            for absent in (
+                "Sensitive task details", "Private learning notes",
+                "Revision material", "Project details", "Mistake details",
+                "This goal is overdue and weak",
+            ):
+                self.assertNotIn(absent, serialized)
+
+    def test_proactive_alerts_are_deterministic_and_bounded(self):
+        with tempfile.TemporaryDirectory() as directory:
+            memory = MemoryStore(Path(directory) / "memory.sqlite3")
+            now = datetime(2026, 8, 28, 12, tzinfo=UTC)
+            memory.remember(
+                "tasks", "urgent", "Private task",
+                metadata={"deadline": (now - timedelta(hours=30)).isoformat()},
+            )
+            for index in range(100):
+                memory.remember(
+                    "mistakes", f"mistake-{index:03d}", "Private mistake",
+                    metadata={"repeat_count": 3},
+                )
+                memory.remember(
+                    "projects", f"project-{index:03d}", "Private project",
+                    metadata={"status": "active", "progress_percent": 50},
+                )
+            engine = ProactiveEngine(memory)
+            first = engine.inspect(now)
+            self.assertEqual(len(first), engine.MAX_ALERTS)
+            self.assertEqual(first, engine.inspect(now))
+            severity = {"urgent": 0, "high": 1, "medium": 2}
+            self.assertEqual(
+                [severity[item["severity"]] for item in first],
+                sorted(severity[item["severity"]] for item in first),
+            )

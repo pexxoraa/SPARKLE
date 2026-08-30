@@ -36,6 +36,13 @@ state is persisted after the active bounded operation returns. If forced
 termination occurs, a later instance records lease recovery before retrying;
 the old token can no longer commit.
 
+Proactive evaluation is active-memory metadata → category-specific schema
+validation → deterministic evidence calculation → severity ordering → bounded
+alert response. Memory free text is neither inspected nor copied. Conditional
+automations apply exact alert/category/key filters and a validated cooldown,
+then enter the same tokenized claim and orchestrator path as scheduled work.
+Alerts are computed views, not a second persistent knowledge or memory store.
+
 Generated-agent installation follows approval → manifest validation → SQLite
 persistence → in-process registry load. Application scaffolding follows
 approval → name/path/size validation → confined file writes → SHA-256 build

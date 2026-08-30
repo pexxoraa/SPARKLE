@@ -109,7 +109,15 @@ async function loadPanel(panel) {
       : empty('No durable memories stored.');
   }
   if (panel === 'automations') {
-    const data = await api('/api/automation-runs?limit=50');
+    const [data, proactive] = await Promise.all([
+      api('/api/automation-runs?limit=50'),
+      api('/api/proactive'),
+    ]);
+    qs('#proactiveList').innerHTML = proactive.alerts.length
+      ? proactive.alerts.map((alert) => (
+        `<div class="list-item"><strong>${escapeHtml(alert.type)} · ${escapeHtml(alert.severity)}</strong><small>${escapeHtml(alert.category)} · ${escapeHtml(alert.key)} · memory ${escapeHtml(alert.source_memory_id)}</small></div>`
+      )).join('')
+      : empty('No structured evidence currently triggers a proactive rule.');
     qs('#automationList').innerHTML = data.runs.length
       ? data.runs.map((run) => (
         `<div class="list-item"><strong>${escapeHtml(run.name)} · ${escapeHtml(run.status)}</strong><small>${escapeHtml(run.trace_id || 'no agent trace')} · ${escapeHtml(run.attempts)} attempt(s)</small></div>`

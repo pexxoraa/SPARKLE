@@ -350,8 +350,10 @@ class APIAuditStore(SQLiteStore):
         "/api/knowledge/delete", "/api/traces", "/api/automations",
         "/api/automations/run", "/api/automations/enable",
         "/api/automations/delete", "/api/automation-runs", "/api/builds",
-        "/api/builds/verify", "/api/builds/test", "/api/verifications",
-        "/api/test-runs", "/api/audit", "/api/chat",
+        "/api/builds/verify", "/api/builds/test", "/api/builds/test-external",
+        "/api/builds/package", "/api/verifications", "/api/test-runs",
+        "/api/external-test-runs", "/api/artifacts", "/api/deployments",
+        "/api/proactive", "/api/audit", "/api/chat",
     })
     UNKNOWN_ROUTE = "/api/[unknown]"
     OUTCOMES = {

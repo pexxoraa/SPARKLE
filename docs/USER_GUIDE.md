@@ -188,6 +188,26 @@ trace IDs, and safe result summaries.
 with an explicit run record; because this is at-least-once processing, future
 external actions must be idempotent.
 
+Inspect current evidence-backed alerts at `GET /api/proactive` or in the
+dashboard Automation panel. Alerts are computed from explicit metadata fields,
+not from memory prose. To drive an automation from an alert, create a
+conditional automation through `POST /api/automations` with a condition such
+as:
+
+```json
+{
+  "type": "proactive_alert",
+  "alert": "revision_due",
+  "category": "learning",
+  "key": "control_systems",
+  "cooldown_minutes": 1440
+}
+```
+
+Supported alerts are `deadline_approaching`, `overdue`, `weak_learning`,
+`revision_due`, `project_incomplete`, and `repeated_mistake`. The full evidence
+schema is documented in `docs/AUTOMATION.md`.
+
 ## Dashboard
 
 ```bash
@@ -195,7 +215,7 @@ sparkle serve
 ```
 
 The dashboard displays model/configuration state, built-in and generated
-agents, memory, automation runs, application builds, static verifications,
+agents, memory, proactive alerts, automation runs, application builds, static verifications,
 bounded local test runs, signed external-worker evidence, immutable artifacts,
 unverified deployment events, and traces. The API
 audit panel shows only route outcomes and durations; it never

@@ -12,6 +12,7 @@
 | Generated agents | `data_environment/generated_agents.sqlite3` | Persistent runtime agent definitions | User | Until replaced/deleted | Agent registry/router |
 | Automations, claims, runs, and service state | `data_environment/automations.sqlite3` | Schedules, expiring claims, recovery/fencing, execution and lifecycle evidence | User/system owner | Until deleted | Automation engine/service/dashboard |
 | Automation service lock | `data_environment/automation-service.lock` | Prevent concurrent local service instances | System owner | Persistent mode-0600 inode | Automation service |
+| Proactive alerts | Computed in process from active memory metadata; not separately persisted | Bounded evidence-backed prioritization and conditional automation matching | User/system owner | Recomputed per inspection or runner cycle | Proactive API/dashboard/automation runner |
 | Application workspaces | Configured applications data root | Bounded generated project files | User | Until operator deletion | Builder agents |
 | Application build records | `data_environment/builds.sqlite3` | File hashes, sizes, and scaffold evidence | System owner | Policy not yet configured | Dashboard/builder |
 | Workspace verifications | `data_environment/verifications.sqlite3` | Static check results and durations | System owner | Policy not yet configured | Builder agents/dashboard |

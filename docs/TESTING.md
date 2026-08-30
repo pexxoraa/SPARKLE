@@ -29,6 +29,12 @@ execution and traces, singleton lock refusal, mode-0600/no-follow lock policy,
 bounded degraded cycles, fresh/stale lifecycle status, pre-requested shutdown,
 installed-style CLI check/once/status/health behavior, a real subprocess
 SIGTERM drain, and systemd hardening inspection.
+Proactive coverage validates exact condition schemas, unknown-field and
+unsupported-category rejection, deadline compatibility, structured weak-skill
+conditions with cooldown, all six alert types, invalid-evidence suppression,
+deterministic ordering and the 200-alert bound, API audit normalization,
+dashboard loading, and
+absence of memory free text from serialized alert evidence.
 Configuration packaging coverage verifies that checkout defaults and bundled
 defaults are identical, an installed runtime materializes separate mode-0600
 application/model configuration, and the writable model registry remains
@@ -80,9 +86,9 @@ sparkle smoke-test --live
 Never report the live test as passed when the credential is absent or the exact
 `SPARKLE_LIVE_OK` response is not observed.
 
-Latest corrected v0.13 release-state result on 2026-08-29: 116 tests passed in
-20.023 seconds. Dashboard JavaScript syntax, Git whitespace, and a fresh
-offline wheel build/install plus automation check/once/status lifecycle also
-passed. Corrected GitHub CI run #27 passed Python 3.12, Python 3.13,
-worker-image, and installed automation-service lifecycle jobs. See
-`RELEASE_REPORT.md` for remote evidence and external blockers.
+Latest v0.14 pre-publication result on 2026-08-29: 120 tests passed in 21.283
+seconds. Dashboard JavaScript syntax, Git whitespace, and a fresh offline
+non-editable wheel install plus status and automation check/once/status
+lifecycle also passed. Remote CI evidence is recorded in `RELEASE_REPORT.md`
+only after every required job completes. The corrected v0.13 GitHub CI run #27 remains the
+latest published baseline at this point.

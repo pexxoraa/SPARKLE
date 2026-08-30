@@ -59,6 +59,10 @@
   explicit API approval flag.
 - Automation actions are limited to validated SPARKLE agent requests with one
   to three attempts; arbitrary commands are not accepted.
+- Proactive rules inspect only bounded structured metadata in eligible memory
+  categories. They do not parse memory free text, expose memory values, or let
+  condition records add unknown fields. Condition alert/category/key filters
+  are allowlisted and cooldowns are restricted to 1-10,080 minutes.
 - The supervised automation entrypoint uses an owner-only no-follow POSIX lock,
   one active local instance, expiring claim tokens, recovery records, and
   token-fenced completion. Its status stores only bounded lifecycle/error-type

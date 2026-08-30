@@ -22,7 +22,7 @@ MAX_BODY_BYTES = 1_000_000
 class SparkleHandler(BaseHTTPRequestHandler):
     system: SparkleSystem
     dashboard_root = Path(__file__).with_name("dashboard")
-    server_version = "SPARKLE/0.13"
+    server_version = "SPARKLE/0.14"
 
     def log_message(self, format: str, *args: object) -> None:
         # Avoid request bodies, headers, query values, and secrets in logs.
@@ -295,6 +295,11 @@ class SparkleHandler(BaseHTTPRequestHandler):
                 "runs": self.system.automations.list_runs(
                     limit=int(query.get("limit", [20])[0])
                 )
+            })
+        if parsed.path == "/api/proactive":
+            return self._json({
+                "protocol_version": self.system.proactive.PROTOCOL,
+                "alerts": self.system.proactive.inspect(),
             })
         if parsed.path == "/api/builds":
             return self._json({

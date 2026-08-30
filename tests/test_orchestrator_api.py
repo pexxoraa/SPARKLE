@@ -390,7 +390,29 @@ class APITests(SystemCase):
         self.assertNotIn(b"localStorage", script)
         self.assertNotIn(b"sessionStorage", script)
         self.assertIn(b"/api/artifacts?limit=50", script)
+        self.assertIn(b"/api/proactive", script)
         self.assertIn(b"Artifacts & deployment", body)
+        self.assertIn(b"Evidence-backed proactive alerts", body)
+
+    def test_proactive_endpoint_exposes_metadata_evidence_only(self):
+        self.system.memory.remember(
+            "skills",
+            "robotics",
+            "Do not expose this private note",
+            metadata={
+                "evidence_count": 5,
+                "accuracy": 0.5,
+                "target_accuracy": 0.8,
+                "attempts": 10,
+            },
+        )
+        status, _, body = self.request("/api/proactive")
+        self.assertEqual(status, 200)
+        value = json.loads(body)
+        self.assertEqual(value["protocol_version"], "SPARKLE-PROACTIVE/1")
+        self.assertEqual(value["alerts"][0]["type"], "weak_learning")
+        self.assertNotIn("Do not expose", body.decode())
+        self.assertEqual(self.system.api_audit.recent()[0]["path"], "/api/proactive")
 
     def test_generated_agent_build_and_automation_endpoints(self):
         agent = {
