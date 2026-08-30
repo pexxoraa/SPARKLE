@@ -1,3 +1,36 @@
+# 0.16.0-alpha.1 verification report
+
+Date: 2026-08-30 UTC
+
+## Executed evidence
+
+- Four focused schedule-conflict storage/automation/API cases passed after one
+  corrected horizon-boundary fixture; the corrected adjacent storage,
+  automation-runner, and API set passed 33 tests in 8.939 seconds.
+- The engine validates positive ISO-8601 intervals no longer than seven days,
+  considers at most 200 recent records and a 30-day horizon, emits at most 200
+  deterministic conflicts, and exposes only safe pair evidence.
+- Conditional automations can match `schedule_conflict` with existing strict
+  category/key filters and cooldowns. API output contains no memory free text.
+- The corrected complete `make check` passed 154 tests in 19.378 seconds;
+  dashboard JavaScript syntax and Git whitespace checks passed.
+
+- A zero-dependency non-editable `0.16.0a1` wheel installed in a fresh virtual
+  environment and passed installed status, schedule-conflict
+  evaluation/non-disclosure, multimodal round trip, automation
+  check/once/status, worker-entrypoint, and mode-0600 configuration checks.
+
+Publication and CI evidence are pending.
+
+## Honest limits
+
+- Conflicts require explicit structured time metadata; SPARKLE does not infer a
+  calendar from memory prose.
+- External calendar ingestion, notification delivery, and research-change
+  monitoring remain absent.
+
+---
+
 # 0.15.0-alpha.1 verification report
 
 Date: 2026-08-30 UTC

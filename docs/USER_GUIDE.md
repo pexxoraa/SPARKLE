@@ -240,8 +240,9 @@ as:
 }
 ```
 
-Supported alerts are `deadline_approaching`, `overdue`, `weak_learning`,
-`revision_due`, `project_incomplete`, and `repeated_mistake`. The full evidence
+Supported alerts are `deadline_approaching`, `overdue`, `schedule_conflict`,
+`weak_learning`, `revision_due`, `project_incomplete`, and `repeated_mistake`.
+Schedule records use bounded ISO-8601 `starts_at` and `ends_at` metadata. The full evidence
 schema is documented in `docs/AUTOMATION.md`.
 
 ## Dashboard

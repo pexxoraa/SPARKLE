@@ -23,6 +23,7 @@ PROACTIVE_ALERT_TYPES = frozenset({
     "project_incomplete",
     "repeated_mistake",
     "revision_due",
+    "schedule_conflict",
     "weak_learning",
 })
 
@@ -534,6 +535,10 @@ class ProactiveEngine:
 
     PROTOCOL = "SPARKLE-PROACTIVE/1"
     MAX_ALERTS = 200
+    MAX_SCHEDULE_RECORDS = 200
+    MAX_SCHEDULE_CONFLICTS = 200
+    MAX_SCHEDULE_DURATION_DAYS = 7
+    SCHEDULE_HORIZON_DAYS = 30
     _SEVERITY_ORDER = {"urgent": 0, "high": 1, "medium": 2}
 
     def __init__(self, memory: MemoryStore):
@@ -694,16 +699,103 @@ class ProactiveEngine:
             {"repeat_count": repeat_count},
         )
 
+    @classmethod
+    def _schedule_interval(
+        cls, item: dict[str, Any], current: datetime,
+    ) -> tuple[datetime, datetime] | None:
+        metadata = item["metadata"]
+        start = cls._time(metadata.get("starts_at"))
+        end = cls._time(metadata.get("ends_at"))
+        if start is None or end is None:
+            return None
+        start = start.astimezone(UTC)
+        end = end.astimezone(UTC)
+        duration = end - start
+        if duration <= timedelta(0) or duration > timedelta(
+            days=cls.MAX_SCHEDULE_DURATION_DAYS,
+        ):
+            return None
+        if end <= current or start > current + timedelta(
+            days=cls.SCHEDULE_HORIZON_DAYS,
+        ):
+            return None
+        return start, end
+
+    @classmethod
+    def _schedule_alerts(
+        cls, items: list[dict[str, Any]], current: datetime,
+    ) -> list[dict[str, Any]]:
+        recent = sorted(
+            items, key=lambda item: int(item["id"]), reverse=True,
+        )[: cls.MAX_SCHEDULE_RECORDS]
+        intervals: list[tuple[datetime, datetime, dict[str, Any]]] = []
+        for item in recent:
+            interval = cls._schedule_interval(item, current)
+            if interval is not None:
+                intervals.append((*interval, item))
+        intervals.sort(key=lambda value: (
+            value[0], value[1], value[2]["category"], value[2]["key"],
+            value[2]["id"],
+        ))
+
+        alerts: list[dict[str, Any]] = []
+        horizon = current + timedelta(days=cls.SCHEDULE_HORIZON_DAYS)
+        for index, (first_start, first_end, first) in enumerate(intervals):
+            for second_start, second_end, second in intervals[index + 1:]:
+                if second_start >= first_end:
+                    break
+                overlap_start = max(first_start, second_start)
+                overlap_end = min(first_end, second_end)
+                if (
+                    overlap_start >= overlap_end
+                    or overlap_end <= current
+                    or overlap_start > horizon
+                ):
+                    continue
+                primary, conflicting = sorted(
+                    (first, second), key=lambda item: int(item["id"]),
+                )
+                hours_until = (
+                    overlap_start - current
+                ).total_seconds() / 3_600
+                severity = (
+                    "urgent" if hours_until <= 0
+                    else "high" if hours_until <= 24
+                    else "medium"
+                )
+                alerts.append(cls._alert(
+                    primary,
+                    "schedule_conflict",
+                    severity,
+                    {
+                        "overlap_start": overlap_start.isoformat(),
+                        "overlap_end": overlap_end.isoformat(),
+                        "overlap_minutes": round(
+                            (overlap_end - overlap_start).total_seconds() / 60,
+                            2,
+                        ),
+                        "conflicting_memory_id": conflicting["id"],
+                        "conflicting_category": conflicting["category"],
+                        "conflicting_key": conflicting["key"],
+                    },
+                ))
+                if len(alerts) >= cls.MAX_SCHEDULE_CONFLICTS:
+                    return alerts
+        return alerts
+
     def inspect(self, now: datetime | None = None) -> list[dict[str, Any]]:
         current = now or datetime.now(UTC)
         if current.tzinfo is None:
             current = current.replace(tzinfo=UTC)
         alerts: list[dict[str, Any]] = []
+        schedule_items: list[dict[str, Any]] = []
         categories = (
             "tasks", "exams", "projects", "goals", "skills", "learning", "mistakes",
         )
         for category in categories:
             for item in self.memory.recent(limit=100, category=category):
+                if category in {"tasks", "exams", "projects"}:
+                    schedule_items.append(item)
                 if category in {"tasks", "exams", "projects", "goals"}:
                     alert = self._deadline_alert(item, current)
                     if alert:
@@ -723,6 +815,7 @@ class ProactiveEngine:
                     alert = self._mistake_alert(item)
                     if alert:
                         alerts.append(alert)
+        alerts.extend(self._schedule_alerts(schedule_items, current))
         alerts.sort(key=lambda alert: (
             self._SEVERITY_ORDER[alert["severity"]],
             alert["type"],

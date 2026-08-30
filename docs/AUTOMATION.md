@@ -22,6 +22,7 @@ memory value or sends that value in alert evidence.
 | Alert | Eligible categories | Required metadata |
 |---|---|---|
 | `deadline_approaching`, `overdue` | tasks, exams, projects, goals | ISO-8601 `deadline` or `due_at` |
+| `schedule_conflict` | tasks, exams, projects | Two records with overlapping ISO-8601 `starts_at`/`ends_at` intervals; each interval must be positive and no longer than 7 days |
 | `weak_learning` | skills, learning, exams | positive integer `evidence_count` and either `mastery_level` below `target_level`, or `accuracy` below `target_accuracy` with positive integer `attempts` |
 | `revision_due` | skills, learning, exams | ISO-8601 `next_review_at` at or before evaluation time |
 | `project_incomplete` | projects | `status` in active, blocked, in_progress, or paused, plus `progress_percent` below 100 |
@@ -32,6 +33,13 @@ are bounded and type checked. Invalid or incomplete evidence produces no
 alert. GET `/api/proactive` returns the protocol version and safe structured
 alerts; the dashboard renders their type, severity, category, key, and source
 memory ID.
+
+Schedule evaluation considers at most 200 recent eligible records, looks no
+more than 30 days ahead, and emits at most 200 pair conflicts. Touching but
+non-overlapping intervals are not conflicts. Evidence contains only normalized
+overlap times/duration and the conflicting record's ID/category/key; memory
+free text is never copied. The lower memory ID is the deterministic primary
+record used by category/key condition filters.
 
 Conditional automations accept the backwards-compatible `memory_deadline`
 type for deadline alerts or `proactive_alert` for any supported alert. They can

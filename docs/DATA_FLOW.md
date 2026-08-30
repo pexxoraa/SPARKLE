@@ -50,6 +50,8 @@ alert response. Memory free text is neither inspected nor copied. Conditional
 automations apply exact alert/category/key filters and a validated cooldown,
 then enter the same tokenized claim and orchestrator path as scheduled work.
 Alerts are computed views, not a second persistent knowledge or memory store.
+Schedule evaluation joins only validated task/exam/project intervals within a
+bounded record count and horizon; pair evidence contains no record values.
 
 Generated-agent installation follows approval → manifest validation → SQLite
 persistence → in-process registry load. Application scaffolding follows

@@ -31,7 +31,7 @@ installed-style CLI check/once/status/health behavior, a real subprocess
 SIGTERM drain, and systemd hardening inspection.
 Proactive coverage validates exact condition schemas, unknown-field and
 unsupported-category rejection, deadline compatibility, structured weak-skill
-conditions with cooldown, all six alert types, invalid-evidence suppression,
+conditions with cooldown, all seven alert types, invalid-evidence suppression,
 deterministic ordering and the 200-alert bound, API audit normalization,
 dashboard loading, and
 absence of memory free text from serialized alert evidence.
@@ -121,6 +121,12 @@ inventory, repository-confined relative Markdown links, package/display version
 consistency, required build-state fields, and continued `PARTIAL`/`BLOCKED`
 honesty in acceptance reporting.
 
+Schedule-conflict coverage verifies cross-category overlapping intervals,
+normalized safe pair evidence, free-text non-disclosure, invalid/missing/past/
+reversed/overlong suppression, touching and one-minute boundaries, the 30-day
+horizon, deterministic ordering, the dedicated pair bound, conditional
+automation cooldown, and API exposure.
+
 The Phase 35 cohesive system workflow uses the real HTTP server and separate
 memory, knowledge, and trace stores. It writes context through the API, submits
 a mixed text/document request, proves retrieved context reached the selected
@@ -152,3 +158,12 @@ GitHub CI run #33 (`33290153808`) passed the 150-test final checkpoint on
 Python 3.12 and 3.13, the separately deployable worker image
 build/entrypoint, and the installed automation-service lifecycle. Runs #31 and
 #32 preserve the earlier exact multimodal and Phase 33 checkpoints.
+
+Latest v0.16 pre-publication result on 2026-08-30: the corrected full suite
+passed 154 tests in 19.378 seconds after the four schedule-conflict cases were
+added. Dashboard JavaScript syntax and Git whitespace checks passed. A clean
+zero-dependency non-editable `0.16.0a1` wheel installed in a fresh virtual
+environment and passed installed status, structured schedule-conflict
+evaluation/non-disclosure, multimodal round trip, automation
+check/once/status, worker-entrypoint, and mode-0600 configuration checks.
+Remote CI evidence is pending.

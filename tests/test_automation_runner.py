@@ -116,3 +116,41 @@ class AutomationRunnerTests(unittest.TestCase):
         self.assertEqual(
             self.system.automation_runner.run_due(now + timedelta(minutes=10)), [],
         )
+
+    def test_schedule_conflict_condition_executes_once_per_cooldown(self):
+        now = datetime.now(UTC)
+        self.system.memory.remember(
+            "tasks", "robot_lab", "Private lab details",
+            metadata={
+                "starts_at": (now + timedelta(hours=1)).isoformat(),
+                "ends_at": (now + timedelta(hours=3)).isoformat(),
+            },
+        )
+        self.system.memory.remember(
+            "exams", "controls_exam", "Private exam details",
+            metadata={
+                "starts_at": (now + timedelta(hours=2)).isoformat(),
+                "ends_at": (now + timedelta(hours=4)).isoformat(),
+            },
+        )
+        self.system.automations.create(
+            "Schedule helper",
+            "condition",
+            {
+                "type": "agent", "prompt": "Resolve my schedule conflict",
+                "agent": "productivity",
+            },
+            condition={
+                "type": "proactive_alert",
+                "alert": "schedule_conflict",
+                "category": "tasks",
+                "key": "robot_lab",
+                "cooldown_minutes": 60,
+            },
+        )
+        first = self.system.automation_runner.run_due(now)
+        self.assertEqual(first[0]["status"], "success")
+        self.assertEqual(
+            self.system.automation_runner.run_due(now + timedelta(minutes=10)),
+            [],
+        )

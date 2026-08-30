@@ -414,6 +414,34 @@ class APITests(SystemCase):
         self.assertNotIn("Do not expose", body.decode())
         self.assertEqual(self.system.api_audit.recent()[0]["path"], "/api/proactive")
 
+    def test_proactive_endpoint_exposes_safe_schedule_conflict_evidence(self):
+        now = datetime.now(UTC)
+        first_id = self.system.memory.remember(
+            "tasks", "robot_lab", "Never expose private lab details",
+            metadata={
+                "starts_at": (now + timedelta(hours=1)).isoformat(),
+                "ends_at": (now + timedelta(hours=3)).isoformat(),
+            },
+        )
+        second_id = self.system.memory.remember(
+            "exams", "controls_exam", "Never expose private exam details",
+            metadata={
+                "starts_at": (now + timedelta(hours=2)).isoformat(),
+                "ends_at": (now + timedelta(hours=4)).isoformat(),
+            },
+        )
+        status, _, body = self.request("/api/proactive")
+        self.assertEqual(status, 200)
+        alerts = json.loads(body)["alerts"]
+        conflict = next(
+            item for item in alerts if item["type"] == "schedule_conflict"
+        )
+        self.assertEqual(conflict["source_memory_id"], first_id)
+        self.assertEqual(
+            conflict["evidence"]["conflicting_memory_id"], second_id,
+        )
+        self.assertNotIn("Never expose", body.decode())
+
     def test_generated_agent_build_and_automation_endpoints(self):
         agent = {
             "name": "robotics_research", "capability": "reasoning",

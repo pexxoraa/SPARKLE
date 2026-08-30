@@ -30,13 +30,13 @@ means an external dependency is unavailable.
 | Text works | PASS | CLI, HTTP API, dashboard, bearer/session auth, CSRF, origin, preflight, rate-limit, and API-audit integration tests |
 | Voice/text share context | PARTIAL | Shared architecture exists; voice cannot execute here |
 | Automation works | PASS | Due/conditional execution, retry/recurrence/cooldown, expiring claims, crash recovery records, fencing, singleton service, health, real SIGTERM drain, CLI and systemd profile are tested; external notification/calendar/webhook connectors are separate unfinished capabilities |
-| Proactive intelligence | PARTIAL | Six bounded evidence-backed rules, strict condition filters/cooldowns, API/dashboard exposure, and free-text non-disclosure are tested; schedule-conflict, research-change, and notification delivery capabilities remain absent |
+| Proactive intelligence | PARTIAL | Seven bounded evidence-backed rules now include structured schedule conflicts, strict condition filters/cooldowns, API/dashboard exposure, and free-text non-disclosure; research-change monitoring and notification delivery remain absent |
 | Dashboard works | PASS | Local panels plus bounded login/reload/CSRF/logout session lifecycle are integration tested; deployed TLS/reverse-proxy validation remains absent |
 | Data tracing works | PASS | Success/tool/failure metadata implemented; trace tests |
 | Motion/presence architecture | PASS | Independent presence engine; physical motion intentionally absent |
 | Multimodal architecture prepared | PASS | `SPARKLE-CONTENT/1` text/image/audio/document contracts flow through API, context, routing, adapters, results, and raw-content-free traces; mixed and failure paths are tested. Live non-text semantic understanding remains a separate provider capability |
-| Tests pass | PASS | 150 local tests pass, including voice/presence, the 16-agent matrix, documentation contracts, and cohesive system E2E; final CI run #33 passed all four jobs |
+| Tests pass | PASS | 154 local tests pass, including schedule-conflict adversarial/integration coverage; v0.15 CI #33 passed all four jobs and v0.16 CI is pending |
 | Documentation complete for implementation | PASS | All master-directive documents are present; relative links, version consistency, and required truth fields have executable regression tests |
 | Installation reproducible | PASS | Python 3.12 core has zero mandatory third-party dependencies |
 | End-to-end workflows | PARTIAL | A cohesive HTTP → context → mixed content → agent/model → trace/presence workflow and worker/automation/application flows pass; live provider and external actions remain blocked |
-| Release | PASS | v0.15 capability `61cab3f`/`b7d4365` passed CI #31; Phase 33 `cba1510`/`b2b437d` passed CI #32; final checkpoint `6ec020a`/`5965876` passed CI #33 |
+| Release | PARTIAL | v0.15 final checkpoint `6ec020a`/`5965876` passed CI #33; v0.16 schedule-conflict implementation is locally in progress and not yet published |

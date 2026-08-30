@@ -5,6 +5,7 @@ import tempfile
 import unittest
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from unittest.mock import patch
 
 from sparkle.automation import AutomationStore, ProactiveEngine
 from sparkle.knowledge import KnowledgeIngestError, KnowledgeIngestor
@@ -203,6 +204,117 @@ class AutomationTests(unittest.TestCase):
                 "This goal is overdue and weak",
             ):
                 self.assertNotIn(absent, serialized)
+
+    def test_schedule_conflicts_use_validated_safe_pair_evidence(self):
+        with tempfile.TemporaryDirectory() as directory:
+            memory = MemoryStore(Path(directory) / "memory.sqlite3")
+            now = datetime(2026, 8, 28, 12, tzinfo=UTC)
+            first_id = memory.remember(
+                "tasks", "robot_lab", "Private robot lab details",
+                metadata={
+                    "starts_at": (now + timedelta(hours=1)).isoformat(),
+                    "ends_at": (now + timedelta(hours=3)).isoformat(),
+                },
+            )
+            second_id = memory.remember(
+                "exams", "controls_exam", "Private controls exam details",
+                metadata={
+                    "starts_at": (now + timedelta(hours=2)).isoformat(),
+                    "ends_at": (now + timedelta(hours=4)).isoformat(),
+                },
+            )
+            memory.remember(
+                "projects", "later", "Non-overlapping project",
+                metadata={
+                    "starts_at": (now + timedelta(hours=6)).isoformat(),
+                    "ends_at": (now + timedelta(hours=7)).isoformat(),
+                },
+            )
+            invalid = [
+                {"starts_at": (now + timedelta(hours=1)).isoformat()},
+                {
+                    "starts_at": (now + timedelta(hours=3)).isoformat(),
+                    "ends_at": (now + timedelta(hours=2)).isoformat(),
+                },
+                {
+                    "starts_at": now.isoformat(),
+                    "ends_at": (now + timedelta(days=8)).isoformat(),
+                },
+                {"starts_at": "invalid", "ends_at": "invalid"},
+                {
+                    "starts_at": (now - timedelta(hours=3)).isoformat(),
+                    "ends_at": (now - timedelta(hours=2)).isoformat(),
+                },
+            ]
+            for index, metadata in enumerate(invalid):
+                memory.remember(
+                    "tasks", f"invalid_{index}", f"Private invalid {index}",
+                    metadata=metadata,
+                )
+
+            engine = ProactiveEngine(memory)
+            conflicts = [
+                item for item in engine.inspect(now)
+                if item["type"] == "schedule_conflict"
+            ]
+            self.assertEqual(len(conflicts), 1)
+            conflict = conflicts[0]
+            self.assertEqual(conflict["source_memory_id"], first_id)
+            self.assertEqual(conflict["category"], "tasks")
+            self.assertEqual(conflict["key"], "robot_lab")
+            self.assertEqual(conflict["severity"], "high")
+            self.assertEqual(conflict["evidence"]["overlap_minutes"], 60.0)
+            self.assertEqual(
+                conflict["evidence"]["conflicting_memory_id"], second_id,
+            )
+            self.assertEqual(
+                conflict["evidence"]["conflicting_category"], "exams",
+            )
+            self.assertEqual(
+                conflict["evidence"]["conflicting_key"], "controls_exam",
+            )
+            self.assertEqual(conflicts, [
+                item for item in engine.inspect(now)
+                if item["type"] == "schedule_conflict"
+            ])
+            serialized = json.dumps(conflicts)
+            for private_value in (
+                "Private robot lab details", "Private controls exam details",
+                "Non-overlapping project", "Private invalid",
+            ):
+                self.assertNotIn(private_value, serialized)
+
+    def test_schedule_conflict_boundaries_and_pair_limit(self):
+        with tempfile.TemporaryDirectory() as directory:
+            memory = MemoryStore(Path(directory) / "memory.sqlite3")
+            now = datetime(2026, 8, 28, 12, tzinfo=UTC)
+            start = now + timedelta(days=30, hours=-2)
+            memory.remember("tasks", "first", "Private", metadata={
+                "starts_at": start.isoformat(),
+                "ends_at": (start + timedelta(hours=2)).isoformat(),
+            })
+            memory.remember("tasks", "second", "Private", metadata={
+                "starts_at": (start + timedelta(hours=1, minutes=59)).isoformat(),
+                "ends_at": (start + timedelta(hours=3)).isoformat(),
+            })
+            memory.remember("tasks", "third", "Private", metadata={
+                "starts_at": (start + timedelta(hours=1)).isoformat(),
+                "ends_at": (start + timedelta(hours=4)).isoformat(),
+            })
+            memory.remember("tasks", "touching", "Private", metadata={
+                "starts_at": (start + timedelta(hours=4)).isoformat(),
+                "ends_at": (start + timedelta(hours=5)).isoformat(),
+            })
+            with patch.object(ProactiveEngine, "MAX_SCHEDULE_CONFLICTS", 2):
+                conflicts = [
+                    item for item in ProactiveEngine(memory).inspect(now)
+                    if item["type"] == "schedule_conflict"
+                ]
+            self.assertEqual(len(conflicts), 2)
+            self.assertTrue(any(
+                item["evidence"]["overlap_minutes"] == 1.0
+                for item in conflicts
+            ))
 
     def test_proactive_alerts_are_deterministic_and_bounded(self):
         with tempfile.TemporaryDirectory() as directory:
