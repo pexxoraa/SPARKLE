@@ -725,3 +725,63 @@ class APITests(SystemCase):
         )
         self.assertNotIn("Perform robotics research", evidence_body.decode())
         self.assertNotIn("SPARKLE processed", evidence_body.decode())
+
+    def test_ai_system_prepare_approval_build_and_list_endpoints(self):
+        requirements = {
+            "name": "robotics_ai",
+            "purpose": "Research robotics evidence and produce bounded analytical outputs.",
+            "model_requirements": [{
+                "capability": "reasoning", "modalities": ["text"],
+            }],
+            "agents": ["research", "data_analysis"],
+            "tools": ["calculator", "knowledge_search"],
+            "data_environments": [
+                "knowledge_environment", "data_environment", "trace_environment",
+            ],
+            "interfaces": ["text", "api", "dashboard"],
+            "workflow": [
+                "Collect bounded evidence from approved sources.",
+                "Analyze evidence with the selected specialist agents.",
+                "Return a traceable result and preserve evaluation evidence.",
+            ],
+            "evaluations": [{
+                "name": "robotics_integration",
+                "kind": "integration",
+                "criterion": "The system preserves source and trace boundaries.",
+            }],
+            "deployment": {
+                "environment_name": "staging", "target_kind": "server",
+            },
+        }
+        status, _, body = self.request(
+            "/api/ai-systems/prepare", {"requirements": requirements},
+        )
+        self.assertEqual(status, 200)
+        prepared = json.loads(body)["blueprint"]
+        self.assertEqual(
+            prepared["protocol_version"], "SPARKLE-AI-SYSTEM-BLUEPRINT/1",
+        )
+        self.assertFalse(prepared["model_calls_executed"])
+        self.assertFalse(prepared["runtime_evaluation_executed"])
+        self.assertFalse(prepared["external_deployment_executed"])
+        self.assertEqual(
+            json.loads(self.request("/api/ai-system-blueprints")[2])["blueprints"],
+            [],
+        )
+
+        self.assertEqual(self.request(
+            "/api/ai-systems/build",
+            {"requirements": requirements, "approved": False},
+        )[0], 400)
+        status, _, body = self.request(
+            "/api/ai-systems/build",
+            {"requirements": requirements, "approved": True},
+        )
+        self.assertEqual(status, 201)
+        built = json.loads(body)["blueprint"]
+        self.assertEqual(built["status"], "materialized_static_verified")
+        status, _, evidence_body = self.request("/api/ai-system-blueprints")
+        self.assertEqual(status, 200)
+        records = json.loads(evidence_body)["blueprints"]
+        self.assertEqual(records[0]["system_name"], "robotics_ai")
+        self.assertEqual(records[0]["status"], "materialized_static_verified")

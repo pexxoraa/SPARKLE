@@ -1,3 +1,57 @@
+# 0.21.0-alpha.1 verification report
+
+Date: 2026-08-30 UTC
+
+## Executed evidence
+
+- `SPARKLE-AI-SYSTEM-BLUEPRINT/1` converts an exact bounded structured
+  requirement into deterministic provider-neutral model routes, agent/tool
+  references, separate data environments, interfaces, workflow, evaluation
+  contracts, and an explicitly unverified deployment plan.
+- Model requirements resolve capability roles and modalities against enabled
+  registry records without importing provider-specific behavior, constructing
+  an adapter, or calling a model. Selected tools must be registered and allowed
+  by at least one selected installed agent.
+- Preparation is non-mutating. Explicitly approved materialization writes only
+  deterministic `README.md` and `SPARKLE_AI_SYSTEM.json` files through the
+  existing bounded workspace manager with overwrite disabled.
+- The latest 1,000 blueprint attempts persist separately. Successful records
+  link to workspace build evidence; failures retain only a safe exception type,
+  not source content or an exception message.
+- Seven focused builder/API/CLI cases passed. The first complete run executed
+  186 tests: 185 passed and the documentation version contract caught the stale
+  v0.20 value in `BUILD_STATE.md`. After correction, all 186 tests passed in
+  24.235 seconds. The final documented tree passed all 186 tests in 24.451
+  seconds; dashboard JavaScript syntax and Git whitespace checks passed.
+- A zero-dependency non-editable `0.21.0a1` wheel installed without an index in
+  a fresh virtual environment. Installed AI system prepare/build/reload,
+  isolated Agent Blueprint response evaluation/non-disclosure, multimodal
+  round-trip, automation check/once/status, worker help, and mode-0600
+  configuration checks passed. Its SHA-256 was
+  `6c310495ba44b6e489b30f6b81a2218951fe3e4ae0ad0b0a2bf20e06a8d33510`.
+- The development executor then reset before publication. A clean recovery
+  worktree was reconstructed over the exact published v0.20 tree. Its complete
+  suite passed all 186 tests again in 26.097 seconds.
+- The first recovery wheel smoke called a nonexistent convenience constructor
+  after the wheel had built and installed; the second used a tuple where the
+  contract intentionally requires a list. Neither is counted as a passing
+  release gate. The corrected third fresh no-index build/install passed AI
+  system prepare/build/reload, multimodal round-trip, automation
+  check/once/status, worker help, and mode-0600 configuration checks. The
+  recovery wheel SHA-256 was
+  `d529a955fdd2f3186aca64d563f5fdeda03443a746be4b3dc760d025c5b74cf7`.
+
+## Honest limits
+
+- The blueprint is a statically validated architecture scaffold. It does not
+  generate implementation source, run declared evaluations, call a model, or
+  deploy a target. All four claims remain explicit in its output.
+- Requirements are structured JSON. Natural-language requirements conversion,
+  semantic runtime evaluation, and external deployment remain incomplete.
+- Exact-tree GitHub publication and the four-job v0.21 CI gate are pending.
+
+---
+
 # 0.20.0-alpha.1 verification report
 
 Date: 2026-08-30 UTC

@@ -18,6 +18,66 @@ from sparkle.system import SparkleSystem
 
 
 class CLITests(unittest.TestCase):
+    def test_ai_system_prepare_and_approved_materialization(self):
+        with tempfile.TemporaryDirectory() as directory:
+            requirements = Path(directory) / "robotics-ai.json"
+            requirements.write_text(json.dumps({
+                "name": "robotics_ai",
+                "purpose": "Research robotics evidence and produce bounded analytical outputs.",
+                "model_requirements": [{
+                    "capability": "reasoning", "modalities": ["text"],
+                }],
+                "agents": ["research", "data_analysis"],
+                "tools": ["calculator", "knowledge_search"],
+                "data_environments": [
+                    "knowledge_environment", "data_environment", "trace_environment",
+                ],
+                "interfaces": ["text", "api", "dashboard"],
+                "workflow": [
+                    "Collect bounded evidence from approved sources.",
+                    "Analyze evidence with the selected specialist agents.",
+                    "Return a traceable result and preserve evaluation evidence.",
+                ],
+                "evaluations": [{
+                    "name": "robotics_integration",
+                    "kind": "integration",
+                    "criterion": "The system preserves source and trace boundaries.",
+                }],
+                "deployment": {
+                    "environment_name": "staging", "target_kind": "server",
+                },
+            }), encoding="utf-8")
+            output = io.StringIO()
+            error = io.StringIO()
+            with (
+                patch.dict(
+                    os.environ, {"SPARKLE_DATA_DIR": directory}, clear=False,
+                ),
+                contextlib.redirect_stdout(output),
+                contextlib.redirect_stderr(error),
+            ):
+                self.assertEqual(main([
+                    "ai-system-prepare", str(requirements),
+                ]), 0)
+                self.assertEqual(entrypoint([
+                    "ai-system-build", str(requirements),
+                ]), 1)
+                self.assertEqual(main([
+                    "ai-system-build", str(requirements), "--approve",
+                ]), 0)
+                system = SparkleSystem()
+            self.assertIn("explicit approval", error.getvalue())
+            self.assertNotIn("Traceback", error.getvalue())
+            self.assertIn("SPARKLE-AI-SYSTEM-BLUEPRINT/1", output.getvalue())
+            self.assertIn("materialized_static_verified", output.getvalue())
+            self.assertEqual(
+                system.ai_system_blueprints.list()[0]["system_name"],
+                "robotics_ai",
+            )
+            workspace = Path(directory) / "applications" / "robotics_ai"
+            self.assertTrue((workspace / "README.md").is_file())
+            self.assertTrue((workspace / "SPARKLE_AI_SYSTEM.json").is_file())
+
     def test_agent_blueprint_prepare_and_approved_build(self):
         with tempfile.TemporaryDirectory() as directory:
             def deterministic_system() -> SparkleSystem:

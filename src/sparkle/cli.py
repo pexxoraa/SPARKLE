@@ -67,6 +67,17 @@ def build_parser() -> argparse.ArgumentParser:
     )
     agent_evaluate.add_argument("name")
     agent_evaluate.add_argument("--approve", action="store_true")
+    ai_system_prepare = sub.add_parser(
+        "ai-system-prepare",
+        help="Validate structured requirements and generate an AI system blueprint",
+    )
+    ai_system_prepare.add_argument("requirements")
+    ai_system_build = sub.add_parser(
+        "ai-system-build",
+        help="Generate and materialize a statically verified AI system scaffold",
+    )
+    ai_system_build.add_argument("requirements")
+    ai_system_build.add_argument("--approve", action="store_true")
     automation_run = sub.add_parser("automations-run", help="Execute due automations")
     automation_run.add_argument("--watch", action="store_true")
     automation_run.add_argument("--interval", type=float, default=60.0)
@@ -210,6 +221,22 @@ def main(argv: list[str] | None = None) -> int:
         )
         _print({"ok": result["status"] == "passed", "evaluation": result})
         return 0 if result["status"] == "passed" else 1
+    if args.command == "ai-system-prepare":
+        requirements = _load_manifest(args.requirements)
+        _print({
+            "ok": True,
+            "blueprint": system.ai_system_builder.prepare(requirements).to_dict(),
+        })
+        return 0
+    if args.command == "ai-system-build":
+        requirements = _load_manifest(args.requirements)
+        _print({
+            "ok": True,
+            "blueprint": system.ai_system_builder.build(
+                requirements, approved=bool(args.approve),
+            ),
+        })
+        return 0
     if args.command == "automations-run":
         if not args.watch:
             _print({

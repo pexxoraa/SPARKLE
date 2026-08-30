@@ -111,6 +111,15 @@ generic traces, safe error types, API/CLI execution, and retention of only the
 latest 1,000 evidence records. It does not claim semantic correctness or a live
 provider evaluation.
 
+AI System Blueprint coverage verifies exact bounded requirements,
+provider/model-neutral capability and modality resolution from enabled model
+records, installed-agent and registered-tool references, agent tool access,
+separate data-environment declarations, deterministic preparation and
+serialization, approval before mutation, two-file workspace materialization,
+safe failure types, reload, latest-1,000 retention, and equivalent API/CLI
+flows. It does not call a model, execute runtime evaluations, generate an
+implementation, or claim deployment.
+
 ## Phase 33 evidence matrix
 
 | Required category | Executed evidence | Remaining external gap |
@@ -124,7 +133,7 @@ provider evaluation.
 | Tool | Allowlists, schemas, bounds, approval, confinement, execution, and failure paths | Disabled web/browser/computer adapters |
 | Voice | Disabled failures, adapter injection, and shared-core contract | Real STT/TTS and microphone/speaker hardware |
 | Application | Scaffold, static verification, fixed tests, artifacts, worker protocol/service, API/CLI/dashboard | Target-specific build and deployment adapters |
-| AI system | Single/multi-agent orchestration, tool loop, structured agent blueprints, generated agents, model independence, multimodal transport | Autonomous natural-language requirements-to-deployment evaluation |
+| AI system | Single/multi-agent orchestration, tool loop, structured agent and AI System Blueprints, registry-backed model routes, generated agents, model independence, multimodal transport, approval-gated deterministic architecture workspaces | Autonomous natural-language requirements-to-implementation, semantic runtime evaluation, and deployment |
 | End-to-end | HTTP chat, automations, workspace flows, and client → worker → child unittest → signed result | Live provider, remote isolation, and external actions |
 | Regression | Exact `make check` gate on the full standard-library suite | None for implemented local behavior |
 
@@ -248,3 +257,20 @@ GitHub CI run #43 (`33314903193`) passed the exact v0.20 capability tree
 separately deployable worker image build/entrypoint, and the installed
 automation-service lifecycle. After recording that evidence, the resulting
 documentation checkpoint passed all 179 tests in 22.433 seconds.
+
+The v0.21 AI System Blueprint increment added seven focused builder/API/CLI
+tests. The first complete run executed 186 tests: 185 passed and the
+documentation version-consistency contract caught that `BUILD_STATE.md` still
+reported v0.20. After correction, all 186 tests passed in 24.235 seconds; the
+final documented tree passed all 186 tests in 24.451 seconds. A zero-dependency
+non-editable `0.21.0a1` wheel installed without an index and passed AI system
+prepare/build/reload, Agent Blueprint response evaluation/non-disclosure,
+multimodal round-trip, automation check/once/status, worker-entrypoint, and
+mode-0600 configuration checks. Its SHA-256 was
+`6c310495ba44b6e489b30f6b81a2218951fe3e4ae0ad0b0a2bf20e06a8d33510`.
+After the development executor reset, the capability was reconstructed over
+the exact published v0.20 tree and all 186 tests passed again in 26.097
+seconds. Two recovery wheel smokes stopped on invalid test-fixture calls after
+the wheel itself built and installed; the corrected fresh no-index gate passed
+with wheel SHA-256
+`d529a955fdd2f3186aca64d563f5fdeda03443a746be4b3dc760d025c5b74cf7`.

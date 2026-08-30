@@ -29,7 +29,7 @@ MAX_MULTIMODAL_BODY_BYTES = 12_000_000
 class SparkleHandler(BaseHTTPRequestHandler):
     system: SparkleSystem
     dashboard_root = Path(__file__).with_name("dashboard")
-    server_version = "SPARKLE/0.20"
+    server_version = "SPARKLE/0.21"
 
     def log_message(self, format: str, *args: object) -> None:
         # Avoid request bodies, headers, query values, and secrets in logs.
@@ -299,6 +299,13 @@ class SparkleHandler(BaseHTTPRequestHandler):
                     limit=int(query.get("limit", [50])[0])
                 ),
             })
+        if parsed.path == "/api/ai-system-blueprints":
+            return self._json({
+                "protocol_version": self.system.ai_system_builder.PROTOCOL,
+                "blueprints": self.system.ai_system_blueprints.list(
+                    limit=int(query.get("limit", [50])[0])
+                ),
+            })
         if parsed.path == "/api/memory":
             return self._json({"memories": self.system.memory.search(query.get("q", [""])[0], limit=int(query.get("limit", [20])[0]))})
         if parsed.path == "/api/knowledge/search":
@@ -473,6 +480,27 @@ class SparkleHandler(BaseHTTPRequestHandler):
                     "ok": evaluation["status"] == "passed",
                     "evaluation": evaluation,
                 }, 200 if evaluation["status"] == "passed" else 422)
+            if self.path == "/api/ai-systems/prepare":
+                if set(data) != {"requirements"}:
+                    raise ValueError(
+                        "AI system prepare accepts only requirements"
+                    )
+                blueprint = self.system.ai_system_builder.prepare(
+                    data["requirements"]
+                )
+                return self._json({
+                    "ok": True, "blueprint": blueprint.to_dict(),
+                })
+            if self.path == "/api/ai-systems/build":
+                if set(data) - {"requirements", "approved"}:
+                    raise ValueError("AI system build fields are unsupported")
+                blueprint = self.system.ai_system_builder.build(
+                    data.get("requirements"),
+                    approved=data.get("approved") is True,
+                )
+                return self._json({
+                    "ok": True, "blueprint": blueprint,
+                }, 201)
             if self.path == "/api/agents/remove":
                 if data.get("approved") is not True:
                     raise ValueError("Agent removal requires explicit approval")

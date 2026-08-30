@@ -144,6 +144,29 @@ Use `--replace` to update a generated agent. Remove it with
 `sparkle agent-remove robotics_research --approve`. Built-in agents cannot be
 replaced or removed.
 
+## Prepare an AI system scaffold
+
+Create a structured requirements file using the schema in
+[`AI_BUILDER.md`](AI_BUILDER.md), then validate it without mutation:
+
+```bash
+sparkle ai-system-prepare requirements.json
+```
+
+After reviewing the resolved model routes, agents, tools, environment
+boundaries, interfaces, evaluations, and deployment plan, explicitly approve
+materialization:
+
+```bash
+sparkle ai-system-build requirements.json --approve
+```
+
+The build creates a bounded application workspace containing `README.md` and
+the canonical `SPARKLE_AI_SYSTEM.json`. It does not call a model, run the
+declared evaluations, or deploy the system. History is available from
+`GET /api/ai-system-blueprints`; authenticated API clients can use
+`POST /api/ai-systems/prepare` and `POST /api/ai-systems/build`.
+
 ## Scaffold an application workspace
 
 Create `app.json`:
