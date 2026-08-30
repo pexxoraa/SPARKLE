@@ -12,12 +12,19 @@ from pathlib import Path
 from unittest.mock import patch
 
 from sparkle.cli import entrypoint, main
+from sparkle.providers.mock import DeterministicAdapter
+from sparkle.registry import ModelRegistry
 from sparkle.system import SparkleSystem
 
 
 class CLITests(unittest.TestCase):
     def test_agent_blueprint_prepare_and_approved_build(self):
         with tempfile.TemporaryDirectory() as directory:
+            def deterministic_system() -> SparkleSystem:
+                registry = ModelRegistry()
+                registry.inject(registry.active_id, DeterministicAdapter())
+                return SparkleSystem(model_registry=registry)
+
             requirements = Path(directory) / "robotics-agent.json"
             requirements.write_text(json.dumps({
                 "name": "robotics_research",
@@ -33,6 +40,10 @@ class CLITests(unittest.TestCase):
                 "evaluations": [{
                     "name": "robot_arm_evidence",
                     "prompt": "Perform robotics research for a robot arm.",
+                    "assertions": {
+                        "contains_all": ["SPARKLE processed", "robot arm"],
+                        "max_chars": 500,
+                    },
                 }],
             }), encoding="utf-8")
             output = io.StringIO()
@@ -43,6 +54,7 @@ class CLITests(unittest.TestCase):
                 ),
                 contextlib.redirect_stdout(output),
                 contextlib.redirect_stderr(error),
+                patch("sparkle.cli.SparkleSystem", deterministic_system),
             ):
                 self.assertEqual(main([
                     "agent-prepare", str(requirements),
@@ -57,6 +69,12 @@ class CLITests(unittest.TestCase):
                 self.assertEqual(main([
                     "agent-build", str(requirements), "--approve",
                 ]), 0)
+                self.assertEqual(entrypoint([
+                    "agent-evaluate", "robotics_research",
+                ]), 1)
+                self.assertEqual(main([
+                    "agent-evaluate", "robotics_research", "--approve",
+                ]), 0)
                 system = SparkleSystem()
             self.assertIn("explicit approval", error.getvalue())
             self.assertNotIn("Traceback", error.getvalue())
@@ -67,6 +85,8 @@ class CLITests(unittest.TestCase):
             )
             self.assertIn('"prepared_static_verified"', output.getvalue())
             self.assertIn('"installed_static_verified"', output.getvalue())
+            self.assertIn('"SPARKLE-AGENT-EVALUATION/1"', output.getvalue())
+            self.assertIn("response evaluation requires explicit approval", error.getvalue())
 
     def test_ingest_monitor_key_detects_a_later_file_revision(self):
         with tempfile.TemporaryDirectory() as directory:

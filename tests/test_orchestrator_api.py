@@ -661,6 +661,11 @@ class APITests(SystemCase):
             "evaluations": [{
                 "name": "robot_arm_evidence",
                 "prompt": "Perform robotics research for a robot arm.",
+                "assertions": {
+                    "contains_all": ["SPARKLE processed", "robot arm"],
+                    "excludes_all": ["fabricated completion"],
+                    "max_chars": 500,
+                },
             }],
         }
         status, _, body = self.request(
@@ -703,3 +708,20 @@ class APITests(SystemCase):
             next(item for item in agents if item["name"] == "robotics_research")["source"],
             "generated",
         )
+        self.assertEqual(self.request(
+            "/api/agents/evaluate",
+            {"name": "robotics_research", "approved": False},
+        )[0], 400)
+        status, _, body = self.request(
+            "/api/agents/evaluate",
+            {"name": "robotics_research", "approved": True},
+        )
+        self.assertEqual(status, 200)
+        self.assertEqual(json.loads(body)["evaluation"]["status"], "passed")
+        status, _, evidence_body = self.request("/api/agent-evaluations")
+        self.assertEqual(status, 200)
+        self.assertEqual(
+            json.loads(evidence_body)["evaluations"][0]["status"], "passed",
+        )
+        self.assertNotIn("Perform robotics research", evidence_body.decode())
+        self.assertNotIn("SPARKLE processed", evidence_body.decode())

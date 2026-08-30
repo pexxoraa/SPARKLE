@@ -1,3 +1,41 @@
+# 0.20.0-alpha.1 verification report
+
+Date: 2026-08-30 UTC
+
+## Executed evidence
+
+- `SPARKLE-AGENT-EVALUATION/1` runs bounded lexical/length response contracts
+  for an installed, revalidated Agent Blueprint through the common model
+  router. Model calls require explicit operator approval.
+- The isolated orchestrator profile rejects history, additional context, and
+  user identity; skips memory/knowledge retrieval; advertises no tools; and
+  fails if the model requests one.
+- The latest 1,000 evaluation records contain check booleans, response hashes
+  and lengths, provider/model labels, trace IDs, and safe error types without
+  prompts, responses, assertion phrases, or personal context. Evaluation
+  traces use generic summaries.
+- Twelve focused builder/evaluation/API/CLI cases passed before the isolation
+  injection boundary case was added. The first complete run then passed 178 of
+  179 tests and caught a stale v0.19 version in `BUILD_STATE.md`; the corrected
+  complete suite passed all 179 tests in 22.690 seconds. Dashboard JavaScript
+  syntax and Git whitespace checks passed.
+- A zero-dependency non-editable `0.20.0a1` wheel installed without an index in
+  a fresh virtual environment. Installed blueprint build/evaluate/reload,
+  isolated content-free evidence, multimodal round-trip, automation
+  check/once/status, worker help, and mode-0600 configuration checks passed.
+  Its SHA-256 was
+  `a41d689e9fea9cc7eaf16dde4b287aa4d1169351a1a135831140d7e9e505d5f4`.
+
+## Honest limits
+
+- These deterministic response contracts are not semantic correctness
+  judgments. `semantic_evaluation_executed` and `live_provider_verified`
+  remain false.
+- No live MiniMax evaluation, natural-language source generation, or external
+  agent deployment ran.
+
+---
+
 # 0.19.0-alpha.1 verification report
 
 Date: 2026-08-30 UTC

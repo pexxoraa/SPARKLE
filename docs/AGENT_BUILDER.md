@@ -11,6 +11,8 @@ evaluation fixtures. Each fixture must select the candidate with the same
 deterministic scorer used by the production router while the registry remains
 unchanged. Preparation reports `prepared_static_verified`; it explicitly
 reports that semantic model evaluation and external deployment did not run.
+Optional bounded response assertions can be attached to every fixture for a
+later approval-gated run through `SPARKLE-AGENT-EVALUATION/1`.
 
 Approved generated-agent manifests are validated, stored in
 `data_environment/generated_agents.sqlite3`, hot-loaded into routing, and
@@ -36,7 +38,15 @@ Create a structured requirements file with the exact fields below:
   "workflow": ["Collect evidence.", "Cross-check sources.", "State uncertainty."],
   "guardrails": ["Never fabricate sources or completed tests."],
   "evaluations": [
-    {"name": "robot_arm_evidence", "prompt": "Perform robotics research for a robot arm."}
+    {
+      "name": "robot_arm_evidence",
+      "prompt": "Perform robotics research for a robot arm.",
+      "assertions": {
+        "contains_all": ["evidence", "robot arm"],
+        "excludes_all": ["completed the physical test"],
+        "max_chars": 4000
+      }
+    }
   ]
 }
 ```
@@ -46,17 +56,22 @@ Prepare without mutation, then approve the build:
 ```bash
 sparkle agent-prepare requirements.json
 sparkle agent-build requirements.json --approve
+sparkle agent-evaluate robotics_research --approve
 sparkle agent-remove robotics_research --approve
 ```
 
 The equivalent HTTP operations are `POST /api/agents/prepare`,
-`POST /api/agents/build`, and `GET /api/agent-blueprints`. The original
+`POST /api/agents/build`, `POST /api/agents/evaluate`,
+`GET /api/agent-blueprints`, and `GET /api/agent-evaluations`. Evaluation uses
+an isolated no-context/no-tool orchestrator profile and stores content-free
+evidence; see [Agent response evaluation](AGENT_EVALUATION.md). The original
 lower-level `agent-install` manifest command remains available for reviewed
 manifests; `--replace` updates an existing generated definition.
 
 The runtime does not yet turn unrestricted natural language into source code,
-run live-model response-quality benchmarks, or deploy an external agent
-service. Static routing success is not semantic-quality evidence. The verified
-capability is structured requirements-to-manifest generation, deterministic
-static evaluation, approval-gated installation, persistence, reload, and
-routing—not fully autonomous agent engineering.
+generate source code, perform semantic correctness judgments, or deploy an
+external agent service. Static routing and lexical response-contract success
+are not semantic-quality evidence. The verified capability is structured
+requirements-to-manifest generation, deterministic static routing and isolated
+response-contract evaluation, approval-gated installation, persistence,
+reload, and routing—not fully autonomous agent engineering.

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from typing import Literal
 
 from sparkle.agents import AgentRegistry, AgentRouter, AgentSpec
 from sparkle.content import MAX_PART_BYTES, ContentEnvelope, ContentValidationError
@@ -42,9 +43,18 @@ class Orchestrator:
         user_id: str | None = None,
         additional_context: str | None = None,
         input_source: str = "text",
+        execution_profile: Literal["standard", "evaluation"] = "standard",
     ) -> AgentResult:
         if not isinstance(text, str):
             raise ValueError("Request text must be a string")
+        if execution_profile not in {"standard", "evaluation"}:
+            raise ValueError("Unsupported orchestrator execution profile")
+        if execution_profile == "evaluation" and (
+            history is not None or additional_context is not None or user_id is not None
+        ):
+            raise ValueError(
+                "The isolated evaluation profile rejects history, additional context, and user identity"
+            )
         if content is None:
             if not text.strip():
                 raise ValueError("Request text cannot be empty")
@@ -73,6 +83,10 @@ class Orchestrator:
             input_modalities = content.modalities
             content_identifiers = content.content_identifiers
             execution_metadata = content.trace_metadata()
+        execution_metadata = {
+            **execution_metadata,
+            "execution_profile": execution_profile,
+        }
 
         spec = (
             self.agents.get(agent_name)
@@ -88,13 +102,18 @@ class Orchestrator:
         )
         adapter = None
         executed: list[str] = []
-        data_accessed = ["memory_environment", "knowledge_environment"]
+        data_accessed = (
+            ["memory_environment", "knowledge_environment"]
+            if execution_profile == "standard" else []
+        )
         try:
-            bundle = (
-                self.context.build(text)
-                if content is None else self.context.build_content(content)
-            )
-            rendered_context = bundle.render()
+            rendered_context = ""
+            if execution_profile == "standard":
+                bundle = (
+                    self.context.build(text)
+                    if content is None else self.context.build_content(content)
+                )
+                rendered_context = bundle.render()
             system_parts = [spec.system_prompt()]
             if rendered_context:
                 system_parts.append(rendered_context)
@@ -111,7 +130,10 @@ class Orchestrator:
                 response = adapter.complete(ModelRequest(
                     messages=messages,
                     system="\n\n".join(system_parts),
-                    tools=self.tools.definitions(set(spec.tools)),
+                    tools=(
+                        self.tools.definitions(set(spec.tools))
+                        if execution_profile == "standard" else []
+                    ),
                     max_output_tokens=4096,
                     temperature=1.0,
                     thinking=True,
@@ -119,6 +141,10 @@ class Orchestrator:
                 ))
                 if not response.tool_calls:
                     break
+                if execution_profile == "evaluation":
+                    raise RuntimeError(
+                        "Model requested a tool in the isolated evaluation profile"
+                    )
                 if round_number >= self.max_tool_rounds:
                     raise RuntimeError("Model exceeded the configured tool-call round limit")
                 messages.append(Message(
@@ -142,13 +168,18 @@ class Orchestrator:
                 output_modalities=["text"],
                 content_identifiers=content_identifiers,
             )
-            transformations = [
-                "content_validation", "context_retrieval", "agent_reasoning",
-                "tool_loop" if executed else "direct_completion",
-            ] if content is not None else [
-                "context_retrieval", "agent_reasoning",
-                "tool_loop" if executed else "direct_completion",
-            ]
+            if execution_profile == "evaluation":
+                transformations = [
+                    "isolated_evaluation", "agent_reasoning", "direct_completion",
+                ]
+            else:
+                transformations = [
+                    "content_validation", "context_retrieval", "agent_reasoning",
+                    "tool_loop" if executed else "direct_completion",
+                ] if content is not None else [
+                    "context_retrieval", "agent_reasoning",
+                    "tool_loop" if executed else "direct_completion",
+                ]
             self.traces.finish(
                 trace_id, started, status="success", agent=spec.name, model=response.model,
                 provider=response.provider, tools=executed, data_accessed=data_accessed,
@@ -157,7 +188,10 @@ class Orchestrator:
                 processing_stage="completed",
                 output_modalities=["text"],
                 execution_metadata=execution_metadata,
-                result_summary=response.text,
+                result_summary=(
+                    "Agent evaluation model call completed"
+                    if execution_profile == "evaluation" else response.text
+                ),
             )
             return result
         except Exception as exc:
@@ -174,7 +208,11 @@ class Orchestrator:
                 tools=executed, data_accessed=data_accessed, storage_destinations=["trace_environment"],
                 processing_stage="failed", output_modalities=[],
                 execution_metadata=execution_metadata,
-                error_type=type(exc).__name__, result_summary=str(exc),
+                error_type=type(exc).__name__,
+                result_summary=(
+                    "Agent evaluation model call failed"
+                    if execution_profile == "evaluation" else str(exc)
+                ),
             )
             if isinstance(exc, ModelError):
                 raise

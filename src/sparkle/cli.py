@@ -61,6 +61,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     agent_build.add_argument("requirements")
     agent_build.add_argument("--approve", action="store_true")
+    agent_evaluate = sub.add_parser(
+        "agent-evaluate",
+        help="Run approved response-contract fixtures for an installed blueprint",
+    )
+    agent_evaluate.add_argument("name")
+    agent_evaluate.add_argument("--approve", action="store_true")
     automation_run = sub.add_parser("automations-run", help="Execute due automations")
     automation_run.add_argument("--watch", action="store_true")
     automation_run.add_argument("--interval", type=float, default=60.0)
@@ -198,6 +204,12 @@ def main(argv: list[str] | None = None) -> int:
             ),
         })
         return 0
+    if args.command == "agent-evaluate":
+        result = system.agent_evaluator.evaluate(
+            args.name, approved=bool(args.approve),
+        )
+        _print({"ok": result["status"] == "passed", "evaluation": result})
+        return 0 if result["status"] == "passed" else 1
     if args.command == "automations-run":
         if not args.watch:
             _print({

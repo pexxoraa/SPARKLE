@@ -5,6 +5,7 @@ from typing import Any
 
 from sparkle.agents import AgentRegistry, AgentRouter, GeneratedAgentStore
 from sparkle.agent_builder import AgentBlueprintBuilder, AgentBlueprintStore
+from sparkle.agent_evaluation import AgentEvaluationStore, AgentResponseEvaluator
 from sparkle.artifacts import ArtifactManager
 from sparkle.automation import AutomationRunner, AutomationStore, ProactiveEngine
 from sparkle.builders import WorkspaceManager
@@ -131,6 +132,13 @@ class SparkleSystem:
             context=self.context, tools=self.tools, traces=self.traces,
             max_tool_rounds=self.config.max_tool_rounds,
         )
+        self.agent_evaluations = AgentEvaluationStore()
+        self.agent_evaluator = AgentResponseEvaluator(
+            self.agent_builder,
+            self.agent_blueprints,
+            self.orchestrator,
+            self.agent_evaluations,
+        )
         self.automation_runner = AutomationRunner(
             self.automations,
             self.orchestrator,
@@ -143,7 +151,7 @@ class SparkleSystem:
         models = self.models.list()
         return {
             "name": "SPARKLE",
-            "version": "0.19.0-alpha.1",
+            "version": "0.20.0-alpha.1",
             "status": "ready" if any(model["configured"] for model in models) else "limited",
             "active_model": self.models.active_id,
             "models": models,
@@ -155,6 +163,7 @@ class SparkleSystem:
                 "status": "ready",
                 "count": sum(1 for agent in self.agents.list() if agent["source"] == "generated"),
                 "blueprints": len(self.agent_blueprints.list(limit=100)),
+                "evaluations": len(self.agent_evaluations.list(limit=100)),
             },
             "tools": self.tools.status(),
             "api_security": {

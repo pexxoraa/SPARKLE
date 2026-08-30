@@ -29,7 +29,7 @@ MAX_MULTIMODAL_BODY_BYTES = 12_000_000
 class SparkleHandler(BaseHTTPRequestHandler):
     system: SparkleSystem
     dashboard_root = Path(__file__).with_name("dashboard")
-    server_version = "SPARKLE/0.19"
+    server_version = "SPARKLE/0.20"
 
     def log_message(self, format: str, *args: object) -> None:
         # Avoid request bodies, headers, query values, and secrets in logs.
@@ -292,6 +292,13 @@ class SparkleHandler(BaseHTTPRequestHandler):
                     limit=int(query.get("limit", [50])[0])
                 ),
             })
+        if parsed.path == "/api/agent-evaluations":
+            return self._json({
+                "protocol_version": self.system.agent_evaluator.PROTOCOL,
+                "evaluations": self.system.agent_evaluations.list(
+                    limit=int(query.get("limit", [50])[0])
+                ),
+            })
         if parsed.path == "/api/memory":
             return self._json({"memories": self.system.memory.search(query.get("q", [""])[0], limit=int(query.get("limit", [20])[0]))})
         if parsed.path == "/api/knowledge/search":
@@ -456,6 +463,16 @@ class SparkleHandler(BaseHTTPRequestHandler):
                 return self._json({
                     "ok": True, "blueprint": blueprint,
                 }, 201)
+            if self.path == "/api/agents/evaluate":
+                if set(data) - {"name", "approved"}:
+                    raise ValueError("Agent evaluation fields are unsupported")
+                evaluation = self.system.agent_evaluator.evaluate(
+                    data.get("name"), approved=data.get("approved") is True,
+                )
+                return self._json({
+                    "ok": evaluation["status"] == "passed",
+                    "evaluation": evaluation,
+                }, 200 if evaluation["status"] == "passed" else 422)
             if self.path == "/api/agents/remove":
                 if data.get("approved") is not True:
                     raise ValueError("Agent removal requires explicit approval")

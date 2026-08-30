@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import re
 import sqlite3
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -13,10 +13,44 @@ from sparkle.storage import SQLiteStore, utc_now
 
 
 @dataclass(frozen=True, slots=True)
+class AgentResponseAssertions:
+    contains_all: tuple[str, ...] = ()
+    contains_any: tuple[str, ...] = ()
+    excludes_all: tuple[str, ...] = ()
+    min_chars: int | None = None
+    max_chars: int | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        value: dict[str, Any] = {}
+        if self.contains_all:
+            value["contains_all"] = list(self.contains_all)
+        if self.contains_any:
+            value["contains_any"] = list(self.contains_any)
+        if self.excludes_all:
+            value["excludes_all"] = list(self.excludes_all)
+        if self.min_chars is not None:
+            value["min_chars"] = self.min_chars
+        if self.max_chars is not None:
+            value["max_chars"] = self.max_chars
+        return value
+
+
+@dataclass(frozen=True, slots=True)
 class AgentEvaluationCase:
     name: str
     prompt: str
     expected_route: str
+    assertions: AgentResponseAssertions | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        value = {
+            "name": self.name,
+            "prompt": self.prompt,
+            "expected_route": self.expected_route,
+        }
+        if self.assertions is not None:
+            value["assertions"] = self.assertions.to_dict()
+        return value
 
 
 @dataclass(frozen=True, slots=True)
@@ -42,7 +76,7 @@ class AgentBlueprint:
             },
             "workflow": list(self.workflow),
             "guardrails": list(self.guardrails),
-            "evaluations": [asdict(case) for case in self.evaluations],
+            "evaluations": [case.to_dict() for case in self.evaluations],
             "static_checks": list(self.static_checks),
             "status": self.status,
             "semantic_evaluation_executed": False,
@@ -110,6 +144,19 @@ class AgentBlueprintStore(SQLiteStore):
             for row in rows
         ]
 
+    def latest_requirements(self, agent_name: str) -> tuple[int, dict[str, Any]]:
+        with self.connect() as connection:
+            row = connection.execute("""
+                SELECT id, requirements_json FROM agent_blueprints
+                WHERE agent_name=? ORDER BY id DESC LIMIT 1
+            """, (agent_name,)).fetchone()
+        if row is None:
+            raise KeyError(f"No Agent Blueprint exists for: {agent_name}")
+        requirements = json.loads(row["requirements_json"])
+        if not isinstance(requirements, dict):
+            raise ValueError("Stored Agent Blueprint requirements are invalid")
+        return int(row["id"]), requirements
+
 
 class AgentBlueprintBuilder:
     PROTOCOL = "SPARKLE-AGENT-BLUEPRINT/1"
@@ -118,6 +165,10 @@ class AgentBlueprintBuilder:
     _ALLOWED_FIELDS = {
         "name", "capability", "purpose", "tools", "keywords", "workflow",
         "guardrails", "evaluations",
+    }
+    _ASSERTION_FIELDS = {
+        "contains_all", "contains_any", "excludes_all", "min_chars",
+        "max_chars",
     }
 
     def __init__(self, registry: AgentRegistry, store: AgentBlueprintStore):
@@ -153,7 +204,58 @@ class AgentBlueprintBuilder:
             raise ValueError(f"Agent blueprint {field} must not contain duplicates")
         return normalized
 
-    def prepare(self, requirements: dict[str, Any]) -> AgentBlueprint:
+    def _assertions(self, value: Any) -> AgentResponseAssertions | None:
+        if value is None:
+            return None
+        if not isinstance(value, dict):
+            raise ValueError("Agent evaluation assertions must be an object")
+        unknown = set(value) - self._ASSERTION_FIELDS
+        if unknown:
+            raise ValueError(
+                "Unsupported agent evaluation assertions: "
+                + ", ".join(sorted(unknown))
+            )
+        collections: dict[str, tuple[str, ...]] = {}
+        for field in ("contains_all", "contains_any", "excludes_all"):
+            collections[field] = (
+                self._strings(
+                    value[field], field=f"assertions.{field}",
+                    minimum=1, maximum=10, max_chars=200, unique=True,
+                )
+                if field in value else ()
+            )
+        bounds: dict[str, int | None] = {}
+        for field in ("min_chars", "max_chars"):
+            raw = value.get(field)
+            if raw is not None and (
+                isinstance(raw, bool) or not isinstance(raw, int)
+                or not 0 <= raw <= 100_000
+            ):
+                raise ValueError(
+                    f"Agent evaluation {field} must be an integer from 0 to 100000"
+                )
+            bounds[field] = raw
+        if (
+            bounds["min_chars"] is not None
+            and bounds["max_chars"] is not None
+            and bounds["min_chars"] > bounds["max_chars"]
+        ):
+            raise ValueError("Agent evaluation character bounds are reversed")
+        if not any(collections.values()) and all(
+            item is None for item in bounds.values()
+        ):
+            raise ValueError("Agent evaluation assertions cannot be empty")
+        return AgentResponseAssertions(
+            contains_all=collections["contains_all"],
+            contains_any=collections["contains_any"],
+            excludes_all=collections["excludes_all"],
+            min_chars=bounds["min_chars"],
+            max_chars=bounds["max_chars"],
+        )
+
+    def _prepare(
+        self, requirements: dict[str, Any], *, allow_existing: bool,
+    ) -> AgentBlueprint:
         if not isinstance(requirements, dict):
             raise ValueError("Agent blueprint requirements must be an object")
         unknown = set(requirements) - self._ALLOWED_FIELDS
@@ -200,8 +302,14 @@ class AgentBlueprintBuilder:
         evaluations: list[AgentEvaluationCase] = []
         evaluation_names: set[str] = set()
         for value in raw_evaluations:
-            if not isinstance(value, dict) or set(value) != {"name", "prompt"}:
-                raise ValueError("Agent evaluation cases require only name and prompt")
+            if (
+                not isinstance(value, dict)
+                or not {"name", "prompt"} <= set(value)
+                or set(value) - {"name", "prompt", "assertions"}
+            ):
+                raise ValueError(
+                    "Agent evaluation cases require name, prompt, and optional assertions"
+                )
             name = value.get("name")
             prompt = value.get("prompt")
             if not isinstance(name, str) or self._CASE_NAME.fullmatch(name) is None:
@@ -221,6 +329,7 @@ class AgentBlueprintBuilder:
             evaluations.append(AgentEvaluationCase(
                 name=name, prompt=prompt.strip(),
                 expected_route=str(requirements.get("name", "")),
+                assertions=self._assertions(value.get("assertions")),
             ))
 
         instructions = (
@@ -240,7 +349,7 @@ class AgentBlueprintBuilder:
             keywords=keywords,
         )
         self.registry.validate(spec)
-        if spec.name in self.registry.names:
+        if spec.name in self.registry.names and not allow_existing:
             raise ValueError(f"Agent already exists: {spec.name}")
         for case in evaluations:
             scores = [
@@ -270,6 +379,23 @@ class AgentBlueprintBuilder:
             ),
             status="prepared_static_verified",
         )
+
+    def prepare(self, requirements: dict[str, Any]) -> AgentBlueprint:
+        return self._prepare(requirements, allow_existing=False)
+
+    def validate_installed(
+        self, requirements: dict[str, Any],
+    ) -> AgentBlueprint:
+        blueprint = self._prepare(requirements, allow_existing=True)
+        try:
+            installed = self.registry.get(blueprint.manifest.name)
+        except KeyError as exc:
+            raise ValueError("Agent Blueprint agent is not installed") from exc
+        if installed != blueprint.manifest:
+            raise ValueError(
+                "Installed agent no longer matches the latest Agent Blueprint"
+            )
+        return blueprint
 
     def build(
         self, requirements: dict[str, Any], *, approved: bool,

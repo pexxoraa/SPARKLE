@@ -103,6 +103,14 @@ install/reload/routing, split-store rollback, and equivalent API and CLI
 lifecycles. These are static manifest and routing evaluations; no test claims a
 live model response-quality benchmark or external deployment.
 
+Agent response-evaluation coverage verifies exact bounded assertions,
+approval before model calls, installed-manifest revalidation, deterministic
+pass/fail contracts, an isolated no-history/no-user/no-context/no-tool
+orchestrator profile, tool-call refusal, raw prompt/response non-disclosure,
+generic traces, safe error types, API/CLI execution, and retention of only the
+latest 1,000 evidence records. It does not claim semantic correctness or a live
+provider evaluation.
+
 ## Phase 33 evidence matrix
 
 | Required category | Executed evidence | Remaining external gap |
@@ -110,7 +118,7 @@ live model response-quality benchmark or external deployment.
 | Unit | Content, security, stores, routing, tools, services, and validators | None for implemented local units |
 | Integration | API, orchestrator/context/model, multimodal, automation, artifact, and worker boundaries | Live provider and deployed external targets |
 | System | Composed system, HTTP server, persisted stores, status, dashboard, and service lifecycle | Production identity/TLS/deployment environment |
-| Agent | All 16 built-ins plus structured blueprint generation, static routing fixtures, approval, generated-agent persistence, rollback, routing, tools, deterministic execution, and traces | Natural-language source generation, live-provider response-quality evaluation, external deployment |
+| Agent | All 16 built-ins plus structured blueprints, static routing fixtures, isolated response contracts, approval, persistence, rollback, routing, tools, deterministic execution, and traces | Natural-language source generation, semantic/live-provider quality evaluation, external deployment |
 | Model | MiniMax mapping/retry/stream/tool state, registry switching, capability/modality routing, deterministic adapter | Live MiniMax credentialed smoke call |
 | Memory | CRUD, search, archive/restore, structured proactive evidence, and backup | Production retention/encrypted backup policy |
 | Tool | Allowlists, schemas, bounds, approval, confinement, execution, and failure paths | Disabled web/browser/computer adapters |
@@ -222,3 +230,15 @@ configuration checks. Its SHA-256 was
 GitHub CI run #41 (`33313769623`) passed the exact v0.19 capability tree on
 Python 3.12 and 3.13, the separately deployable worker image
 build/entrypoint, and the installed automation-service lifecycle.
+
+The first v0.20 complete run executed 179 tests: 178 passed and the
+documentation version-consistency contract caught that `BUILD_STATE.md` still
+reported v0.19. The state file was corrected; the failed attempt is preserved
+in `RELEASE_REPORT.md` and is not counted as a passing gate. A corrected
+complete suite passed all 179 tests in 22.690 seconds; dashboard JavaScript
+syntax and Git whitespace checks passed. A zero-dependency non-editable
+`0.20.0a1` wheel installed without an index and passed isolated Agent Blueprint
+response evaluation/non-disclosure, blueprint reload/routing, multimodal
+round-trip, automation check/once/status, worker-entrypoint, and mode-0600
+configuration checks. Its SHA-256 was
+`a41d689e9fea9cc7eaf16dde4b287aa4d1169351a1a135831140d7e9e505d5f4`.

@@ -37,6 +37,10 @@ The agent-blueprint builder is a separate provider-neutral composition over the
 agent registry. It deterministically converts exact structured requirements to
 an `AgentSpec`, executes production routing fixtures without registry mutation,
 and persists an approved blueprint separately from the installed manifest.
+The response evaluator is composed only after the orchestrator exists. It
+revalidates the installed blueprint and calls the common router through an
+isolated orchestrator profile that disables context and tools. Its evidence
+store receives hashes and check metadata, never raw prompts or responses.
 An independent artifact manager reads bounded application workspaces and emits
 deterministic content-addressed ZIPs; it never starts an executable.
 The automation service is another independent entrypoint over the existing
@@ -73,6 +77,7 @@ and orchestration do not depend on cookie or browser implementation details.
 - `var/data_environment/notifications.sqlite3`
 - `var/data_environment/generated_agents.sqlite3`
 - `var/data_environment/agent_blueprints.sqlite3`
+- `var/data_environment/agent_evaluations.sqlite3`
 - `var/data_environment/automation-service.lock`
 - `var/data_environment/builds.sqlite3`
 - `var/data_environment/verifications.sqlite3`

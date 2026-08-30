@@ -91,7 +91,15 @@ non-mutating static preparation before installation. Create
   "workflow": ["Collect evidence.", "Cross-check sources.", "Label uncertainty."],
   "guardrails": ["Never fabricate sources or completed tests."],
   "evaluations": [
-    {"name": "robot_paper", "prompt": "Start robotics research for a robot paper."}
+    {
+      "name": "robot_paper",
+      "prompt": "Start robotics research for a robot paper.",
+      "assertions": {
+        "contains_all": ["robot paper"],
+        "excludes_all": ["fabricated source"],
+        "max_chars": 4000
+      }
+    }
   ]
 }
 ```
@@ -101,12 +109,16 @@ Prepare, inspect, and explicitly approve installation:
 ```bash
 sparkle agent-prepare agent-requirements.json
 sparkle agent-build agent-requirements.json --approve
+sparkle agent-evaluate robotics_research --approve
 sparkle chat --agent robotics_research "Compare two robot-arm control methods"
 ```
 
 Preparation never installs the agent. It validates that each fixture routes to
-the candidate but does not call a model, evaluate answer quality, generate
-source code, or deploy an external service.
+the candidate but does not call a model. The separate approved evaluation
+command calls the configured model using no personal context and no tools, then
+persists only response hashes/lengths and check results. It evaluates bounded
+lexical/length contracts, not semantic correctness, source generation, or
+external deployment.
 
 The lower-level reviewed-manifest path remains available. Create `agent.json`:
 
