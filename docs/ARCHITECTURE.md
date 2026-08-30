@@ -33,6 +33,10 @@ See `MULTIMODAL.md` for the exact contract and evidence boundary.
 tool registry, orchestrator, voice service, presence engine, proactive engine,
 automation store, notification store, static verifier, and opt-in fixed
 workspace test runner.
+The agent-blueprint builder is a separate provider-neutral composition over the
+agent registry. It deterministically converts exact structured requirements to
+an `AgentSpec`, executes production routing fixtures without registry mutation,
+and persists an approved blueprint separately from the installed manifest.
 An independent artifact manager reads bounded application workspaces and emits
 deterministic content-addressed ZIPs; it never starts an executable.
 The automation service is another independent entrypoint over the existing
@@ -67,6 +71,8 @@ and orchestration do not depend on cookie or browser implementation details.
 - `var/knowledge_environment/knowledge.sqlite3`
 - `var/data_environment/automations.sqlite3`
 - `var/data_environment/notifications.sqlite3`
+- `var/data_environment/generated_agents.sqlite3`
+- `var/data_environment/agent_blueprints.sqlite3`
 - `var/data_environment/automation-service.lock`
 - `var/data_environment/builds.sqlite3`
 - `var/data_environment/verifications.sqlite3`

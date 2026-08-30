@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any
 
 from sparkle.agents import AgentRegistry, AgentRouter, GeneratedAgentStore
+from sparkle.agent_builder import AgentBlueprintBuilder, AgentBlueprintStore
 from sparkle.artifacts import ArtifactManager
 from sparkle.automation import AutomationRunner, AutomationStore, ProactiveEngine
 from sparkle.builders import WorkspaceManager
@@ -119,6 +120,10 @@ class SparkleSystem:
             self.generated_agents,
             allowed_tools=self.tools.names | {"agent_install"},
         )
+        self.agent_blueprints = AgentBlueprintStore()
+        self.agent_builder = AgentBlueprintBuilder(
+            self.agents, self.agent_blueprints,
+        )
         self.tools.register(AgentInstallTool(self.agents))
         self.agent_router = AgentRouter(self.agents)
         self.orchestrator = Orchestrator(
@@ -138,7 +143,7 @@ class SparkleSystem:
         models = self.models.list()
         return {
             "name": "SPARKLE",
-            "version": "0.18.0-alpha.1",
+            "version": "0.19.0-alpha.1",
             "status": "ready" if any(model["configured"] for model in models) else "limited",
             "active_model": self.models.active_id,
             "models": models,
@@ -149,6 +154,7 @@ class SparkleSystem:
             "generated_agents": {
                 "status": "ready",
                 "count": sum(1 for agent in self.agents.list() if agent["source"] == "generated"),
+                "blueprints": len(self.agent_blueprints.list(limit=100)),
             },
             "tools": self.tools.status(),
             "api_security": {

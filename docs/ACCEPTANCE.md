@@ -19,7 +19,7 @@ means an external dependency is unavailable.
 | Core orchestrator | PASS | Single-agent, tool-loop, failure-trace paths implemented and tested |
 | Context system | PASS | Memory and knowledge retrieval integrated before calls |
 | 16 initial agents | PARTIAL | A domain matrix verifies all 16 capabilities, instructions, minimum tool boundaries, routing, common safety prompts, deterministic execution, and trace linkage; live-provider response-quality evaluations remain incomplete |
-| Agent Builder deploys new agents | PARTIAL | Approval-gated manifests persist, hot-load, route, replace, and remove agents; autonomous requirements-to-evaluation generation remains incomplete |
+| Agent Builder deploys new agents | PARTIAL | `SPARKLE-AGENT-BLUEPRINT/1` converts bounded structured requirements into provider-neutral manifests, executes deterministic production-routing fixtures without mutation, requires approval, persists/reloads/routes, and rolls back split-store failures. Natural-language source generation, live semantic evaluation, and external deployment remain incomplete |
 | AI system builder | PARTIAL | Specialist exists; full build/deploy toolchain absent |
 | Application builder | PARTIAL | Approval-gated workspaces, static verification, fixed tests, the signed external-worker loop, and deterministic content-addressed ZIP packaging are tested; target-specific build/deployment adapters remain absent |
 | External test worker | PARTIAL | Separately installable service, exact validation, replay/concurrency/key controls, fixed executors, local end-to-end execution, Docker/Caddy/systemd assets, and fail-closed preflight are tested; no named remote instance or live namespace isolation evidence exists |
@@ -35,8 +35,8 @@ means an external dependency is unavailable.
 | Data tracing works | PASS | Success/tool/failure metadata implemented; trace tests |
 | Motion/presence architecture | PASS | Independent presence engine; physical motion intentionally absent |
 | Multimodal architecture prepared | PASS | `SPARKLE-CONTENT/1` text/image/audio/document contracts flow through API, context, routing, adapters, results, and raw-content-free traces; mixed and failure paths are tested. Live non-text semantic understanding remains a separate provider capability |
-| Tests pass | PASS | 166 local v0.18 tests pass, including notification validation, retention, dedupe refresh, API/UI/read state, conditional delivery, and trace non-disclosure; CI run #39 passed all four jobs |
+| Tests pass | PASS | 172 local v0.19 tests pass in 22.177 seconds, including deterministic/non-mutating blueprint preparation, validation, production routing fixtures, approval, persistence/reload, rollback, API, and CLI; v0.19 CI pending |
 | Documentation complete for implementation | PASS | All master-directive documents are present; relative links, version consistency, and required truth fields have executable regression tests |
-| Installation reproducible | PASS | Python 3.12 core has zero mandatory third-party dependencies |
+| Installation reproducible | PASS | Zero-dependency `0.19.0a1` wheel installed without an index and passed blueprint prepare/build/reload/routing, multimodal, automation service, worker, and mode-0600 configuration gates |
 | End-to-end workflows | PARTIAL | A cohesive HTTP → context → mixed content → agent/model → trace/presence workflow and worker/automation/application flows pass; live provider and external actions remain blocked |
-| Release | PASS | v0.18 capability `c801e4d`/`c15469b` is on `main` and passed all four jobs in CI run #39 |
+| Release | PARTIAL | v0.18 remains the latest four-job CI-verified release; the v0.19 capability passed locally and awaits exact-tree publication and CI |

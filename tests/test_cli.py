@@ -16,6 +16,58 @@ from sparkle.system import SparkleSystem
 
 
 class CLITests(unittest.TestCase):
+    def test_agent_blueprint_prepare_and_approved_build(self):
+        with tempfile.TemporaryDirectory() as directory:
+            requirements = Path(directory) / "robotics-agent.json"
+            requirements.write_text(json.dumps({
+                "name": "robotics_research",
+                "capability": "reasoning",
+                "purpose": "Research robotics with evidence and engineering constraints.",
+                "tools": ["calculator"],
+                "keywords": ["robotics research", "robot arm"],
+                "workflow": [
+                    "Collect relevant robotics evidence.",
+                    "Cross-check sources and state uncertainty.",
+                ],
+                "guardrails": ["Never fabricate sources or completed tests."],
+                "evaluations": [{
+                    "name": "robot_arm_evidence",
+                    "prompt": "Perform robotics research for a robot arm.",
+                }],
+            }), encoding="utf-8")
+            output = io.StringIO()
+            error = io.StringIO()
+            with (
+                patch.dict(
+                    os.environ, {"SPARKLE_DATA_DIR": directory}, clear=False,
+                ),
+                contextlib.redirect_stdout(output),
+                contextlib.redirect_stderr(error),
+            ):
+                self.assertEqual(main([
+                    "agent-prepare", str(requirements),
+                ]), 0)
+                self.assertNotIn(
+                    "robotics_research",
+                    SparkleSystem().agents.names,
+                )
+                self.assertEqual(entrypoint([
+                    "agent-build", str(requirements),
+                ]), 1)
+                self.assertEqual(main([
+                    "agent-build", str(requirements), "--approve",
+                ]), 0)
+                system = SparkleSystem()
+            self.assertIn("explicit approval", error.getvalue())
+            self.assertNotIn("Traceback", error.getvalue())
+            self.assertIn("robotics_research", system.agents.names)
+            self.assertEqual(
+                system.agent_blueprints.list()[0]["agent_name"],
+                "robotics_research",
+            )
+            self.assertIn('"prepared_static_verified"', output.getvalue())
+            self.assertIn('"installed_static_verified"', output.getvalue())
+
     def test_ingest_monitor_key_detects_a_later_file_revision(self):
         with tempfile.TemporaryDirectory() as directory:
             source = Path(directory) / "robotics.md"

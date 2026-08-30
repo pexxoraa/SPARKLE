@@ -77,7 +77,38 @@ new observation.
 
 ## Install a generated agent
 
-Create `agent.json`:
+The recommended path starts from structured requirements and performs a
+non-mutating static preparation before installation. Create
+`agent-requirements.json`:
+
+```json
+{
+  "name": "robotics_research",
+  "capability": "reasoning",
+  "purpose": "Research robotics systems with explicit evidence standards.",
+  "tools": ["calculator", "knowledge_search", "memory_search"],
+  "keywords": ["robotics research", "robot paper"],
+  "workflow": ["Collect evidence.", "Cross-check sources.", "Label uncertainty."],
+  "guardrails": ["Never fabricate sources or completed tests."],
+  "evaluations": [
+    {"name": "robot_paper", "prompt": "Start robotics research for a robot paper."}
+  ]
+}
+```
+
+Prepare, inspect, and explicitly approve installation:
+
+```bash
+sparkle agent-prepare agent-requirements.json
+sparkle agent-build agent-requirements.json --approve
+sparkle chat --agent robotics_research "Compare two robot-arm control methods"
+```
+
+Preparation never installs the agent. It validates that each fixture routes to
+the candidate but does not call a model, evaluate answer quality, generate
+source code, or deploy an external service.
+
+The lower-level reviewed-manifest path remains available. Create `agent.json`:
 
 ```json
 {

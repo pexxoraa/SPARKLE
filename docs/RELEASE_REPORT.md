@@ -1,3 +1,46 @@
+# 0.19.0-alpha.1 verification report
+
+Date: 2026-08-30 UTC
+
+## Executed evidence
+
+- `SPARKLE-AGENT-BLUEPRINT/1` converts exact bounded structured requirements
+  into a provider- and model-neutral `AgentSpec`, workflow, guardrails, and
+  evaluation fixtures without mutating the registry.
+- Preparation rejects unknown fields/tools, invalid scalar and collection
+  bounds, duplicates, oversized JSON, built-in/existing names, and fixtures
+  that do not select the candidate through the production routing scorer.
+- Approved builds persist the agent and separate blueprint evidence, hot-load
+  routing, survive process reload, and roll back the agent manifest when
+  blueprint persistence fails. API and CLI preparation/build/list paths run.
+- Six focused builder/API/CLI cases passed. A first complete run passed 171 of
+  172 tests and caught a stale v0.18 version in `BUILD_STATE.md`; this report
+  preserves that corrected documentation failure rather than counting it as a
+  pass. The corrected complete suite passed all 172 tests in 22.177 seconds.
+- The first auxiliary JavaScript command used the obsolete
+  `dashboard/assets/app.js` path after the suite had passed and failed with
+  `MODULE_NOT_FOUND`. The corrected repository path
+  `src/sparkle/dashboard/app.js` passed `node --check`; Git whitespace checks
+  also passed.
+- An initial clean wheel passed before final review added append-only
+  remove/rebuild history; that earlier wheel was invalidated and is not release
+  evidence. A fresh zero-dependency non-editable `0.19.0a1` wheel from the
+  final capability tree installed without an index. Preparation remained
+  non-mutating; approved install/reload/routing and remove/rebuild history
+  passed; multimodal canonical round-trip, automation check/once/status,
+  worker help, and mode-0600 configuration checks also passed. The final wheel
+  SHA-256 was
+  `3f29323e7c0fd2ec67b06ba3fe9451ad5b5aa43122a0aaa0229dae913cfd0919`.
+
+## Honest limits
+
+- Static routing fixtures prove deterministic selection, not semantic response
+  quality. No live model evaluation ran.
+- Requirements are structured JSON. Natural-language source generation and
+  external agent deployment are not implemented by this increment.
+
+---
+
 # 0.18.0-alpha.1 verification report
 
 Date: 2026-08-30 UTC

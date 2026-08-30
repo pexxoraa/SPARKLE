@@ -96,6 +96,13 @@ unambiguous routing prompt, common evidence guardrails, actual deterministic
 orchestrator execution, and successful trace linkage. This is structural and
 execution evidence; it is not a live-provider response-quality benchmark.
 
+Agent Blueprint coverage verifies deterministic non-mutating preparation,
+exact fields and bounds, duplicate rejection, known-tool enforcement,
+production-router fixture execution, approval refusal, persistent
+install/reload/routing, split-store rollback, and equivalent API and CLI
+lifecycles. These are static manifest and routing evaluations; no test claims a
+live model response-quality benchmark or external deployment.
+
 ## Phase 33 evidence matrix
 
 | Required category | Executed evidence | Remaining external gap |
@@ -103,13 +110,13 @@ execution evidence; it is not a live-provider response-quality benchmark.
 | Unit | Content, security, stores, routing, tools, services, and validators | None for implemented local units |
 | Integration | API, orchestrator/context/model, multimodal, automation, artifact, and worker boundaries | Live provider and deployed external targets |
 | System | Composed system, HTTP server, persisted stores, status, dashboard, and service lifecycle | Production identity/TLS/deployment environment |
-| Agent | All 16 built-ins plus generated-agent persistence, routing, tools, deterministic execution, and traces | Live-provider response-quality evaluation |
+| Agent | All 16 built-ins plus structured blueprint generation, static routing fixtures, approval, generated-agent persistence, rollback, routing, tools, deterministic execution, and traces | Natural-language source generation, live-provider response-quality evaluation, external deployment |
 | Model | MiniMax mapping/retry/stream/tool state, registry switching, capability/modality routing, deterministic adapter | Live MiniMax credentialed smoke call |
 | Memory | CRUD, search, archive/restore, structured proactive evidence, and backup | Production retention/encrypted backup policy |
 | Tool | Allowlists, schemas, bounds, approval, confinement, execution, and failure paths | Disabled web/browser/computer adapters |
 | Voice | Disabled failures, adapter injection, and shared-core contract | Real STT/TTS and microphone/speaker hardware |
 | Application | Scaffold, static verification, fixed tests, artifacts, worker protocol/service, API/CLI/dashboard | Target-specific build and deployment adapters |
-| AI system | Single/multi-agent orchestration, tool loop, generated agents, model independence, multimodal transport | Autonomous requirements-to-deployment evaluation |
+| AI system | Single/multi-agent orchestration, tool loop, structured agent blueprints, generated agents, model independence, multimodal transport | Autonomous natural-language requirements-to-deployment evaluation |
 | End-to-end | HTTP chat, automations, workspace flows, and client → worker → child unittest → signed result | Live provider, remote isolation, and external actions |
 | Regression | Exact `make check` gate on the full standard-library suite | None for implemented local behavior |
 
@@ -196,3 +203,19 @@ mode-0600 configuration checks.
 GitHub CI run #39 (`33301375054`) passed the exact v0.18 capability tree on
 Python 3.12 and 3.13, the separately deployable worker image
 build/entrypoint, and the installed automation-service lifecycle.
+
+The first v0.19 complete run executed 172 tests: 171 passed and the
+documentation version-consistency contract caught that `BUILD_STATE.md` still
+reported v0.18 after the code/package version moved to v0.19. The state file
+was corrected; the failed attempt remains recorded in `RELEASE_REPORT.md` and
+is not counted as a passing gate. The corrected complete suite passed all 172
+tests in 22.177 seconds. An auxiliary JavaScript check first targeted an
+obsolete path and failed after the suite; `node --check` on the actual packaged
+dashboard path and Git whitespace checks then passed.
+An initial clean wheel was invalidated after final review added append-only
+remove/rebuild history. A fresh zero-dependency non-editable `0.19.0a1` wheel
+from the final capability tree installed without an index. It passed installed
+blueprint prepare/build/reload/routing, remove/rebuild history, multimodal
+round-trip, automation check/once/status, worker-entrypoint, and mode-0600
+configuration checks. Its SHA-256 was
+`3f29323e7c0fd2ec67b06ba3fe9451ad5b5aa43122a0aaa0229dae913cfd0919`.

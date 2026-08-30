@@ -50,6 +50,17 @@ def build_parser() -> argparse.ArgumentParser:
     agent_remove = sub.add_parser("agent-remove", help="Remove a generated agent")
     agent_remove.add_argument("name")
     agent_remove.add_argument("--approve", action="store_true")
+    agent_prepare = sub.add_parser(
+        "agent-prepare",
+        help="Validate structured requirements and generate an agent blueprint",
+    )
+    agent_prepare.add_argument("requirements")
+    agent_build = sub.add_parser(
+        "agent-build",
+        help="Generate, statically verify, and install an agent blueprint",
+    )
+    agent_build.add_argument("requirements")
+    agent_build.add_argument("--approve", action="store_true")
     automation_run = sub.add_parser("automations-run", help="Execute due automations")
     automation_run.add_argument("--watch", action="store_true")
     automation_run.add_argument("--interval", type=float, default=60.0)
@@ -170,6 +181,22 @@ def main(argv: list[str] | None = None) -> int:
         if not args.approve:
             raise ValueError("Agent removal requires --approve")
         _print({"ok": True, "removed": system.agents.remove(args.name)})
+        return 0
+    if args.command == "agent-prepare":
+        requirements = _load_manifest(args.requirements)
+        _print({
+            "ok": True,
+            "blueprint": system.agent_builder.prepare(requirements).to_dict(),
+        })
+        return 0
+    if args.command == "agent-build":
+        requirements = _load_manifest(args.requirements)
+        _print({
+            "ok": True,
+            "blueprint": system.agent_builder.build(
+                requirements, approved=bool(args.approve),
+            ),
+        })
         return 0
     if args.command == "automations-run":
         if not args.watch:

@@ -160,6 +160,12 @@ class AgentRegistry:
             if unknown:
                 raise ValueError(f"Agent references unknown tools: {', '.join(sorted(unknown))}")
 
+    def validate(self, spec: AgentSpec) -> None:
+        """Validate a generated specification without mutating the registry."""
+        self._validate(spec)
+        if spec.name in self._builtin_names:
+            raise ValueError(f"Generated agent cannot replace a built-in agent: {spec.name}")
+
     def install(self, spec: AgentSpec, *, replace: bool = False) -> AgentSpec:
         if not self.store:
             raise RuntimeError("Generated-agent persistence is not configured")
@@ -213,8 +219,13 @@ class AgentRouter:
         lowered = text.lower()
         return sum(2 if " " in keyword else 1 for keyword in spec.keywords if re.search(rf"\b{re.escape(keyword)}\b", lowered))
 
+    @classmethod
+    def score(cls, text: str, spec: AgentSpec) -> int:
+        """Return the deterministic production routing score for a manifest."""
+        return cls._score(text, spec)
+
     def rank(self, text: str) -> list[tuple[int, AgentSpec]]:
-        ranked = [(self._score(text, self.registry.get(name)), self.registry.get(name)) for name in self.registry.names]
+        ranked = [(self.score(text, self.registry.get(name)), self.registry.get(name)) for name in self.registry.names]
         return sorted(ranked, key=lambda item: (item[0], item[1].name), reverse=True)
 
     def select(self, text: str) -> AgentSpec:

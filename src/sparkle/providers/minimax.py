@@ -56,7 +56,7 @@ class MiniMaxMessagesAdapter(ModelAdapter):
             "Authorization": f"Bearer {key}",
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "User-Agent": "SPARKLE/0.18",
+            "User-Agent": "SPARKLE/0.19",
         }
 
     @staticmethod

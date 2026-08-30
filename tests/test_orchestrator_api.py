@@ -574,6 +574,7 @@ class APITests(SystemCase):
             json.loads(self.request("/api/verifications")[2])["verifications"][0]["passed"],
             1,
         )
+
         self.assertEqual(self.request(
             "/api/builds/test", {"project_name": "robot_console", "approved": True},
         )[0], 400)
@@ -643,4 +644,62 @@ class APITests(SystemCase):
         self.assertEqual(
             json.loads(self.request("/api/automation-runs")[2])["runs"][0]["status"],
             "success",
+        )
+
+    def test_agent_blueprint_prepare_approval_build_and_list_endpoints(self):
+        requirements = {
+            "name": "robotics_research",
+            "capability": "reasoning",
+            "purpose": "Research robotics systems with evidence and engineering constraints.",
+            "tools": ["calculator"],
+            "keywords": ["robotics research", "robot arm"],
+            "workflow": [
+                "Collect relevant robotics evidence.",
+                "Cross-check sources and state uncertainty.",
+            ],
+            "guardrails": ["Never fabricate sources or completed tests."],
+            "evaluations": [{
+                "name": "robot_arm_evidence",
+                "prompt": "Perform robotics research for a robot arm.",
+            }],
+        }
+        status, _, body = self.request(
+            "/api/agents/prepare", {"requirements": requirements},
+        )
+        self.assertEqual(status, 200)
+        prepared = json.loads(body)["blueprint"]
+        self.assertEqual(prepared["status"], "prepared_static_verified")
+        self.assertFalse(prepared["semantic_evaluation_executed"])
+        self.assertFalse(prepared["external_deployment_executed"])
+        self.assertNotIn(
+            "robotics_research",
+            {item["name"] for item in json.loads(
+                self.request("/api/agents")[2]
+            )["agents"]},
+        )
+
+        self.assertEqual(self.request(
+            "/api/agents/build",
+            {"requirements": requirements, "approved": False},
+        )[0], 400)
+        self.assertEqual(
+            json.loads(self.request("/api/agent-blueprints")[2])["blueprints"],
+            [],
+        )
+
+        status, _, body = self.request(
+            "/api/agents/build",
+            {"requirements": requirements, "approved": True},
+        )
+        self.assertEqual(status, 201)
+        installed = json.loads(body)["blueprint"]
+        self.assertEqual(installed["status"], "installed_static_verified")
+        blueprints = json.loads(
+            self.request("/api/agent-blueprints")[2]
+        )["blueprints"]
+        self.assertEqual(blueprints[0]["agent_name"], "robotics_research")
+        agents = json.loads(self.request("/api/agents")[2])["agents"]
+        self.assertEqual(
+            next(item for item in agents if item["name"] == "robotics_research")["source"],
+            "generated",
         )

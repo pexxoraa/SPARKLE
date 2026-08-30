@@ -4,19 +4,22 @@ Updated: 2026-08-30 UTC
 
 | Field | State |
 |---|---|
-| SPARKLE version | 0.18.0-alpha.1 |
+| SPARKLE version | 0.19.0-alpha.1 |
 | Current phase | Continuous improvement after verified Phase 36 release |
-| Current task | Inspect the remaining gaps after the verified v0.18 release |
-| Completed | v0.3-v0.18 private GitHub releases/CI; model abstraction/registry/MiniMax adapter; orchestrator/context/tracing; memory and knowledge lifecycle with backup; 16 built-in agents; persistent generated-agent installation; bounded workspaces/static verification/fixed local tests; signed external-worker client and deployable worker; reproducible approval-gated application artifacts; supervised automation service; bounded dashboard notifications; safe tools; text API/CLI/dashboard; bearer/session/CSRF/origin/rate/audit security; eight bounded proactive rule types; provider-neutral deterministic text/image/audio/document content contracts; dedicated voice/presence contracts; 16-agent matrix; documentation audit; cohesive E2E; v0.18 clean-wheel, 166-test local, exact-tree publication, and four-job CI evidence |
-| In progress | Remaining-gap inspection; external infrastructure and hardware dependencies remain blocked |
+| Current task | Verify and publish the v0.19 structured Agent Blueprint increment |
+| Completed | v0.3-v0.18 private GitHub releases/CI; model abstraction/registry/MiniMax adapter; orchestrator/context/tracing; memory and knowledge lifecycle with backup; 16 built-in agents; persistent generated-agent installation; bounded structured Agent Blueprint generation/static routing evaluation/approval/rollback; bounded workspaces/static verification/fixed local tests; signed external-worker client and deployable worker; reproducible approval-gated application artifacts; supervised automation service; bounded dashboard notifications; safe tools; text API/CLI/dashboard; bearer/session/CSRF/origin/rate/audit security; eight bounded proactive rule types; provider-neutral deterministic text/image/audio/document content contracts; dedicated voice/presence contracts; 16-agent matrix; documentation audit; cohesive E2E; v0.19 172-test local and clean-wheel evidence; v0.18 exact-tree publication and four-job CI evidence |
+| In progress | v0.19 exact-tree publication and CI |
 | Blocked | Real Bubblewrap isolation on this executor (namespace setup denied); named remote worker/TLS target and live hostile-code validation; live MiniMax call (no key in build process); semantic non-text provider mapping; voice hardware; browser/computer runtime adapters; public application deployment target |
-| Failed tests | None in the current 166-test local suite or CI runs #31-#39; prior corrected failures remain preserved in the release report |
-| Next action | Separate technically implementable work from requirements needing real credentials, hardware, or deployment targets |
-| Estimated directive completion | 87% |
+| Failed tests | None in the corrected 172-test local suite or CI runs #31-#40. The first v0.19 run caught a stale build-state version and the corrected failure remains preserved in the release report |
+| Next action | Publish the exact tested v0.19 tree and require all four CI jobs |
+| Estimated directive completion | 88% |
 
 The percentage measures the full long-term directive, not code volume. Agent
-specifications are operational through the common orchestrator. Generated
-agents, internal automations, bounded workspace creation/static verification,
+specifications are operational through the common orchestrator. Structured
+Agent Blueprints now provide deterministic non-mutating requirements-to-
+manifest preparation, production-router fixtures, approval-gated installation,
+separate evidence persistence, and rollback. Generated agents, internal
+automations, bounded workspace creation/static verification,
 the full external-worker protocol/service loop, deterministic artifact
 packaging, the supervised automation lifecycle, and eight structured proactive
 rule types now have runtime evidence.
@@ -25,8 +28,9 @@ tested. It proves bounded content flow, not semantic understanding by the
 currently text-only MiniMax adapter. The reference production executor and
 deployment profiles exist, but this host
 cannot validate their namespaces and no remote instance is provisioned, so
-isolation remains blocked. Autonomous code generation and external deployment
-adapters, external email/SMS/push/calendar/webhook delivery, external research
+isolation remains blocked. Natural-language agent source generation, semantic
+live-model agent evaluations, autonomous code generation, and external
+deployment adapters, external email/SMS/push/calendar/webhook delivery, external research
 polling, live browser control, real voice, physical embodiment, multi-user role authorization,
 TLS/edge rate limiting, and deployment are not
 complete.

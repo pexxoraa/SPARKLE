@@ -10,6 +10,7 @@
 | User profile/goals | Memory SQLite | Personal context | User | Until archived/deleted | Context and personal agents |
 | Documents/papers | Knowledge SQLite | Retrieval | User | Until source deletion | Knowledge/context system |
 | Generated agents | `data_environment/generated_agents.sqlite3` | Persistent runtime agent definitions | User | Until replaced/deleted | Agent registry/router |
+| Agent blueprints | `data_environment/agent_blueprints.sqlite3` | Structured requirements outcome and deterministic static-evaluation evidence | User/system owner | Build history; deletion policy not yet configured | Agent Builder/API/CLI/system status |
 | Automations, claims, runs, and service state | `data_environment/automations.sqlite3` | Schedules, expiring claims, recovery/fencing, execution and lifecycle evidence | User/system owner | Until deleted | Automation engine/service/dashboard |
 | Dashboard notifications | `data_environment/notifications.sqlite3` | Bounded local delivery, deduplication, and read state | User/system owner | Latest 1,000 records | Notification API/dashboard/automation runner |
 | Automation service lock | `data_environment/automation-service.lock` | Prevent concurrent local service instances | System owner | Persistent mode-0600 inode | Automation service |
