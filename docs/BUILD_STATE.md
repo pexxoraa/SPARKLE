@@ -6,12 +6,12 @@ Updated: 2026-08-30 UTC
 |---|---|
 | SPARKLE version | 0.17.0-alpha.1 |
 | Current phase | Continuous improvement after verified Phase 36 release |
-| Current task | Verify and release bounded explicit research-source revision detection |
-| Completed | v0.3-v0.16 private GitHub releases/CI; model abstraction/registry/MiniMax adapter; orchestrator/context/tracing; memory and knowledge lifecycle with backup; 16 built-in agents; persistent generated-agent installation; bounded workspaces/static verification/fixed local tests; signed external-worker client and deployable worker; reproducible approval-gated application artifacts; supervised automation service; safe tools; text API/CLI/dashboard; bearer/session/CSRF/origin/rate/audit security; eight bounded proactive rule types including schedule conflicts and explicit knowledge revisions; provider-neutral deterministic text/image/audio/document content contracts; dedicated voice/presence contracts; 16-agent domain matrix; executable documentation audit; cohesive HTTP/context/multimodal/trace E2E; v0.16 release/CI plus clean-wheel and 160-test local v0.17 evidence |
-| In progress | v0.17 exact-tree publication and CI verification; external/hardware dependencies remain blocked |
+| Current task | Inspect the next unblocked acceptance gap after the verified v0.17 release |
+| Completed | v0.3-v0.17 private GitHub releases/CI; model abstraction/registry/MiniMax adapter; orchestrator/context/tracing; memory and knowledge lifecycle with backup; 16 built-in agents; persistent generated-agent installation; bounded workspaces/static verification/fixed local tests; signed external-worker client and deployable worker; reproducible approval-gated application artifacts; supervised automation service; safe tools; text API/CLI/dashboard; bearer/session/CSRF/origin/rate/audit security; eight bounded proactive rule types including schedule conflicts and explicit knowledge revisions; provider-neutral deterministic text/image/audio/document content contracts; dedicated voice/presence contracts; 16-agent domain matrix; executable documentation audit; cohesive HTTP/context/multimodal/trace E2E; v0.17 clean-wheel, 160-test local, exact-tree publication, and four-job CI evidence |
+| In progress | Next independent capability-gap inspection; external/hardware dependencies remain blocked |
 | Blocked | Real Bubblewrap isolation on this executor (namespace setup denied); named remote worker/TLS target and live hostile-code validation; live MiniMax call (no key in build process); semantic non-text provider mapping; voice hardware; browser/computer runtime adapters; public application deployment target |
-| Failed tests | None in the current 160-test local suite. One over-broad privacy fixture assertion and one pre-execution wheel-policy block were corrected and preserved in the release report |
-| Next action | Publish the exact tested tree and verify all four CI jobs |
+| Failed tests | None in the current 160-test local suite or CI runs #31-#37. Corrected fixtures and the pre-execution wheel-policy block remain preserved in the release report |
+| Next action | Select the first unblocked acceptance gap without weakening existing boundaries |
 | Estimated directive completion | 86% |
 
 The percentage measures the full long-term directive, not code volume. Agent

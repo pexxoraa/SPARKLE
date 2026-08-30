@@ -179,4 +179,6 @@ JavaScript syntax and Git whitespace checks passed. A zero-dependency
 non-editable `0.17.0a1` wheel installed without an index and passed installed
 status, research-change/non-disclosure, multimodal round trip, automation
 check/once/status, worker-entrypoint, and mode-0600 configuration checks.
-Publication and remote CI evidence are pending.
+GitHub CI run #37 (`33300452288`) passed the exact v0.17 capability tree on
+Python 3.12 and 3.13, the separately deployable worker image
+build/entrypoint, and the installed automation-service lifecycle.
