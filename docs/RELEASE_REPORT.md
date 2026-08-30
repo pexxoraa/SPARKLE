@@ -39,6 +39,18 @@ Date: 2026-08-30 UTC
 - Requirements are structured JSON. Natural-language source generation and
   external agent deployment are not implemented by this increment.
 
+## GitHub publication and CI
+
+Result: PASS — private repository `pexxoraa/SPARKLE` received capability
+commit `f6e0466a449ff19aa49357b2875a95255267de2e` on `main` by a non-force
+fast-forward. Its tree `d2c8d4621946db9fcbb67b6777c04d63e055d289`
+exactly matches local tested commit
+`646359e58e3530295a06a3ca74c055aa15fb89cb`.
+
+SPARKLE CI run #41 (`33313769623`) completed successfully. All required jobs
+passed: `test (3.12)`, `test (3.13)`, `worker-image`, and
+`automation-service`.
+
 ---
 
 # 0.18.0-alpha.1 verification report

@@ -219,3 +219,6 @@ blueprint prepare/build/reload/routing, remove/rebuild history, multimodal
 round-trip, automation check/once/status, worker-entrypoint, and mode-0600
 configuration checks. Its SHA-256 was
 `3f29323e7c0fd2ec67b06ba3fe9451ad5b5aa43122a0aaa0229dae913cfd0919`.
+GitHub CI run #41 (`33313769623`) passed the exact v0.19 capability tree on
+Python 3.12 and 3.13, the separately deployable worker image
+build/entrypoint, and the installed automation-service lifecycle.

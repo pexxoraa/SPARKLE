@@ -6,12 +6,12 @@ Updated: 2026-08-30 UTC
 |---|---|
 | SPARKLE version | 0.19.0-alpha.1 |
 | Current phase | Continuous improvement after verified Phase 36 release |
-| Current task | Verify and publish the v0.19 structured Agent Blueprint increment |
-| Completed | v0.3-v0.18 private GitHub releases/CI; model abstraction/registry/MiniMax adapter; orchestrator/context/tracing; memory and knowledge lifecycle with backup; 16 built-in agents; persistent generated-agent installation; bounded structured Agent Blueprint generation/static routing evaluation/approval/rollback; bounded workspaces/static verification/fixed local tests; signed external-worker client and deployable worker; reproducible approval-gated application artifacts; supervised automation service; bounded dashboard notifications; safe tools; text API/CLI/dashboard; bearer/session/CSRF/origin/rate/audit security; eight bounded proactive rule types; provider-neutral deterministic text/image/audio/document content contracts; dedicated voice/presence contracts; 16-agent matrix; documentation audit; cohesive E2E; v0.19 172-test local and clean-wheel evidence; v0.18 exact-tree publication and four-job CI evidence |
-| In progress | v0.19 exact-tree publication and CI |
+| Current task | Inspect the next incomplete capability after the verified v0.19 release |
+| Completed | v0.3-v0.19 private GitHub releases/CI; model abstraction/registry/MiniMax adapter; orchestrator/context/tracing; memory and knowledge lifecycle with backup; 16 built-in agents; persistent generated-agent installation; bounded structured Agent Blueprint generation/static routing evaluation/approval/rollback; bounded workspaces/static verification/fixed local tests; signed external-worker client and deployable worker; reproducible approval-gated application artifacts; supervised automation service; bounded dashboard notifications; safe tools; text API/CLI/dashboard; bearer/session/CSRF/origin/rate/audit security; eight bounded proactive rule types; provider-neutral deterministic text/image/audio/document content contracts; dedicated voice/presence contracts; 16-agent matrix; documentation audit; cohesive E2E; v0.19 172-test local, clean-wheel, exact-tree publication, and four-job CI evidence |
+| In progress | Remaining-gap inspection; external infrastructure and hardware dependencies remain blocked |
 | Blocked | Real Bubblewrap isolation on this executor (namespace setup denied); named remote worker/TLS target and live hostile-code validation; live MiniMax call (no key in build process); semantic non-text provider mapping; voice hardware; browser/computer runtime adapters; public application deployment target |
-| Failed tests | None in the corrected 172-test local suite or CI runs #31-#40. The first v0.19 run caught a stale build-state version and the corrected failure remains preserved in the release report |
-| Next action | Publish the exact tested v0.19 tree and require all four CI jobs |
+| Failed tests | None in the corrected 172-test local suite or CI runs #31-#41. The first v0.19 run caught a stale build-state version and the corrected failure remains preserved in the release report |
+| Next action | Select and implement the next technically unblocked acceptance gap while preserving external blockers |
 | Estimated directive completion | 88% |
 
 The percentage measures the full long-term directive, not code volume. Agent
