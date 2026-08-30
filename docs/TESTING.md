@@ -166,4 +166,6 @@ zero-dependency non-editable `0.16.0a1` wheel installed in a fresh virtual
 environment and passed installed status, structured schedule-conflict
 evaluation/non-disclosure, multimodal round trip, automation
 check/once/status, worker-entrypoint, and mode-0600 configuration checks.
-Remote CI evidence is pending.
+GitHub CI run #35 (`33299313086`) passed the exact v0.16 capability tree on
+Python 3.12 and 3.13, the separately deployable worker image
+build/entrypoint, and the installed automation-service lifecycle.

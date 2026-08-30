@@ -20,7 +20,17 @@ Date: 2026-08-30 UTC
   evaluation/non-disclosure, multimodal round trip, automation
   check/once/status, worker-entrypoint, and mode-0600 configuration checks.
 
-Publication and CI evidence are pending.
+## GitHub publication and CI
+
+Result: PASS — private repository `pexxoraa/SPARKLE` received capability
+commit `d570107a57f879d72f035adab41c42b86a142948` on `main` by a non-force
+fast-forward. Its tree `ef33e08fb040e5480bf56372dfe68d05d01c014f`
+exactly matches local tested commit
+`bf7e54b76c2f5be6747860f4618e18785a5f3ad7`.
+
+SPARKLE CI run #35 (`33299313086`) completed successfully. All required jobs
+passed: `test (3.12)`, `test (3.13)`, `worker-image`, and
+`automation-service`.
 
 ## Honest limits
 
