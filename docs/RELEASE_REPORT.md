@@ -48,7 +48,19 @@ Date: 2026-08-30 UTC
   deploy a target. All four claims remain explicit in its output.
 - Requirements are structured JSON. Natural-language requirements conversion,
   semantic runtime evaluation, and external deployment remain incomplete.
-- Exact-tree GitHub publication and the four-job v0.21 CI gate are pending.
+- No live provider, external deployment, or semantic evaluation ran.
+
+## GitHub publication and CI
+
+Result: PASS — private repository `pexxoraa/SPARKLE` received capability
+commit `0256c16bd247f84448baf1ed9ae9f6ecc8f3e0fb` on `main` by a non-force
+fast-forward from the verified v0.20 checkpoint. Its tree
+`02acd582684da3dd335bc7fe503bc538c4bfbf75` exactly matches local tested commit
+`7a66793f23a4ee1eb26a520d3aac64343b846018`.
+
+SPARKLE CI run #45 (`33329833127`) completed successfully. All required jobs
+passed: `test (3.12)`, `test (3.13)`, `worker-image`, and
+`automation-service`.
 
 ---
 

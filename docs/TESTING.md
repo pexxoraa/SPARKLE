@@ -274,3 +274,8 @@ seconds. Two recovery wheel smokes stopped on invalid test-fixture calls after
 the wheel itself built and installed; the corrected fresh no-index gate passed
 with wheel SHA-256
 `d529a955fdd2f3186aca64d563f5fdeda03443a746be4b3dc760d025c5b74cf7`.
+The exact candidate tree then passed all 186 tests in 25.361 seconds.
+Capability commit `0256c16bd247f84448baf1ed9ae9f6ecc8f3e0fb` has that exact tree,
+`02acd582684da3dd335bc7fe503bc538c4bfbf75`. GitHub CI run #45
+(`33329833127`) passed Python 3.12, Python 3.13, worker-image, and
+automation-service jobs.
