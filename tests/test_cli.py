@@ -18,6 +18,68 @@ from sparkle.system import SparkleSystem
 
 
 class CLITests(unittest.TestCase):
+    def test_structured_project_create_update_list_and_archive(self):
+        with tempfile.TemporaryDirectory() as directory:
+            manifest = Path(directory) / "project.json"
+            manifest.write_text(json.dumps({
+                "name": "sparkle_core",
+                "title": "SPARKLE core platform",
+                "description": "Build and verify the provider-neutral personal AI platform.",
+                "status": "implementation",
+                "priority": "critical",
+                "deadline": "2026-09-30T12:30:00Z",
+                "dependencies": [],
+                "risks": ["External provider verification is unavailable."],
+                "milestones": [{
+                    "name": "Structured project tracking",
+                    "status": "in_progress",
+                    "due_at": "2026-09-05T12:00:00Z",
+                }],
+                "blockers": [],
+                "next_action": "Complete structured project-state integration.",
+                "progress": 90,
+            }), encoding="utf-8")
+            changes = Path(directory) / "changes.json"
+            changes.write_text(json.dumps({
+                "progress": 95,
+                "next_action": "Run the complete project regression suite.",
+            }), encoding="utf-8")
+            output = io.StringIO()
+            error = io.StringIO()
+            with (
+                patch.dict(
+                    os.environ, {"SPARKLE_DATA_DIR": directory}, clear=False,
+                ),
+                contextlib.redirect_stdout(output),
+                contextlib.redirect_stderr(error),
+            ):
+                self.assertEqual(main([
+                    "project-create", str(manifest),
+                ]), 0)
+                self.assertEqual(main([
+                    "project-update", "sparkle_core", str(changes),
+                    "--expected-version", "1",
+                ]), 0)
+                self.assertEqual(main([
+                    "projects", "--query", "SPARKLE",
+                ]), 0)
+                self.assertEqual(entrypoint([
+                    "project-archive", "sparkle_core",
+                    "--expected-version", "2",
+                ]), 1)
+                self.assertEqual(main([
+                    "project-archive", "sparkle_core",
+                    "--expected-version", "2", "--approve",
+                ]), 0)
+                self.assertEqual(main([
+                    "projects", "--include-archived",
+                ]), 0)
+            self.assertIn("SPARKLE-PROJECT/1", output.getvalue())
+            self.assertIn('"version": 2', output.getvalue())
+            self.assertIn('"archived": true', output.getvalue())
+            self.assertIn("explicit approval", error.getvalue())
+            self.assertNotIn("Traceback", error.getvalue())
+
     def test_ai_system_prepare_and_approved_materialization(self):
         with tempfile.TemporaryDirectory() as directory:
             requirements = Path(directory) / "robotics-ai.json"

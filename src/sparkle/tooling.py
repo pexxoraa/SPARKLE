@@ -14,6 +14,7 @@ from sparkle.builders import WorkspaceManager
 from sparkle.contracts import ToolDefinition
 from sparkle.development import DevelopmentVerifier, WorkspaceTestRunner
 from sparkle.external_worker import ExternalWorkerClient
+from sparkle.projects import ProjectStore
 from sparkle.storage import KnowledgeStore, MemoryStore
 
 
@@ -126,6 +127,40 @@ class MemorySearchTool(Tool):
             str(arguments.get("query", "")), limit=int(arguments.get("limit", 5)),
             category=str(arguments["category"]) if arguments.get("category") else None,
         )
+
+
+class ProjectSearchTool(Tool):
+    name = "project_search"
+    description = (
+        "Read bounded structured project status, priority, deadlines, "
+        "milestones, blockers, and next actions."
+    )
+    parameters = {
+        "type": "object",
+        "properties": {
+            "query": {"type": "string", "maxLength": 200},
+            "limit": {"type": "integer", "minimum": 1, "maximum": 20},
+        },
+        "required": ["query"],
+        "additionalProperties": False,
+    }
+
+    def __init__(self, store: ProjectStore):
+        self.store = store
+
+    def run(self, arguments: dict[str, Any]) -> Any:
+        if not isinstance(arguments, dict) or set(arguments) - {"query", "limit"}:
+            raise ToolError("Project search fields are unsupported")
+        query = arguments.get("query")
+        limit = arguments.get("limit", 10)
+        if not isinstance(query, str):
+            raise ToolError("Project search query must be a string")
+        if type(limit) is not int or not 1 <= limit <= 20:
+            raise ToolError("Project search limit must be an integer from 1 to 20")
+        try:
+            return self.store.search(query, limit=limit)
+        except ValueError as exc:
+            raise ToolError(str(exc)) from exc
 
 
 class MemoryWriteTool(Tool):

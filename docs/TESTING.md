@@ -120,6 +120,15 @@ safe failure types, reload, latest-1,000 retention, and equivalent API/CLI
 flows. It does not call a model, execute runtime evaluations, generate an
 implementation, or claim deployment.
 
+Structured-project coverage validates exact lifecycle manifests, normalized
+timezone-aware deadlines, dependencies, risks, milestones, blockers, progress,
+complete/blocked truth constraints, optimistic update conflicts, priority and
+deadline ordering, literal search escaping, archive immutability, active and
+event bounds, reload, content-free change evidence, least-privilege read-tool
+access, direct content-free proactive alerts, API/CLI lifecycle, status, and a
+read-only dashboard panel. No test claims semantic project decisions or an
+external project/calendar connection.
+
 ## Phase 33 evidence matrix
 
 | Required category | Executed evidence | Remaining external gap |
@@ -127,7 +136,7 @@ implementation, or claim deployment.
 | Unit | Content, security, stores, routing, tools, services, and validators | None for implemented local units |
 | Integration | API, orchestrator/context/model, multimodal, automation, artifact, and worker boundaries | Live provider and deployed external targets |
 | System | Composed system, HTTP server, persisted stores, status, dashboard, and service lifecycle | Production identity/TLS/deployment environment |
-| Agent | All 16 built-ins plus structured blueprints, static routing fixtures, isolated response contracts, approval, persistence, rollback, routing, tools, deterministic execution, and traces | Natural-language source generation, semantic/live-provider quality evaluation, external deployment |
+| Agent | All 16 built-ins plus structured agent/AI-system blueprints, static routing fixtures, isolated response contracts, structured Project Agent evidence/read access, approval, persistence, rollback, routing, tools, deterministic execution, and traces | Natural-language source generation, semantic/live-provider quality evaluation, external deployment |
 | Model | MiniMax mapping/retry/stream/tool state, registry switching, capability/modality routing, deterministic adapter | Live MiniMax credentialed smoke call |
 | Memory | CRUD, search, archive/restore, structured proactive evidence, and backup | Production retention/encrypted backup policy |
 | Tool | Allowlists, schemas, bounds, approval, confinement, execution, and failure paths | Disabled web/browser/computer adapters |
@@ -279,3 +288,16 @@ Capability commit `0256c16bd247f84448baf1ed9ae9f6ecc8f3e0fb` has that exact tree
 `02acd582684da3dd335bc7fe503bc538c4bfbf75`. GitHub CI run #45
 (`33329833127`) passed Python 3.12, Python 3.13, worker-image, and
 automation-service jobs.
+
+The v0.22 structured-project increment added eight store/API/CLI cases and
+expanded dashboard, documentation-version, agent-tool, and proactive
+regressions. The first focused run exposed three invalid SQLite escape errors;
+the corrected escape then exposed one incorrect literal-underscore fixture
+expectation. Both failures are preserved in `RELEASE_REPORT.md`. The corrected
+22-test adjacent suite passed in 1.490 seconds, and the complete suite passed
+all 194 tests in 26.371 seconds. A zero-dependency non-editable `0.22.0a1`
+wheel installed without an index and passed project
+create/update/reload/search/proactive/archive, AI-system preparation,
+multimodal round-trip, automation check/once/status, worker-entrypoint, and
+mode-0600 configuration checks. Its SHA-256 was
+`ce44e407b9e281dec6e61c4c3c85e22968475949a3f7c1ea6aa251e89b793d14`.

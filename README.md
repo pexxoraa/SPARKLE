@@ -7,7 +7,7 @@ registry, provider adapters, specialist agents, persistent memory, a separate
 knowledge index, execution traces, automations, proactive rules, a CLI, an HTTP
 API, and a local dashboard.
 
-Current release: `0.21.0-alpha.1`. This is a tested foundation release, not the
+Current release: `0.22.0-alpha.1`. This is a tested foundation release, not the
 final system described in the long-term Definition of Done. See
 [`docs/BUILD_STATE.md`](docs/BUILD_STATE.md) and
 [`docs/ACCEPTANCE.md`](docs/ACCEPTANCE.md) for exact evidence and gaps.
@@ -36,6 +36,10 @@ final system described in the long-term Definition of Done. See
   registry-backed model capability/modality routing, agent/tool access checks,
   deterministic manifests, explicit approval, bounded workspace
   materialization, and safe persisted attempt evidence.
+- Provider-neutral `SPARKLE-PROJECT/1` project state with strict lifecycle,
+  priority/deadline/dependency/risk/milestone/blocker/next-action validation,
+  optimistic updates, approval-gated archive, content-free change evidence,
+  proactive alerts, least-privilege agent reads, API/CLI, and dashboard access.
 - SQLite memory, knowledge, trace, and automation stores in separate paths.
 - Executable once/daily/weekly/conditional automations with retry, rescheduling,
   run history, and automation-origin traces.
@@ -122,3 +126,5 @@ Worker deployment and security evidence are documented in
 [`docs/WORKER.md`](docs/WORKER.md).
 Dashboard notification contracts are documented in
 [`docs/NOTIFICATIONS.md`](docs/NOTIFICATIONS.md).
+Structured project contracts are documented in
+[`docs/PROJECTS.md`](docs/PROJECTS.md).

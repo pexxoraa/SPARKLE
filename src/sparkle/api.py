@@ -29,7 +29,7 @@ MAX_MULTIMODAL_BODY_BYTES = 12_000_000
 class SparkleHandler(BaseHTTPRequestHandler):
     system: SparkleSystem
     dashboard_root = Path(__file__).with_name("dashboard")
-    server_version = "SPARKLE/0.21"
+    server_version = "SPARKLE/0.22"
 
     def log_message(self, format: str, *args: object) -> None:
         # Avoid request bodies, headers, query values, and secrets in logs.
@@ -342,6 +342,42 @@ class SparkleHandler(BaseHTTPRequestHandler):
                 "protocol_version": self.system.proactive.PROTOCOL,
                 "alerts": self.system.proactive.inspect(),
             })
+        if parsed.path == "/api/projects":
+            project_query = query.get("q", [""])[0]
+            limit = int(query.get("limit", [50])[0])
+            include_archived = query.get("include_archived", [""])[0].lower() in {
+                "1", "true", "yes",
+            }
+            projects = (
+                self.system.projects.search(project_query, limit=limit)
+                if project_query else
+                self.system.projects.list(
+                    limit=limit, include_archived=include_archived,
+                )
+            )
+            return self._json({
+                "protocol_version": self.system.projects.PROTOCOL,
+                "projects": projects,
+            })
+        if parsed.path == "/api/project-events":
+            name = query.get("name", [""])[0]
+            if not name:
+                return self._json({
+                    "ok": False, "error": "Project event query requires name",
+                }, 400)
+            try:
+                events = self.system.projects.events(
+                    name, limit=int(query.get("limit", [50])[0]),
+                )
+            except (ValueError, KeyError) as exc:
+                return self._json({
+                    "ok": False, "error": str(exc),
+                    "error_type": type(exc).__name__,
+                }, 400)
+            return self._json({
+                "protocol_version": self.system.projects.PROTOCOL,
+                "events": events,
+            })
         if parsed.path == "/api/builds":
             return self._json({
                 "builds": self.system.workspaces.list(
@@ -539,6 +575,30 @@ class SparkleHandler(BaseHTTPRequestHandler):
                     "ok": True,
                     "deleted": self.system.knowledge.delete_source(int(data["source_id"])),
                 })
+            if self.path == "/api/projects":
+                project = self.system.projects.create(data)
+                return self._json({"ok": True, "project": project}, 201)
+            if self.path == "/api/projects/update":
+                if set(data) != {"name", "changes", "expected_version"}:
+                    raise ValueError(
+                        "Project update requires name, changes, and expected_version"
+                    )
+                project = self.system.projects.update(
+                    data["name"], data["changes"],
+                    expected_version=data["expected_version"],
+                )
+                return self._json({"ok": True, "project": project})
+            if self.path == "/api/projects/archive":
+                if set(data) != {"name", "expected_version", "approved"}:
+                    raise ValueError(
+                        "Project archive requires name, expected_version, and approved"
+                    )
+                if data["approved"] is not True:
+                    raise ValueError("Project archival requires explicit approval")
+                project = self.system.projects.archive(
+                    data["name"], expected_version=data["expected_version"],
+                )
+                return self._json({"ok": True, "project": project})
             if self.path == "/api/notifications":
                 notification = self.system.notifications.deliver(
                     channel=str(data.get("channel", "dashboard")),

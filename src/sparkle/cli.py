@@ -78,6 +78,27 @@ def build_parser() -> argparse.ArgumentParser:
     )
     ai_system_build.add_argument("requirements")
     ai_system_build.add_argument("--approve", action="store_true")
+    project_create = sub.add_parser(
+        "project-create", help="Create a validated structured project record",
+    )
+    project_create.add_argument("manifest")
+    project_update = sub.add_parser(
+        "project-update", help="Update a project with optimistic version control",
+    )
+    project_update.add_argument("name")
+    project_update.add_argument("changes")
+    project_update.add_argument("--expected-version", type=int, required=True)
+    projects = sub.add_parser(
+        "projects", help="List or search structured project records",
+    )
+    projects.add_argument("--query", default="")
+    projects.add_argument("--include-archived", action="store_true")
+    project_archive = sub.add_parser(
+        "project-archive", help="Archive a project record",
+    )
+    project_archive.add_argument("name")
+    project_archive.add_argument("--expected-version", type=int, required=True)
+    project_archive.add_argument("--approve", action="store_true")
     automation_run = sub.add_parser("automations-run", help="Execute due automations")
     automation_run.add_argument("--watch", action="store_true")
     automation_run.add_argument("--interval", type=float, default=60.0)
@@ -236,6 +257,39 @@ def main(argv: list[str] | None = None) -> int:
                 requirements, approved=bool(args.approve),
             ),
         })
+        return 0
+    if args.command == "project-create":
+        project = system.projects.create(_load_manifest(args.manifest))
+        _print({"ok": True, "project": project})
+        return 0
+    if args.command == "project-update":
+        project = system.projects.update(
+            args.name, _load_manifest(args.changes),
+            expected_version=args.expected_version,
+        )
+        _print({"ok": True, "project": project})
+        return 0
+    if args.command == "projects":
+        records = (
+            system.projects.search(args.query, limit=100)
+            if args.query else
+            system.projects.list(
+                limit=100, include_archived=bool(args.include_archived),
+            )
+        )
+        _print({
+            "ok": True,
+            "protocol_version": system.projects.PROTOCOL,
+            "projects": records,
+        })
+        return 0
+    if args.command == "project-archive":
+        if not args.approve:
+            raise ValueError("Project archival requires explicit approval")
+        project = system.projects.archive(
+            args.name, expected_version=args.expected_version,
+        )
+        _print({"ok": True, "project": project})
         return 0
     if args.command == "automations-run":
         if not args.watch:

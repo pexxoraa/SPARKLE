@@ -19,6 +19,7 @@ from sparkle.knowledge import KnowledgeIngestor
 from sparkle.notifications import NotificationStore
 from sparkle.orchestrator import Orchestrator
 from sparkle.presence import PresenceEngine
+from sparkle.projects import ProjectStore
 from sparkle.registry import ModelRegistry, ModelRouter
 from sparkle.secrets import SecretResolver
 from sparkle.security import (
@@ -35,6 +36,7 @@ from sparkle.tooling import (
     KnowledgeSearchTool,
     MemorySearchTool,
     MemoryWriteTool,
+    ProjectSearchTool,
     ToolRegistry,
     WorkspaceScaffoldTool,
     WorkspacePackageTool,
@@ -76,7 +78,10 @@ class SparkleSystem:
         self.traces = TraceStore()
         self.automations = AutomationStore()
         self.notifications = NotificationStore()
-        self.proactive = ProactiveEngine(self.memory, self.knowledge)
+        self.projects = ProjectStore()
+        self.proactive = ProactiveEngine(
+            self.memory, self.knowledge, self.projects,
+        )
         self.presence = PresenceEngine()
         self.voice = VoiceService()
         self.models = model_registry or ModelRegistry()
@@ -112,6 +117,7 @@ class SparkleSystem:
         self.tools.register(MemorySearchTool(self.memory))
         self.tools.register(MemoryWriteTool(self.memory))
         self.tools.register(KnowledgeSearchTool(self.knowledge))
+        self.tools.register(ProjectSearchTool(self.projects))
         self.tools.register(FileReadTool(project_root()))
         self.tools.register(WorkspaceScaffoldTool(self.workspaces))
         self.tools.register(WorkspaceVerifyTool(self.development))
@@ -160,7 +166,7 @@ class SparkleSystem:
         models = self.models.list()
         return {
             "name": "SPARKLE",
-            "version": "0.21.0-alpha.1",
+            "version": "0.22.0-alpha.1",
             "status": "ready" if any(model["configured"] for model in models) else "limited",
             "active_model": self.models.active_id,
             "models": models,
@@ -198,6 +204,11 @@ class SparkleSystem:
                 "protocol_version": self.notifications.PROTOCOL,
                 "channels": sorted(self.notifications.CHANNELS),
                 **self.notifications.stats(),
+            },
+            "projects": {
+                "status": "ready",
+                "protocol_version": self.projects.PROTOCOL,
+                **self.projects.stats(),
             },
             "builders": {
                 "status": "ready", "workspaces": len(self.workspaces.list(limit=100)),

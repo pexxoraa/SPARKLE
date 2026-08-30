@@ -1,3 +1,50 @@
+# 0.22.0-alpha.1 verification report
+
+Date: 2026-08-30 UTC
+
+## Executed evidence
+
+- `SPARKLE-PROJECT/1` validates the requested project lifecycle, status,
+  priority, deadline, dependencies, risks, milestones, blockers, next action,
+  progress, optimistic version, and archive boundaries in a separate data
+  environment.
+- Create/update/list/search/archive flows execute through API and CLI. Archive
+  requires explicit interface approval, stale updates fail closed, active
+  projects are bounded to 1,000, lists to 100, and agent searches to 20.
+- Personal, Project, and Productivity agents receive a read-only project tool;
+  unrelated agents do not. No model-facing tool can write project state.
+- Change evidence retains at most 10,000 records and contains only identifier,
+  action, version, changed fields, status, priority, progress, and timestamp.
+  Structured proactive alerts use status/count/progress/deadline evidence and
+  do not copy project descriptions, risks, blockers, milestones, or next
+  actions.
+- The first focused run executed eight cases and exposed three errors from an
+  invalid SQLite `LIKE` escape expression. After switching to a literal `!`
+  escape, the second run exposed one incorrect test expectation: `_` is a
+  legitimate literal character in both fixture identifiers. The expectation
+  was corrected; all eight focused cases passed. Two additional bound and
+  proactive cases were then added, and the 22-test project/automation/API/CLI
+  adjacent suite passed in 1.490 seconds.
+- The complete suite passed all 194 tests in 26.371 seconds. Dashboard
+  JavaScript syntax, Python compilation, documentation contracts, and Git
+  whitespace checks passed.
+- A zero-dependency non-editable `0.22.0a1` wheel installed without an index in
+  a fresh virtual environment. Installed project
+  create/update/reload/search/proactive/archive, AI-system preparation,
+  multimodal round-trip, automation check/once/status, worker help, and
+  mode-0600 configuration checks passed. Its SHA-256 was
+  `ce44e407b9e281dec6e61c4c3c85e22968475949a3f7c1ea6aa251e89b793d14`.
+
+## Honest limits
+
+- Structured project state and deterministic read access do not establish
+  live-provider project-decision quality.
+- Third-party project-management, calendar synchronization, and external
+  notification connectors remain absent.
+- Exact-tree publication and CI evidence are pending.
+
+---
+
 # 0.21.0-alpha.1 verification report
 
 Date: 2026-08-30 UTC

@@ -12,6 +12,7 @@ from typing import Any
 from sparkle.config import data_root
 from sparkle.notifications import NotificationStore
 from sparkle.orchestrator import Orchestrator
+from sparkle.projects import ProjectStore
 from sparkle.storage import KnowledgeStore, MemoryStore, SQLiteStore, utc_now
 from sparkle.trace import TraceStore
 
@@ -574,10 +575,14 @@ class ProactiveEngine:
     _SEVERITY_ORDER = {"urgent": 0, "high": 1, "medium": 2}
 
     def __init__(
-        self, memory: MemoryStore, knowledge: KnowledgeStore | None = None,
+        self,
+        memory: MemoryStore,
+        knowledge: KnowledgeStore | None = None,
+        projects: ProjectStore | None = None,
     ):
         self.memory = memory
         self.knowledge = knowledge
+        self.projects = projects
 
     @staticmethod
     def _time(value: Any) -> datetime | None:
@@ -883,6 +888,66 @@ class ProactiveEngine:
                 break
         return alerts
 
+    def _structured_project_alerts(
+        self, current: datetime,
+    ) -> list[dict[str, Any]]:
+        if self.projects is None:
+            return []
+        alerts: list[dict[str, Any]] = []
+        for project in self.projects.list(limit=100):
+            if project["status"] == "complete":
+                continue
+            evidence: dict[str, Any] = {
+                "status": project["status"],
+                "priority": project["priority"],
+                "progress_percent": project["progress"],
+                "blocker_count": len(project["blockers"]),
+                "open_milestone_count": sum(
+                    item["status"] != "complete"
+                    for item in project["milestones"]
+                ),
+            }
+            alerts.append({
+                "protocol_version": self.PROTOCOL,
+                "type": "project_incomplete",
+                "severity": (
+                    "high"
+                    if project["status"] == "blocked"
+                    or project["priority"] == "critical"
+                    else "medium"
+                ),
+                "category": "projects",
+                "key": project["name"],
+                "source_kind": "project",
+                "source_id": project["name"],
+                "source_project_name": project["name"],
+                "evidence": evidence,
+            })
+            due = self._time(project["deadline"])
+            if due is None:
+                continue
+            hours = (due.astimezone(UTC) - current).total_seconds() / 3_600
+            if hours > 72:
+                continue
+            alerts.append({
+                "protocol_version": self.PROTOCOL,
+                "type": "overdue" if hours < 0 else "deadline_approaching",
+                "severity": (
+                    "urgent" if hours <= -24 else "high"
+                ),
+                "category": "projects",
+                "key": project["name"],
+                "source_kind": "project",
+                "source_id": project["name"],
+                "source_project_name": project["name"],
+                "evidence": {
+                    "due_at": due.astimezone(UTC).isoformat(),
+                    "hours_remaining": round(hours, 1),
+                },
+                "hours": round(hours, 1),
+            })
+        return alerts
+
     def inspect(self, now: datetime | None = None) -> list[dict[str, Any]]:
         current = now or datetime.now(UTC)
         if current.tzinfo is None:
@@ -917,12 +982,17 @@ class ProactiveEngine:
                         alerts.append(alert)
         alerts.extend(self._schedule_alerts(schedule_items, current))
         alerts.extend(self._research_alerts(current))
+        alerts.extend(self._structured_project_alerts(current))
         alerts.sort(key=lambda alert: (
             self._SEVERITY_ORDER[alert["severity"]],
             alert["type"],
             alert["category"],
             alert["key"],
-            alert["source_id"],
+            (
+                0, alert["source_id"]
+            ) if isinstance(alert["source_id"], int) else (
+                1, str(alert["source_id"])
+            ),
         ))
         return alerts[: self.MAX_ALERTS]
 

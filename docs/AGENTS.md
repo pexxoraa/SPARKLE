@@ -16,7 +16,7 @@ context, trace, and model systems.
 | Application Builder | Complete application lifecycle |
 | AI Builder | Complete model/data/evaluation AI systems |
 | Agent Builder | Purpose/tools/memory/workflow/guardrail agent design |
-| Project | Status, deadlines, risks, blockers, milestones |
+| Project | Status, deadlines, risks, blockers, milestones; read-only access to validated `SPARKLE-PROJECT/1` records |
 | Data Analysis | Cleaning, statistics, visualization, forecasting |
 | Content | Research, ideas, scripts, visuals, publishing |
 | Productivity | Realistic schedules and deep work |

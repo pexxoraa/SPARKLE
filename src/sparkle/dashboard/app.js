@@ -81,6 +81,8 @@ async function refresh() {
       metric('Memory', `${state.memory.records} records`),
       metric('Knowledge', `${state.knowledge.sources} sources`),
       metric('Generated agents', state.generated_agents.count),
+      metric('Active projects', state.projects.active),
+      metric('Blocked projects', state.projects.blocked),
       metric('Automation runs', state.automation.recent_runs),
       metric('Automation service', state.automation.service.state),
       metric('Application builds', state.builders.workspaces),
@@ -129,6 +131,14 @@ async function loadPanel(panel) {
         `<div class="list-item"><strong>${escapeHtml(run.name)} · ${escapeHtml(run.status)}</strong><small>${escapeHtml(run.trace_id || 'no agent trace')} · ${escapeHtml(run.attempts)} attempt(s)</small></div>`
       )).join('')
       : empty('No automations executed yet.');
+  }
+  if (panel === 'projects') {
+    const data = await api('/api/projects?limit=50');
+    qs('#projectList').innerHTML = data.projects.length
+      ? data.projects.map((project) => (
+        `<div class="list-item"><strong>${escapeHtml(project.title)} · ${escapeHtml(project.status)} · ${escapeHtml(project.priority)}</strong><small>${escapeHtml(project.progress)}% · ${escapeHtml(project.deadline || 'no deadline')} · ${escapeHtml(project.blockers.length)} blocker(s) · next: ${escapeHtml(project.next_action)}</small></div>`
+      )).join('')
+      : empty('No active structured projects.');
   }
   if (panel === 'builds') {
     const data = await api('/api/builds?limit=50');

@@ -33,6 +33,11 @@ See `MULTIMODAL.md` for the exact contract and evidence boundary.
 tool registry, orchestrator, voice service, presence engine, proactive engine,
 automation store, notification store, static verifier, and opt-in fixed
 workspace test runner.
+Structured projects are owned by an independent store. Only a read-only search
+tool is exposed to Personal, Project, and Productivity agents; create, update,
+and archive remain explicit interface actions. The proactive engine consumes
+validated project fields and emits content-free evidence rather than parsing
+memory prose.
 The agent-blueprint builder is a separate provider-neutral composition over the
 agent registry. It deterministically converts exact structured requirements to
 an `AgentSpec`, executes production routing fixtures without registry mutation,
@@ -85,6 +90,7 @@ and orchestration do not depend on cookie or browser implementation details.
 - `var/data_environment/agent_blueprints.sqlite3`
 - `var/data_environment/agent_evaluations.sqlite3`
 - `var/data_environment/ai_system_blueprints.sqlite3`
+- `var/data_environment/projects.sqlite3`
 - `var/data_environment/automation-service.lock`
 - `var/data_environment/builds.sqlite3`
 - `var/data_environment/verifications.sqlite3`

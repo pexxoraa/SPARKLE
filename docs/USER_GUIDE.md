@@ -144,6 +144,30 @@ Use `--replace` to update a generated agent. Remove it with
 `sparkle agent-remove robotics_research --approve`. Built-in agents cannot be
 replaced or removed.
 
+## Track structured projects
+
+Create a project manifest using the exact contract in
+[`PROJECTS.md`](PROJECTS.md):
+
+```bash
+sparkle project-create project.json
+sparkle projects
+sparkle project-update sparkle_core changes.json --expected-version 1
+```
+
+Updates require the current version so concurrent or stale changes fail rather
+than overwrite. Archive is explicit and approval-gated:
+
+```bash
+sparkle project-archive sparkle_core --expected-version 2 --approve
+sparkle projects --include-archived
+```
+
+The dashboard shows active projects. Personal, Project, and Productivity
+agents can read them through `project_search`; model-facing writes are not
+available. The authenticated API provides equivalent create/update/archive,
+list/search, and content-free change-evidence routes.
+
 ## Prepare an AI system scaffold
 
 Create a structured requirements file using the schema in

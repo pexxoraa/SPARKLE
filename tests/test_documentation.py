@@ -28,6 +28,7 @@ REQUIRED_DOCUMENTS = {
     "docs/TROUBLESHOOTING.md",
     "docs/DEVELOPMENT.md",
     "docs/USER_GUIDE.md",
+    "docs/PROJECTS.md",
 }
 MARKDOWN_LINK = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
 
@@ -63,6 +64,12 @@ class DocumentationContractTests(unittest.TestCase):
         self.assertIsNotNone(match)
         package_version = str(match.group(1))
         display_version = re.sub(r"a(\d+)$", r"-alpha.\1", package_version)
+        self.assertIn(
+            f'__version__ = "{display_version}"',
+            (ROOT / "src" / "sparkle" / "__init__.py").read_text(
+                encoding="utf-8",
+            ),
+        )
         self.assertIn(
             f"Current release: `{display_version}`",
             (ROOT / "README.md").read_text(encoding="utf-8"),

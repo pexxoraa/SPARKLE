@@ -392,7 +392,9 @@ class APITests(SystemCase):
         self.assertIn(b"/api/artifacts?limit=50", script)
         self.assertIn(b"/api/proactive", script)
         self.assertIn(b"/api/notifications", script)
+        self.assertIn(b"/api/projects?limit=50", script)
         self.assertIn(b'notificationList', body)
+        self.assertIn(b'projectList', body)
         self.assertIn(b"Artifacts & deployment", body)
         self.assertIn(b"Evidence-backed proactive alerts", body)
 
@@ -785,3 +787,66 @@ class APITests(SystemCase):
         records = json.loads(evidence_body)["blueprints"]
         self.assertEqual(records[0]["system_name"], "robotics_ai")
         self.assertEqual(records[0]["status"], "materialized_static_verified")
+
+    def test_structured_project_lifecycle_and_evidence_endpoints(self):
+        project = {
+            "name": "sparkle_core",
+            "title": "SPARKLE core platform",
+            "description": "Build and verify the provider-neutral personal AI platform.",
+            "status": "implementation",
+            "priority": "critical",
+            "deadline": "2026-09-30T12:30:00Z",
+            "dependencies": [],
+            "risks": ["External provider verification is unavailable."],
+            "milestones": [{
+                "name": "Structured project tracking",
+                "status": "in_progress",
+                "due_at": "2026-09-05T12:00:00Z",
+            }],
+            "blockers": [],
+            "next_action": "Complete the structured project-state integration.",
+            "progress": 90,
+        }
+        status, _, body = self.request("/api/projects", project)
+        self.assertEqual(status, 201)
+        created = json.loads(body)["project"]
+        self.assertEqual(created["version"], 1)
+        self.assertEqual(
+            json.loads(self.request("/api/projects?limit=50")[2])["projects"][0]["name"],
+            "sparkle_core",
+        )
+        stale = {
+            "name": "sparkle_core",
+            "changes": {"progress": 91},
+            "expected_version": 5,
+        }
+        self.assertEqual(self.request("/api/projects/update", stale)[0], 400)
+        update = {
+            "name": "sparkle_core",
+            "changes": {
+                "progress": 95,
+                "next_action": "Run the complete project regression suite.",
+            },
+            "expected_version": 1,
+        }
+        status, _, body = self.request("/api/projects/update", update)
+        self.assertEqual(status, 200)
+        self.assertEqual(json.loads(body)["project"]["version"], 2)
+        events = json.loads(self.request(
+            "/api/project-events?name=sparkle_core",
+        )[2])["events"]
+        self.assertEqual(events[0]["changed_fields"], ["next_action", "progress"])
+        self.assertNotIn("Run the complete", json.dumps(events))
+        archive = {
+            "name": "sparkle_core", "expected_version": 2, "approved": False,
+        }
+        self.assertEqual(self.request("/api/projects/archive", archive)[0], 400)
+        archive["approved"] = True
+        self.assertEqual(self.request("/api/projects/archive", archive)[0], 200)
+        self.assertEqual(
+            json.loads(self.request("/api/projects")[2])["projects"], [],
+        )
+        archived = json.loads(self.request(
+            "/api/projects?include_archived=true",
+        )[2])["projects"]
+        self.assertTrue(archived[0]["archived"])

@@ -37,6 +37,12 @@ alert. GET `/api/proactive` returns the protocol version and safe structured
 alerts; the dashboard renders their type, severity, category, key, source kind,
 and source ID.
 
+Validated `SPARKLE-PROJECT/1` records also produce `project_incomplete` and
+deadline alerts directly. Those alerts expose only the project identifier,
+status, priority, progress, blocker/open-milestone counts, and normalized
+deadline timing. They never copy descriptions, risk text, blocker text,
+milestone names, or next-action text.
+
 Schedule evaluation considers at most 200 recent eligible records, looks no
 more than 30 days ahead, and emits at most 200 pair conflicts. Touching but
 non-overlapping intervals are not conflicts. Evidence contains only normalized
