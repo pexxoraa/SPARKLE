@@ -7,7 +7,7 @@ registry, provider adapters, specialist agents, persistent memory, a separate
 knowledge index, execution traces, automations, proactive rules, a CLI, an HTTP
 API, and a local dashboard.
 
-Current release: `0.14.0-alpha.1`. This is a tested foundation release, not the
+Current release: `0.15.0-alpha.1`. This is a tested foundation release, not the
 final system described in the long-term Definition of Done. See
 [`docs/BUILD_STATE.md`](docs/BUILD_STATE.md) and
 [`docs/ACCEPTANCE.md`](docs/ACCEPTANCE.md) for exact evidence and gaps.
@@ -15,6 +15,9 @@ final system described in the long-term Definition of Done. See
 ## What works now
 
 - Provider-neutral model, request, response, tool, and routing contracts.
+- Deterministic `SPARKLE-CONTENT/1` envelopes for bounded text, image, audio,
+  document, and mixed-modality requests. Contract transport and tracing are
+  tested; semantic non-text understanding awaits a capable provider adapter.
 - MiniMax-M3 adapter using MiniMax's recommended Messages endpoint directly
   over HTTP. There is no OpenAI package or API dependency.
 - Model registry with add, remove, enable, disable, activate, route, inspect,
@@ -100,5 +103,7 @@ make check
 ```
 
 Full documentation starts at [`docs/USER_GUIDE.md`](docs/USER_GUIDE.md).
+The multimodal contract is specified in
+[`docs/MULTIMODAL.md`](docs/MULTIMODAL.md).
 Worker deployment and security evidence are documented in
 [`docs/WORKER.md`](docs/WORKER.md).

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from sparkle.content import ContentEnvelope
 from sparkle.storage import KnowledgeStore, MemoryStore
 
 
@@ -35,3 +36,6 @@ class ContextBuilder:
             memory=self.memory.search(query, limit=self.memory_limit),
             knowledge=self.knowledge.search(query, limit=self.knowledge_limit),
         )
+
+    def build_content(self, content: ContentEnvelope) -> ContextBundle:
+        return self.build(content.retrieval_text())

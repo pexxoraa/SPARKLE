@@ -56,7 +56,7 @@ class MiniMaxMessagesAdapter(ModelAdapter):
             "Authorization": f"Bearer {key}",
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "User-Agent": "SPARKLE/0.3",
+            "User-Agent": "SPARKLE/0.15",
         }
 
     @staticmethod
@@ -82,8 +82,8 @@ class MiniMaxMessagesAdapter(ModelAdapter):
             }
         if message.role == "assistant" and message.tool_calls:
             content: list[dict[str, Any]] = []
-            if message.content:
-                content.append({"type": "text", "text": message.content})
+            if message.text_content:
+                content.append({"type": "text", "text": message.text_content})
             content.extend(
                 {"type": "tool_use", "id": call.id, "name": call.name, "input": call.arguments}
                 for call in message.tool_calls
@@ -91,7 +91,7 @@ class MiniMaxMessagesAdapter(ModelAdapter):
             return {"role": "assistant", "content": content}
         if message.role == "system":
             raise ValueError("System messages must be provided via ModelRequest.system")
-        return {"role": message.role, "content": message.content}
+        return {"role": message.role, "content": message.text_content}
 
     def _payload(self, request: ModelRequest) -> dict[str, Any]:
         payload: dict[str, Any] = {
@@ -103,7 +103,10 @@ class MiniMaxMessagesAdapter(ModelAdapter):
             "service_tier": self._config.get("service_tier", "standard"),
             "thinking": {"type": "adaptive" if request.thinking else "disabled"},
         }
-        system_parts = [message.content for message in request.messages if message.role == "system"]
+        system_parts = [
+            message.text_content for message in request.messages
+            if message.role == "system"
+        ]
         if request.system:
             system_parts.insert(0, request.system)
         if system_parts:
@@ -164,6 +167,7 @@ class MiniMaxMessagesAdapter(ModelAdapter):
         )
 
     def complete(self, request: ModelRequest) -> ModelResponse:
+        self.validate_request(request)
         request.stream = False
         try:
             headers = self._headers()
@@ -196,6 +200,7 @@ class MiniMaxMessagesAdapter(ModelAdapter):
         raise last_error or ModelError("MiniMax request failed")
 
     def stream(self, request: ModelRequest) -> Iterator[str]:
+        self.validate_request(request)
         request.stream = True
         try:
             headers = self._headers()

@@ -7,7 +7,8 @@ from pathlib import Path
 from typing import Any
 
 from sparkle.config import load_json, model_config_path
-from sparkle.model import ModelAdapter
+from sparkle.content import SUPPORTED_CONTENT_TYPES
+from sparkle.model import ModelAdapter, UnsupportedModalityError
 from sparkle.providers.minimax import MiniMaxMessagesAdapter
 from sparkle.secrets import SecretResolver
 
@@ -19,6 +20,7 @@ class ModelRecord:
     model_id: str
     adapter: str
     roles: tuple[str, ...]
+    modalities: tuple[str, ...]
     enabled: bool
     config: dict[str, Any]
 
@@ -46,9 +48,19 @@ class ModelRegistry:
                 raise ValueError(f"Duplicate model record: {raw['id']}")
             if raw["adapter"] not in self.ADAPTERS:
                 raise ValueError(f"Unknown adapter: {raw['adapter']}")
+            modalities = raw.get("modalities", ["text"])
+            if (
+                not isinstance(modalities, list)
+                or not modalities
+                or any(item not in SUPPORTED_CONTENT_TYPES for item in modalities)
+                or len(set(modalities)) != len(modalities)
+            ):
+                raise ValueError("Model modalities must be unique supported content types")
             self._records[raw["id"]] = ModelRecord(
                 id=raw["id"], provider=raw["provider"], model_id=raw["model_id"],
-                adapter=raw["adapter"], roles=tuple(raw["roles"]), enabled=bool(raw["enabled"]), config=raw,
+                adapter=raw["adapter"], roles=tuple(raw["roles"]),
+                modalities=tuple(modalities), enabled=bool(raw["enabled"]),
+                config=raw,
             )
         active = self._config.get("active_model")
         if active not in self._records or not self._records[active].enabled:
@@ -69,6 +81,7 @@ class ModelRegistry:
                 "provider": record.provider,
                 "model_id": record.model_id,
                 "roles": list(record.roles),
+                "modalities": list(record.modalities),
                 "enabled": record.enabled,
                 "active": record.id == self.active_id,
                 "configured": any(self.secrets.status(record.config.get("secret_refs", [])).values()),
@@ -155,11 +168,32 @@ class ModelRouter:
     def __init__(self, registry: ModelRegistry):
         self.registry = registry
 
-    def select(self, capability: str = "general") -> ModelAdapter:
+    def select(
+        self,
+        capability: str = "general",
+        *,
+        modalities: set[str] | list[str] | tuple[str, ...] | None = None,
+    ) -> ModelAdapter:
+        required = set(modalities or {"text"})
         record_id = self.registry.routing.get(capability, self.registry.routing.get("default", self.registry.active_id))
         record = self.registry.record(record_id)
         if capability not in record.roles and capability != "general":
             candidates = [item for item in self.registry._records.values() if item.enabled and capability in item.roles]
             if candidates:
                 record_id = candidates[0].id
-        return self.registry.adapter(record_id)
+        adapter = self.registry.adapter(record_id)
+        if adapter.supports(required):
+            return adapter
+        for candidate in self.registry._records.values():
+            if not candidate.enabled or candidate.id == record_id:
+                continue
+            if capability != "general" and capability not in candidate.roles:
+                continue
+            alternate = self.registry.adapter(candidate.id)
+            if alternate.supports(required):
+                return alternate
+        raise UnsupportedModalityError(
+            required - adapter.supported_modalities,
+            model_id=adapter.model_id,
+            provider=adapter.provider,
+        )

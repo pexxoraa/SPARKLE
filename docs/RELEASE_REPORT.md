@@ -1,3 +1,50 @@
+# 0.15.0-alpha.1 verification report
+
+Date: 2026-08-30 UTC
+
+## Executed evidence
+
+- The focused multimodal set passed 17 tests in 1.505 seconds after validation,
+  routing, trace-migration, and provider-failure hardening.
+- The adjacent MiniMax/orchestrator/storage/security regression set passed 58
+  tests in 9.625 seconds.
+- The first complete pre-publication `make check` passed 138 tests in 23.005
+  seconds. The final documented rerun passed all 138 in 22.472 seconds.
+  Dashboard JavaScript syntax and Git whitespace checks also passed.
+- A zero-dependency non-editable `0.15.0a1` wheel installed into a fresh
+  virtual environment. Installed status, deterministic mixed-content round
+  trip, exact legacy serialization, automation check/once/status, and the
+  worker entrypoint passed. Both independently materialized application/model
+  configuration files were mode 0600.
+- Legacy string messages remain byte-for-byte serialization compatible. Text,
+  image, audio, document, and mixed envelopes flow through API validation,
+  context construction, capability routing, model requests, a compatible
+  deterministic adapter, agent results, and execution traces.
+- Bounds and failure tests cover part/envelope/request/API sizes, empty and
+  malformed payloads, wrong MIME families, non-canonical base64, unsupported
+  types, duplicate/forged IDs, invalid metadata, and a text-only MiniMax
+  refusal before any network operation.
+- Trace migration and integration tests prove that modalities, derived content
+  identifiers, processing stages, transformations, output modalities, and safe
+  execution metadata are recorded without raw input or caller metadata.
+
+Exact-tree GitHub/CI evidence is pending. This section will be updated only
+after those operations actually complete.
+
+## Honest limits
+
+- The release proves provider-neutral contract transport and failure behavior,
+  not semantic understanding of image, audio, or document bytes.
+- MiniMax-M3 remains configured and verified as a text-only adapter. No
+  undocumented provider-specific multimodal mapping was added.
+- Video, camera, sensor, spatial, and gesture types remain future extensions.
+
+## GitHub publication and CI
+
+Result: PENDING — v0.14 remains the latest fully verified remote release.
+
+---
+
 # 0.14.0-alpha.1 verification report
 
 Date: 2026-08-29 UTC

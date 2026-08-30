@@ -34,9 +34,9 @@ means an external dependency is unavailable.
 | Dashboard works | PASS | Local panels plus bounded login/reload/CSRF/logout session lifecycle are integration tested; deployed TLS/reverse-proxy validation remains absent |
 | Data tracing works | PASS | Success/tool/failure metadata implemented; trace tests |
 | Motion/presence architecture | PASS | Independent presence engine; physical motion intentionally absent |
-| Multimodal architecture prepared | PARTIAL | M3 registry role and model contracts ready; image/video input contract not exposed yet |
-| Tests pass | PASS | 120 local tests pass; CI run #29 passes the full suite on Python 3.12 and 3.13 plus both service/image jobs |
+| Multimodal architecture prepared | PASS | `SPARKLE-CONTENT/1` text/image/audio/document contracts flow through API, context, routing, adapters, results, and raw-content-free traces; mixed and failure paths are tested. Live non-text semantic understanding remains a separate provider capability |
+| Tests pass | PASS | 138 local tests pass; v0.15 remote CI is pending publication. Last published v0.14 CI run #29 passed all four jobs |
 | Documentation complete for implementation | PASS | Requested implementation documents present |
 | Installation reproducible | PASS | Python 3.12 core has zero mandatory third-party dependencies |
 | End-to-end workflows | PARTIAL | Deterministic local flows pass; live provider and external actions blocked |
-| Release | PASS | v0.14 remote commit `99f5bd2` has exact verified tree `fa068d1`; CI run #29 passed Python 3.12/3.13, worker-image, and installed automation-service jobs |
+| Release | PARTIAL | v0.15 implementation and local suite pass; exact-tree publication, fresh wheel gate, and remote four-job CI remain pending. v0.14 stays the latest fully verified remote release |

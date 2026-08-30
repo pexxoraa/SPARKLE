@@ -42,6 +42,12 @@ Environment overrides:
 Configuration files may contain secret *names* such as `MINIMAX_API_KEY`; they
 must never contain secret values. Shell and web tools default to disabled.
 
+Model records may declare `"modalities": ["text"]`; accepted values are
+`text`, `image`, `audio`, and `document`. The list must be non-empty and unique.
+It describes intended configuration, while the instantiated adapter's
+`supported_modalities` remains the execution-time authority. The bundled
+MiniMax-M3 record is text-only.
+
 `application/config.json` contains the `security` policy:
 
 - `api_auth_required`: requires bearer authentication for every `/api/` route.

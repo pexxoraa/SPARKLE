@@ -7,6 +7,7 @@
       "model_id": "MiniMax-M3",
       "adapter": "minimax_messages",
       "roles": ["general", "reasoning", "coding", "vision", "tool_use"],
+      "modalities": ["text"],
       "enabled": true,
       "context_window": 1000000,
       "max_output_tokens": 131072,

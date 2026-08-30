@@ -9,6 +9,7 @@ from sparkle.automation import AutomationRunner, AutomationStore, ProactiveEngin
 from sparkle.builders import WorkspaceManager
 from sparkle.config import AppConfig, data_root, project_root
 from sparkle.context import ContextBuilder
+from sparkle.content import content_contract_status
 from sparkle.development import DevelopmentVerifier, WorkspaceTestRunner
 from sparkle.external_worker import ExternalWorkerClient
 from sparkle.knowledge import KnowledgeIngestor
@@ -131,7 +132,7 @@ class SparkleSystem:
         models = self.models.list()
         return {
             "name": "SPARKLE",
-            "version": "0.14.0-alpha.1",
+            "version": "0.15.0-alpha.1",
             "status": "ready" if any(model["configured"] for model in models) else "limited",
             "active_model": self.models.active_id,
             "models": models,
@@ -151,6 +152,7 @@ class SparkleSystem:
                 "recent_audit_records": len(self.api_audit.recent(limit=100)),
             },
             "voice": self.voice.status(),
+            "multimodal": content_contract_status(),
             "automation": {
                 "status": "ready", "count": len(self.automations.list()),
                 "recent_runs": len(self.automations.list_runs(limit=100)),

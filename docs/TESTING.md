@@ -76,6 +76,15 @@ file reads, symlink/sensitive/reserved/portable-name/size rejection, approval
 gates, CLI/API/dashboard integration, and append-only deployment reports that
 remain explicitly unverified and execute no external action.
 
+Multimodal coverage validates byte-compatible legacy text serialization;
+image, audio, and document construction; text+image, text+document, and fully
+mixed requests; deterministic canonical round trips; empty, oversized,
+malformed, wrong-MIME, unsupported-type, duplicate-ID, aggregate-message, and
+metadata boundaries; API execution and rejection paths; context, routing,
+adapter, result, and raw-content-free trace flow; fail-closed MiniMax behavior
+before network access; trace-schema migration; and future compatible-adapter
+selection without orchestrator changes.
+
 The deterministic adapter avoids provider cost and network flakiness. The live
 smoke test is intentionally separate:
 
@@ -86,9 +95,11 @@ sparkle smoke-test --live
 Never report the live test as passed when the credential is absent or the exact
 `SPARKLE_LIVE_OK` response is not observed.
 
-Latest v0.14 release result on 2026-08-29: 120 local tests passed in 21.283
-seconds. Dashboard JavaScript syntax, Git whitespace, and a fresh offline
-non-editable wheel install plus status and automation check/once/status
-lifecycle also passed. GitHub CI run #29 (`33287645323`) completed successfully
-on 2026-08-30: Python 3.12, Python 3.13, worker-image, and the installed
-automation-service lifecycle all passed.
+Latest v0.15 pre-publication result on 2026-08-30: 138 local tests passed in
+22.472 seconds in the final documented rerun after the complete multimodal
+implementation; an earlier complete run passed in 23.005 seconds. Dashboard
+JavaScript syntax and Git whitespace checks passed. A zero-dependency
+non-editable `0.15.0a1` wheel installed in a fresh virtual environment and
+passed status, mixed-content round trip, legacy serialization, automation
+check/once/status, worker-entrypoint, and mode-0600 configuration checks.
+Remote CI evidence is pending publication.

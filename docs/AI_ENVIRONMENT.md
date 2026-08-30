@@ -4,6 +4,14 @@ The AI environment contains registry records, routes, provider adapters, and
 model request/response contracts. The application asks for a capability; it
 does not select a vendor endpoint.
 
+Each registry record declares a bounded `modalities` list and every adapter
+exposes its authoritative runtime `supported_modalities`. Routing first follows
+the configured capability and then may select another enabled compatible
+adapter. If no adapter supports the complete request, execution raises a safe
+provider-neutral unsupported-modality error before credential resolution or
+network access. Existing registry records that omit the field default to
+`["text"]` for backward compatibility.
+
 Current MiniMax-M3 contract, verified against MiniMax documentation on
 2026-08-28:
 
@@ -31,3 +39,6 @@ Sources:
 
 The adapter uses the recommended Messages HTTP surface directly. It does not
 install the Anthropic SDK and does not expose that protocol to agents.
+The current MiniMax adapter advertises text only. SPARKLE does not infer or
+hard-code a MiniMax image, audio, or document mapping without separately
+verified provider documentation and executable tests.

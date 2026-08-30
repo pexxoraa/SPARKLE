@@ -23,6 +23,14 @@ accessed, transformations, destinations, status, safe result summary, error
 type, timestamps, and duration. Traces exclude authorization headers, request
 bodies, provider thinking blocks, and secret values.
 
+For an explicit content envelope, validation precedes context retrieval and
+model selection. The trace records ordered input/output modalities,
+content-derived identifiers, processing stage, safe transformations, storage
+destinations, and bounded execution metadata containing only type, media type,
+byte size, and digest. Raw text, base64, decoded binary data, and caller
+metadata are never copied into the trace. Unsupported modality failures record
+the attempted adapter identity and fail before any provider request.
+
 Scheduled work follows the same orchestrator path after an automation record is
 atomically claimed. Its trace source is `automation`; run status, attempts,
 trace ID, and bounded result summary are stored separately in the automation

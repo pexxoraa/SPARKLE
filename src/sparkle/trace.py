@@ -26,6 +26,11 @@ class TraceStore(SQLiteStore):
                     year INTEGER NOT NULL,
                     year_sequence INTEGER NOT NULL,
                     input_source TEXT NOT NULL,
+                    input_modalities TEXT NOT NULL DEFAULT '["text"]',
+                    content_identifiers TEXT NOT NULL DEFAULT '[]',
+                    processing_stage TEXT NOT NULL DEFAULT 'received',
+                    output_modalities TEXT NOT NULL DEFAULT '[]',
+                    execution_metadata TEXT NOT NULL DEFAULT '{}',
                     agent TEXT,
                     model TEXT,
                     provider TEXT,
@@ -44,7 +49,78 @@ class TraceStore(SQLiteStore):
                 )
             """)
 
-    def start(self, *, input_source: str, agent: str | None = None) -> tuple[str, float]:
+            columns = {
+                row["name"] for row in connection.execute(
+                    "PRAGMA table_info(traces)"
+                ).fetchall()
+            }
+            migrations = {
+                "input_modalities": "TEXT NOT NULL DEFAULT '[\"text\"]'",
+                "content_identifiers": "TEXT NOT NULL DEFAULT '[]'",
+                "processing_stage": "TEXT NOT NULL DEFAULT 'received'",
+                "output_modalities": "TEXT NOT NULL DEFAULT '[]'",
+                "execution_metadata": "TEXT NOT NULL DEFAULT '{}'",
+            }
+            for name, definition in migrations.items():
+                if name not in columns:
+                    connection.execute(
+                        f"ALTER TABLE traces ADD COLUMN {name} {definition}"
+                    )
+
+    @staticmethod
+    def _labels(
+        values: list[str] | None,
+        *,
+        label: str,
+        maximum: int = 16,
+        chars: int = 128,
+    ) -> list[str]:
+        result = values or []
+        if (
+            not isinstance(result, list)
+            or len(result) > maximum
+            or any(
+                not isinstance(item, str) or not item or len(item) > chars
+                for item in result
+            )
+        ):
+            raise ValueError(f"Trace {label} is invalid")
+        return result
+
+    @staticmethod
+    def _execution_metadata(value: dict[str, Any] | None) -> dict[str, Any]:
+        if value is None:
+            return {}
+        if not isinstance(value, dict):
+            raise ValueError("Trace execution metadata must be an object")
+        safe = SecretResolver.redact(value)
+        encoded = json.dumps(
+            safe, separators=(",", ":"), ensure_ascii=False,
+            sort_keys=True, allow_nan=False,
+        )
+        if len(encoded.encode("utf-8")) > 16_000:
+            raise ValueError("Trace execution metadata is too large")
+        return safe
+
+    def start(
+        self,
+        *,
+        input_source: str,
+        agent: str | None = None,
+        input_modalities: list[str] | None = None,
+        content_identifiers: list[str] | None = None,
+        processing_stage: str = "received",
+        execution_metadata: dict[str, Any] | None = None,
+    ) -> tuple[str, float]:
+        modalities = self._labels(
+            input_modalities or ["text"], label="input modalities", chars=32,
+        )
+        identifiers = self._labels(
+            content_identifiers, label="content identifiers",
+        )
+        if not isinstance(processing_stage, str) or not processing_stage or len(processing_stage) > 64:
+            raise ValueError("Trace processing stage is invalid")
+        metadata = self._execution_metadata(execution_metadata)
         year = datetime.now(UTC).year
         started = utc_now()
         with self.connect() as connection:
@@ -54,9 +130,19 @@ class TraceStore(SQLiteStore):
             ).fetchone()[0])
             trace_id = f"SPK-{year}-{next_sequence:06d}"
             connection.execute("""
-                INSERT INTO traces(trace_id, year, year_sequence, input_source, agent, status, started_at)
-                VALUES(?,?,?,?,?,'running',?)
-            """, (trace_id, year, next_sequence, input_source, agent, started))
+                INSERT INTO traces(
+                    trace_id, year, year_sequence, input_source,
+                    input_modalities, content_identifiers, processing_stage,
+                    execution_metadata, agent, status, started_at
+                ) VALUES(?,?,?,?,?,?,?,?,?,'running',?)
+            """, (
+                trace_id, year, next_sequence, input_source,
+                json.dumps(modalities, separators=(",", ":")),
+                json.dumps(identifiers, separators=(",", ":")),
+                processing_stage,
+                json.dumps(metadata, separators=(",", ":"), ensure_ascii=False, sort_keys=True),
+                agent, started,
+            ))
         return trace_id, time.monotonic()
 
     def finish(
@@ -73,6 +159,9 @@ class TraceStore(SQLiteStore):
         data_created: list[str] | None = None,
         transformations: list[str] | None = None,
         storage_destinations: list[str] | None = None,
+        processing_stage: str | None = None,
+        output_modalities: list[str] | None = None,
+        execution_metadata: dict[str, Any] | None = None,
         result_summary: str | None = None,
         error_type: str | None = None,
     ) -> None:
@@ -82,13 +171,25 @@ class TraceStore(SQLiteStore):
             for item in (tools or [], data_accessed or [], data_created or [], transformations or [], storage_destinations or [])
         ]
         encoded = [json.dumps(value, separators=(",", ":"), ensure_ascii=False) for value in values]
+        stage = processing_stage or ("completed" if status == "success" else "failed")
+        if not isinstance(stage, str) or not stage or len(stage) > 64:
+            raise ValueError("Trace processing stage is invalid")
+        outputs = self._labels(
+            output_modalities or (["text"] if status == "success" else []),
+            label="output modalities", chars=32,
+        )
+        metadata = self._execution_metadata(execution_metadata)
         with self.connect() as connection:
             connection.execute("""
                 UPDATE traces SET status=?, agent=?, model=?, provider=?, tools=?, data_accessed=?,
                     data_created=?, transformations=?, storage_destinations=?, result_summary=?, error_type=?,
+                    processing_stage=?, output_modalities=?, execution_metadata=?,
                     duration_ms=?, finished_at=? WHERE trace_id=?
             """, (
                 status, agent, model, provider, *encoded, safe_summary, error_type,
+                stage,
+                json.dumps(outputs, separators=(",", ":")),
+                json.dumps(metadata, separators=(",", ":"), ensure_ascii=False, sort_keys=True),
                 round((time.monotonic() - started_clock) * 1000, 3), utc_now(), trace_id,
             ))
 
@@ -101,5 +202,9 @@ class TraceStore(SQLiteStore):
 
     @staticmethod
     def _public(row: sqlite3.Row) -> dict[str, Any]:
-        json_fields = {"tools", "data_accessed", "data_created", "transformations", "storage_destinations"}
+        json_fields = {
+            "tools", "data_accessed", "data_created", "transformations",
+            "storage_destinations", "input_modalities", "content_identifiers",
+            "output_modalities", "execution_metadata",
+        }
         return {key: (json.loads(row[key]) if key in json_fields else row[key]) for key in row.keys() if key not in {"id", "year", "year_sequence"}}

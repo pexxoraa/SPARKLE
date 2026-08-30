@@ -15,9 +15,40 @@ class ModelError(RuntimeError):
         self.status_code = status_code
 
 
+class UnsupportedModalityError(ModelError):
+    """The selected adapter cannot consume one or more request modalities."""
+
+    def __init__(
+        self,
+        modalities: set[str] | list[str] | tuple[str, ...],
+        *,
+        model_id: str | None = None,
+        provider: str | None = None,
+    ):
+        self.modalities = tuple(sorted(set(modalities)))
+        self.model_id = model_id
+        self.provider = provider
+        super().__init__(
+            "Selected model adapter does not support modalities: "
+            + ", ".join(self.modalities),
+            retryable=False,
+        )
+
+
 class ModelAdapter(ABC):
     provider: str
     model_id: str
+    supported_modalities = frozenset({"text"})
+
+    def supports(self, modalities: set[str] | list[str] | tuple[str, ...]) -> bool:
+        return set(modalities).issubset(self.supported_modalities)
+
+    def validate_request(self, request: ModelRequest) -> None:
+        unsupported = set(request.input_modalities) - self.supported_modalities
+        if unsupported:
+            raise UnsupportedModalityError(
+                unsupported, model_id=self.model_id, provider=self.provider,
+            )
 
     @abstractmethod
     def complete(self, request: ModelRequest) -> ModelResponse:

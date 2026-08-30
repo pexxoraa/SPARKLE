@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 
 from sparkle.agents import AgentRegistry, AgentRouter, AgentSpec
+from sparkle.content import MAX_PART_BYTES, ContentEnvelope, ContentValidationError
 from sparkle.context import ContextBuilder
 from sparkle.contracts import AgentResult, Message, ModelRequest, TokenUsage
 from sparkle.model import ModelError
@@ -33,31 +34,78 @@ class Orchestrator:
 
     def run(
         self,
-        text: str,
+        text: str = "",
         *,
+        content: ContentEnvelope | None = None,
         agent_name: str | None = None,
         history: Iterable[Message] | None = None,
         user_id: str | None = None,
         additional_context: str | None = None,
         input_source: str = "text",
     ) -> AgentResult:
-        if not text.strip():
-            raise ValueError("Request text cannot be empty")
-        spec = self.agents.get(agent_name) if agent_name else self.agent_router.select(text)
-        trace_id, started = self.traces.start(input_source=input_source, agent=spec.name)
+        if not isinstance(text, str):
+            raise ValueError("Request text must be a string")
+        if content is None:
+            if not text.strip():
+                raise ValueError("Request text cannot be empty")
+            if len(text.encode("utf-8")) > MAX_PART_BYTES["text"]:
+                raise ContentValidationError("Request text is too large")
+            routing_text = text
+            user_content: str | ContentEnvelope = text
+            input_modalities = ["text"]
+            content_identifiers: list[str] = []
+            execution_metadata = {
+                "content_protocol": "legacy-text",
+                "part_count": 1,
+                "total_bytes": len(text.encode("utf-8")),
+                "mixed_modalities": False,
+                "content": [],
+            }
+        else:
+            if not isinstance(content, ContentEnvelope):
+                raise ValueError("Request content must be a ContentEnvelope")
+            if text.strip():
+                raise ValueError(
+                    "Use either legacy request text or a content envelope, not both"
+                )
+            routing_text = content.routing_text()
+            user_content = content
+            input_modalities = content.modalities
+            content_identifiers = content.content_identifiers
+            execution_metadata = content.trace_metadata()
+
+        spec = (
+            self.agents.get(agent_name)
+            if agent_name else self.agent_router.select(routing_text)
+        )
+        trace_id, started = self.traces.start(
+            input_source=input_source,
+            agent=spec.name,
+            input_modalities=input_modalities,
+            content_identifiers=content_identifiers,
+            processing_stage="content_validated",
+            execution_metadata=execution_metadata,
+        )
         adapter = None
         executed: list[str] = []
         data_accessed = ["memory_environment", "knowledge_environment"]
         try:
-            bundle = self.context.build(text)
+            bundle = (
+                self.context.build(text)
+                if content is None else self.context.build_content(content)
+            )
             rendered_context = bundle.render()
             system_parts = [spec.system_prompt()]
             if rendered_context:
                 system_parts.append(rendered_context)
             if additional_context:
                 system_parts.append(f"Other agent work:\n{additional_context}")
-            messages = list(history or []) + [Message(role="user", content=text)]
-            adapter = self.models.select(spec.capability)
+            messages = list(history or []) + [
+                Message(role="user", content=user_content)
+            ]
+            adapter = self.models.select(
+                spec.capability, modalities=input_modalities,
+            )
             response = None
             for round_number in range(self.max_tool_rounds + 1):
                 response = adapter.complete(ModelRequest(
@@ -90,19 +138,42 @@ class Orchestrator:
                 agent=spec.name, text=response.text, model=response.model, provider=response.provider,
                 trace_id=trace_id, finish_reason=response.finish_reason, usage=response.usage,
                 tool_calls_executed=executed,
+                input_modalities=input_modalities,
+                output_modalities=["text"],
+                content_identifiers=content_identifiers,
             )
+            transformations = [
+                "content_validation", "context_retrieval", "agent_reasoning",
+                "tool_loop" if executed else "direct_completion",
+            ] if content is not None else [
+                "context_retrieval", "agent_reasoning",
+                "tool_loop" if executed else "direct_completion",
+            ]
             self.traces.finish(
                 trace_id, started, status="success", agent=spec.name, model=response.model,
                 provider=response.provider, tools=executed, data_accessed=data_accessed,
-                transformations=["context_retrieval", "agent_reasoning", "tool_loop" if executed else "direct_completion"],
-                storage_destinations=["trace_environment"], result_summary=response.text,
+                transformations=transformations,
+                storage_destinations=["trace_environment"],
+                processing_stage="completed",
+                output_modalities=["text"],
+                execution_metadata=execution_metadata,
+                result_summary=response.text,
             )
             return result
         except Exception as exc:
             self.traces.finish(
                 trace_id, started, status="failure", agent=spec.name,
-                model=getattr(adapter, "model_id", None), provider=getattr(adapter, "provider", None),
+                model=(
+                    getattr(adapter, "model_id", None)
+                    or getattr(exc, "model_id", None)
+                ),
+                provider=(
+                    getattr(adapter, "provider", None)
+                    or getattr(exc, "provider", None)
+                ),
                 tools=executed, data_accessed=data_accessed, storage_destinations=["trace_environment"],
+                processing_stage="failed", output_modalities=[],
+                execution_metadata=execution_metadata,
                 error_type=type(exc).__name__, result_summary=str(exc),
             )
             if isinstance(exc, ModelError):
@@ -111,27 +182,29 @@ class Orchestrator:
 
     def run_multi(
         self,
-        text: str,
+        text: str = "",
         *,
+        content: ContentEnvelope | None = None,
         agent_names: list[str] | None = None,
         user_id: str | None = None,
         input_source: str = "text",
     ) -> AgentResult:
-        specs = [self.agents.get(name) for name in agent_names] if agent_names else self.agent_router.select_many(text)
+        routing_text = content.routing_text() if content is not None else text
+        specs = [self.agents.get(name) for name in agent_names] if agent_names else self.agent_router.select_many(routing_text)
         if len(specs) == 1:
             return self.run(
                 text, agent_name=specs[0].name, user_id=user_id,
-                input_source=input_source,
+                input_source=input_source, content=content,
             )
         peer_outputs: list[str] = []
         for spec in specs:
             output = self.run(
                 text, agent_name=spec.name, user_id=user_id,
-                input_source=input_source,
+                input_source=input_source, content=content,
             )
             peer_outputs.append(f"[{spec.name}]\n{output.text}")
         return self.run(
-            "Synthesize the specialist analyses into one verified, actionable answer for the original request:\n\n" + text,
+            "Synthesize the specialist analyses into one verified, actionable answer for the original request:\n\n" + routing_text,
             agent_name="personal", user_id=user_id,
             additional_context="\n\n".join(peer_outputs), input_source=input_source,
         )

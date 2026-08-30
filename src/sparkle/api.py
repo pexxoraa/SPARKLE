@@ -10,6 +10,12 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 
+from sparkle.content import (
+    MAX_PART_BYTES,
+    ContentEnvelope,
+    ContentValidationError,
+    content_contract_status,
+)
 from sparkle.model import ModelError
 from sparkle.external_worker import ExternalWorkerError
 from sparkle.security import APIAuditStore
@@ -17,12 +23,13 @@ from sparkle.system import SparkleSystem
 from sparkle.tooling import ToolError
 
 MAX_BODY_BYTES = 1_000_000
+MAX_MULTIMODAL_BODY_BYTES = 12_000_000
 
 
 class SparkleHandler(BaseHTTPRequestHandler):
     system: SparkleSystem
     dashboard_root = Path(__file__).with_name("dashboard")
-    server_version = "SPARKLE/0.14"
+    server_version = "SPARKLE/0.15"
 
     def log_message(self, format: str, *args: object) -> None:
         # Avoid request bodies, headers, query values, and secrets in logs.
@@ -233,10 +240,10 @@ class SparkleHandler(BaseHTTPRequestHandler):
         self._json({"ok": False, "error": "rate_limited"}, 429)
         return False
 
-    def _read_json(self) -> dict[str, Any]:
+    def _read_json(self, *, max_bytes: int = MAX_BODY_BYTES) -> dict[str, Any]:
         length = int(self.headers.get("Content-Length", "0"))
-        if length <= 0 or length > MAX_BODY_BYTES:
-            raise ValueError("Request body must contain 1-1000000 bytes")
+        if length <= 0 or length > max_bytes:
+            raise ValueError(f"Request body must contain 1-{max_bytes} bytes")
         content_type = self.headers.get("Content-Type", "").split(";", 1)[0].strip()
         if content_type != "application/json":
             raise ValueError("Content-Type must be application/json")
@@ -274,6 +281,8 @@ class SparkleHandler(BaseHTTPRequestHandler):
             return self._json({"ok": True, "status": self.system.status()})
         if parsed.path == "/api/models":
             return self._json({"models": self.system.models.list()})
+        if parsed.path == "/api/content-contract":
+            return self._json(content_contract_status())
         if parsed.path == "/api/agents":
             return self._json({"agents": self.system.agents.list()})
         if parsed.path == "/api/memory":
@@ -355,15 +364,48 @@ class SparkleHandler(BaseHTTPRequestHandler):
         if parsed.path == "/api/session/logout":
             return self._session_logout()
         try:
-            data = self._read_json()
+            data = self._read_json(
+                max_bytes=(
+                    MAX_MULTIMODAL_BODY_BYTES
+                    if self.path == "/api/chat" else MAX_BODY_BYTES
+                )
+            )
             if self.path == "/api/chat":
-                text = str(data.get("message", ""))
+                allowed_chat_fields = {
+                    "message", "content", "agent", "agents", "user_id",
+                    "multi_agent",
+                }
+                unknown_chat_fields = set(data) - allowed_chat_fields
+                if unknown_chat_fields:
+                    raise ValueError(
+                        "Unsupported chat fields: "
+                        + ", ".join(sorted(unknown_chat_fields))
+                    )
+                raw_text = data.get("message", "")
+                if not isinstance(raw_text, str):
+                    raise ValueError("Chat message must be a string")
+                if len(raw_text.encode("utf-8")) > MAX_PART_BYTES["text"]:
+                    raise ContentValidationError("Chat message is too large")
+                content = (
+                    ContentEnvelope.from_dict(data["content"])
+                    if "content" in data else None
+                )
+                if content is not None and raw_text.strip():
+                    raise ValueError(
+                        "Use either message or content in a chat request, not both"
+                    )
                 agent = str(data["agent"]) if data.get("agent") else None
                 self.system.presence.update("working", "Reasoning", agent=agent)
                 result = (
-                    self.system.orchestrator.run_multi(text, agent_names=data.get("agents"), user_id=data.get("user_id"))
+                    self.system.orchestrator.run_multi(
+                        raw_text, content=content, agent_names=data.get("agents"),
+                        user_id=data.get("user_id"),
+                    )
                     if data.get("multi_agent") else
-                    self.system.orchestrator.run(text, agent_name=agent, user_id=data.get("user_id"))
+                    self.system.orchestrator.run(
+                        raw_text, content=content, agent_name=agent,
+                        user_id=data.get("user_id"),
+                    )
                 )
                 self.system.presence.update("idle", "Ready", agent=result.agent, trace_id=result.trace_id)
                 return self._json({"ok": True, "result": result.to_dict()})

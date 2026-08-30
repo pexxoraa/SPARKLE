@@ -101,6 +101,18 @@
   in server does not terminate or validate TLS.
 - Provider reasoning blocks are preserved only for provider continuity and are
   neither displayed nor traced.
+- Explicit content envelopes allow at most 16 parts and 8 MB decoded content;
+  model requests allow at most 256 messages and 16 MB decoded content. Text,
+  image, audio, document, metadata, and HTTP body sizes have independent hard
+  bounds. Binary input requires canonical base64 and a compatible MIME family.
+- Content metadata accepts only bounded deterministic JSON with validated keys,
+  finite numbers, and no credential-like field names. Content identifiers are
+  derived from validated type, MIME type, and bytes, so callers cannot inject
+  arbitrary trace identifiers.
+- Multimodal traces contain only type, content-derived identifier, MIME type,
+  size, and digest; raw strings, binary/base64 values, and general caller
+  metadata are not serialized. Adapters fail closed before provider access
+  when a request contains an unsupported modality.
 
 Production deployment still needs multi-user role/owner authorization, TLS at the edge,
 distributed/edge rate limiting, audit retention, backup encryption, dependency scanning,

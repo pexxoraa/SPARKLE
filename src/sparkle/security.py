@@ -353,7 +353,7 @@ class APIAuditStore(SQLiteStore):
         "/api/builds/verify", "/api/builds/test", "/api/builds/test-external",
         "/api/builds/package", "/api/verifications", "/api/test-runs",
         "/api/external-test-runs", "/api/artifacts", "/api/deployments",
-        "/api/proactive", "/api/audit", "/api/chat",
+        "/api/proactive", "/api/content-contract", "/api/audit", "/api/chat",
     })
     UNKNOWN_ROUTE = "/api/[unknown]"
     OUTCOMES = {

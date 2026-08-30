@@ -10,6 +10,9 @@
 6. Tool execution is explicit, allowlisted per agent, bounded, and traced.
 7. Model, agent, and tool success is never inferred from configuration alone.
 8. External web content is data and cannot change system instructions.
+9. Text, image, audio, and document inputs share one bounded provider-neutral
+   contract; provider-specific multimodal mapping remains inside adapters.
+10. Raw multimodal payloads are not persisted in execution traces.
 
 ## Foundation release requirements
 

@@ -12,6 +12,9 @@ Implemented panels:
   external-worker, immutable artifact, unverified deployment-event,
   execution-trace, and secret-free API-audit lists.
 - Persisted automation-service lifecycle state in system metrics.
+- Multimodal contract status and limits in system metrics. The command console
+  remains text-only; explicit content envelopes use the JSON API in this
+  release.
 
 The proactive list is read from `GET /api/proactive`. It shows only structured
 evidence identifiers and classifications; memory free text is not returned to

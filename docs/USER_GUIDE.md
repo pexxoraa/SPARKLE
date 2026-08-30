@@ -19,6 +19,42 @@ sparkle chat --agent research "Compare robot-arm control approaches"
 sparkle chat --multi "Research robot arms and design a dashboard"
 ```
 
+Existing text messages remain unchanged. Provider-neutral image, audio, and
+document input is available through `POST /api/chat` with a
+`SPARKLE-CONTENT/1` object in the `content` field. For example, a small
+document request can omit `content_id`; SPARKLE derives it after validation:
+
+```json
+{
+  "agent": "research",
+  "content": {
+    "protocol_version": "SPARKLE-CONTENT/1",
+    "parts": [
+      {
+        "type": "text",
+        "media_type": "text/plain",
+        "encoding": "utf-8",
+        "data": "Review these notes",
+        "metadata": {}
+      },
+      {
+        "type": "document",
+        "media_type": "text/plain",
+        "encoding": "base64",
+        "data": "bm90ZXM=",
+        "metadata": {"filename": "notes.txt"}
+      }
+    ]
+  }
+}
+```
+
+Inspect exact types and bounds at `GET /api/content-contract`. The current
+MiniMax-M3 adapter is text-only and rejects non-text content before a provider
+call. A compatible future adapter can process the same envelope without core
+changes. The deterministic test adapter proves the complete transport path; it
+does not prove semantic non-text understanding. See `MULTIMODAL.md`.
+
 ## Store useful context
 
 ```bash
@@ -220,6 +256,8 @@ bounded local test runs, signed external-worker evidence, immutable artifacts,
 unverified deployment events, and traces. The API
 audit panel shows only route outcomes and durations; it never
 shows client identities, request content, queries, origins, headers, or tokens.
+System metrics expose multimodal contract types and bounds, but the dashboard
+command field remains a text client in this release.
 
 ## Secure API access
 
