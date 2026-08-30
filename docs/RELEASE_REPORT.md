@@ -30,8 +30,18 @@ Date: 2026-08-29 UTC
   prediction or autonomous understanding of unstructured memory text.
 - Schedule-conflict detection, research-change monitoring, notification
   delivery, and calendar/webhook connectors are not implemented.
-- Remote publication and all-job CI verification are pending for this
-  pre-publication checkpoint. The verified remote baseline remains v0.13.
+## GitHub publication and CI
+
+Result: PASS — private repository `pexxoraa/SPARKLE` received capability commit
+`99f5bd27853145fec00fb80d356c6f45bdd52f50` on `main` by a non-force
+fast-forward. Its tree `fa068d1e7f15dfdb8306abd93febdd53d1cb593a`
+exactly matches the locally tested v0.14 tree in commit
+`6c086530100181c3d77bf504cfa6abde995bbb68`.
+
+SPARKLE CI run #29 (`33287645323`) completed successfully. All required jobs
+passed: `test (3.12)`, `test (3.13)`, `worker-image`, and
+`automation-service`, including the compile/test, worker image build and
+entrypoint, non-editable package install, and service lifecycle steps.
 
 ---
 

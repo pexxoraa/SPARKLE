@@ -86,9 +86,9 @@ sparkle smoke-test --live
 Never report the live test as passed when the credential is absent or the exact
 `SPARKLE_LIVE_OK` response is not observed.
 
-Latest v0.14 pre-publication result on 2026-08-29: 120 tests passed in 21.283
+Latest v0.14 release result on 2026-08-29: 120 local tests passed in 21.283
 seconds. Dashboard JavaScript syntax, Git whitespace, and a fresh offline
 non-editable wheel install plus status and automation check/once/status
-lifecycle also passed. Remote CI evidence is recorded in `RELEASE_REPORT.md`
-only after every required job completes. The corrected v0.13 GitHub CI run #27 remains the
-latest published baseline at this point.
+lifecycle also passed. GitHub CI run #29 (`33287645323`) completed successfully
+on 2026-08-30: Python 3.12, Python 3.13, worker-image, and the installed
+automation-service lifecycle all passed.
