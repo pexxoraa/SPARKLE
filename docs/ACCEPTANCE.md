@@ -18,7 +18,7 @@ means an external dependency is unavailable.
 | Trace environment | PASS | Sequential IDs, redacted execution traces, and separate query-free API audit outcomes/durations tested |
 | Core orchestrator | PASS | Single-agent, tool-loop, failure-trace paths implemented and tested |
 | Context system | PASS | Memory and knowledge retrieval integrated before calls |
-| 16 initial agents | PARTIAL | All route and run; domain-specific evaluation suites are incomplete |
+| 16 initial agents | PARTIAL | A domain matrix verifies all 16 capabilities, instructions, minimum tool boundaries, routing, common safety prompts, deterministic execution, and trace linkage; live-provider response-quality evaluations remain incomplete |
 | Agent Builder deploys new agents | PARTIAL | Approval-gated manifests persist, hot-load, route, replace, and remove agents; autonomous requirements-to-evaluation generation remains incomplete |
 | AI system builder | PARTIAL | Specialist exists; full build/deploy toolchain absent |
 | Application builder | PARTIAL | Approval-gated workspaces, static verification, fixed tests, the signed external-worker loop, and deterministic content-addressed ZIP packaging are tested; target-specific build/deployment adapters remain absent |
@@ -35,8 +35,8 @@ means an external dependency is unavailable.
 | Data tracing works | PASS | Success/tool/failure metadata implemented; trace tests |
 | Motion/presence architecture | PASS | Independent presence engine; physical motion intentionally absent |
 | Multimodal architecture prepared | PASS | `SPARKLE-CONTENT/1` text/image/audio/document contracts flow through API, context, routing, adapters, results, and raw-content-free traces; mixed and failure paths are tested. Live non-text semantic understanding remains a separate provider capability |
-| Tests pass | PASS | 138 local tests pass; v0.15 remote CI is pending publication. Last published v0.14 CI run #29 passed all four jobs |
+| Tests pass | PASS | 145 local tests pass, including dedicated voice/presence contracts and the 16-agent matrix; v0.15 capability CI run #31 passed all four jobs. Phase 33 checkpoint CI is pending |
 | Documentation complete for implementation | PASS | Requested implementation documents present |
 | Installation reproducible | PASS | Python 3.12 core has zero mandatory third-party dependencies |
 | End-to-end workflows | PARTIAL | Deterministic local flows pass; live provider and external actions blocked |
-| Release | PARTIAL | v0.15 implementation and local suite pass; exact-tree publication, fresh wheel gate, and remote four-job CI remain pending. v0.14 stays the latest fully verified remote release |
+| Release | PASS | v0.15 remote commit `61cab3f` has exact tested tree `b7d4365`; CI run #31 passed all four required jobs |

@@ -28,8 +28,7 @@ Date: 2026-08-30 UTC
   identifiers, processing stages, transformations, output modalities, and safe
   execution metadata are recorded without raw input or caller metadata.
 
-Exact-tree GitHub/CI evidence is pending. This section will be updated only
-after those operations actually complete.
+The locally tested release tree is `b7d4365b185ad5c5b8bcad57cf41c1cf4da216e6`.
 
 ## Honest limits
 
@@ -41,7 +40,26 @@ after those operations actually complete.
 
 ## GitHub publication and CI
 
-Result: PENDING — v0.14 remains the latest fully verified remote release.
+Result: PASS — private repository `pexxoraa/SPARKLE` received capability commit
+`61cab3f4cf786276edcc5428b83960355d109448` on `main` by a non-force
+fast-forward. Its tree `b7d4365b185ad5c5b8bcad57cf41c1cf4da216e6`
+exactly matches local tested commit
+`4ff0eafc63d9ef8a969af8c1a5c8def12d8faadc`.
+
+SPARKLE CI run #31 (`33289468321`) completed successfully. All required jobs
+passed: `test (3.12)`, `test (3.13)`, `worker-image`, and
+`automation-service`, including compile/test, worker image build/entrypoint,
+non-editable package installation, and installed service lifecycle steps.
+
+## Phase 33 continuation evidence
+
+After the capability release, four dedicated voice/presence contract tests and
+three data-driven built-in-agent evaluation groups were added. The agent matrix
+checks all 16 agents' domain contracts, routing, tool boundaries, common safety
+prompts, deterministic orchestrator execution, and trace linkage. Focused runs
+passed 4/4 and 3/3; the complete suite passed 145 tests in 22.919 seconds.
+This does not claim real speech I/O or live-provider response quality. The
+checkpoint awaits exact-tree publication and remote CI.
 
 ---
 

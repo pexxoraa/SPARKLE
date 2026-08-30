@@ -85,6 +85,37 @@ adapter, result, and raw-content-free trace flow; fail-closed MiniMax behavior
 before network access; trace-schema migration; and future compatible-adapter
 selection without orchestrator changes.
 
+Voice/presence contract coverage verifies explicit disabled STT/TTS failures,
+provider-neutral deterministic adapter injection, shared-core status, initial
+presence state, and agent/trace-linked presence transitions. These tests do not
+claim hardware I/O or a production speech engine.
+
+Built-in agent evaluation coverage uses a 16-agent domain matrix. It verifies
+each agent's capability, domain instruction, minimum tool boundary,
+unambiguous routing prompt, common evidence guardrails, actual deterministic
+orchestrator execution, and successful trace linkage. This is structural and
+execution evidence; it is not a live-provider response-quality benchmark.
+
+## Phase 33 evidence matrix
+
+| Required category | Executed evidence | Remaining external gap |
+|---|---|---|
+| Unit | Content, security, stores, routing, tools, services, and validators | None for implemented local units |
+| Integration | API, orchestrator/context/model, multimodal, automation, artifact, and worker boundaries | Live provider and deployed external targets |
+| System | Composed system, HTTP server, persisted stores, status, dashboard, and service lifecycle | Production identity/TLS/deployment environment |
+| Agent | All 16 built-ins plus generated-agent persistence, routing, tools, deterministic execution, and traces | Live-provider response-quality evaluation |
+| Model | MiniMax mapping/retry/stream/tool state, registry switching, capability/modality routing, deterministic adapter | Live MiniMax credentialed smoke call |
+| Memory | CRUD, search, archive/restore, structured proactive evidence, and backup | Production retention/encrypted backup policy |
+| Tool | Allowlists, schemas, bounds, approval, confinement, execution, and failure paths | Disabled web/browser/computer adapters |
+| Voice | Disabled failures, adapter injection, and shared-core contract | Real STT/TTS and microphone/speaker hardware |
+| Application | Scaffold, static verification, fixed tests, artifacts, worker protocol/service, API/CLI/dashboard | Target-specific build and deployment adapters |
+| AI system | Single/multi-agent orchestration, tool loop, generated agents, model independence, multimodal transport | Autonomous requirements-to-deployment evaluation |
+| End-to-end | HTTP chat, automations, workspace flows, and client → worker → child unittest → signed result | Live provider, remote isolation, and external actions |
+| Regression | Exact `make check` gate on the full standard-library suite | None for implemented local behavior |
+
+`PASS` in this matrix means an executable local path exists and ran. It does
+not convert an external or hardware-dependent requirement into a pass.
+
 The deterministic adapter avoids provider cost and network flakiness. The live
 smoke test is intentionally separate:
 
@@ -95,11 +126,15 @@ sparkle smoke-test --live
 Never report the live test as passed when the credential is absent or the exact
 `SPARKLE_LIVE_OK` response is not observed.
 
-Latest v0.15 pre-publication result on 2026-08-30: 138 local tests passed in
-22.472 seconds in the final documented rerun after the complete multimodal
-implementation; an earlier complete run passed in 23.005 seconds. Dashboard
-JavaScript syntax and Git whitespace checks passed. A zero-dependency
+Latest Phase 33 continuation result on 2026-08-30: 145 local tests passed in
+22.919 seconds after adding four voice/presence contract cases and three
+data-driven 16-agent evaluation groups. The v0.15 capability release previously
+passed 138 tests in 22.472 seconds; an earlier complete run passed in 23.005
+seconds. Dashboard JavaScript syntax and Git whitespace checks passed. A zero-dependency
 non-editable `0.15.0a1` wheel installed in a fresh virtual environment and
 passed status, mixed-content round trip, legacy serialization, automation
 check/once/status, worker-entrypoint, and mode-0600 configuration checks.
-Remote CI evidence is pending publication.
+GitHub CI run #31 (`33289468321`) passed the 138-test capability tree on Python 3.12 and 3.13,
+the separately deployable worker image build/entrypoint, and the installed
+automation-service lifecycle. Remote CI for the 145-test Phase 33 checkpoint is
+pending publication.
