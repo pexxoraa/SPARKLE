@@ -17,14 +17,20 @@ Date: 2026-08-30 UTC
 - Twelve focused builder/evaluation/API/CLI cases passed before the isolation
   injection boundary case was added. The first complete run then passed 178 of
   179 tests and caught a stale v0.19 version in `BUILD_STATE.md`; the corrected
-  complete suite passed all 179 tests in 22.690 seconds. Dashboard JavaScript
-  syntax and Git whitespace checks passed.
+  complete suite passed all 179 tests in 22.690 seconds. The final exact-tree
+  run passed all 179 tests in 22.564 seconds. Dashboard JavaScript syntax and
+  Git whitespace checks passed.
 - A zero-dependency non-editable `0.20.0a1` wheel installed without an index in
   a fresh virtual environment. Installed blueprint build/evaluate/reload,
   isolated content-free evidence, multimodal round-trip, automation
   check/once/status, worker help, and mode-0600 configuration checks passed.
   Its SHA-256 was
   `a41d689e9fea9cc7eaf16dde4b287aa4d1169351a1a135831140d7e9e505d5f4`.
+- Capability commit `e1e4066671672671ec48d3c2b7f76059c0207427` has exact tree
+  `99db2e28bfaafff456e42b1c8cce1b51b4f7a631`. GitHub CI run #43
+  (`33314903193`) passed Python 3.12, Python 3.13, worker-image, and
+  automation-service jobs. The documentation checkpoint that records this
+  evidence passed all 179 tests in 22.433 seconds.
 
 ## Honest limits
 

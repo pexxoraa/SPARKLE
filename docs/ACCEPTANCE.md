@@ -35,8 +35,8 @@ means an external dependency is unavailable.
 | Data tracing works | PASS | Success/tool/failure metadata implemented; trace tests |
 | Motion/presence architecture | PASS | Independent presence engine; physical motion intentionally absent |
 | Multimodal architecture prepared | PASS | `SPARKLE-CONTENT/1` text/image/audio/document contracts flow through API, context, routing, adapters, results, and raw-content-free traces; mixed and failure paths are tested. Live non-text semantic understanding remains a separate provider capability |
-| Tests pass | PASS | 179 local v0.20 tests pass in 22.690 seconds, including isolated response contracts, strict assertion validation, context/tool refusal, content-free evidence, retention, API, and CLI; v0.20 CI pending |
+| Tests pass | PASS | 179 local v0.20 tests pass in 22.433 seconds, including isolated response contracts, strict assertion validation, context/tool refusal, content-free evidence, retention, API, and CLI; CI run #43 passed Python 3.12/3.13, worker-image, and automation-service jobs |
 | Documentation complete for implementation | PASS | All master-directive documents are present; relative links, version consistency, and required truth fields have executable regression tests |
 | Installation reproducible | PASS | Zero-dependency `0.20.0a1` wheel installed without an index and passed isolated response evaluation/non-disclosure, blueprint reload/routing, multimodal, automation service, worker, and mode-0600 configuration gates |
 | End-to-end workflows | PARTIAL | A cohesive HTTP → context → mixed content → agent/model → trace/presence workflow and worker/automation/application flows pass; live provider and external actions remain blocked |
-| Release | PARTIAL | v0.19 remains the latest four-job CI-verified release; the v0.20 capability passed locally and awaits exact-tree publication and CI |
+| Release | PASS | v0.20 capability commit `e1e4066671672671ec48d3c2b7f76059c0207427` has exact tree `99db2e28bfaafff456e42b1c8cce1b51b4f7a631`; GitHub CI run #43 (`33314903193`) passed all four required jobs |

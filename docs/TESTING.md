@@ -235,10 +235,16 @@ The first v0.20 complete run executed 179 tests: 178 passed and the
 documentation version-consistency contract caught that `BUILD_STATE.md` still
 reported v0.19. The state file was corrected; the failed attempt is preserved
 in `RELEASE_REPORT.md` and is not counted as a passing gate. A corrected
-complete suite passed all 179 tests in 22.690 seconds; dashboard JavaScript
+complete suite passed all 179 tests in 22.690 seconds; a final exact-tree run
+passed all 179 tests in 22.564 seconds. Dashboard JavaScript
 syntax and Git whitespace checks passed. A zero-dependency non-editable
 `0.20.0a1` wheel installed without an index and passed isolated Agent Blueprint
 response evaluation/non-disclosure, blueprint reload/routing, multimodal
 round-trip, automation check/once/status, worker-entrypoint, and mode-0600
 configuration checks. Its SHA-256 was
 `a41d689e9fea9cc7eaf16dde4b287aa4d1169351a1a135831140d7e9e505d5f4`.
+GitHub CI run #43 (`33314903193`) passed the exact v0.20 capability tree
+`99db2e28bfaafff456e42b1c8cce1b51b4f7a631` on Python 3.12 and 3.13, the
+separately deployable worker image build/entrypoint, and the installed
+automation-service lifecycle. After recording that evidence, the resulting
+documentation checkpoint passed all 179 tests in 22.433 seconds.
