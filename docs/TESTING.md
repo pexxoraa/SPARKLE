@@ -192,4 +192,7 @@ seconds; dashboard JavaScript syntax and Git whitespace checks passed.
 A zero-dependency non-editable `0.18.0a1` wheel installed without an index and
 passed installed notification automation/read-state, trace non-disclosure,
 multimodal round trip, automation check/once/status, worker-entrypoint, and
-mode-0600 configuration checks. Publication and CI evidence are pending.
+mode-0600 configuration checks.
+GitHub CI run #39 (`33301375054`) passed the exact v0.18 capability tree on
+Python 3.12 and 3.13, the separately deployable worker image
+build/entrypoint, and the installed automation-service lifecycle.

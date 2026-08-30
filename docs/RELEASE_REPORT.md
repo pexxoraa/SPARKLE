@@ -23,7 +23,17 @@ Date: 2026-08-30 UTC
   worker-entrypoint, and mode-0600 configuration checks. Its SHA-256 was
   `c1df89da337becced79392045737106872435e47f084ac3d1b932778087791c7`.
 
-Publication and CI evidence are pending.
+## GitHub publication and CI
+
+Result: PASS — private repository `pexxoraa/SPARKLE` received capability
+commit `c801e4dbaa55462b50681b33a9e11e8e9c5f26e3` on `main` by a non-force
+fast-forward. Its tree `c15469bc2d537389d51715b103bace63565c5b89`
+exactly matches local tested commit
+`1badcf119b2007ded512fa5b86b5691415e7a5a3`.
+
+SPARKLE CI run #39 (`33301375054`) completed successfully. All required jobs
+passed: `test (3.12)`, `test (3.13)`, `worker-image`, and
+`automation-service`.
 
 ## Honest limits
 

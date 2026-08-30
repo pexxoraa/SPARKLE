@@ -6,12 +6,12 @@ Updated: 2026-08-30 UTC
 |---|---|
 | SPARKLE version | 0.18.0-alpha.1 |
 | Current phase | Continuous improvement after verified Phase 36 release |
-| Current task | Verify and release bounded provider-neutral dashboard notifications |
-| Completed | v0.3-v0.17 private GitHub releases/CI; model abstraction/registry/MiniMax adapter; orchestrator/context/tracing; memory and knowledge lifecycle with backup; 16 built-in agents; persistent generated-agent installation; bounded workspaces/static verification/fixed local tests; signed external-worker client and deployable worker; reproducible approval-gated application artifacts; supervised automation service; bounded dashboard notifications; safe tools; text API/CLI/dashboard; bearer/session/CSRF/origin/rate/audit security; eight bounded proactive rule types; provider-neutral deterministic text/image/audio/document content contracts; dedicated voice/presence contracts; 16-agent matrix; documentation audit; cohesive E2E; v0.17 release/CI plus clean-wheel and 166-test local v0.18 evidence |
-| In progress | v0.18 exact-tree publication and CI verification; external/hardware dependencies remain blocked |
+| Current task | Inspect the remaining gaps after the verified v0.18 release |
+| Completed | v0.3-v0.18 private GitHub releases/CI; model abstraction/registry/MiniMax adapter; orchestrator/context/tracing; memory and knowledge lifecycle with backup; 16 built-in agents; persistent generated-agent installation; bounded workspaces/static verification/fixed local tests; signed external-worker client and deployable worker; reproducible approval-gated application artifacts; supervised automation service; bounded dashboard notifications; safe tools; text API/CLI/dashboard; bearer/session/CSRF/origin/rate/audit security; eight bounded proactive rule types; provider-neutral deterministic text/image/audio/document content contracts; dedicated voice/presence contracts; 16-agent matrix; documentation audit; cohesive E2E; v0.18 clean-wheel, 166-test local, exact-tree publication, and four-job CI evidence |
+| In progress | Remaining-gap inspection; external infrastructure and hardware dependencies remain blocked |
 | Blocked | Real Bubblewrap isolation on this executor (namespace setup denied); named remote worker/TLS target and live hostile-code validation; live MiniMax call (no key in build process); semantic non-text provider mapping; voice hardware; browser/computer runtime adapters; public application deployment target |
-| Failed tests | None in the current 166-test local suite; prior corrected failures remain preserved in the release report |
-| Next action | Publish the exact tree and verify all four CI jobs |
+| Failed tests | None in the current 166-test local suite or CI runs #31-#39; prior corrected failures remain preserved in the release report |
+| Next action | Separate technically implementable work from requirements needing real credentials, hardware, or deployment targets |
 | Estimated directive completion | 87% |
 
 The percentage measures the full long-term directive, not code volume. Agent

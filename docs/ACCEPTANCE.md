@@ -35,8 +35,8 @@ means an external dependency is unavailable.
 | Data tracing works | PASS | Success/tool/failure metadata implemented; trace tests |
 | Motion/presence architecture | PASS | Independent presence engine; physical motion intentionally absent |
 | Multimodal architecture prepared | PASS | `SPARKLE-CONTENT/1` text/image/audio/document contracts flow through API, context, routing, adapters, results, and raw-content-free traces; mixed and failure paths are tested. Live non-text semantic understanding remains a separate provider capability |
-| Tests pass | PASS | 166 local v0.18 tests pass, including notification validation, retention, dedupe refresh, API/UI/read state, conditional delivery, and trace non-disclosure; remote v0.18 CI is pending |
+| Tests pass | PASS | 166 local v0.18 tests pass, including notification validation, retention, dedupe refresh, API/UI/read state, conditional delivery, and trace non-disclosure; CI run #39 passed all four jobs |
 | Documentation complete for implementation | PASS | All master-directive documents are present; relative links, version consistency, and required truth fields have executable regression tests |
 | Installation reproducible | PASS | Python 3.12 core has zero mandatory third-party dependencies |
 | End-to-end workflows | PARTIAL | A cohesive HTTP → context → mixed content → agent/model → trace/presence workflow and worker/automation/application flows pass; live provider and external actions remain blocked |
-| Release | PARTIAL | v0.17 capability `e737c62`/`97dba5c` passed CI #37; v0.18 notification work is not yet published |
+| Release | PASS | v0.18 capability `c801e4d`/`c15469b` is on `main` and passed all four jobs in CI run #39 |
