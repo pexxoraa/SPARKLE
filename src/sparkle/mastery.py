@@ -4,7 +4,7 @@ import json
 import hashlib
 import re
 import sqlite3
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -104,7 +104,10 @@ class SkillMasteryStore(SQLiteStore):
             ) from exc
         if parsed.tzinfo is None:
             raise ValueError("Skill occurred_at must include a timezone")
-        return parsed.astimezone(UTC).isoformat()
+        normalized = parsed.astimezone(UTC)
+        if normalized > datetime.now(UTC) + timedelta(minutes=5):
+            raise ValueError("Skill occurred_at cannot be in the future")
+        return normalized.isoformat()
 
     @classmethod
     def validate(cls, value: Any) -> dict[str, Any]:
@@ -304,10 +307,19 @@ class SkillMasteryStore(SQLiteStore):
 
     def add_evidence(self, manifest: dict[str, Any]) -> dict[str, Any]:
         evidence = self.validate_evidence(manifest)
-        current = self.get(evidence["skill_name"])
-        if current["archived"]:
-            raise ValueError("Archived skills cannot receive evidence")
         with self.connect() as connection:
+            # Serialize the active-state, count, insert, and derived-level update.
+            # Without one immediate transaction, a concurrent archive or evidence
+            # insertion could cross the checked boundary before the write.
+            connection.execute("BEGIN IMMEDIATE")
+            skill = connection.execute(
+                "SELECT archived FROM skills WHERE name=?",
+                (evidence["skill_name"],),
+            ).fetchone()
+            if skill is None:
+                raise KeyError(f"Unknown skill: {evidence['skill_name']}")
+            if bool(skill["archived"]):
+                raise ValueError("Archived skills cannot receive evidence")
             count = connection.execute(
                 "SELECT COUNT(*) FROM skill_evidence WHERE skill_name=?",
                 (evidence["skill_name"],),
@@ -337,10 +349,12 @@ class SkillMasteryStore(SQLiteStore):
                 (evidence["skill_name"],),
             ).fetchall()
             level = self._level([self._evidence(row) for row in rows])
-            connection.execute("""
+            updated = connection.execute("""
                 UPDATE skills SET current_level=?, version=version+1,
                     updated_at=? WHERE name=? AND archived=0
             """, (level, utc_now(), evidence["skill_name"]))
+            if updated.rowcount != 1:
+                raise ValueError("Skill changed while evidence was added")
             evidence_id = cursor.lastrowid
         return {
             "evidence": self.evidence_by_id(int(evidence_id)),
@@ -392,6 +406,8 @@ class SkillMasteryStore(SQLiteStore):
         verified = [item for item in values if item["verified"]]
         current_level = self._level(values)
         return {
+            "current_level": current_level,
+            "current_level_name": self.LEVEL_NAMES[current_level],
             "total_evidence_count": len(values),
             "verified_evidence_count": len(verified),
             "evidence_types": sorted({

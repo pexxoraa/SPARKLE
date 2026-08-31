@@ -302,11 +302,15 @@ multimodal round-trip, automation check/once/status, worker-entrypoint, and
 mode-0600 configuration checks. Its SHA-256 was
 `ce44e407b9e281dec6e61c4c3c85e22968475949a3f7c1ea6aa251e89b793d14`.
 
-The v0.23 evidence-derived skill increment added 11 mastery, CLI, and API cases
+The v0.23 evidence-derived skill increment added mastery, CLI, and API cases
 plus dashboard, agent-tool, proactive, automation, documentation, and prior-
-capability regressions. Nine focused mastery cases passed. The adjacent 53-test
-suite passed in 12.193 seconds, and the complete suite passed all 205 tests in
-28.498 seconds. Dashboard JavaScript syntax and Git whitespace checks passed.
+capability regressions. Final hardening added future-evidence rejection and one
+immediate transaction around active-state checking, bound enforcement,
+insertion, and level recomputation. Ten focused mastery cases pass. The
+hardened focused integration set passed 16 tests in 0.836 seconds, the adjacent
+suite passed 75 tests in 13.024 seconds, and the complete suite passed all 206
+tests in 28.122 seconds. Dashboard JavaScript syntax and Git whitespace checks
+passed.
 
 The first fresh no-index `0.23.0a1` wheel built and installed, but its smoke
 used an invalid multimodal envelope fixture and is recorded as failed even
@@ -315,3 +319,8 @@ Installed mastery create/evidence/reload/search, duplicate rejection,
 proactive non-disclosure, multimodal canonical round-trip, worker help, and
 automation-service checks passed. The corrected wheel SHA-256 was
 `a24c71033c316c8fae274ac705b134e08678bf7a2af379b2cf952c856a0410a6`.
+A subsequent fresh no-index wheel containing the final hardening installed and
+passed installed mastery create/evidence/reload/read-only search, proactive
+non-disclosure, version/status, mode-0600 configuration, automation
+check/once/status, and worker-entrypoint gates. Its SHA-256 was
+`43e225a2af529754067f0ebc14f181f992f4b8d45b447e6f0f6b22e6671dd1d8`.

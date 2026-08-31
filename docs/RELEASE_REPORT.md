@@ -10,15 +10,20 @@ Date: 2026-08-31 UTC
   evidence, and average score; no interface can write the current level.
 - Canonical evidence digests reject exact replay. Review found and closed this
   integrity gap before broad regression; it did not produce a failed test run.
-- Nine focused mastery cases pass: promotion through level 6, unverified
+- Ten focused mastery cases pass: promotion through level 6, unverified
   evidence exclusion, duplicate rejection, validation, timezone normalization,
-  active/evidence bounds, optimistic metadata/archive behavior, least-
-  privilege agent reads, content-free proactive evidence, and matching
-  conditional-notification execution.
-- The final adjacent mastery/automation/CLI/API/dashboard/documentation suite
-  passed all 53 tests in 12.193 seconds. The complete suite passed all 205
-  tests in 28.498 seconds; dashboard JavaScript syntax and Git whitespace
-  checks passed.
+  future-evidence rejection, active/evidence bounds, optimistic
+  metadata/archive behavior, least-privilege agent reads, content-free
+  proactive evidence, and matching conditional-notification execution.
+- Final review placed active-state checking, evidence-bound enforcement,
+  insertion, and level recomputation in one immediate transaction so a
+  concurrent archive or append cannot cross a checked boundary. Read results
+  recompute the public level from evidence, and occurrence times more than five
+  minutes in the future fail before persistence.
+- The hardened focused mastery/CLI/API/documentation set passed all 16 tests in
+  0.836 seconds. The adjacent storage/automation/agent/CLI/API/system set passed
+  all 75 tests in 13.024 seconds. The complete suite passed all 206 tests in
+  28.122 seconds; dashboard JavaScript syntax and Git whitespace checks passed.
 - The first fresh no-index wheel built and installed, and its mastery checks
   passed, but the combined smoke then supplied an unsupported envelope-level
   `metadata` field to the multimodal fixture. Because that shell did not fail
@@ -28,6 +33,12 @@ Date: 2026-08-31 UTC
   proactive non-disclosure, multimodal canonical round-trip, worker help, and
   automation-service checks passed. The corrected wheel SHA-256 was
   `a24c71033c316c8fae274ac705b134e08678bf7a2af379b2cf952c856a0410a6`.
+- A subsequent fresh no-index wheel containing the final transactional and
+  future-evidence safeguards installed as `0.23.0a1`. Installed
+  create/evidence/reload/read-only-agent-search, proactive non-disclosure,
+  version/status, mode-0600 configuration, automation check/once/status, and
+  worker entrypoint gates passed. Its SHA-256 was
+  `43e225a2af529754067f0ebc14f181f992f4b8d45b447e6f0f6b22e6671dd1d8`.
 
 ## Honest limits
 

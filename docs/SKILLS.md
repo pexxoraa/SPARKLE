@@ -11,7 +11,8 @@ Evidence types are exactly `question`, `exercise`, `test`, `project`,
 `implementation`, and `independent_problem_solving`. Each item has an integer
 score from 0–100, an explicit verification flag, a bounded summary, optional
 artifact reference, and a timezone-aware occurrence time. Unverified evidence
-is retained but never contributes to level or average score.
+is retained but never contributes to level or average score. Occurrence times
+more than five minutes in the future are rejected before persistence.
 
 | Level | Name | Minimum verified evidence |
 |---:|---|---|
@@ -31,6 +32,8 @@ cannot be replayed to inflate mastery.
 ## Boundaries
 
 - At most 1,000 active skills and 100 evidence items per skill.
+- Active-state checking, the evidence bound, insertion, and level recomputation
+  execute in one immediate database transaction.
 - Skill identifiers, manifests, timestamps, scores, flags, and update versions
   fail closed on invalid input.
 - Metadata updates use optimistic version checks. The derived current level is

@@ -184,6 +184,16 @@ class SkillMasteryStoreTests(unittest.TestCase):
         with self.assertRaises(KeyError):
             self.store.evidence_by_id(999)
 
+    def test_future_evidence_is_rejected_before_persistence(self):
+        self.store.create(skill_manifest())
+        future = evidence()
+        future["occurred_at"] = "2999-01-01T00:00:00Z"
+        with self.assertRaisesRegex(ValueError, "cannot be in the future"):
+            self.store.add_evidence(future)
+        skill = self.store.get("python")
+        self.assertEqual(skill["current_level"], 0)
+        self.assertEqual(skill["total_evidence_count"], 0)
+
     def test_skill_tool_is_read_only_and_least_privileged(self):
         self.store.create(skill_manifest())
         self.store.add_evidence(evidence())
