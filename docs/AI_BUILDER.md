@@ -279,9 +279,10 @@ The following output fields preserve that boundary:
 }
 ```
 
-Natural-language conversion is locally verified with deterministic injected
-adapters, and implementation-plan derivation is deterministic and provider
-neutral. Live MiniMax conversion, semantic fidelity of the resulting draft,
-human review completion, generated implementation code, runtime semantic
-evaluation, provider-specific multimodal mapping, and real deployment remain
-incomplete.
+Natural-language conversion and bounded candidate generation are locally
+verified with deterministic injected adapters; implementation-plan derivation
+is deterministic and provider neutral. Runtime-evaluation contracts and the
+authenticated worker boundary have deterministic integration evidence. Live
+MiniMax conversion, semantic fidelity of generated content, an actual human
+review, a named isolated-worker evaluation, provider-specific multimodal
+mapping, production promotion, and real deployment remain incomplete.

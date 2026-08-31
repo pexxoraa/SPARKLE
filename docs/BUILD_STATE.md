@@ -48,10 +48,11 @@ materialization writes only the plan manifest and content-free evidence. The
 complete local suite passes 219/219 and a fresh installed wheel passes, but
 human review, source generation, runtime evaluation, and deployment remain
 unexecuted. The completion estimate therefore remains 93%.
-Local v0.25 capability commit
+At the original v0.25 checkpoint, local capability commit
 `2b98f25468a48bed992fb30fc187288f0de63705` has tree
 `a74ff1148a00f543ca923ebffaa6258ab70b5ca3`; it is not published and has no
-remote CI evidence.
+remote CI evidence under that original SHA. Its content was later replayed and
+published through the reconciled lineage recorded above.
 
 The v0.26 Source Candidate boundary consumes only an explicitly reviewed,
 materialized implementation plan. A separate provider disclosure must be
@@ -60,8 +61,10 @@ plan-path-confined JSON written under `candidate_environment`, never the
 application or production tree. Generated, human-reviewed, statically
 verified, and approved are distinct states. Static verification parses and
 scans source without importing it or claiming runtime correctness. Completion
-remains 93% because runtime evaluation, source promotion, isolated execution,
-deployment, live MiniMax evidence, and remote publication remain incomplete.
+remained 93% at that checkpoint because runtime evaluation, source promotion,
+isolated execution, deployment, live MiniMax evidence, and remote publication
+were incomplete. Runtime-evaluation contracts and remote publication were
+added later; the other limitations remain.
 
 The v0.27 Runtime Evaluation boundary accepts only an approved candidate and
 exact matching plan ID. Approved declarative contracts create unique evaluation
