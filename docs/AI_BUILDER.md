@@ -6,11 +6,14 @@ requirements into a deterministic architecture manifest and, with explicit
 operator approval, materializes a two-file application workspace.
 
 The Blueprint boundary itself composes existing registries and stores without
-calling a model. v0.24 adds a separate approval-gated
+calling a model. v0.24 added a separate approval-gated
 `SPARKLE-AI-SYSTEM-DRAFT/1` boundary that can ask the configured model router
 to convert bounded natural language into the exact structured contract. It
 does not generate source code, run semantic evaluations, or perform deployment.
-Those claims remain explicitly false.
+v0.25 adds deterministic `SPARKLE-AI-SYSTEM-IMPLEMENTATION-PLAN/1` derivation
+from a revalidated Blueprint. The plan is human-reviewable and can be
+materialized separately, but source generation and every execution claim
+remain explicitly false.
 
 ## Requirements contract
 
@@ -118,6 +121,43 @@ are rejected before the draft is returned. Successful output includes the
 generated structured requirements and the independently prepared Blueprint;
 it does not materialize a workspace.
 
+## Implementation planning
+
+Create a non-mutating deterministic implementation plan from the same exact
+structured requirements:
+
+```bash
+sparkle ai-system-plan requirements.json
+```
+
+Materialize only the plan manifest with separate explicit approval:
+
+```bash
+sparkle ai-system-plan-build requirements.json --approve
+```
+
+Equivalent authenticated HTTP endpoints are:
+
+- `POST /api/ai-systems/plan`
+- `POST /api/ai-systems/plan/build`
+- `GET /api/ai-system-plans`
+
+The planner re-runs the complete Blueprint validator. It removes resolved
+provider/model identities from its architecture inputs and retains only
+capability and modality requirements, selected agents/tools/environments, and
+interfaces. It deterministically proposes confined unique Python interface and
+evaluation paths, then orders contract review, core composition, interface
+adapters, evaluation harness, and release review with explicit dependencies and
+acceptance gates.
+
+Preparation changes no workspace or evidence store. Approved materialization
+adds only `SPARKLE_IMPLEMENTATION_PLAN.json` to the bounded application
+workspace with overwrite disabled. It can coexist with the Blueprint's
+`README.md` and `SPARKLE_AI_SYSTEM.json`. The proposed source and test paths are
+plan records only; they are not written. Materialization approval is permission
+to write the plan, not evidence that a human completed review or approved
+future source generation.
+
 ## Evidence and persistence
 
 Blueprint attempts are stored separately in
@@ -133,6 +173,14 @@ response digest/length, bounded provider/model labels, trace ID, and safe error
 type. Natural-language input and generated JSON are not persisted in the draft
 store. The trace uses a generic evaluation summary and does not store raw input
 or output.
+
+Implementation-plan attempts are stored separately in
+`data_environment/ai_system_implementation_plans.sqlite3`, retaining the latest
+1,000 attempts and returning at most 100. Evidence contains only system name,
+Blueprint and plan-body digests, plan byte count, status, workspace build ID,
+timestamps, and safe error type. Purpose, workflow, criteria, plan content, and
+source are excluded. The plan digest scope is the canonical plan before its
+`plan_sha256` field is added, avoiding a self-referential digest.
 
 Static checks prove requirements shape, model capability/modality routing,
 agent and tool references, agent tool access, environment separation,
@@ -151,6 +199,8 @@ The following output fields preserve that boundary:
 ```
 
 Natural-language conversion is locally verified with deterministic injected
-adapters. Live MiniMax conversion, semantic fidelity of the resulting draft,
-generated implementation code, runtime semantic evaluation, provider-specific
-multimodal mapping, and real deployment remain incomplete.
+adapters, and implementation-plan derivation is deterministic and provider
+neutral. Live MiniMax conversion, semantic fidelity of the resulting draft,
+human review completion, generated implementation code, runtime semantic
+evaluation, provider-specific multimodal mapping, and real deployment remain
+incomplete.

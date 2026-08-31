@@ -75,6 +75,14 @@ registry-backed Blueprint validation → content-free evidence and trace linkage
 The draft store contains no prompt or generated JSON, and the trace summary is
 generic. A valid draft is returned for review but does not materialize files.
 
+AI-system implementation planning follows exact requirements → complete
+Blueprint revalidation → provider-identity-free architecture inputs → bounded
+unique proposed paths → ordered work/evaluation/release gates → non-mutating
+review output. A separate approval can write only the canonical plan manifest
+to the bounded application workspace. Evidence retains digests, byte count,
+status, workspace link, timestamps, and safe error type; proposed source and
+test files are not generated or executed.
+
 Artifact packaging follows approval → confined workspace selection → stable
 no-follow regular-file reads → portable path and size checks → per-file/source
 digests → deterministic ZIP and embedded manifest → immutable target integrity

@@ -84,6 +84,17 @@ def build_parser() -> argparse.ArgumentParser:
     )
     ai_system_build.add_argument("requirements")
     ai_system_build.add_argument("--approve", action="store_true")
+    ai_system_plan = sub.add_parser(
+        "ai-system-plan",
+        help="Derive a deterministic human-reviewable implementation plan",
+    )
+    ai_system_plan.add_argument("requirements")
+    ai_system_plan_build = sub.add_parser(
+        "ai-system-plan-build",
+        help="Materialize an approved AI system implementation plan",
+    )
+    ai_system_plan_build.add_argument("requirements")
+    ai_system_plan_build.add_argument("--approve", action="store_true")
     project_create = sub.add_parser(
         "project-create", help="Create a validated structured project record",
     )
@@ -295,6 +306,22 @@ def main(argv: list[str] | None = None) -> int:
         _print({
             "ok": True,
             "blueprint": system.ai_system_builder.build(
+                requirements, approved=bool(args.approve),
+            ),
+        })
+        return 0
+    if args.command == "ai-system-plan":
+        requirements = _load_manifest(args.requirements)
+        _print({
+            "ok": True,
+            "implementation_plan": system.ai_system_planner.prepare(requirements),
+        })
+        return 0
+    if args.command == "ai-system-plan-build":
+        requirements = _load_manifest(args.requirements)
+        _print({
+            "ok": True,
+            "implementation_plan": system.ai_system_planner.materialize(
                 requirements, approved=bool(args.approve),
             ),
         })

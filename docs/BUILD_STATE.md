@@ -4,14 +4,14 @@ Updated: 2026-08-31 UTC
 
 | Field | State |
 |---|---|
-| SPARKLE version | 0.24.0-alpha.1 |
-| Current phase | Continuous improvement — Phase 15/21 AI-system requirements compilation |
-| Current task | Implement the first bounded reviewed draft-to-implementation planning increment without claiming source generation, runtime evaluation, deployment, or remote publication |
+| SPARKLE version | 0.25.0-alpha.1 |
+| Current phase | Continuous improvement — Phase 16/21 AI-system implementation planning |
+| Current task | Preserve the verified local v0.25 implementation-plan checkpoint and prepare the next bounded source-candidate generation boundary without claiming execution or remote publication |
 | Completed | v0.3-v0.22 capability releases and four-job CI; v0.23 capability publication and four-job CI; model abstraction/registry/MiniMax adapter; orchestrator/context/tracing; memory and knowledge lifecycle with backup; 16 built-in agents; persistent generated-agent installation; bounded structured Agent Blueprint generation/static routing evaluation/approval/rollback; isolated response-contract evaluation with bounded content-free evidence; provider-neutral AI System Blueprints; approval-gated `SPARKLE-AI-SYSTEM-DRAFT/1` natural-language conversion through the model router with isolated no-context/no-tool execution, exact duplicate-free JSON and full Blueprint revalidation, bounded content-free evidence, API/CLI/status/dashboard integration, and deterministic adapter tests; `SPARKLE-PROJECT/1` strict project lifecycle and evidence; `SPARKLE-SKILL/1` strict targets/evidence types/transactional derived levels/duplicate and future-evidence protection/optimistic metadata/archive/content-free proactive and least-privilege agent reads/API/CLI/status/dashboard integration; bounded workspaces/static verification/fixed local tests; signed external-worker client and deployable worker; reproducible approval-gated application artifacts; supervised automation service; bounded dashboard notifications; safe tools; text API/CLI/dashboard; bearer/session/CSRF/origin/rate/audit security; provider-neutral deterministic text/image/audio/document content contracts; dedicated voice/presence contracts; 16-agent matrix; documentation audit; cohesive E2E |
-| In progress | Reconciled local v0.24 passes all 213 official tests and a fresh no-index installed-wheel gate. Private GitHub `main` remains at the v0.23 capability commit; v0.23 post-CI hardening and v0.24 have not been published or run in remote CI. The next unblocked implementation-planning boundary is under development |
+| In progress | Local v0.25 passes all 219 official tests and a fresh no-index installed-wheel plan-only gate. Private GitHub `main` remains at the v0.23 capability commit; later local commits have not been published or run in remote CI. Bounded source-candidate generation with independent human review/static verification is the next unblocked implementation boundary |
 | Blocked | Real Bubblewrap isolation on this executor (namespace setup denied); named remote worker/TLS target and live hostile-code validation; live MiniMax call (no key in build process); semantic non-text provider mapping; voice hardware; browser/computer runtime adapters; public application deployment target |
 | Failed tests | The first two focused commands did not execute the new cases because the worktree had no `.venv` and then lacked `PYTHONPATH=src`. The first executed six-case draft run produced five setup errors because its test adapter omitted `health()`; after adding it, one case failed on an invalid memory-category fixture. Corrected focused/adjacent/full runs pass. Four earlier wheel harness attempts stopped on a missing build entrypoint, rejected network-capable invocation, wrong wheel filename matcher, and wrong automation executable name. The first reconciliation wheel smoke used a nonexistent singular model-status key and stopped after install; a new fresh corrected gate passes. No v0.24 product assertion has failed. Historical failures remain in the release report |
-| Next action | Implement, test, and document a provider-neutral, human-reviewable implementation plan derived from a statically verified AI System Blueprint. Remote publication remains a separate approval-gated action |
+| Next action | Define a bounded provider-neutral source-candidate protocol that consumes an approved plan, requires separate disclosure/generation approval, writes nothing before review, and cannot claim tests or deployment. Remote publication remains a separate approval-gated action |
 | Estimated directive completion | 93% |
 
 Release-state reconciliation confirmed local v0.24 implementation at commit
@@ -21,6 +21,14 @@ aligned runtime version markers, and added a cross-surface regression contract.
 The reconciled source passed 213/213 official tests and a fresh installed-wheel
 gate. This is local evidence only: private GitHub `main` remains at
 `78032c1fbbaeab7253421f8cdde6e70da5d6f97c`, and no v0.24 remote CI exists.
+
+The v0.25 Implementation Plan boundary revalidates the Blueprint and derives a
+deterministic provider-neutral plan with confined proposed paths, ordered work
+dependencies, evaluation contracts, and release gates. Approved
+materialization writes only the plan manifest and content-free evidence. The
+complete local suite passes 219/219 and a fresh installed wheel passes, but
+human review, source generation, runtime evaluation, and deployment remain
+unexecuted. The completion estimate therefore remains 93%.
 
 The percentage measures the full long-term directive, not code volume. Agent
 specifications are operational through the common orchestrator. Structured

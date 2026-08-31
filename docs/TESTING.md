@@ -359,3 +359,14 @@ A new fresh fail-fast no-index gate passed version/status, draft protocol,
 credential-absence, worker entrypoint, and automation-service checks. Its
 SHA-256 was
 `560a647978d36e796c93bdb57c2ffe879a1e3c1111a09173bc8fa75a83f45be6`.
+
+The v0.25 AI System Implementation Plan increment added five focused
+planner/store/CLI cases and one authenticated API integration case. The
+focused planner/Blueprint/draft/API/documentation set passed all 21 tests in
+6.724 seconds. The complete official suite passed all 219 tests in 29.397
+seconds; dashboard JavaScript syntax and Git whitespace checks passed. A fresh
+zero-dependency `0.25.0a1` wheel installed without an index and passed
+deterministic plan preparation, approval-gated plan-only materialization,
+version/status, no-source assertions, worker help, and automation-service
+configuration. Its SHA-256 was
+`76b0ac4d3776be18790f4120f09a1e717bb08bef015bbd8d9d09274c66a6bac0`.

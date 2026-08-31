@@ -1,3 +1,50 @@
+# 0.25.0-alpha.1 verification report
+
+Date: 2026-08-31 UTC
+
+## Executed evidence
+
+- `SPARKLE-AI-SYSTEM-IMPLEMENTATION-PLAN/1` revalidates exact structured AI
+  system requirements through the existing Blueprint builder, then derives a
+  deterministic provider-neutral plan without calling a model.
+- Plans contain capability/modality requirements rather than provider or model
+  identities, bounded unique proposed source/evaluation paths, an ordered
+  acyclic work sequence, declared evaluation contracts, and an explicitly
+  unverified deployment review.
+- Preparation is non-mutating. Separate approval permits only the canonical
+  `SPARKLE_IMPLEMENTATION_PLAN.json` manifest to be added to the bounded
+  application workspace with overwrite protection. No proposed source or test
+  file is generated.
+- The separate evidence store retains the latest 1,000 attempts and returns at
+  most 100. It contains system name, Blueprint/plan digests, plan size, status,
+  workspace build link, timestamps, and safe error type—not purpose, workflow,
+  criteria, plan content, or source.
+- Five focused planner/store/CLI cases and an authenticated API integration
+  case cover deterministic preparation, provider neutrality, path uniqueness,
+  digest scope, approval, plan-only materialization into an existing Blueprint
+  workspace, content-free evidence, invalid input, duplicate refusal,
+  retention, API/CLI, system status, and dashboard integration.
+- The focused planner/Blueprint/draft/API/documentation set passed all 21 tests
+  in 6.724 seconds. The complete official gate passed all 219 tests in 29.397
+  seconds; dashboard JavaScript syntax and Git whitespace checks passed.
+- A fresh zero-dependency `0.25.0a1` wheel built and installed without an
+  index. Installed deterministic preparation and approved materialization
+  produced only `SPARKLE_IMPLEMENTATION_PLAN.json`, left every generated-source
+  and execution claim false, created no source directory, updated status, and
+  passed worker and automation-service entrypoint checks. Its SHA-256 is
+  `76b0ac4d3776be18790f4120f09a1e717bb08bef015bbd8d9d09274c66a6bac0`.
+
+## Honest limits
+
+- The plan is a statically derived proposal that still requires human review.
+  Materializing it does not mark review complete or approve later generation.
+- No implementation source or executable test is generated. No runtime
+  evaluation, package installation, external worker job, or deployment runs.
+- Live MiniMax semantic verification and remote v0.25 publication/CI have not
+  occurred. Completion remains 93%.
+
+---
+
 # 0.24.0-alpha.1 verification report
 
 Date: 2026-08-31 UTC

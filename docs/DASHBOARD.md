@@ -6,7 +6,8 @@ Implemented panels:
 
 - Command console with normal or multi-agent execution.
 - System state, active model, storage counts, voice state, and agents.
-- AI System Blueprint and content-free natural-language draft attempt counts.
+- AI System Blueprint, content-free natural-language draft attempt, and
+  content-free implementation-plan materialization counts.
 - Durable memory records.
 - Read-only evidence-derived skill levels, targets, counts, and averages.
 - Evidence-backed proactive alerts and automation execution history.

@@ -8,6 +8,10 @@ from sparkle.agent_builder import AgentBlueprintBuilder, AgentBlueprintStore
 from sparkle.agent_evaluation import AgentEvaluationStore, AgentResponseEvaluator
 from sparkle.ai_system_builder import AISystemBlueprintBuilder, AISystemBlueprintStore
 from sparkle.ai_system_draft import AISystemDraftStore, AISystemRequirementsCompiler
+from sparkle.ai_system_plan import (
+    AISystemImplementationPlanner,
+    AISystemImplementationPlanStore,
+)
 from sparkle.artifacts import ArtifactManager
 from sparkle.automation import AutomationRunner, AutomationStore, ProactiveEngine
 from sparkle.builders import WorkspaceManager
@@ -145,6 +149,12 @@ class SparkleSystem:
             self.workspaces,
             self.ai_system_blueprints,
         )
+        self.ai_system_implementation_plans = AISystemImplementationPlanStore()
+        self.ai_system_planner = AISystemImplementationPlanner(
+            self.ai_system_builder,
+            self.workspaces,
+            self.ai_system_implementation_plans,
+        )
         self.tools.register(AgentInstallTool(self.agents))
         self.agent_router = AgentRouter(self.agents)
         self.orchestrator = Orchestrator(
@@ -177,7 +187,7 @@ class SparkleSystem:
         models = self.models.list()
         return {
             "name": "SPARKLE",
-            "version": "0.24.0-alpha.1",
+            "version": "0.25.0-alpha.1",
             "status": "ready" if any(model["configured"] for model in models) else "limited",
             "active_model": self.models.active_id,
             "models": models,
@@ -197,6 +207,12 @@ class SparkleSystem:
                 "protocol_version": self.ai_system_builder.PROTOCOL,
                 "drafts": len(self.ai_system_drafts.list(limit=100)),
                 "draft_protocol_version": self.ai_system_compiler.PROTOCOL,
+                "implementation_plans": len(
+                    self.ai_system_implementation_plans.list(limit=100)
+                ),
+                "implementation_plan_protocol_version": (
+                    self.ai_system_planner.PROTOCOL
+                ),
             },
             "tools": self.tools.status(),
             "api_security": {

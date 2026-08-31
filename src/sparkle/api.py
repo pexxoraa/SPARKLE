@@ -29,7 +29,7 @@ MAX_MULTIMODAL_BODY_BYTES = 12_000_000
 class SparkleHandler(BaseHTTPRequestHandler):
     system: SparkleSystem
     dashboard_root = Path(__file__).with_name("dashboard")
-    server_version = "SPARKLE/0.24"
+    server_version = "SPARKLE/0.25"
 
     def log_message(self, format: str, *args: object) -> None:
         # Avoid request bodies, headers, query values, and secrets in logs.
@@ -313,6 +313,15 @@ class SparkleHandler(BaseHTTPRequestHandler):
                     limit=int(query.get("limit", [50])[0])
                 ),
             })
+        if parsed.path == "/api/ai-system-plans":
+            return self._json({
+                "protocol_version": self.system.ai_system_planner.PROTOCOL,
+                "implementation_plans": (
+                    self.system.ai_system_implementation_plans.list(
+                        limit=int(query.get("limit", [50])[0])
+                    )
+                ),
+            })
         if parsed.path == "/api/memory":
             return self._json({"memories": self.system.memory.search(query.get("q", [""])[0], limit=int(query.get("limit", [20])[0]))})
         if parsed.path == "/api/knowledge/search":
@@ -587,6 +596,25 @@ class SparkleHandler(BaseHTTPRequestHandler):
                 )
                 return self._json({
                     "ok": True, "blueprint": blueprint,
+                }, 201)
+            if self.path == "/api/ai-systems/plan":
+                if set(data) != {"requirements"}:
+                    raise ValueError("AI system plan accepts only requirements")
+                plan = self.system.ai_system_planner.prepare(data["requirements"])
+                return self._json({
+                    "ok": True, "implementation_plan": plan,
+                })
+            if self.path == "/api/ai-systems/plan/build":
+                if set(data) - {"requirements", "approved"}:
+                    raise ValueError(
+                        "AI system plan build fields are unsupported"
+                    )
+                plan = self.system.ai_system_planner.materialize(
+                    data.get("requirements"),
+                    approved=data.get("approved") is True,
+                )
+                return self._json({
+                    "ok": True, "implementation_plan": plan,
                 }, 201)
             if self.path == "/api/agents/remove":
                 if data.get("approved") is not True:

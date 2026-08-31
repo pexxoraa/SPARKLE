@@ -16,6 +16,9 @@
 11. Natural-language builder conversion requires explicit provider-disclosure
     approval, isolated no-context/no-tool execution, and deterministic schema
     validation before any downstream materialization.
+12. Implementation planning revalidates the provider-neutral Blueprint and
+    keeps plan materialization, source generation, runtime evaluation, and
+    deployment as separate approval and evidence boundaries.
 
 ## Foundation release requirements
 

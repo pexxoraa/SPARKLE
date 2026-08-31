@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.25.0-alpha.1 - 2026-08-31
+
+- Added deterministic `SPARKLE-AI-SYSTEM-IMPLEMENTATION-PLAN/1` derivation from
+  fully revalidated AI System Blueprints.
+- Added provider-neutral architecture inputs, bounded unique proposed paths,
+  ordered work and release gates, evaluation/deployment review plans, explicit
+  human-review state, approval-gated plan-only workspace materialization,
+  content-free evidence, API, CLI, status, and dashboard integration.
+- Kept source generation, human review completion, runtime evaluation,
+  external deployment, live-provider verification, and remote CI explicitly
+  unexecuted or unverified.
+
 ## 0.24.0-alpha.1 - 2026-08-31
 
 - Added approval-gated `SPARKLE-AI-SYSTEM-DRAFT/1` conversion from bounded

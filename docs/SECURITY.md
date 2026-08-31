@@ -17,6 +17,12 @@
   exact duplicate-free JSON plus complete Blueprint validation, and persists
   only bounded content-free evidence. Provider semantic fidelity is not
   inferred from schema success.
+- AI-system implementation planning revalidates the Blueprint, emits only
+  deterministic confined proposed paths, and requires separate approval before
+  writing the plan manifest. The write uses the bounded workspace manager with
+  overwrite protection. Evidence excludes plan content, purpose, workflow,
+  criteria, and source. Plan materialization does not approve or execute source
+  generation, testing, external-worker submission, or deployment.
 - Application scaffolding requires explicit approval, confines every path to a
   dedicated application root, rejects traversal and symlinks, enforces file and
   manifest size limits, and protects existing files by default.

@@ -62,6 +62,13 @@ the existing model router using the isolated no-context/no-tool profile. Its
 output must pass exact JSON parsing and the full Blueprint validator. A
 separate evidence store receives only lengths, a digest, bounded execution
 labels, trace linkage, status, and safe error type—not prompt or response text.
+The AI System Implementation Planner is a separate deterministic composition
+over the Blueprint builder and bounded workspace manager. It revalidates the
+Blueprint, removes provider identities from plan inputs, derives confined
+proposed source/evaluation paths and ordered review gates, and can materialize
+only a canonical plan manifest after approval. Its independent evidence store
+contains digests and bounded outcomes, not the plan or source. It does not call
+a model, generate proposed files, execute tests, or deploy a target.
 An independent artifact manager reads bounded application workspaces and emits
 deterministic content-addressed ZIPs; it never starts an executable.
 The automation service is another independent entrypoint over the existing
@@ -101,6 +108,7 @@ and orchestration do not depend on cookie or browser implementation details.
 - `var/data_environment/agent_evaluations.sqlite3`
 - `var/data_environment/ai_system_blueprints.sqlite3`
 - `var/data_environment/ai_system_drafts.sqlite3`
+- `var/data_environment/ai_system_implementation_plans.sqlite3`
 - `var/data_environment/projects.sqlite3`
 - `var/data_environment/skills.sqlite3`
 - `var/data_environment/automation-service.lock`

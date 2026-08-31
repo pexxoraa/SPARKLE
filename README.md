@@ -7,7 +7,7 @@ registry, provider adapters, specialist agents, persistent memory, a separate
 knowledge index, execution traces, automations, proactive rules, a CLI, an HTTP
 API, and a local dashboard.
 
-Current release: `0.24.0-alpha.1`. This is a tested foundation release, not the
+Current release: `0.25.0-alpha.1`. This is a tested foundation release, not the
 final system described in the long-term Definition of Done. See
 [`docs/BUILD_STATE.md`](docs/BUILD_STATE.md) and
 [`docs/ACCEPTANCE.md`](docs/ACCEPTANCE.md) for exact evidence and gaps.
@@ -41,6 +41,11 @@ final system described in the long-term Definition of Done. See
   context/no-tool execution profile, followed by exact JSON and full Blueprint
   validation with bounded content-free evidence. Deterministic adapter tests
   pass; live-provider semantic quality is not yet verified.
+- Deterministic `SPARKLE-AI-SYSTEM-IMPLEMENTATION-PLAN/1` derivation from a
+  revalidated Blueprint, with provider-neutral architecture inputs, bounded
+  proposed source/evaluation paths, ordered work and release gates, explicit
+  human-review state, approval-gated plan-only workspace materialization, and
+  content-free evidence. It does not generate source or execute evaluations.
 - Provider-neutral `SPARKLE-PROJECT/1` project state with strict lifecycle,
   priority/deadline/dependency/risk/milestone/blocker/next-action validation,
   optimistic updates, approval-gated archive, content-free change evidence,

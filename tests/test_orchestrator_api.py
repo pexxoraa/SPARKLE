@@ -859,6 +859,72 @@ class APITests(SystemCase):
         self.assertNotIn(natural_language, evidence_body.decode())
         self.assertNotIn("Research robotics evidence", evidence_body.decode())
 
+    def test_ai_system_implementation_plan_prepare_build_and_list_api(self):
+        requirements = {
+            "name": "robotics_plan_ai",
+            "purpose": "Research robotics evidence with bounded implementation gates.",
+            "model_requirements": [{
+                "capability": "reasoning", "modalities": ["text"],
+            }],
+            "agents": ["research", "data_analysis"],
+            "tools": ["calculator", "knowledge_search"],
+            "data_environments": [
+                "knowledge_environment", "data_environment", "trace_environment",
+            ],
+            "interfaces": ["text", "api", "dashboard"],
+            "workflow": [
+                "Collect bounded evidence from approved sources.",
+                "Analyze evidence with selected specialist agents.",
+                "Return a traceable result and preserve evaluation evidence.",
+            ],
+            "evaluations": [{
+                "name": "robotics_plan_integration",
+                "kind": "integration",
+                "criterion": "The implementation preserves declared boundaries.",
+            }],
+            "deployment": {
+                "environment_name": "staging", "target_kind": "server",
+            },
+        }
+        status, _, body = self.request(
+            "/api/ai-systems/plan", {"requirements": requirements},
+        )
+        self.assertEqual(status, 200)
+        plan = json.loads(body)["implementation_plan"]
+        self.assertEqual(
+            plan["protocol_version"],
+            "SPARKLE-AI-SYSTEM-IMPLEMENTATION-PLAN/1",
+        )
+        self.assertTrue(plan["human_review_required"])
+        self.assertFalse(plan["source_generation_executed"])
+        self.assertEqual(plan["generated_source_files"], [])
+        self.assertEqual(self.request(
+            "/api/ai-systems/plan/build",
+            {"requirements": requirements, "approved": False},
+        )[0], 400)
+
+        status, _, body = self.request(
+            "/api/ai-systems/plan/build",
+            {"requirements": requirements, "approved": True},
+        )
+        self.assertEqual(status, 201)
+        materialized = json.loads(body)["implementation_plan"]
+        self.assertEqual(materialized["status"], "materialized_static_verified")
+        self.assertFalse(materialized["source_generation_executed"])
+        status, _, evidence_body = self.request("/api/ai-system-plans")
+        self.assertEqual(status, 200)
+        evidence = json.loads(evidence_body)
+        self.assertEqual(
+            evidence["protocol_version"],
+            "SPARKLE-AI-SYSTEM-IMPLEMENTATION-PLAN/1",
+        )
+        self.assertEqual(
+            evidence["implementation_plans"][0]["status"],
+            "materialized_static_verified",
+        )
+        self.assertNotIn(requirements["purpose"], evidence_body.decode())
+        self.assertNotIn("implementation preserves", evidence_body.decode())
+
     def test_structured_project_lifecycle_and_evidence_endpoints(self):
         project = {
             "name": "sparkle_core",

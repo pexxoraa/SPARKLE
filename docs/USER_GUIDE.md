@@ -75,6 +75,29 @@ Re-ingesting a changed file with the same `--monitor-key` creates a bounded
 not poll the source by itself; an operator or future connector must submit each
 new observation.
 
+## Plan an AI system implementation
+
+Exact structured AI system requirements can be prepared as a Blueprint or
+converted from natural language as described in `AI_BUILDER.md`. After review,
+derive a deterministic implementation plan without calling a model or writing
+source:
+
+```bash
+sparkle ai-system-plan requirements.json
+```
+
+To add only the canonical reviewable plan manifest to the bounded application
+workspace:
+
+```bash
+sparkle ai-system-plan-build requirements.json --approve
+```
+
+The output proposes source and evaluation paths and orders the work, but
+`human_review_completed`, `source_generation_executed`,
+`runtime_evaluation_executed`, and `external_deployment_executed` remain false.
+Materializing a plan is not approval for any later source generation.
+
 ## Install a generated agent
 
 The recommended path starts from structured requirements and performs a
