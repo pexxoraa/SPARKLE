@@ -29,6 +29,10 @@ materialization writes only the plan manifest and content-free evidence. The
 complete local suite passes 219/219 and a fresh installed wheel passes, but
 human review, source generation, runtime evaluation, and deployment remain
 unexecuted. The completion estimate therefore remains 93%.
+Local v0.25 capability commit
+`2b98f25468a48bed992fb30fc187288f0de63705` has tree
+`a74ff1148a00f543ca923ebffaa6258ab70b5ca3`; it is not published and has no
+remote CI evidence.
 
 The percentage measures the full long-term directive, not code volume. Agent
 specifications are operational through the common orchestrator. Structured

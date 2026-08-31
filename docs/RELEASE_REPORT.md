@@ -33,6 +33,11 @@ Date: 2026-08-31 UTC
   and execution claim false, created no source directory, updated status, and
   passed worker and automation-service entrypoint checks. Its SHA-256 is
   `76b0ac4d3776be18790f4120f09a1e717bb08bef015bbd8d9d09274c66a6bac0`.
+- Local capability commit
+  `2b98f25468a48bed992fb30fc187288f0de63705` has tree
+  `a74ff1148a00f543ca923ebffaa6258ab70b5ca3` over the reconciled v0.24
+  checkpoint `59c1396caa37b5a474a14d6c7ba9f7ffe1da05c0`. This is local Git evidence;
+  the commit has not been sent to GitHub and has no remote CI run.
 
 ## Honest limits
 
