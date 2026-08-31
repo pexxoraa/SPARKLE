@@ -367,13 +367,54 @@ class ExternalWorkerClient(SQLiteStore):
             ))
         return int(cursor.lastrowid), now
 
+    def run_directory(
+        self,
+        project_name: str,
+        workspace: Path,
+        *,
+        approved: bool,
+        timeout_seconds: int | None = None,
+        max_output_chars: int | None = None,
+    ) -> dict[str, Any]:
+        """Internal operator boundary for evaluator-owned, non-production bundles."""
+        if approved is not True:
+            raise ExternalWorkerError("External runtime evaluation requires explicit approval")
+        if not WorkspaceManager.NAME_PATTERN.fullmatch(project_name):
+            raise ValueError("Project name must be a 2-64 character lowercase identifier")
+        if workspace.is_symlink():
+            raise ValueError("External worker submission rejects every symlink")
+        resolved = workspace.resolve()
+        if not resolved.is_dir():
+            raise ValueError("External runtime evaluation workspace does not exist")
+        timeout = self.job_timeout_seconds if timeout_seconds is None else timeout_seconds
+        output_limit = self.MAX_OUTPUT_CHARS if max_output_chars is None else max_output_chars
+        if not isinstance(timeout, int) or isinstance(timeout, bool) or not 1 <= timeout <= 60:
+            raise ValueError("External runtime evaluation timeout is invalid")
+        if not isinstance(output_limit, int) or isinstance(output_limit, bool) or not 100 <= output_limit <= self.MAX_OUTPUT_CHARS:
+            raise ValueError("External runtime evaluation output limit is invalid")
+        return self._run(
+            project_name,
+            resolved,
+            timeout_seconds=timeout,
+            max_output_chars=output_limit,
+        )
+
     def run(self, project_name: str) -> dict[str, Any]:
+        return self._run(project_name, self._project_root(project_name))
+
+    def _run(
+        self,
+        project_name: str,
+        project: Path,
+        *,
+        timeout_seconds: int | None = None,
+        max_output_chars: int | None = None,
+    ) -> dict[str, Any]:
         if not self.enabled:
             raise ExternalWorkerError(
                 "External workspace worker is disabled; enable it only after deploying and validating a dedicated worker"
             )
         endpoint = self._validated_endpoint()
-        project = self._project_root(project_name)
         try:
             signing_key = self.secret_resolver.first(self.secret_refs).encode("utf-8")
         except SecretNotFoundError as exc:
@@ -392,8 +433,8 @@ class ExternalWorkerClient(SQLiteStore):
             "operation": self.OPERATION,
             "project_name": project_name,
             "limits": {
-                "timeout_seconds": self.job_timeout_seconds,
-                "max_output_chars": self.MAX_OUTPUT_CHARS,
+                "timeout_seconds": timeout_seconds or self.job_timeout_seconds,
+                "max_output_chars": max_output_chars or self.MAX_OUTPUT_CHARS,
                 "requested_network_isolation": True,
                 "requested_filesystem_isolation": True,
                 "requested_ephemeral": True,

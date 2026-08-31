@@ -92,6 +92,12 @@ labels, lifecycle stages, and false runtime/deployment flags; it excludes
 requirements, source, review notes, credentials, and model output. No lifecycle
 step calls the external worker, runs candidate code, or promotes files.
 
+Candidate runtime evaluation follows approved candidate → validated contract →
+evaluator-owned bundle → signed external-worker request → authenticated bounded
+response → execution observation → criteria result → content-free evidence and
+trace. A signed sandbox claim is not executable isolation evidence. No result
+path promotes, packages, publishes, or deploys candidate source.
+
 Artifact packaging follows approval → confined workspace selection → stable
 no-follow regular-file reads → portable path and size checks → per-file/source
 digests → deterministic ZIP and embedded manifest → immutable target integrity

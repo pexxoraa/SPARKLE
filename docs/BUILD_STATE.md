@@ -4,14 +4,14 @@ Updated: 2026-08-31 UTC
 
 | Field | State |
 |---|---|
-| SPARKLE version | 0.26.0-alpha.1 |
-| Current phase | Continuous improvement — Phase 17/21 bounded source-candidate generation |
-| Current task | Verify and checkpoint the bounded source-candidate lifecycle without claiming runtime correctness, production promotion, deployment, or remote publication |
+| SPARKLE version | 0.27.0-alpha.1 |
+| Current phase | Continuous improvement — Phase 18/21 bounded candidate runtime evaluation |
+| Current task | Verify the approved-candidate runtime-evaluation contract and external-worker integration without claiming executable isolation, production verification, promotion, deployment, or remote publication |
 | Completed | v0.3-v0.22 capability releases and four-job CI; v0.23 capability publication and four-job CI; model abstraction/registry/MiniMax adapter; orchestrator/context/tracing; memory and knowledge lifecycle with backup; 16 built-in agents; persistent generated-agent installation; bounded structured Agent Blueprint generation/static routing evaluation/approval/rollback; isolated response-contract evaluation with bounded content-free evidence; provider-neutral AI System Blueprints; approval-gated `SPARKLE-AI-SYSTEM-DRAFT/1` natural-language conversion through the model router with isolated no-context/no-tool execution, exact duplicate-free JSON and full Blueprint revalidation, bounded content-free evidence, API/CLI/status/dashboard integration, and deterministic adapter tests; `SPARKLE-PROJECT/1` strict project lifecycle and evidence; `SPARKLE-SKILL/1` strict targets/evidence types/transactional derived levels/duplicate and future-evidence protection/optimistic metadata/archive/content-free proactive and least-privilege agent reads/API/CLI/status/dashboard integration; bounded workspaces/static verification/fixed local tests; signed external-worker client and deployable worker; reproducible approval-gated application artifacts; supervised automation service; bounded dashboard notifications; safe tools; text API/CLI/dashboard; bearer/session/CSRF/origin/rate/audit security; provider-neutral deterministic text/image/audio/document content contracts; dedicated voice/presence contracts; 16-agent matrix; documentation audit; cohesive E2E |
-| In progress | v0.26 implements bounded plan-bound generation, separately approved provider disclosure, isolated candidate workspaces, explicit human-review/static-verification/final-approval states, and content-free lifecycle trace evidence. The corrected documented tree passes 228/228 official tests and a fresh no-index installed-wheel status/entrypoint gate. Private GitHub `main` remains at the v0.23 capability commit; later local commits have not been published or run in remote CI |
+| In progress | v0.27 implements provider-neutral runtime-evaluation contracts for approved candidates, exact candidate/plan validation, isolated evaluation bundles, signed external-worker submission with contract-bound limits, explicit lifecycle/failure states, bounded content-free results/traces, API/CLI/status integration, and deterministic worker-boundary tests. The complete suite passes 236/236 and a fresh no-index installed-wheel gate passes; worker readiness honestly fails because its signing key/endpoint are absent. Private GitHub `main` remains at the v0.23 capability commit; later local commits have not been published or run in remote CI |
 | Blocked | Real Bubblewrap isolation on this executor (namespace setup denied); named remote worker/TLS target and live hostile-code validation; live MiniMax call (no key in build process); semantic non-text provider mapping; voice hardware; browser/computer runtime adapters; public application deployment target |
 | Failed tests | The first v0.26 full run executed all 228 tests; 227 passed and the documentation version contract failed because BUILD_STATE still said v0.25 while package metadata had advanced to v0.26. This expected reconciliation-order failure is now corrected. Earlier historical harness and fixture failures remain recorded in the release report |
-| Next action | Seal the exact local v0.26 checkpoint after final regression and tracked-tree audit, then identify the next independent unblocked requirement. Runtime evaluation, worker execution, production promotion, deployment, and remote publication remain separate stages |
+| Next action | Seal the exact local v0.27 checkpoint after final audit. A real named worker, signing configuration, and executable Bubblewrap hostile-canary evidence remain required before live runtime-isolation verification; promotion remains a later separate stage |
 | Estimated directive completion | 93% |
 
 Release-state reconciliation confirmed local v0.24 implementation at commit
@@ -43,6 +43,16 @@ verified, and approved are distinct states. Static verification parses and
 scans source without importing it or claiming runtime correctness. Completion
 remains 93% because runtime evaluation, source promotion, isolated execution,
 deployment, live MiniMax evidence, and remote publication remain incomplete.
+
+The v0.27 Runtime Evaluation boundary accepts only an approved candidate and
+exact matching plan ID. Approved declarative contracts create unique evaluation
+and trace IDs, materialize an evaluator-owned bundle outside application and
+production workspaces, and submit only through the existing HTTPS/HMAC worker
+client with signed timeout/output limits. Results preserve distinct requested,
+queued, submitted, running, completed, evaluated, rejected, start, timeout,
+worker, protocol, execution, and criteria failure states. Deterministic tests
+exercise these contracts, but no named worker is configured and no executable
+isolation evidence exists; `isolation_verified` therefore remains false.
 
 The percentage measures the full long-term directive, not code volume. Agent
 specifications are operational through the common orchestrator. Structured

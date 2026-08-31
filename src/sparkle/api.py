@@ -29,7 +29,7 @@ MAX_MULTIMODAL_BODY_BYTES = 12_000_000
 class SparkleHandler(BaseHTTPRequestHandler):
     system: SparkleSystem
     dashboard_root = Path(__file__).with_name("dashboard")
-    server_version = "SPARKLE/0.26"
+    server_version = "SPARKLE/0.27"
 
     def log_message(self, format: str, *args: object) -> None:
         # Avoid request bodies, headers, query values, and secrets in logs.
@@ -335,6 +335,13 @@ class SparkleHandler(BaseHTTPRequestHandler):
                     self.system.source_provider_disclosures.list(
                         limit=int(query.get("limit", [50])[0])
                     )
+                ),
+            })
+        if parsed.path == "/api/ai-system-runtime-evaluations":
+            return self._json({
+                "protocol_version": self.system.ai_system_runtime_evaluator.PROTOCOL,
+                "runtime_evaluations": self.system.runtime_evaluations.list(
+                    limit=int(query.get("limit", [50])[0])
                 ),
             })
         if parsed.path == "/api/memory":
@@ -708,6 +715,16 @@ class SparkleHandler(BaseHTTPRequestHandler):
                     data["candidate_id"], data["path"],
                 )
                 return self._json({"ok": True, "source_file": source_file})
+            if self.path == "/api/ai-systems/runtime/evaluate":
+                if set(data) - {"contract", "approved"}:
+                    raise ValueError("Runtime evaluation fields are unsupported")
+                result = self.system.ai_system_runtime_evaluator.request(
+                    data.get("contract"), approved=data.get("approved") is True,
+                )
+                return self._json({
+                    "ok": result["status"] == "evaluated",
+                    "runtime_evaluation": result,
+                }, 201)
             if self.path == "/api/agents/remove":
                 if data.get("approved") is not True:
                     raise ValueError("Agent removal requires explicit approval")

@@ -76,6 +76,14 @@ JSON output is confined to plan-declared paths under `candidate_environment`.
 Generated, reviewed, statically verified, and approved are distinct monotonic
 states. Static verification parses but never imports or executes candidate
 source; approval does not copy it into an application or production tree.
+The Candidate Runtime Evaluator is a separate operator boundary over approved
+source-candidate evidence, evaluator-owned ephemeral bundles, and the existing
+external-worker client. It validates a provider-neutral fixed-unittest contract
+and candidate/plan identity, binds approved execution limits into the signed
+request, persists a monotonic lifecycle, evaluates bounded result criteria,
+and annotates a content-free trace. It never uses the local process executor,
+promotes source, packages an artifact, or deploys. Signed sandbox fields remain
+claims; only separately executed isolation can set verified isolation evidence.
 An independent artifact manager reads bounded application workspaces and emits
 deterministic content-addressed ZIPs; it never starts an executable.
 The automation service is another independent entrypoint over the existing
@@ -118,7 +126,9 @@ and orchestration do not depend on cookie or browser implementation details.
 - `var/data_environment/ai_system_implementation_plans.sqlite3`
 - `var/data_environment/source_provider_disclosures.sqlite3`
 - `var/data_environment/source_candidates.sqlite3`
+- `var/data_environment/runtime_evaluations.sqlite3`
 - `var/candidate_environment/source_candidates/`
+- `var/runtime_environment/evaluations/`
 - `var/data_environment/projects.sqlite3`
 - `var/data_environment/skills.sqlite3`
 - `var/data_environment/automation-service.lock`

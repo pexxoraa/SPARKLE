@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.27.0-alpha.1 - 2026-08-31
+
+- Added bounded `SPARKLE-AI-SYSTEM-RUNTIME-EVALUATION/1` requests for approved
+  source candidates through the existing authenticated external-worker client.
+- Added exact contract/plan/candidate validation, signed enforcement of runtime
+  limits, explicit lifecycle and failure states, content-free results/traces,
+  API, CLI, status, and isolated evaluation workspaces.
+- Kept executable isolation, production verification, source promotion,
+  publication, and deployment explicitly unverified or unexecuted.
+
 ## 0.26.0-alpha.1 - 2026-08-31
 
 - Added bounded `SPARKLE-AI-SYSTEM-SOURCE-CANDIDATE/1` generation from an

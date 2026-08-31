@@ -154,6 +154,16 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser(
         "ai-system-source-disclosures", help="List provider disclosures",
     )
+    runtime_evaluate = sub.add_parser(
+        "ai-system-runtime-evaluate",
+        help="Submit an approved candidate evaluation to the configured worker",
+    )
+    runtime_evaluate.add_argument("contract")
+    runtime_evaluate.add_argument("--approve", action="store_true")
+    sub.add_parser(
+        "ai-system-runtime-evaluations",
+        help="List content-free runtime evaluation evidence",
+    )
     project_create = sub.add_parser(
         "project-create", help="Create a validated structured project record",
     )
@@ -474,6 +484,19 @@ def main(argv: list[str] | None = None) -> int:
             "provider_disclosures": system.source_provider_disclosures.list(
                 limit=100
             ),
+        })
+        return 0
+    if args.command == "ai-system-runtime-evaluate":
+        result = system.ai_system_runtime_evaluator.request(
+            _load_manifest(args.contract), approved=bool(args.approve),
+        )
+        _print({"ok": result["status"] == "evaluated", "runtime_evaluation": result})
+        return 0 if result["status"] == "evaluated" else 1
+    if args.command == "ai-system-runtime-evaluations":
+        _print({
+            "ok": True,
+            "protocol_version": system.ai_system_runtime_evaluator.PROTOCOL,
+            "runtime_evaluations": system.runtime_evaluations.list(limit=100),
         })
         return 0
     if args.command == "project-create":

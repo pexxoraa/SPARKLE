@@ -383,3 +383,16 @@ whitespace checks passed. The final reconciled pre-checkpoint rerun passed
 without an index and passed installed version/protocol/status, empty candidate
 evidence, worker help, and automation-service configuration gates. Its SHA-256
 was `e6ddca7b1241b4156b013e0b2276821b3d08f838621b76367c6c095a29c2acd3`.
+
+The v0.27 Runtime Evaluation increment added seven focused methods covering
+approval, contract/candidate/plan rejection, requested-to-terminal state
+transitions, unavailable/authentication/replay/protocol/timeout/execution/
+criteria failures, success, content-free persistence, trace linkage, signed
+limit binding, evaluation-workspace isolation, and non-promotion. Corrected
+focused tests pass 7/7 in 0.658 seconds; the adjacent evaluator/client/service
+set passes 28/28 in 9.901 seconds. An authenticated API approval/listing test
+passes independently in 0.832 seconds. The complete official suite passes
+236/236 in 69.872 seconds, plus dashboard syntax and whitespace checks. A fresh
+no-index `0.27.0a1` wheel passed installed status/protocol/listing and automation
+checks; worker readiness correctly refused the absent signing key. Wheel
+SHA-256: `d71a6e4dd3de0b49f72e17dacfdac1e36d81c6b240e9713b23ea4f23a9a58ab9`.

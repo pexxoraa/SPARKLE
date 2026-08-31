@@ -35,6 +35,16 @@
   consistency, formatting checks, and credential/security-pattern scans. It
   never imports candidate Python, runs candidate tests, installs dependencies,
   calls the external worker, promotes source, or claims runtime correctness.
+- Runtime evaluation requires explicit approval and an already approved source
+  candidate with the exact plan ID. The contract is strict and bounded to the
+  fixed Python unittest operation; it accepts no executable, argument list,
+  shell, dependency installer, or deployment action. Harness paths are confined
+  to `tests/test_*.py` in an evaluator-owned workspace.
+- Runtime bundles use the existing HTTPS/HMAC worker protocol. Approved timeout
+  and output limits are signed with the bundle; authenticated responses are
+  identity/schema/size/freshness checked and replay conflicts fail closed.
+  Results persist output digests/lengths rather than output or source. Worker
+  claims never set independent isolation evidence.
 - Application scaffolding requires explicit approval, confines every path to a
   dedicated application root, rejects traversal and symlinks, enforces file and
   manifest size limits, and protects existing files by default.

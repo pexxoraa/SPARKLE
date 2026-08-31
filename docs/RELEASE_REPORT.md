@@ -1,3 +1,61 @@
+# 0.27.0-alpha.1 verification report
+
+Date: 2026-08-31 UTC
+
+## Executed evidence
+
+- Added `SPARKLE-AI-SYSTEM-RUNTIME-EVALUATION/1` with exact candidate/plan
+  identity, requested capabilities, fixed runtime requirements, bounded input,
+  expected behavior, limits, criteria, harness files, and result format.
+- Missing approval creates no request. Approved invalid contracts/candidates
+  receive unique evaluation/trace IDs and a distinct `rejected` result. Valid
+  requests persist requested, queued, submitted, running, completed, and
+  evaluated events; start, timeout, unavailable-worker, protocol, execution,
+  and criteria failures remain separate.
+- Evaluator-owned bundles are outside candidate, application, production,
+  artifact, and deployment trees. Submission reuses the existing HTTPS/HMAC
+  client and binds contract timeout/output limits into the signed body.
+- Persisted results and traces are content-free. They retain identifiers,
+  result metadata/digests, criterion booleans, worker/runtime labels,
+  response-verification state, and honest false production/promotion/deployment
+  flags. Worker sandbox fields do not establish isolation verification.
+- The first focused run executed six methods but produced eight errors because
+  the new trace finish call omitted mandatory model/provider labels. After the
+  integration fix, one assertion used a positional trace limit and errored.
+  Corrected focused runtime tests pass 6/6 in 0.620 seconds.
+- The runtime evaluator plus existing external-worker client/service suite
+  passes 28/28 in 9.901 seconds, including request/response authentication,
+  tamper rejection, replay conflict, timeout, executor failure, worker
+  unavailability, criteria failure, success, persistence, trace, and isolation
+  non-claims. This is deterministic contract/integration evidence, not a live
+  named isolated-worker run.
+- The initial complete official suite passed 234/234 in 70.513 seconds. After
+  adding the authenticated API approval/listing regression, the suite passed
+  235/235 in 70.275 seconds. Dashboard JavaScript syntax and Git whitespace
+  checks passed.
+- A final candidate-symlink isolation regression passed and the complete suite
+  then passed 236/236 in 69.872 seconds. The focused runtime set passes 7/7 in
+  0.658 seconds.
+- A fresh no-index `0.27.0a1` wheel built and installed. Installed
+  version/protocol/status, empty content-free evaluation listing, and automation
+  service checks passed. Worker readiness refused because
+  `SPARKLE_WORKER_SIGNING_KEY` is intentionally absent; no connection was
+  attempted. Wheel SHA-256 is
+  `d71a6e4dd3de0b49f72e17dacfdac1e36d81c6b240e9713b23ea4f23a9a58ab9`.
+
+## Honest limits
+
+- No endpoint or signing key is configured in this build process. No live
+  external worker was called.
+- Bubblewrap namespace preflight remains denied on this executor. No hostile
+  canary has produced executable filesystem/network isolation evidence.
+- `runtime_verified` is contract/result evidence; `isolation_verified` remains
+  false. Production verification, source promotion, publication, and deployment
+  are unimplemented and never inferred.
+- Remote v0.27 publication and CI have not occurred. Completion remains 93%.
+
+---
+
 # 0.26.0-alpha.1 verification report
 
 Date: 2026-08-31 UTC

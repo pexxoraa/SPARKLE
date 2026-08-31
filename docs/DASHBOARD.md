@@ -8,7 +8,7 @@ Implemented panels:
 - System state, active model, storage counts, voice state, and agents.
 - AI System Blueprint, content-free natural-language draft attempt, and
   content-free implementation-plan, provider-disclosure, and isolated
-  source-candidate counts.
+  source-candidate and runtime-evaluation counts.
 - Durable memory records.
 - Read-only evidence-derived skill levels, targets, counts, and averages.
 - Evidence-backed proactive alerts and automation execution history.

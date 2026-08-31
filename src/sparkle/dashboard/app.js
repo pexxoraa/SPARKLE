@@ -86,6 +86,7 @@ async function refresh() {
       metric('AI implementation plans', state.ai_systems.implementation_plans),
       metric('Source candidates', state.ai_systems.source_candidates),
       metric('Provider disclosures', state.ai_systems.provider_disclosures),
+      metric('Runtime evaluations', state.ai_systems.runtime_evaluations),
       metric('Active projects', state.projects.active),
       metric('Blocked projects', state.projects.blocked),
       metric('Automation runs', state.automation.recent_runs),

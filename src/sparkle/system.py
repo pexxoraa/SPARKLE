@@ -18,6 +18,7 @@ from sparkle.ai_system_source import (
     SourceCandidateStore,
     SourceCandidateWorkspace,
 )
+from sparkle.ai_system_runtime import CandidateRuntimeEvaluator, RuntimeEvaluationStore
 from sparkle.artifacts import ArtifactManager
 from sparkle.automation import AutomationRunner, AutomationStore, ProactiveEngine
 from sparkle.builders import WorkspaceManager
@@ -186,6 +187,14 @@ class SparkleSystem:
             self.source_candidates,
             self.source_candidate_workspace,
         )
+        self.runtime_evaluations = RuntimeEvaluationStore()
+        self.ai_system_runtime_evaluator = CandidateRuntimeEvaluator(
+            self.source_candidates,
+            self.source_candidate_workspace,
+            self.traces,
+            self.runtime_evaluations,
+            self.external_worker,
+        )
         self.agent_evaluations = AgentEvaluationStore()
         self.agent_evaluator = AgentResponseEvaluator(
             self.agent_builder,
@@ -205,7 +214,7 @@ class SparkleSystem:
         models = self.models.list()
         return {
             "name": "SPARKLE",
-            "version": "0.26.0-alpha.1",
+            "version": "0.27.0-alpha.1",
             "status": "ready" if any(model["configured"] for model in models) else "limited",
             "active_model": self.models.active_id,
             "models": models,
@@ -239,6 +248,10 @@ class SparkleSystem:
                 ),
                 "source_candidate_protocol_version": (
                     self.ai_system_source_candidates.PROTOCOL
+                ),
+                "runtime_evaluations": len(self.runtime_evaluations.list(limit=100)),
+                "runtime_evaluation_protocol_version": (
+                    self.ai_system_runtime_evaluator.PROTOCOL
                 ),
             },
             "tools": self.tools.status(),

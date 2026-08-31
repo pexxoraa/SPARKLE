@@ -925,6 +925,22 @@ class APITests(SystemCase):
         self.assertNotIn(requirements["purpose"], evidence_body.decode())
         self.assertNotIn("implementation preserves", evidence_body.decode())
 
+    def test_runtime_evaluation_api_requires_approval_and_lists_safe_evidence(self):
+        status, _, body = self.request("/api/ai-system-runtime-evaluations")
+        self.assertEqual(status, 200)
+        payload = json.loads(body)
+        self.assertEqual(
+            payload["protocol_version"],
+            "SPARKLE-AI-SYSTEM-RUNTIME-EVALUATION/1",
+        )
+        self.assertEqual(payload["runtime_evaluations"], [])
+        status, _, _ = self.request(
+            "/api/ai-systems/runtime/evaluate",
+            {"contract": {}, "approved": False},
+        )
+        self.assertEqual(status, 400)
+        self.assertEqual(self.system.runtime_evaluations.list(), [])
+
     def test_structured_project_lifecycle_and_evidence_endpoints(self):
         project = {
             "name": "sparkle_core",

@@ -18,6 +18,10 @@ v0.26 adds bounded `SPARKLE-AI-SYSTEM-SOURCE-CANDIDATE/1` generation. It
 requires plan review, separately approved provider disclosure, generation
 approval, explicit human source review, non-executing static verification, and
 separate final candidate approval. Candidates never enter production source.
+v0.27 adds `SPARKLE-AI-SYSTEM-RUNTIME-EVALUATION/1` for explicitly approved
+candidates. It prepares a separate bounded evaluation bundle and can submit it
+only through the existing authenticated external-worker client. The current
+environment provides contract evidence, not live isolated-runtime evidence.
 
 ## Requirements contract
 
@@ -202,6 +206,38 @@ an explicit review operation; no endpoint promotes it.
 `STATICALLY VERIFIED` means only that the recorded non-executing checks passed.
 It never means runtime tested, semantically correct, worker-isolated,
 production-ready, published, or deployed.
+
+## Runtime evaluation
+
+The exact contract records candidate and plan IDs, requested capabilities, a
+fixed Python/unittest runtime, bounded JSON input data, expected behavior,
+timeout/output limits, named criteria, bounded `tests/test_*.py` harness files,
+and `SPARKLE-RUNTIME-RESULT/1`. Unknown fields, shell/command runtimes, path
+traversal, duplicate paths, invalid limits, unapproved candidates, and plan
+mismatches fail closed.
+
+Without approval, no evaluation exists (`NOT_REQUESTED`). An approved valid
+request follows `REQUESTED → QUEUED → SUBMITTED → RUNNING → COMPLETED →
+EVALUATED`. Approved invalid requests become `REQUESTED → REJECTED`. Separate
+terminal states preserve `FAILED_TO_START`, `TIMEOUT`, `WORKER_UNAVAILABLE`,
+`PROTOCOL_FAILURE`, `EXECUTION_FAILURE`, and `EVALUATION_FAILURE`.
+
+The evaluator copies only approved candidate files plus the explicit harness
+into `runtime_environment/evaluations/<evaluation-id>`. It never modifies the
+candidate, application workspace, repository, artifact store, or deployment
+records. The existing worker client performs HTTPS/HMAC request and response
+authentication, body integrity, timestamp freshness, response identity/schema
+validation, size bounds, and worker-side replay/conflict protection. Contract
+timeout and output limits are included in the signed request.
+
+Persisted results contain identifiers, lifecycle, return code, timeout and
+duration, bounded output digest/length, criterion booleans, worker/runtime
+labels, response-verification state, safe failure type, and trace linkage—not
+source, harness content, inputs, expected behavior, output, credentials, or
+review text. `RUNTIME VERIFIED` means the authenticated worker returned a
+successful fixed-test result and all declared criteria passed. It does not mean
+production verified or deployed. `isolation_verified` remains false unless
+separate executable hostile-canary evidence proves the deployed worker.
 
 ## Evidence and persistence
 
