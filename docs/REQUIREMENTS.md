@@ -13,6 +13,9 @@
 9. Text, image, audio, and document inputs share one bounded provider-neutral
    contract; provider-specific multimodal mapping remains inside adapters.
 10. Raw multimodal payloads are not persisted in execution traces.
+11. Natural-language builder conversion requires explicit provider-disclosure
+    approval, isolated no-context/no-tool execution, and deterministic schema
+    validation before any downstream materialization.
 
 ## Foundation release requirements
 

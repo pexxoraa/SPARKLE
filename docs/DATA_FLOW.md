@@ -68,6 +68,13 @@ persistence → in-process registry load. Application scaffolding follows
 approval → name/path/size validation → confined file writes → SHA-256 build
 record. Neither path stores a secret or executes an arbitrary command.
 
+AI-system draft conversion follows provider-disclosure approval → bounded
+natural-language input → isolated no-context/no-tool Application Builder call
+through the common model router → exact duplicate-free JSON parse → full
+registry-backed Blueprint validation → content-free evidence and trace linkage.
+The draft store contains no prompt or generated JSON, and the trace summary is
+generic. A valid draft is returned for review but does not materialize files.
+
 Artifact packaging follows approval → confined workspace selection → stable
 no-follow regular-file reads → portable path and size checks → per-file/source
 digests → deterministic ZIP and embedded manifest → immutable target integrity

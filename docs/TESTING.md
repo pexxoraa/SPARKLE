@@ -120,6 +120,15 @@ safe failure types, reload, latest-1,000 retention, and equivalent API/CLI
 flows. It does not call a model, execute runtime evaluations, generate an
 implementation, or claim deployment.
 
+AI System Draft coverage verifies explicit approval before provider disclosure,
+20–20,000-byte input bounds, dynamic provider-neutral registry vocabulary,
+isolated no-history/no-user/no-context/no-tool execution, tool-call refusal,
+exact-JSON and duplicate-key rejection, complete Blueprint revalidation,
+content-free bounded evidence, latest-1,000 retention, generic traces, status,
+dashboard counters, and equivalent API/CLI flows. Deterministic injected
+adapters verify the integration; these tests do not claim live MiniMax use,
+semantic fidelity, source generation, runtime evaluation, or deployment.
+
 Structured-project coverage validates exact lifecycle manifests, normalized
 timezone-aware deadlines, dependencies, risks, milestones, blockers, progress,
 complete/blocked truth constraints, optimistic update conflicts, priority and
@@ -324,3 +333,15 @@ passed installed mastery create/evidence/reload/read-only search, proactive
 non-disclosure, version/status, mode-0600 configuration, automation
 check/once/status, and worker-entrypoint gates. Its SHA-256 was
 `43e225a2af529754067f0ebc14f181f992f4b8d45b447e6f0f6b22e6671dd1d8`.
+
+The v0.24 AI System Draft increment added six focused compiler/store/CLI cases
+and one API integration case. The corrected focused suite passed in 0.449
+seconds, the 12-case adjacent draft/Blueprint/API suite passed in 2.381
+seconds, and the initial full suite passed all 213 tests in 29.139 seconds.
+After version and documentation alignment, the first documented tree passed all 213
+tests in 28.180 seconds; dashboard JavaScript syntax and Git whitespace checks
+passed. A corrected fresh offline `0.24.0a1` wheel installed without an index
+and passed installed draft compilation/isolation/content-free evidence,
+version/status, automation configuration, worker help, and mode-0600
+configuration gates. Its SHA-256 was
+`9c4a06f3994e564d6c96bfd92072e0dd4056f6a3b366afd4439e97a8446aaf6d`.

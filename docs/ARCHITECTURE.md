@@ -56,6 +56,12 @@ requirements resolve against enabled model records without constructing an
 adapter. Approved builds materialize a canonical architecture manifest while
 preserving the memory, knowledge, data, trace, provider, and secrets
 boundaries. It does not call models, run evaluations, or deploy targets.
+The AI System Draft compiler is composed only after the orchestrator exists.
+With explicit approval it sends bounded natural-language requirements through
+the existing model router using the isolated no-context/no-tool profile. Its
+output must pass exact JSON parsing and the full Blueprint validator. A
+separate evidence store receives only lengths, a digest, bounded execution
+labels, trace linkage, status, and safe error type—not prompt or response text.
 An independent artifact manager reads bounded application workspaces and emits
 deterministic content-addressed ZIPs; it never starts an executable.
 The automation service is another independent entrypoint over the existing
@@ -94,6 +100,7 @@ and orchestration do not depend on cookie or browser implementation details.
 - `var/data_environment/agent_blueprints.sqlite3`
 - `var/data_environment/agent_evaluations.sqlite3`
 - `var/data_environment/ai_system_blueprints.sqlite3`
+- `var/data_environment/ai_system_drafts.sqlite3`
 - `var/data_environment/projects.sqlite3`
 - `var/data_environment/skills.sqlite3`
 - `var/data_environment/automation-service.lock`

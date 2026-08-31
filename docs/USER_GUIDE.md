@@ -195,6 +195,18 @@ counts. The authenticated API exposes equivalent skill/evidence routes.
 
 ## Prepare an AI system scaffold
 
+To convert natural-language requirements into a reviewable structured draft,
+put the text in a UTF-8 file and explicitly approve the provider call:
+
+```bash
+sparkle ai-system-draft requirements.txt --approve
+```
+
+This operation uses no memory, knowledge context, history, user identity, or
+tools. Review the returned requirements and Blueprint carefully: schema success
+does not prove semantic fidelity. Draft evidence is available from
+`GET /api/ai-system-drafts`, without storing the input or generated JSON.
+
 Create a structured requirements file using the schema in
 [`AI_BUILDER.md`](AI_BUILDER.md), then validate it without mutation:
 

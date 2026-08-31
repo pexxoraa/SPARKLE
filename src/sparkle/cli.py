@@ -72,6 +72,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Validate structured requirements and generate an AI system blueprint",
     )
     ai_system_prepare.add_argument("requirements")
+    ai_system_draft = sub.add_parser(
+        "ai-system-draft",
+        help="Convert approved natural-language requirements into a validated draft",
+    )
+    ai_system_draft.add_argument("requirements_text")
+    ai_system_draft.add_argument("--approve", action="store_true")
     ai_system_build = sub.add_parser(
         "ai-system-build",
         help="Generate and materialize a statically verified AI system scaffold",
@@ -170,6 +176,10 @@ def _load_manifest(path: str) -> dict[str, object]:
     if not isinstance(value, dict):
         raise ValueError("Manifest root must be a JSON object")
     return value
+
+
+def _load_text(path: str) -> str:
+    return Path(path).resolve().read_text(encoding="utf-8")
 
 
 def live_smoke(system: SparkleSystem) -> int:
@@ -273,6 +283,12 @@ def main(argv: list[str] | None = None) -> int:
             "ok": True,
             "blueprint": system.ai_system_builder.prepare(requirements).to_dict(),
         })
+        return 0
+    if args.command == "ai-system-draft":
+        result = system.ai_system_compiler.compile(
+            _load_text(args.requirements_text), approved=bool(args.approve),
+        )
+        _print({"ok": True, "draft": result})
         return 0
     if args.command == "ai-system-build":
         requirements = _load_manifest(args.requirements)

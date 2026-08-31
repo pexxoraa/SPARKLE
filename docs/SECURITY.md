@@ -11,6 +11,12 @@
 - Tool-call rounds and tool-result sizes are bounded.
 - Generated-agent installation and removal require explicit approval; manifests
   cannot replace built-in agents or reference unregistered tools.
+- Natural-language AI-system conversion requires explicit approval before the
+  text is disclosed to the configured model provider. It uses the isolated
+  no-history/no-user/no-context/no-tool profile, rejects tool calls, requires
+  exact duplicate-free JSON plus complete Blueprint validation, and persists
+  only bounded content-free evidence. Provider semantic fidelity is not
+  inferred from schema success.
 - Application scaffolding requires explicit approval, confines every path to a
   dedicated application root, rejects traversal and symlinks, enforces file and
   manifest size limits, and protects existing files by default.

@@ -81,6 +81,8 @@ async function refresh() {
       metric('Memory', `${state.memory.records} records`),
       metric('Knowledge', `${state.knowledge.sources} sources`),
       metric('Generated agents', state.generated_agents.count),
+      metric('AI system blueprints', state.ai_systems.blueprints),
+      metric('AI system drafts', state.ai_systems.drafts),
       metric('Active projects', state.projects.active),
       metric('Blocked projects', state.projects.blocked),
       metric('Automation runs', state.automation.recent_runs),

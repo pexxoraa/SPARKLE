@@ -553,7 +553,7 @@ class ExternalWorkerService:
         )
         return {
             "service": "SPARKLE external test worker",
-            "version": "0.23.0-alpha.1",
+            "version": "0.24.0-alpha.1",
             "protocol": ExternalWorkerClient.PROTOCOL,
             "operation": ExternalWorkerClient.OPERATION,
             "ready": bool(executor["available"]),

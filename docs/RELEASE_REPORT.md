@@ -1,3 +1,70 @@
+# 0.24.0-alpha.1 verification report
+
+Date: 2026-08-31 UTC
+
+## Executed evidence
+
+- `SPARKLE-AI-SYSTEM-DRAFT/1` accepts 20–20,000 bytes of natural-language AI
+  system requirements only with explicit operator approval, because the text
+  is disclosed to the configured model provider.
+- The current provider-neutral vocabulary is derived from the existing model,
+  agent, tool, and artifact registries. The compiler uses the Application
+  Builder through the common orchestrator's isolated evaluation profile, which
+  rejects history, user identity, additional context, memory/knowledge access,
+  and tools. A model tool request fails closed.
+- Generated text must be one exact JSON object. Markdown fences, duplicate
+  keys, extra/provider-specific fields, unknown or inaccessible tools, invalid
+  capability/modality routes, and all existing Blueprint schema/size failures
+  are rejected before a draft is returned. Successful JSON is independently
+  passed through the complete `SPARKLE-AI-SYSTEM-BLUEPRINT/1` validator.
+- The latest 1,000 attempts persist separately. Evidence retains only status,
+  request byte count, response digest/length, bounded provider/model labels,
+  trace ID, and safe error type. It excludes natural-language requirements,
+  generated JSON, memory/knowledge context, and exception messages. API list
+  results are bounded to 100.
+- CLI, authenticated HTTP API, system status, and dashboard metrics expose the
+  new boundary. Successful output explicitly reports that semantic correctness,
+  live-provider verification, runtime evaluation, source generation, and
+  external deployment are false or absent.
+- The first focused command used a nonexistent `.venv` and executed no tests;
+  the second lacked `PYTHONPATH=src` and executed only an import failure. The
+  first valid six-case run executed but produced five setup errors because the
+  injected test adapter omitted the abstract `health()` method. After that was
+  added, one case failed because the fixture used an unsupported memory
+  category. The corrected six-case suite passed in 0.449 seconds.
+- The 12-case draft/Blueprint/API adjacent suite passed in 2.381 seconds. The
+  initial complete suite passed all 213 tests in 29.139 seconds. After version
+  and documentation updates, the first version-aligned documented tree passed all 213 tests
+  in 28.180 seconds; dashboard JavaScript syntax and Git whitespace checks
+  passed.
+- The first wheel command stopped before building because this runtime's
+  `build` module has no executable `__main__`. A `pip wheel` retry was stopped
+  by the runtime before execution because it could consider the network. The
+  offline retry built successfully but its gate expected the wrong distribution
+  filename and therefore installed nothing. The next fresh wheel installed and
+  its compiler smoke passed, then the gate stopped on the incorrect executable
+  name `sparkle-automation`. The corrected fresh no-index gate used the declared
+  `sparkle-automations` entrypoint and passed installed draft compilation,
+  isolation/evidence assertions, version/status, automation configuration
+  check, worker help, and mode-0600 configuration checks. The final wheel
+  SHA-256 was
+  `9c4a06f3994e564d6c96bfd92072e0dd4056f6a3b366afd4439e97a8446aaf6d`.
+
+## Honest limits
+
+- Tests used a deterministic injected adapter. No live MiniMax conversion ran,
+  so natural-language semantic fidelity is not live-provider verified.
+- A statically valid draft is not proof that it captures the user's intent.
+  Human review remains required before approved workspace materialization.
+- The boundary generates structured requirements and a Blueprint, not source
+  code, semantic runtime evaluation, a working application, or a deployment.
+- Publication and four-job v0.24 CI evidence remain pending.
+- Private GitHub publication is paused because the repository tool requires
+  explicit approval for the project-file payload and destination. No bypass was
+  attempted.
+
+---
+
 # 0.23.0-alpha.1 verification report
 
 Date: 2026-08-31 UTC
@@ -47,7 +114,25 @@ Date: 2026-08-31 UTC
   professional certification.
 - Deterministic mastery accounting does not establish live-provider teaching
   quality, semantic assessment quality, or external learning-platform sync.
-- Exact-tree publication and CI evidence are pending.
+- The initial capability tree was published and passed CI. The subsequent
+  transaction/future-evidence hardening exact tree remains local and unpublished.
+
+## GitHub publication and CI
+
+Result: PARTIAL — private repository `pexxoraa/SPARKLE` received capability
+commit `78032c1fbbaeab7253421f8cdde6e70da5d6f97c` on `main` by a non-force
+fast-forward from the verified v0.22 checkpoint. Its tree
+`9bd67ce08f5bfb9dd3b73b9cd30ddcd6881cbebe` exactly matches the locally tested
+pre-hardening capability commit tree.
+
+SPARKLE CI run #49 (`33348526415`) completed successfully. All required jobs
+passed: `test (3.12)`, `test (3.13)`, `worker-image`, and
+`automation-service`.
+
+The later hardened local commit `d889eee0b108d5a5ea10c0a9a8572c79f30a65e7`
+has tree `4e07ee076a6ce1a03de0318df893559cc5caf35d`; it includes transactional
+append/recompute protection, future-evidence refusal, public read recomputation,
+and final documentation. That tree has not been published or run in GitHub CI.
 
 ---
 

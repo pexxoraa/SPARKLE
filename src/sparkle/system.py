@@ -7,6 +7,7 @@ from sparkle.agents import AgentRegistry, AgentRouter, GeneratedAgentStore
 from sparkle.agent_builder import AgentBlueprintBuilder, AgentBlueprintStore
 from sparkle.agent_evaluation import AgentEvaluationStore, AgentResponseEvaluator
 from sparkle.ai_system_builder import AISystemBlueprintBuilder, AISystemBlueprintStore
+from sparkle.ai_system_draft import AISystemDraftStore, AISystemRequirementsCompiler
 from sparkle.artifacts import ArtifactManager
 from sparkle.automation import AutomationRunner, AutomationStore, ProactiveEngine
 from sparkle.builders import WorkspaceManager
@@ -151,6 +152,12 @@ class SparkleSystem:
             context=self.context, tools=self.tools, traces=self.traces,
             max_tool_rounds=self.config.max_tool_rounds,
         )
+        self.ai_system_drafts = AISystemDraftStore()
+        self.ai_system_compiler = AISystemRequirementsCompiler(
+            self.ai_system_builder,
+            self.orchestrator,
+            self.ai_system_drafts,
+        )
         self.agent_evaluations = AgentEvaluationStore()
         self.agent_evaluator = AgentResponseEvaluator(
             self.agent_builder,
@@ -170,7 +177,7 @@ class SparkleSystem:
         models = self.models.list()
         return {
             "name": "SPARKLE",
-            "version": "0.23.0-alpha.1",
+            "version": "0.24.0-alpha.1",
             "status": "ready" if any(model["configured"] for model in models) else "limited",
             "active_model": self.models.active_id,
             "models": models,
@@ -188,6 +195,8 @@ class SparkleSystem:
                 "status": "ready",
                 "blueprints": len(self.ai_system_blueprints.list(limit=100)),
                 "protocol_version": self.ai_system_builder.PROTOCOL,
+                "drafts": len(self.ai_system_drafts.list(limit=100)),
+                "draft_protocol_version": self.ai_system_compiler.PROTOCOL,
             },
             "tools": self.tools.status(),
             "api_security": {

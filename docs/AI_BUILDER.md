@@ -1,13 +1,16 @@
 # AI System Builder
 
-SPARKLE v0.21 implements a bounded provider-neutral AI System Blueprint
-boundary. `SPARKLE-AI-SYSTEM-BLUEPRINT/1` converts exact structured
+SPARKLE implements a bounded provider-neutral AI System Blueprint boundary.
+`SPARKLE-AI-SYSTEM-BLUEPRINT/1` converts exact structured
 requirements into a deterministic architecture manifest and, with explicit
 operator approval, materializes a two-file application workspace.
 
-This boundary composes existing registries and stores. It does not call a
-model, generate source code, run evaluations, or perform deployment. Those
-claims remain explicitly false in every blueprint.
+The Blueprint boundary itself composes existing registries and stores without
+calling a model. v0.24 adds a separate approval-gated
+`SPARKLE-AI-SYSTEM-DRAFT/1` boundary that can ask the configured model router
+to convert bounded natural language into the exact structured contract. It
+does not generate source code, run semantic evaluations, or perform deployment.
+Those claims remain explicitly false.
 
 ## Requirements contract
 
@@ -87,6 +90,34 @@ The approved build creates `README.md` and `SPARKLE_AI_SYSTEM.json` in the
 bounded application workspace with overwrite disabled. The canonical JSON
 manifest has deterministic key ordering and a final newline.
 
+## Natural-language draft conversion
+
+Natural-language conversion reads a UTF-8 requirements file and requires
+explicit approval because its content is sent to the configured model provider:
+
+```bash
+sparkle ai-system-draft requirements.txt --approve
+```
+
+The equivalent authenticated HTTP endpoints are:
+
+- `POST /api/ai-systems/draft`
+- `GET /api/ai-system-drafts`
+
+The compiler derives the current allowed model capabilities/modalities,
+installed agents and their tool boundaries, data environments, interfaces,
+evaluation kinds, and deployment target vocabulary from the existing
+registries. It invokes the Application Builder through the common orchestrator
+using the isolated evaluation profile: no history, user identity,
+memory/knowledge context, or tools are available. A tool request fails closed.
+
+The provider response must be one exact JSON object. Markdown fences, duplicate
+keys, extra fields, unknown agents/tools, inaccessible tools, provider-specific
+fields, invalid routes, and every existing Blueprint schema or size violation
+are rejected before the draft is returned. Successful output includes the
+generated structured requirements and the independently prepared Blueprint;
+it does not materialize a workspace.
+
 ## Evidence and persistence
 
 Blueprint attempts are stored separately in
@@ -94,6 +125,14 @@ Blueprint attempts are stored separately in
 attempts; the public API returns at most 100 records. Successful records link
 to the existing workspace build ID. Failed materialization stores only the
 safe exception type, not source content or an exception message.
+
+Draft attempts are stored separately in
+`data_environment/ai_system_drafts.sqlite3`, retaining the latest 1,000 records
+and returning at most 100. Evidence contains only status, input byte count,
+response digest/length, bounded provider/model labels, trace ID, and safe error
+type. Natural-language input and generated JSON are not persisted in the draft
+store. The trace uses a generic evaluation summary and does not store raw input
+or output.
 
 Static checks prove requirements shape, model capability/modality routing,
 agent and tool references, agent tool access, environment separation,
@@ -111,6 +150,7 @@ The following output fields preserve that boundary:
 }
 ```
 
-Natural-language requirements conversion, generated implementation code,
-runtime semantic evaluation, provider-specific multimodal mapping, and real
-deployment remain future increments.
+Natural-language conversion is locally verified with deterministic injected
+adapters. Live MiniMax conversion, semantic fidelity of the resulting draft,
+generated implementation code, runtime semantic evaluation, provider-specific
+multimodal mapping, and real deployment remain incomplete.

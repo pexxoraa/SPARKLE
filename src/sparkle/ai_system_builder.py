@@ -222,6 +222,33 @@ class AISystemBlueprintBuilder:
         self.workspaces = workspaces
         self.store = store
 
+    def requirements_contract(self) -> dict[str, Any]:
+        """Return the current provider-neutral vocabulary for draft generation."""
+        model_records = self.models.list()
+        return {
+            "required_root_fields": sorted(self._ALLOWED_FIELDS),
+            "model_capabilities": sorted({
+                role
+                for record in model_records
+                if record["enabled"]
+                for role in record["roles"]
+            }),
+            "model_modalities": sorted({
+                modality
+                for record in model_records
+                if record["enabled"]
+                for modality in record["modalities"]
+            }),
+            "agent_tools": {
+                name: sorted(self.agents.get(name).tools)
+                for name in sorted(self.agents.names)
+            },
+            "data_environments": sorted(self._DATA_ENVIRONMENTS),
+            "interfaces": sorted(self._INTERFACES),
+            "evaluation_kinds": sorted(self._EVALUATION_KINDS),
+            "deployment_target_kinds": sorted(ArtifactManager.TARGET_KINDS),
+        }
+
     @staticmethod
     def _strings(
         value: Any,

@@ -29,7 +29,7 @@ MAX_MULTIMODAL_BODY_BYTES = 12_000_000
 class SparkleHandler(BaseHTTPRequestHandler):
     system: SparkleSystem
     dashboard_root = Path(__file__).with_name("dashboard")
-    server_version = "SPARKLE/0.23"
+    server_version = "SPARKLE/0.24"
 
     def log_message(self, format: str, *args: object) -> None:
         # Avoid request bodies, headers, query values, and secrets in logs.
@@ -306,6 +306,13 @@ class SparkleHandler(BaseHTTPRequestHandler):
                     limit=int(query.get("limit", [50])[0])
                 ),
             })
+        if parsed.path == "/api/ai-system-drafts":
+            return self._json({
+                "protocol_version": self.system.ai_system_compiler.PROTOCOL,
+                "drafts": self.system.ai_system_drafts.list(
+                    limit=int(query.get("limit", [50])[0])
+                ),
+            })
         if parsed.path == "/api/memory":
             return self._json({"memories": self.system.memory.search(query.get("q", [""])[0], limit=int(query.get("limit", [20])[0]))})
         if parsed.path == "/api/knowledge/search":
@@ -563,6 +570,14 @@ class SparkleHandler(BaseHTTPRequestHandler):
                 return self._json({
                     "ok": True, "blueprint": blueprint.to_dict(),
                 })
+            if self.path == "/api/ai-systems/draft":
+                if set(data) - {"requirements_text", "approved"}:
+                    raise ValueError("AI system draft fields are unsupported")
+                draft = self.system.ai_system_compiler.compile(
+                    data.get("requirements_text"),
+                    approved=data.get("approved") is True,
+                )
+                return self._json({"ok": True, "draft": draft}, 201)
             if self.path == "/api/ai-systems/build":
                 if set(data) - {"requirements", "approved"}:
                     raise ValueError("AI system build fields are unsupported")

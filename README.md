@@ -7,7 +7,7 @@ registry, provider adapters, specialist agents, persistent memory, a separate
 knowledge index, execution traces, automations, proactive rules, a CLI, an HTTP
 API, and a local dashboard.
 
-Current release: `0.23.0-alpha.1`. This is a tested foundation release, not the
+Current release: `0.24.0-alpha.1`. This is a tested foundation release, not the
 final system described in the long-term Definition of Done. See
 [`docs/BUILD_STATE.md`](docs/BUILD_STATE.md) and
 [`docs/ACCEPTANCE.md`](docs/ACCEPTANCE.md) for exact evidence and gaps.
@@ -36,6 +36,11 @@ final system described in the long-term Definition of Done. See
   registry-backed model capability/modality routing, agent/tool access checks,
   deterministic manifests, explicit approval, bounded workspace
   materialization, and safe persisted attempt evidence.
+- Approval-gated `SPARKLE-AI-SYSTEM-DRAFT/1` natural-language-to-structured-
+  requirements conversion through the shared model router and isolated no-
+  context/no-tool execution profile, followed by exact JSON and full Blueprint
+  validation with bounded content-free evidence. Deterministic adapter tests
+  pass; live-provider semantic quality is not yet verified.
 - Provider-neutral `SPARKLE-PROJECT/1` project state with strict lifecycle,
   priority/deadline/dependency/risk/milestone/blocker/next-action validation,
   optimistic updates, approval-gated archive, content-free change evidence,

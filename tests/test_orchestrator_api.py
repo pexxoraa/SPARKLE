@@ -790,6 +790,75 @@ class APITests(SystemCase):
         self.assertEqual(records[0]["system_name"], "robotics_ai")
         self.assertEqual(records[0]["status"], "materialized_static_verified")
 
+    def test_ai_system_natural_language_draft_and_content_free_evidence_api(self):
+        requirements = {
+            "name": "robotics_ai",
+            "purpose": "Research robotics evidence and produce bounded analytical outputs.",
+            "model_requirements": [{
+                "capability": "reasoning", "modalities": ["text"],
+            }],
+            "agents": ["research", "data_analysis"],
+            "tools": ["calculator", "knowledge_search"],
+            "data_environments": [
+                "knowledge_environment", "data_environment", "trace_environment",
+            ],
+            "interfaces": ["text", "api", "dashboard"],
+            "workflow": [
+                "Collect bounded evidence from approved sources.",
+                "Analyze evidence with selected specialist agents.",
+                "Return a traceable result and preserve evaluation evidence.",
+            ],
+            "evaluations": [{
+                "name": "robotics_integration", "kind": "integration",
+                "criterion": "The system preserves source and trace boundaries.",
+            }],
+            "deployment": {
+                "environment_name": "staging", "target_kind": "server",
+            },
+        }
+
+        class JSONDraftAdapter(ModelAdapter):
+            provider = "api-draft-provider"
+            model_id = "api-draft-model"
+
+            def complete(self, request: ModelRequest) -> ModelResponse:
+                return ModelResponse(
+                    json.dumps(requirements), self.model_id, self.provider,
+                    "end_turn",
+                )
+
+            def health(self):
+                return {"configured": True}
+
+        self.registry.inject(self.registry.active_id, JSONDraftAdapter())
+        natural_language = (
+            "Build a robotics research AI with bounded evidence and a dashboard."
+        )
+        self.assertEqual(self.request(
+            "/api/ai-systems/draft",
+            {"requirements_text": natural_language, "approved": False},
+        )[0], 400)
+        status, _, body = self.request(
+            "/api/ai-systems/draft",
+            {"requirements_text": natural_language, "approved": True},
+        )
+        self.assertEqual(status, 201)
+        draft = json.loads(body)["draft"]
+        self.assertEqual(draft["protocol_version"], "SPARKLE-AI-SYSTEM-DRAFT/1")
+        self.assertEqual(draft["status"], "draft_static_verified")
+        self.assertFalse(draft["semantic_correctness_verified"])
+        self.assertEqual(draft["requirements"]["name"], "robotics_ai")
+
+        status, _, evidence_body = self.request("/api/ai-system-drafts")
+        self.assertEqual(status, 200)
+        evidence = json.loads(evidence_body)
+        self.assertEqual(
+            evidence["protocol_version"], "SPARKLE-AI-SYSTEM-DRAFT/1",
+        )
+        self.assertEqual(evidence["drafts"][0]["status"], "draft_static_verified")
+        self.assertNotIn(natural_language, evidence_body.decode())
+        self.assertNotIn("Research robotics evidence", evidence_body.decode())
+
     def test_structured_project_lifecycle_and_evidence_endpoints(self):
         project = {
             "name": "sparkle_core",
