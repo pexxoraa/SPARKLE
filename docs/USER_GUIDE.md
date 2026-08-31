@@ -86,6 +86,12 @@ source:
 sparkle ai-system-plan requirements.json
 ```
 
+After materializing the plan, source-candidate generation requires separate
+commands for plan review, provider disclosure and approval, generation, human
+review, static verification, and final candidate approval. Use
+`sparkle --help` for the exact bounded commands. Generated files remain under
+the candidate environment and are never promoted to production automatically.
+
 To add only the canonical reviewable plan manifest to the bounded application
 workspace:
 

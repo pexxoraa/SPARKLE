@@ -1,3 +1,62 @@
+# 0.26.0-alpha.1 verification report
+
+Date: 2026-08-31 UTC
+
+## Executed evidence
+
+- `SPARKLE-AI-SYSTEM-SOURCE-CANDIDATE/1` consumes only a materialized plan
+  whose review is explicitly approved, revalidates its requirements/digest,
+  and generates exact bounded JSON through the existing model router and
+  isolated no-context/no-tool profile.
+- Provider/model/registry identity, task, timestamps, related plan/candidate,
+  generated path labels, and generation status are stored in a separate
+  disclosure record. Disclosure and generation each require approval; source
+  and credentials are absent from disclosure evidence.
+- Candidate files are restricted to plan-declared paths, 1–20 files, 64,000
+  bytes per file, and 256,000 bytes total. They are written only beneath
+  `candidate_environment/source_candidates`, with read-only files and a
+  canonical digest-bound manifest; no application or production source is
+  modified.
+- The state machine distinguishes generation, human-review-required, reviewed
+  or rejected, static-verification failed or passed, and approved. Generated
+  source cannot skip human review or static verification, and no operation
+  automatically claims review or approval.
+- Static verification validates isolation, paths, manifests, byte/file/overall
+  digests, formatting, credential patterns, Python syntax/imports/dependencies
+  and unsafe AST patterns, JSON configuration, and JavaScript syntax where
+  Node is available. Candidate Python is never imported or executed.
+- Nine focused tests passed in 0.225 seconds. They cover disclosure approval,
+  missing/incorrect provider metadata, valid lifecycle, automatic-approval
+  refusal, malformed JSON, invalid paths, plan mismatch, human rejection,
+  static success/failure, symlink isolation, manifest-digest tampering,
+  content-free trace lifecycle, CLI gates, and production-source isolation.
+- The first full documented-tree run executed 228 tests in 28.326 seconds. All
+  product tests passed; the sole failure was the cross-surface documentation
+  check observing BUILD_STATE at v0.25 after package metadata had advanced to
+  v0.26. BUILD_STATE was then reconciled. Final exact-tree and installed-wheel
+  evidence are recorded only after those commands execute successfully.
+- The corrected documented tree passed 228/228 official tests in 28.524
+  seconds; dashboard JavaScript syntax and Git whitespace checks passed.
+- The final reconciled pre-checkpoint tree passed 228/228 again in 28.360
+  seconds; dashboard JavaScript syntax and Git whitespace checks remained clean.
+- A fresh no-index `0.26.0a1` wheel built and installed with no dependencies.
+  Installed version/protocol/status and empty content-free candidate listing
+  passed, as did worker help and automation-service configuration checks. The
+  wheel SHA-256 is
+  `e6ddca7b1241b4156b013e0b2276821b3d08f838621b76367c6c095a29c2acd3`.
+
+## Honest limits
+
+- Deterministic injected-adapter tests do not establish live MiniMax semantic
+  quality or provider availability.
+- `STATICALLY VERIFIED` does not mean runtime tested, semantically correct,
+  isolated by the external worker, production-ready, published, or deployed.
+- Approval preserves a candidate in its isolated workspace; it does not copy,
+  merge, package, execute, publish, or deploy source.
+- Remote v0.26 publication and CI have not occurred. Completion remains 93%.
+
+---
+
 # 0.25.0-alpha.1 verification report
 
 Date: 2026-08-31 UTC

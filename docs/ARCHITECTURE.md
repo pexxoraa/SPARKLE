@@ -69,6 +69,13 @@ proposed source/evaluation paths and ordered review gates, and can materialize
 only a canonical plan manifest after approval. Its independent evidence store
 contains digests and bounded outcomes, not the plan or source. It does not call
 a model, generate proposed files, execute tests, or deploy a target.
+The AI System Source Candidate service consumes only a materialized and
+explicitly reviewed plan. Provider/model disclosure is stored and approved in
+a separate record before the isolated evaluation-profile model call. Exact
+JSON output is confined to plan-declared paths under `candidate_environment`.
+Generated, reviewed, statically verified, and approved are distinct monotonic
+states. Static verification parses but never imports or executes candidate
+source; approval does not copy it into an application or production tree.
 An independent artifact manager reads bounded application workspaces and emits
 deterministic content-addressed ZIPs; it never starts an executable.
 The automation service is another independent entrypoint over the existing
@@ -109,6 +116,9 @@ and orchestration do not depend on cookie or browser implementation details.
 - `var/data_environment/ai_system_blueprints.sqlite3`
 - `var/data_environment/ai_system_drafts.sqlite3`
 - `var/data_environment/ai_system_implementation_plans.sqlite3`
+- `var/data_environment/source_provider_disclosures.sqlite3`
+- `var/data_environment/source_candidates.sqlite3`
+- `var/candidate_environment/source_candidates/`
 - `var/data_environment/projects.sqlite3`
 - `var/data_environment/skills.sqlite3`
 - `var/data_environment/automation-service.lock`

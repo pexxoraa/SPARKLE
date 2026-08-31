@@ -370,3 +370,16 @@ deterministic plan preparation, approval-gated plan-only materialization,
 version/status, no-source assertions, worker help, and automation-service
 configuration. Its SHA-256 was
 `76b0ac4d3776be18790f4120f09a1e717bb08bef015bbd8d9d09274c66a6bac0`.
+
+The v0.26 Source Candidate increment added nine focused lifecycle, disclosure,
+metadata, malformed-output, path/plan mismatch, review, static verification,
+tamper, isolation, trace, and CLI cases. The focused suite passed 9/9 in 0.225
+seconds. The first full run executed 228 tests in 28.326 seconds: all product
+tests passed and the documentation contract alone caught BUILD_STATE still at
+v0.25 during the version update. After reconciliation, the complete official
+suite passed 228/228 in 28.524 seconds; dashboard JavaScript syntax and Git
+whitespace checks passed. The final reconciled pre-checkpoint rerun passed
+228/228 again in 28.360 seconds. A fresh zero-dependency `0.26.0a1` wheel installed
+without an index and passed installed version/protocol/status, empty candidate
+evidence, worker help, and automation-service configuration gates. Its SHA-256
+was `e6ddca7b1241b4156b013e0b2276821b3d08f838621b76367c6c095a29c2acd3`.

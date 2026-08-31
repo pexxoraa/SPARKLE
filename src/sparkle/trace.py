@@ -200,6 +200,53 @@ class TraceStore(SQLiteStore):
             ).fetchall()
         return [self._public(row) for row in rows]
 
+    def annotate_lifecycle(
+        self,
+        trace_id: str,
+        *,
+        processing_stage: str,
+        transformations: list[str],
+        data_accessed: list[str],
+        data_created: list[str],
+        storage_destinations: list[str],
+        execution_metadata: dict[str, Any],
+        result_summary: str,
+    ) -> None:
+        """Advance a completed trace with bounded content-free lifecycle evidence."""
+        if (
+            not isinstance(processing_stage, str)
+            or not processing_stage
+            or len(processing_stage) > 64
+        ):
+            raise ValueError("Trace processing stage is invalid")
+        labels = [
+            self._labels(transformations, label="transformations"),
+            self._labels(data_accessed, label="data accessed"),
+            self._labels(data_created, label="data created"),
+            self._labels(storage_destinations, label="storage destinations"),
+        ]
+        metadata = self._execution_metadata(execution_metadata)
+        safe_summary = result_summary[:500]
+        with self.connect() as connection:
+            cursor = connection.execute("""
+                UPDATE traces
+                SET processing_stage=?, transformations=?, data_accessed=?,
+                    data_created=?, storage_destinations=?, execution_metadata=?,
+                    result_summary=?
+                WHERE trace_id=? AND status IN ('success','failure')
+            """, (
+                processing_stage,
+                *(json.dumps(value, separators=(",", ":")) for value in labels),
+                json.dumps(
+                    metadata, separators=(",", ":"), ensure_ascii=False,
+                    sort_keys=True,
+                ),
+                safe_summary,
+                trace_id,
+            ))
+        if cursor.rowcount != 1:
+            raise ValueError("Trace lifecycle target does not exist")
+
     @staticmethod
     def _public(row: sqlite3.Row) -> dict[str, Any]:
         json_fields = {

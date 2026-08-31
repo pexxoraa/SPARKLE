@@ -4,14 +4,14 @@ Updated: 2026-08-31 UTC
 
 | Field | State |
 |---|---|
-| SPARKLE version | 0.25.0-alpha.1 |
-| Current phase | Continuous improvement — Phase 16/21 AI-system implementation planning |
-| Current task | Preserve the verified local v0.25 implementation-plan checkpoint and prepare the next bounded source-candidate generation boundary without claiming execution or remote publication |
+| SPARKLE version | 0.26.0-alpha.1 |
+| Current phase | Continuous improvement — Phase 17/21 bounded source-candidate generation |
+| Current task | Verify and checkpoint the bounded source-candidate lifecycle without claiming runtime correctness, production promotion, deployment, or remote publication |
 | Completed | v0.3-v0.22 capability releases and four-job CI; v0.23 capability publication and four-job CI; model abstraction/registry/MiniMax adapter; orchestrator/context/tracing; memory and knowledge lifecycle with backup; 16 built-in agents; persistent generated-agent installation; bounded structured Agent Blueprint generation/static routing evaluation/approval/rollback; isolated response-contract evaluation with bounded content-free evidence; provider-neutral AI System Blueprints; approval-gated `SPARKLE-AI-SYSTEM-DRAFT/1` natural-language conversion through the model router with isolated no-context/no-tool execution, exact duplicate-free JSON and full Blueprint revalidation, bounded content-free evidence, API/CLI/status/dashboard integration, and deterministic adapter tests; `SPARKLE-PROJECT/1` strict project lifecycle and evidence; `SPARKLE-SKILL/1` strict targets/evidence types/transactional derived levels/duplicate and future-evidence protection/optimistic metadata/archive/content-free proactive and least-privilege agent reads/API/CLI/status/dashboard integration; bounded workspaces/static verification/fixed local tests; signed external-worker client and deployable worker; reproducible approval-gated application artifacts; supervised automation service; bounded dashboard notifications; safe tools; text API/CLI/dashboard; bearer/session/CSRF/origin/rate/audit security; provider-neutral deterministic text/image/audio/document content contracts; dedicated voice/presence contracts; 16-agent matrix; documentation audit; cohesive E2E |
-| In progress | Local v0.25 passes all 219 official tests and a fresh no-index installed-wheel plan-only gate. Private GitHub `main` remains at the v0.23 capability commit; later local commits have not been published or run in remote CI. Bounded source-candidate generation with independent human review/static verification is the next unblocked implementation boundary |
+| In progress | v0.26 implements bounded plan-bound generation, separately approved provider disclosure, isolated candidate workspaces, explicit human-review/static-verification/final-approval states, and content-free lifecycle trace evidence. The corrected documented tree passes 228/228 official tests and a fresh no-index installed-wheel status/entrypoint gate. Private GitHub `main` remains at the v0.23 capability commit; later local commits have not been published or run in remote CI |
 | Blocked | Real Bubblewrap isolation on this executor (namespace setup denied); named remote worker/TLS target and live hostile-code validation; live MiniMax call (no key in build process); semantic non-text provider mapping; voice hardware; browser/computer runtime adapters; public application deployment target |
-| Failed tests | The first two focused commands did not execute the new cases because the worktree had no `.venv` and then lacked `PYTHONPATH=src`. The first executed six-case draft run produced five setup errors because its test adapter omitted `health()`; after adding it, one case failed on an invalid memory-category fixture. Corrected focused/adjacent/full runs pass. Four earlier wheel harness attempts stopped on a missing build entrypoint, rejected network-capable invocation, wrong wheel filename matcher, and wrong automation executable name. The first reconciliation wheel smoke used a nonexistent singular model-status key and stopped after install; a new fresh corrected gate passes. No v0.24 product assertion has failed. Historical failures remain in the release report |
-| Next action | Define a bounded provider-neutral source-candidate protocol that consumes an approved plan, requires separate disclosure/generation approval, writes nothing before review, and cannot claim tests or deployment. Remote publication remains a separate approval-gated action |
+| Failed tests | The first v0.26 full run executed all 228 tests; 227 passed and the documentation version contract failed because BUILD_STATE still said v0.25 while package metadata had advanced to v0.26. This expected reconciliation-order failure is now corrected. Earlier historical harness and fixture failures remain recorded in the release report |
+| Next action | Seal the exact local v0.26 checkpoint after final regression and tracked-tree audit, then identify the next independent unblocked requirement. Runtime evaluation, worker execution, production promotion, deployment, and remote publication remain separate stages |
 | Estimated directive completion | 93% |
 
 Release-state reconciliation confirmed local v0.24 implementation at commit
@@ -33,6 +33,16 @@ Local v0.25 capability commit
 `2b98f25468a48bed992fb30fc187288f0de63705` has tree
 `a74ff1148a00f543ca923ebffaa6258ab70b5ca3`; it is not published and has no
 remote CI evidence.
+
+The v0.26 Source Candidate boundary consumes only an explicitly reviewed,
+materialized implementation plan. A separate provider disclosure must be
+approved before the isolated generation call. Output is exact, bounded,
+plan-path-confined JSON written under `candidate_environment`, never the
+application or production tree. Generated, human-reviewed, statically
+verified, and approved are distinct states. Static verification parses and
+scans source without importing it or claiming runtime correctness. Completion
+remains 93% because runtime evaluation, source promotion, isolated execution,
+deployment, live MiniMax evidence, and remote publication remain incomplete.
 
 The percentage measures the full long-term directive, not code volume. Agent
 specifications are operational through the common orchestrator. Structured

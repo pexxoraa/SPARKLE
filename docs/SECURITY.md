@@ -23,6 +23,18 @@
   overwrite protection. Evidence excludes plan content, purpose, workflow,
   criteria, and source. Plan materialization does not approve or execute source
   generation, testing, external-worker submission, or deployment.
+- Source-candidate generation additionally requires reviewed-plan approval,
+  separate provider-disclosure approval, and per-generation approval. Exact
+  duplicate-free JSON is bounded by file count and bytes and restricted to
+  plan-declared paths. Candidates live outside application and production
+  trees. Provider metadata is stored separately without credentials or source.
+  Human review, static verification, and final candidate approval are distinct
+  transitions and cannot be inferred or skipped.
+- Candidate static verification performs path/manifest/digest/configuration
+  validation, Python AST and JavaScript syntax checks, local import/dependency
+  consistency, formatting checks, and credential/security-pattern scans. It
+  never imports candidate Python, runs candidate tests, installs dependencies,
+  calls the external worker, promotes source, or claims runtime correctness.
 - Application scaffolding requires explicit approval, confines every path to a
   dedicated application root, rejects traversal and symlinks, enforces file and
   manifest size limits, and protects existing files by default.

@@ -29,7 +29,7 @@ MAX_MULTIMODAL_BODY_BYTES = 12_000_000
 class SparkleHandler(BaseHTTPRequestHandler):
     system: SparkleSystem
     dashboard_root = Path(__file__).with_name("dashboard")
-    server_version = "SPARKLE/0.25"
+    server_version = "SPARKLE/0.26"
 
     def log_message(self, format: str, *args: object) -> None:
         # Avoid request bodies, headers, query values, and secrets in logs.
@@ -318,6 +318,21 @@ class SparkleHandler(BaseHTTPRequestHandler):
                 "protocol_version": self.system.ai_system_planner.PROTOCOL,
                 "implementation_plans": (
                     self.system.ai_system_implementation_plans.list(
+                        limit=int(query.get("limit", [50])[0])
+                    )
+                ),
+            })
+        if parsed.path == "/api/ai-system-source-candidates":
+            return self._json({
+                "protocol_version": self.system.ai_system_source_candidates.PROTOCOL,
+                "source_candidates": self.system.source_candidates.list(
+                    limit=int(query.get("limit", [50])[0])
+                ),
+            })
+        if parsed.path == "/api/ai-system-source-disclosures":
+            return self._json({
+                "provider_disclosures": (
+                    self.system.source_provider_disclosures.list(
                         limit=int(query.get("limit", [50])[0])
                     )
                 ),
@@ -616,6 +631,83 @@ class SparkleHandler(BaseHTTPRequestHandler):
                 return self._json({
                     "ok": True, "implementation_plan": plan,
                 }, 201)
+            if self.path == "/api/ai-systems/plan/review":
+                if set(data) - {"plan_id", "approved"}:
+                    raise ValueError("AI system plan review fields are unsupported")
+                plan = self.system.ai_system_source_candidates.review_plan(
+                    data.get("plan_id"), approved=data.get("approved") is True,
+                )
+                return self._json({
+                    "ok": True, "implementation_plan": plan,
+                })
+            if self.path == "/api/ai-systems/source/disclose":
+                if set(data) != {"plan_id", "requirements", "generation_task"}:
+                    raise ValueError("Source disclosure fields are unsupported")
+                disclosure = (
+                    self.system.ai_system_source_candidates.prepare_disclosure(
+                        data["plan_id"], data["requirements"],
+                        generation_task=data["generation_task"],
+                    )
+                )
+                return self._json({
+                    "ok": True, "provider_disclosure": disclosure,
+                }, 201)
+            if self.path == "/api/ai-systems/source/disclosure/approve":
+                if set(data) - {"disclosure_id", "approved"}:
+                    raise ValueError("Source disclosure approval fields are unsupported")
+                disclosure = (
+                    self.system.ai_system_source_candidates.approve_disclosure(
+                        data.get("disclosure_id"),
+                        approved=data.get("approved") is True,
+                    )
+                )
+                return self._json({
+                    "ok": True, "provider_disclosure": disclosure,
+                })
+            if self.path == "/api/ai-systems/source/generate":
+                if set(data) - {
+                    "plan_id", "requirements", "disclosure_id", "approved",
+                }:
+                    raise ValueError("Source generation fields are unsupported")
+                candidate = self.system.ai_system_source_candidates.generate(
+                    data.get("plan_id"), data.get("requirements"),
+                    data.get("disclosure_id"),
+                    approved=data.get("approved") is True,
+                )
+                return self._json({
+                    "ok": True, "source_candidate": candidate,
+                }, 201)
+            if self.path == "/api/ai-systems/source/review":
+                if set(data) - {
+                    "candidate_id", "decision", "notes", "approved",
+                }:
+                    raise ValueError("Source review fields are unsupported")
+                candidate = self.system.ai_system_source_candidates.review(
+                    data.get("candidate_id"), decision=data.get("decision"),
+                    notes=data.get("notes"), approved=data.get("approved") is True,
+                )
+                return self._json({"ok": True, "source_candidate": candidate})
+            if self.path == "/api/ai-systems/source/verify":
+                if set(data) != {"candidate_id", "requirements"}:
+                    raise ValueError("Source verification fields are unsupported")
+                candidate = self.system.ai_system_source_candidates.verify(
+                    data["candidate_id"], data["requirements"],
+                )
+                return self._json({"ok": True, "source_candidate": candidate})
+            if self.path == "/api/ai-systems/source/approve":
+                if set(data) - {"candidate_id", "approved"}:
+                    raise ValueError("Source candidate approval fields are unsupported")
+                candidate = self.system.ai_system_source_candidates.approve(
+                    data.get("candidate_id"), approved=data.get("approved") is True,
+                )
+                return self._json({"ok": True, "source_candidate": candidate})
+            if self.path == "/api/ai-systems/source/file":
+                if set(data) != {"candidate_id", "path"}:
+                    raise ValueError("Source candidate file fields are unsupported")
+                source_file = self.system.ai_system_source_candidates.read_file(
+                    data["candidate_id"], data["path"],
+                )
+                return self._json({"ok": True, "source_file": source_file})
             if self.path == "/api/agents/remove":
                 if data.get("approved") is not True:
                     raise ValueError("Agent removal requires explicit approval")

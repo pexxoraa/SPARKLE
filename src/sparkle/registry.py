@@ -174,6 +174,17 @@ class ModelRouter:
         *,
         modalities: set[str] | list[str] | tuple[str, ...] | None = None,
     ) -> ModelAdapter:
+        return self.select_with_record(
+            capability, modalities=modalities,
+        )[1]
+
+    def select_with_record(
+        self,
+        capability: str = "general",
+        *,
+        modalities: set[str] | list[str] | tuple[str, ...] | None = None,
+    ) -> tuple[str, ModelAdapter]:
+        """Return the selected registry ID with its adapter for disclosure."""
         required = set(modalities or {"text"})
         record_id = self.registry.routing.get(capability, self.registry.routing.get("default", self.registry.active_id))
         record = self.registry.record(record_id)
@@ -183,7 +194,7 @@ class ModelRouter:
                 record_id = candidates[0].id
         adapter = self.registry.adapter(record_id)
         if adapter.supports(required):
-            return adapter
+            return record_id, adapter
         for candidate in self.registry._records.values():
             if not candidate.enabled or candidate.id == record_id:
                 continue
@@ -191,7 +202,7 @@ class ModelRouter:
                 continue
             alternate = self.registry.adapter(candidate.id)
             if alternate.supports(required):
-                return alternate
+                return candidate.id, alternate
         raise UnsupportedModalityError(
             required - adapter.supported_modalities,
             model_id=adapter.model_id,

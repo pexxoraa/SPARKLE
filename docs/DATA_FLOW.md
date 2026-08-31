@@ -83,6 +83,15 @@ to the bounded application workspace. Evidence retains digests, byte count,
 status, workspace link, timestamps, and safe error type; proposed source and
 test files are not generated or executed.
 
+Source-candidate generation follows revalidated requirement → reviewed
+implementation plan → separate provider disclosure → disclosure approval →
+isolated no-context/no-tool model call → exact plan-bound JSON → isolated
+candidate workspace → explicit human review → non-executing static checks →
+separate candidate approval. Trace metadata records identifiers, provider/model
+labels, lifecycle stages, and false runtime/deployment flags; it excludes
+requirements, source, review notes, credentials, and model output. No lifecycle
+step calls the external worker, runs candidate code, or promotes files.
+
 Artifact packaging follows approval → confined workspace selection → stable
 no-follow regular-file reads → portable path and size checks → per-file/source
 digests → deterministic ZIP and embedded manifest → immutable target integrity

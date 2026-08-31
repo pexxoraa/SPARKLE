@@ -12,6 +12,12 @@ from sparkle.ai_system_plan import (
     AISystemImplementationPlanner,
     AISystemImplementationPlanStore,
 )
+from sparkle.ai_system_source import (
+    AISystemSourceCandidateService,
+    ProviderDisclosureStore,
+    SourceCandidateStore,
+    SourceCandidateWorkspace,
+)
 from sparkle.artifacts import ArtifactManager
 from sparkle.automation import AutomationRunner, AutomationStore, ProactiveEngine
 from sparkle.builders import WorkspaceManager
@@ -168,6 +174,18 @@ class SparkleSystem:
             self.orchestrator,
             self.ai_system_drafts,
         )
+        self.source_provider_disclosures = ProviderDisclosureStore()
+        self.source_candidates = SourceCandidateStore()
+        self.source_candidate_workspace = SourceCandidateWorkspace()
+        self.ai_system_source_candidates = AISystemSourceCandidateService(
+            self.ai_system_planner,
+            self.ai_system_implementation_plans,
+            self.orchestrator,
+            self.traces,
+            self.source_provider_disclosures,
+            self.source_candidates,
+            self.source_candidate_workspace,
+        )
         self.agent_evaluations = AgentEvaluationStore()
         self.agent_evaluator = AgentResponseEvaluator(
             self.agent_builder,
@@ -187,7 +205,7 @@ class SparkleSystem:
         models = self.models.list()
         return {
             "name": "SPARKLE",
-            "version": "0.25.0-alpha.1",
+            "version": "0.26.0-alpha.1",
             "status": "ready" if any(model["configured"] for model in models) else "limited",
             "active_model": self.models.active_id,
             "models": models,
@@ -212,6 +230,15 @@ class SparkleSystem:
                 ),
                 "implementation_plan_protocol_version": (
                     self.ai_system_planner.PROTOCOL
+                ),
+                "provider_disclosures": len(
+                    self.source_provider_disclosures.list(limit=100)
+                ),
+                "source_candidates": len(
+                    self.source_candidates.list(limit=100)
+                ),
+                "source_candidate_protocol_version": (
+                    self.ai_system_source_candidates.PROTOCOL
                 ),
             },
             "tools": self.tools.status(),

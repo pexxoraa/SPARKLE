@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.26.0-alpha.1 - 2026-08-31
+
+- Added bounded `SPARKLE-AI-SYSTEM-SOURCE-CANDIDATE/1` generation from an
+  explicitly reviewed implementation plan through the model-agnostic router.
+- Added separately approved provider disclosure, isolated candidate storage,
+  explicit generated/reviewed/statically-verified/approved lifecycle states,
+  content-free trace evidence, API/CLI/status/dashboard integration, and
+  non-executing static verification.
+- Kept runtime testing, external-worker submission, production promotion,
+  publication, and deployment explicitly unexecuted.
+
 ## 0.25.0-alpha.1 - 2026-08-31
 
 - Added deterministic `SPARKLE-AI-SYSTEM-IMPLEMENTATION-PLAN/1` derivation from

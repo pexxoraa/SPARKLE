@@ -41,6 +41,21 @@ class AISystemImplementationPlanStore(SQLiteStore):
                     updated_at TEXT NOT NULL
                 )
             """)
+            columns = {
+                row["name"] for row in connection.execute(
+                    "PRAGMA table_info(ai_system_implementation_plans)"
+                ).fetchall()
+            }
+            migrations = {
+                "review_status": "TEXT NOT NULL DEFAULT 'human_review_required'",
+                "reviewed_at": "TEXT",
+            }
+            for name, definition in migrations.items():
+                if name not in columns:
+                    connection.execute(
+                        "ALTER TABLE ai_system_implementation_plans "
+                        f"ADD COLUMN {name} {definition}"
+                    )
 
     @staticmethod
     def _digest(value: Any, *, field: str) -> str:
@@ -129,25 +144,65 @@ class AISystemImplementationPlanStore(SQLiteStore):
                 SELECT * FROM ai_system_implementation_plans
                 ORDER BY id DESC LIMIT ?
             """, (max(1, min(limit, 100)),)).fetchall()
-        return [
-            {
-                "plan_id": row["id"],
-                "system_name": row["system_name"],
-                "blueprint_sha256": row["blueprint_sha256"],
-                "plan_sha256": row["plan_sha256"],
-                "plan_bytes": row["plan_bytes"],
-                "status": row["status"],
-                "workspace_build_id": row["workspace_build_id"],
-                "error_type": row["error_type"],
-                "human_review_completed": False,
-                "source_generation_executed": False,
-                "runtime_evaluation_executed": False,
-                "external_deployment_executed": False,
-                "created_at": row["created_at"],
-                "updated_at": row["updated_at"],
-            }
-            for row in rows
-        ]
+        return [self._public(row) for row in rows]
+
+    def get(self, plan_id: int) -> dict[str, Any]:
+        if not isinstance(plan_id, int) or isinstance(plan_id, bool) or plan_id < 1:
+            raise ValueError("AI system implementation-plan ID is invalid")
+        with self.connect() as connection:
+            row = connection.execute(
+                "SELECT * FROM ai_system_implementation_plans WHERE id=?",
+                (plan_id,),
+            ).fetchone()
+        if row is None:
+            raise KeyError("AI system implementation plan does not exist")
+        return self._public(row)
+
+    def approve_for_generation(self, plan_id: int, *, approved: bool) -> dict[str, Any]:
+        if approved is not True:
+            raise ValueError(
+                "AI system implementation-plan review requires explicit approval"
+            )
+        now = utc_now()
+        with self.connect() as connection:
+            cursor = connection.execute("""
+                UPDATE ai_system_implementation_plans
+                SET review_status='approved_for_generation', reviewed_at=?,
+                    updated_at=?
+                WHERE id=? AND status='materialized_static_verified'
+                  AND review_status='human_review_required'
+            """, (now, now, plan_id))
+        if cursor.rowcount != 1:
+            record = self.get(plan_id)
+            if record["review_status"] == "approved_for_generation":
+                raise ValueError("AI system implementation plan is already approved")
+            raise ValueError(
+                "Only a materialized implementation plan can be approved"
+            )
+        return self.get(plan_id)
+
+    @staticmethod
+    def _public(row: Any) -> dict[str, Any]:
+        reviewed = row["review_status"] == "approved_for_generation"
+        return {
+            "plan_id": row["id"],
+            "system_name": row["system_name"],
+            "blueprint_sha256": row["blueprint_sha256"],
+            "plan_sha256": row["plan_sha256"],
+            "plan_bytes": row["plan_bytes"],
+            "status": row["status"],
+            "workspace_build_id": row["workspace_build_id"],
+            "error_type": row["error_type"],
+            "review_status": row["review_status"],
+            "human_review_completed": reviewed,
+            "approved_for_source_generation": reviewed,
+            "source_generation_executed": False,
+            "runtime_evaluation_executed": False,
+            "external_deployment_executed": False,
+            "reviewed_at": row["reviewed_at"],
+            "created_at": row["created_at"],
+            "updated_at": row["updated_at"],
+        }
 
 
 class AISystemImplementationPlanner:

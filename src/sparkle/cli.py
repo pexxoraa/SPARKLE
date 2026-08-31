@@ -95,6 +95,65 @@ def build_parser() -> argparse.ArgumentParser:
     )
     ai_system_plan_build.add_argument("requirements")
     ai_system_plan_build.add_argument("--approve", action="store_true")
+    ai_system_plan_review = sub.add_parser(
+        "ai-system-plan-review",
+        help="Approve a reviewed implementation plan for candidate generation",
+    )
+    ai_system_plan_review.add_argument("plan_id", type=int)
+    ai_system_plan_review.add_argument("--approve", action="store_true")
+    source_disclose = sub.add_parser(
+        "ai-system-source-disclose",
+        help="Create a provider disclosure for an approved implementation plan",
+    )
+    source_disclose.add_argument("plan_id", type=int)
+    source_disclose.add_argument("requirements")
+    source_disclose.add_argument("generation_task")
+    source_disclosure_approve = sub.add_parser(
+        "ai-system-source-disclosure-approve",
+        help="Approve disclosed provider metadata before generation",
+    )
+    source_disclosure_approve.add_argument("disclosure_id", type=int)
+    source_disclosure_approve.add_argument("--approve", action="store_true")
+    source_generate = sub.add_parser(
+        "ai-system-source-generate",
+        help="Generate an isolated bounded source candidate",
+    )
+    source_generate.add_argument("plan_id", type=int)
+    source_generate.add_argument("disclosure_id", type=int)
+    source_generate.add_argument("requirements")
+    source_generate.add_argument("--approve", action="store_true")
+    source_review = sub.add_parser(
+        "ai-system-source-review",
+        help="Record an explicit human review decision",
+    )
+    source_review.add_argument("candidate_id", type=int)
+    source_review.add_argument("decision", choices=("accept", "reject"))
+    source_review.add_argument("notes")
+    source_review.add_argument("--approve", action="store_true")
+    source_verify = sub.add_parser(
+        "ai-system-source-verify",
+        help="Run non-executing static candidate verification",
+    )
+    source_verify.add_argument("candidate_id", type=int)
+    source_verify.add_argument("requirements")
+    source_approve = sub.add_parser(
+        "ai-system-source-approve",
+        help="Approve a human-reviewed statically verified candidate",
+    )
+    source_approve.add_argument("candidate_id", type=int)
+    source_approve.add_argument("--approve", action="store_true")
+    source_file = sub.add_parser(
+        "ai-system-source-file",
+        help="Read one declared candidate file for human review",
+    )
+    source_file.add_argument("candidate_id", type=int)
+    source_file.add_argument("path")
+    sub.add_parser(
+        "ai-system-source-candidates", help="List source candidate evidence",
+    )
+    sub.add_parser(
+        "ai-system-source-disclosures", help="List provider disclosures",
+    )
     project_create = sub.add_parser(
         "project-create", help="Create a validated structured project record",
     )
@@ -323,6 +382,97 @@ def main(argv: list[str] | None = None) -> int:
             "ok": True,
             "implementation_plan": system.ai_system_planner.materialize(
                 requirements, approved=bool(args.approve),
+            ),
+        })
+        return 0
+    if args.command == "ai-system-plan-review":
+        _print({
+            "ok": True,
+            "implementation_plan": system.ai_system_source_candidates.review_plan(
+                args.plan_id, approved=bool(args.approve),
+            ),
+        })
+        return 0
+    if args.command == "ai-system-source-disclose":
+        _print({
+            "ok": True,
+            "provider_disclosure": (
+                system.ai_system_source_candidates.prepare_disclosure(
+                    args.plan_id,
+                    _load_manifest(args.requirements),
+                    generation_task=_load_text(args.generation_task),
+                )
+            ),
+        })
+        return 0
+    if args.command == "ai-system-source-disclosure-approve":
+        _print({
+            "ok": True,
+            "provider_disclosure": (
+                system.ai_system_source_candidates.approve_disclosure(
+                    args.disclosure_id, approved=bool(args.approve),
+                )
+            ),
+        })
+        return 0
+    if args.command == "ai-system-source-generate":
+        _print({
+            "ok": True,
+            "source_candidate": system.ai_system_source_candidates.generate(
+                args.plan_id,
+                _load_manifest(args.requirements),
+                args.disclosure_id,
+                approved=bool(args.approve),
+            ),
+        })
+        return 0
+    if args.command == "ai-system-source-review":
+        _print({
+            "ok": True,
+            "source_candidate": system.ai_system_source_candidates.review(
+                args.candidate_id,
+                decision=args.decision,
+                notes=_load_text(args.notes),
+                approved=bool(args.approve),
+            ),
+        })
+        return 0
+    if args.command == "ai-system-source-verify":
+        _print({
+            "ok": True,
+            "source_candidate": system.ai_system_source_candidates.verify(
+                args.candidate_id, _load_manifest(args.requirements),
+            ),
+        })
+        return 0
+    if args.command == "ai-system-source-approve":
+        _print({
+            "ok": True,
+            "source_candidate": system.ai_system_source_candidates.approve(
+                args.candidate_id, approved=bool(args.approve),
+            ),
+        })
+        return 0
+    if args.command == "ai-system-source-file":
+        _print({
+            "ok": True,
+            "source_file": system.ai_system_source_candidates.read_file(
+                args.candidate_id, args.path,
+            ),
+        })
+        return 0
+    if args.command == "ai-system-source-candidates":
+        _print({
+            "ok": True,
+            "protocol_version": system.ai_system_source_candidates.PROTOCOL,
+            "source_candidates": system.source_candidates.list(limit=100),
+        })
+        return 0
+    if args.command == "ai-system-source-disclosures":
+        _print({
+            "ok": True,
+            "provider_disclosures": system.source_provider_disclosures.list(
+                limit=100
             ),
         })
         return 0

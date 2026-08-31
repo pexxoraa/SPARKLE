@@ -14,6 +14,10 @@ v0.25 adds deterministic `SPARKLE-AI-SYSTEM-IMPLEMENTATION-PLAN/1` derivation
 from a revalidated Blueprint. The plan is human-reviewable and can be
 materialized separately, but source generation and every execution claim
 remain explicitly false.
+v0.26 adds bounded `SPARKLE-AI-SYSTEM-SOURCE-CANDIDATE/1` generation. It
+requires plan review, separately approved provider disclosure, generation
+approval, explicit human source review, non-executing static verification, and
+separate final candidate approval. Candidates never enter production source.
 
 ## Requirements contract
 
@@ -157,6 +161,47 @@ workspace with overwrite disabled. It can coexist with the Blueprint's
 plan records only; they are not written. Materialization approval is permission
 to write the plan, not evidence that a human completed review or approved
 future source generation.
+
+## Source-candidate generation
+
+The generation lifecycle is deliberately discontinuous:
+
+```text
+MATERIALIZED PLAN → REVIEWED PLAN → PROVIDER DISCLOSURE PENDING
+→ PROVIDER DISCLOSURE APPROVED → GENERATED/HUMAN REVIEW REQUIRED
+→ REVIEWED → STATICALLY VERIFIED → APPROVED CANDIDATE
+```
+
+Each approval is explicit. Generation uses the Application Builder through the
+common model router and isolated evaluation profile. The response must be one
+duplicate-free `SPARKLE-AI-SYSTEM-SOURCE-CANDIDATE/1` JSON object linked to the
+exact plan digest, with 1–20 UTF-8 files and at most 256,000 total bytes. Every
+path must already appear in the approved plan's proposed source files.
+
+Provider disclosure is prepared and stored independently before generation. It
+records provider, model, registry identifier, timestamp, bounded generation
+task, related plan/candidate identifiers, generated path labels, and status.
+It never stores credentials or source. A current router selection that differs
+from the approved disclosure fails closed, as does missing or inconsistent
+metadata on the model response.
+
+Candidate files and `SPARKLE_SOURCE_CANDIDATE.json` are written only under
+`candidate_environment/source_candidates/candidate-NNNNNN/`, not the bounded
+application workspace, repository, artifacts, or deployment area. Human review
+stores only a digest of bounded notes. Static verification revalidates the
+requirements and plan, candidate paths, manifest and digests, then applies
+syntax/configuration, import/reference, dependency, formatting, and security
+pattern checks where supported. JavaScript `--check` receives a minimal
+environment; Python uses AST parsing and is never imported.
+
+CLI and authenticated API operations keep review, disclosure approval,
+generation, human review, verification, and final approval separate. Listing
+surfaces expose content-free evidence. Reading one declared candidate file is
+an explicit review operation; no endpoint promotes it.
+
+`STATICALLY VERIFIED` means only that the recorded non-executing checks passed.
+It never means runtime tested, semantically correct, worker-isolated,
+production-ready, published, or deployed.
 
 ## Evidence and persistence
 
