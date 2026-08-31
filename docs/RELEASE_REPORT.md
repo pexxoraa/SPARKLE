@@ -30,6 +30,10 @@ Date: 2026-08-31 UTC
   `test (3.12)`, `test (3.13)`, `worker-image`, and `automation-service` all
   passed. This proves remote publication and CI for the replayed capability
   commit, not live MiniMax availability or executable Bubblewrap isolation.
+- Documentation checkpoint `eb707aaf28602f2a7ec69cb5dedf7cc6375d319f`,
+  tree `03232c1aeba537f21d9865fa03b0c7f76f6c47f0`, was published as a normal
+  descendant. SPARKLE CI run #51 (`33399507776`) also passed the Python 3.12,
+  Python 3.13, worker-image, and automation-service jobs.
 - Two stopped local packaging harness attempts are not release evidence: one
   expected a bare array instead of the documented runtime-list envelope; the
   next used positional `check` instead of `sparkle-automations --check`.
