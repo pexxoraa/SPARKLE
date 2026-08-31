@@ -2,6 +2,39 @@
 
 Date: 2026-08-31 UTC
 
+## Repository reconciliation and publication
+
+- Original local checkpoint:
+  `e2ebfd454bf0b1b194a453b716628e34d4407235`; original tree:
+  `b5f94e9366263fd0f4f9a2abe07220b61c076b47`.
+- Remote `main` before replay:
+  `78032c1fbbaeab7253421f8cdde6e70da5d6f97c`. Its tree matched the local
+  v0.23 capability tree, but the complete remote and local commit histories had
+  no common ancestor.
+- The seven intended local commits following the content-equivalent v0.23 tree
+  were replayed without conflicts onto remote `78032c1`. No force push,
+  unrelated-history merge, remote deletion, or history replacement occurred.
+- Published replayed v0.27 capability checkpoint:
+  `76aec2e439e82d9766c0dccf4ca3487c54288e3c`; published capability tree:
+  `b5f94e9366263fd0f4f9a2abe07220b61c076b47`. The original local commit SHA
+  was not published and remains preserved locally as `audit/original-v0.27`.
+- Post-replay official verification passed 236/236 tests in 35.407 seconds.
+  The corrected focused runtime/external-worker/service command passed 29/29
+  tests in 9.534 seconds. Dashboard JavaScript syntax, Git whitespace, tracked
+  artifact/binary/secret-signature audits, and version checks passed.
+- A fresh no-index `0.27.0a1` wheel installed and passed version, status,
+  empty runtime-evaluation protocol, worker entrypoint, and automation-service
+  checks. Its SHA-256 is
+  `7622f86967efb2429d55a4576653c1c0729e46c4f9c6e55f917cc58feca688b4`.
+- SPARKLE CI run #50 (`33398943322`) for `76aec2e` completed successfully.
+  `test (3.12)`, `test (3.13)`, `worker-image`, and `automation-service` all
+  passed. This proves remote publication and CI for the replayed capability
+  commit, not live MiniMax availability or executable Bubblewrap isolation.
+- Two stopped local packaging harness attempts are not release evidence: one
+  expected a bare array instead of the documented runtime-list envelope; the
+  next used positional `check` instead of `sparkle-automations --check`.
+  The fresh successful gate above supersedes both.
+
 ## Executed evidence
 
 - Added `SPARKLE-AI-SYSTEM-RUNTIME-EVALUATION/1` with exact candidate/plan
@@ -52,7 +85,8 @@ Date: 2026-08-31 UTC
 - `runtime_verified` is contract/result evidence; `isolation_verified` remains
   false. Production verification, source promotion, publication, and deployment
   are unimplemented and never inferred.
-- Remote v0.27 publication and CI have not occurred. Completion remains 93%.
+- Replayed v0.27 capability publication and four-job remote CI are verified.
+  Completion remains 93%.
 
 ---
 

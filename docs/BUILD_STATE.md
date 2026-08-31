@@ -6,12 +6,12 @@ Updated: 2026-08-31 UTC
 |---|---|
 | SPARKLE version | 0.27.0-alpha.1 |
 | Current phase | Continuous improvement — Phase 18/21 bounded candidate runtime evaluation |
-| Current task | Verify the approved-candidate runtime-evaluation contract and external-worker integration without claiming executable isolation, production verification, promotion, deployment, or remote publication |
+| Current task | Reconcile the non-force v0.27 history replay, remote publication, and CI evidence without claiming executable isolation, production verification, promotion, or deployment |
 | Completed | v0.3-v0.22 capability releases and four-job CI; v0.23 capability publication and four-job CI; model abstraction/registry/MiniMax adapter; orchestrator/context/tracing; memory and knowledge lifecycle with backup; 16 built-in agents; persistent generated-agent installation; bounded structured Agent Blueprint generation/static routing evaluation/approval/rollback; isolated response-contract evaluation with bounded content-free evidence; provider-neutral AI System Blueprints; approval-gated `SPARKLE-AI-SYSTEM-DRAFT/1` natural-language conversion through the model router with isolated no-context/no-tool execution, exact duplicate-free JSON and full Blueprint revalidation, bounded content-free evidence, API/CLI/status/dashboard integration, and deterministic adapter tests; `SPARKLE-PROJECT/1` strict project lifecycle and evidence; `SPARKLE-SKILL/1` strict targets/evidence types/transactional derived levels/duplicate and future-evidence protection/optimistic metadata/archive/content-free proactive and least-privilege agent reads/API/CLI/status/dashboard integration; bounded workspaces/static verification/fixed local tests; signed external-worker client and deployable worker; reproducible approval-gated application artifacts; supervised automation service; bounded dashboard notifications; safe tools; text API/CLI/dashboard; bearer/session/CSRF/origin/rate/audit security; provider-neutral deterministic text/image/audio/document content contracts; dedicated voice/presence contracts; 16-agent matrix; documentation audit; cohesive E2E |
-| In progress | v0.27 implements provider-neutral runtime-evaluation contracts for approved candidates, exact candidate/plan validation, isolated evaluation bundles, signed external-worker submission with contract-bound limits, explicit lifecycle/failure states, bounded content-free results/traces, API/CLI/status integration, and deterministic worker-boundary tests. The complete suite passes 236/236 and a fresh no-index installed-wheel gate passes; worker readiness honestly fails because its signing key/endpoint are absent. Private GitHub `main` remains at the v0.23 capability commit; later local commits have not been published or run in remote CI |
+| In progress | v0.27 implements provider-neutral runtime-evaluation contracts for approved candidates, exact candidate/plan validation, isolated evaluation bundles, signed external-worker submission with contract-bound limits, explicit lifecycle/failure states, bounded content-free results/traces, API/CLI/status integration, and deterministic worker-boundary tests. After the non-force history replay, the complete suite passed 236/236, the focused runtime/worker suite passed 29/29, and a fresh no-index installed-wheel gate passed. Private GitHub `main` published the replayed v0.27 capability commit `76aec2e439e82d9766c0dccf4ca3487c54288e3c`; SPARKLE CI run #50 (`33398943322`) passed all four jobs |
 | Blocked | Real Bubblewrap isolation on this executor (namespace setup denied); named remote worker/TLS target and live hostile-code validation; live MiniMax call (no key in build process); semantic non-text provider mapping; voice hardware; browser/computer runtime adapters; public application deployment target |
 | Failed tests | The first v0.26 full run executed all 228 tests; 227 passed and the documentation version contract failed because BUILD_STATE still said v0.25 while package metadata had advanced to v0.26. This expected reconciliation-order failure is now corrected. Earlier historical harness and fixture failures remain recorded in the release report |
-| Next action | Seal the exact local v0.27 checkpoint after final audit. A real named worker, signing configuration, and executable Bubblewrap hostile-canary evidence remain required before live runtime-isolation verification; promotion remains a later separate stage |
+| Next action | Publish and verify this release-state documentation checkpoint, then keep feature development paused. A real named worker, signing configuration, and executable Bubblewrap hostile-canary evidence remain required before live runtime-isolation verification; promotion remains a later separate stage |
 | Estimated directive completion | 93% |
 
 Release-state reconciliation confirmed local v0.24 implementation at commit
@@ -19,8 +19,27 @@ Release-state reconciliation confirmed local v0.24 implementation at commit
 `8b0d76e414bd6e8bc547e3ad649e74b58a1b409a`, restored CHANGELOG coverage,
 aligned runtime version markers, and added a cross-surface regression contract.
 The reconciled source passed 213/213 official tests and a fresh installed-wheel
-gate. This is local evidence only: private GitHub `main` remains at
-`78032c1fbbaeab7253421f8cdde6e70da5d6f97c`, and no v0.24 remote CI exists.
+gate. At that checkpoint this was local evidence only: private GitHub `main`
+remained at `78032c1fbbaeab7253421f8cdde6e70da5d6f97c`, and no v0.24 remote CI
+existed. The later non-force replay publication is recorded below.
+
+The local and GitHub repositories were later found to have unrelated commit
+ancestry despite content-equivalent v0.23 trees. The original verified local
+v0.27 checkpoint was
+`e2ebfd454bf0b1b194a453b716628e34d4407235`, tree
+`b5f94e9366263fd0f4f9a2abe07220b61c076b47`. Remote `main` before replay was
+`78032c1fbbaeab7253421f8cdde6e70da5d6f97c`. Seven intended commits were
+replayed without conflicts as normal descendants of that remote commit; no
+force push, unrelated-history merge, deletion, or history replacement occurred.
+The published v0.27 capability checkpoint is
+`76aec2e439e82d9766c0dccf4ca3487c54288e3c` with the same verified tree
+`b5f94e9366263fd0f4f9a2abe07220b61c076b47`. Post-replay verification passed
+236/236 official tests in 35.407 seconds and 29/29 focused runtime/worker tests
+in 9.534 seconds; dashboard syntax, whitespace, packaging, fresh offline
+installation, version, binary, secret-signature, and generated-artifact checks
+passed. SPARKLE CI run #50 (`33398943322`) passed `test (3.12)`, `test (3.13)`,
+`worker-image`, and `automation-service`. The original local SHA was not
+published; it remains preserved by the local `audit/original-v0.27` branch.
 
 The v0.25 Implementation Plan boundary revalidates the Blueprint and derives a
 deterministic provider-neutral plan with confined proposed paths, ordered work
