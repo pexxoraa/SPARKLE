@@ -8,7 +8,7 @@ context, trace, and model systems.
 |---|---|
 | Personal | Goals, priorities, context, specialist coordination |
 | Learning | Explain, ask, test, correct, apply, retest |
-| Skill | Evidence-based mastery levels 0–6 |
+| Skill | Evidence-based mastery levels 0–6; read-only access to validated `SPARKLE-SKILL/1` summaries |
 | Exam | Syllabus, practice, mocks, revision, error analysis |
 | Research | Source evaluation, cross-checking, synthesis |
 | Coding | Implementation, debugging, tests, code review |
@@ -25,6 +25,12 @@ context, trace, and model systems.
 
 Multi-agent execution runs selected specialists, then asks the Personal Agent to
 synthesize their outputs. Each specialist and synthesis receives its own trace.
+
+Personal, Learning, and Skill agents can inspect bounded structured mastery
+summaries through `skill_search`. Evidence creation/verification, metadata
+updates, and archive are explicit user/API/CLI boundaries; no model tool can
+raise a level. Descriptions, evidence summaries, and artifact references are
+excluded from model-facing results.
 
 Generated agents use the same `AgentSpec` contract and execution path. Approved
 manifests are validated against registered tools, persisted outside source code,

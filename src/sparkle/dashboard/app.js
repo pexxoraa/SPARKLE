@@ -110,6 +110,14 @@ async function loadPanel(panel) {
       )).join('')
       : empty('No durable memories stored.');
   }
+  if (panel === 'skills') {
+    const data = await api('/api/skills?limit=50');
+    qs('#skillList').innerHTML = data.skills.length
+      ? data.skills.map((skill) => (
+        `<div class="list-item"><strong>${escapeHtml(skill.title)} · level ${escapeHtml(skill.current_level)} ${escapeHtml(skill.current_level_name)}</strong><small>target ${escapeHtml(skill.target_level)} · ${escapeHtml(skill.verified_evidence_count)} verified / ${escapeHtml(skill.total_evidence_count)} total evidence · average ${escapeHtml(skill.average_verified_score ?? 'not established')}</small></div>`
+      )).join('')
+      : empty('No structured skills tracked.');
+  }
   if (panel === 'automations') {
     const [data, proactive, notifications] = await Promise.all([
       api('/api/automation-runs?limit=50'),

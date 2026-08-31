@@ -29,6 +29,7 @@ REQUIRED_DOCUMENTS = {
     "docs/DEVELOPMENT.md",
     "docs/USER_GUIDE.md",
     "docs/PROJECTS.md",
+    "docs/SKILLS.md",
 }
 MARKDOWN_LINK = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
 

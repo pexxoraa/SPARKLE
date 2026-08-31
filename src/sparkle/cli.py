@@ -99,6 +99,31 @@ def build_parser() -> argparse.ArgumentParser:
     project_archive.add_argument("name")
     project_archive.add_argument("--expected-version", type=int, required=True)
     project_archive.add_argument("--approve", action="store_true")
+    skill_create = sub.add_parser(
+        "skill-create", help="Create a validated structured skill record",
+    )
+    skill_create.add_argument("manifest")
+    skill_update = sub.add_parser(
+        "skill-update", help="Update skill metadata with optimistic version control",
+    )
+    skill_update.add_argument("name")
+    skill_update.add_argument("changes")
+    skill_update.add_argument("--expected-version", type=int, required=True)
+    skill_evidence = sub.add_parser(
+        "skill-evidence", help="Add explicit evidence and recompute mastery",
+    )
+    skill_evidence.add_argument("manifest")
+    skills = sub.add_parser(
+        "skills", help="List or search structured skill mastery records",
+    )
+    skills.add_argument("--query", default="")
+    skills.add_argument("--include-archived", action="store_true")
+    skill_archive = sub.add_parser(
+        "skill-archive", help="Archive a structured skill record",
+    )
+    skill_archive.add_argument("name")
+    skill_archive.add_argument("--expected-version", type=int, required=True)
+    skill_archive.add_argument("--approve", action="store_true")
     automation_run = sub.add_parser("automations-run", help="Execute due automations")
     automation_run.add_argument("--watch", action="store_true")
     automation_run.add_argument("--interval", type=float, default=60.0)
@@ -290,6 +315,43 @@ def main(argv: list[str] | None = None) -> int:
             args.name, expected_version=args.expected_version,
         )
         _print({"ok": True, "project": project})
+        return 0
+    if args.command == "skill-create":
+        skill = system.skills.create(_load_manifest(args.manifest))
+        _print({"ok": True, "skill": skill})
+        return 0
+    if args.command == "skill-update":
+        skill = system.skills.update(
+            args.name, _load_manifest(args.changes),
+            expected_version=args.expected_version,
+        )
+        _print({"ok": True, "skill": skill})
+        return 0
+    if args.command == "skill-evidence":
+        result = system.skills.add_evidence(_load_manifest(args.manifest))
+        _print({"ok": True, **result})
+        return 0
+    if args.command == "skills":
+        records = (
+            system.skills.search(args.query, limit=100)
+            if args.query else
+            system.skills.list(
+                limit=100, include_archived=bool(args.include_archived),
+            )
+        )
+        _print({
+            "ok": True,
+            "protocol_version": system.skills.PROTOCOL,
+            "skills": records,
+        })
+        return 0
+    if args.command == "skill-archive":
+        if not args.approve:
+            raise ValueError("Skill archival requires explicit approval")
+        skill = system.skills.archive(
+            args.name, expected_version=args.expected_version,
+        )
+        _print({"ok": True, "skill": skill})
         return 0
     if args.command == "automations-run":
         if not args.watch:

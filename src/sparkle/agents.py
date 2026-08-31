@@ -31,10 +31,11 @@ class AgentSpec:
 def _specs() -> list[AgentSpec]:
     shared = frozenset({"calculator", "memory_search", "knowledge_search"})
     project_read = frozenset({"project_search"})
+    skill_read = frozenset({"skill_search"})
     return [
-        AgentSpec("personal", "reasoning", "Coordinate personal goals, priorities, context, and specialist work.", "Give realistic priorities and explicitly identify missing constraints.", shared | project_read | {"memory_write"}, ("goal", "priority", "today", "tomorrow", "personal", "focus", "week")),
-        AgentSpec("learning", "reasoning", "Teach concepts with active recall, exercises, correction, and retesting.", "Use the explain → ask → test → correct → apply → retest loop.", shared | {"memory_write"}, ("learn", "teach", "explain", "lesson", "practice", "quiz", "concept")),
-        AgentSpec("skill", "reasoning", "Plan and assess evidence-based skill mastery levels 0 through 6.", "Require demonstrations, projects, or tests before increasing mastery.", shared | {"memory_write"}, ("skill", "mastery", "level", "practice plan")),
+        AgentSpec("personal", "reasoning", "Coordinate personal goals, priorities, context, and specialist work.", "Give realistic priorities and explicitly identify missing constraints.", shared | project_read | skill_read | {"memory_write"}, ("goal", "priority", "today", "tomorrow", "personal", "focus", "week")),
+        AgentSpec("learning", "reasoning", "Teach concepts with active recall, exercises, correction, and retesting.", "Use the explain → ask → test → correct → apply → retest loop and inspect structured mastery evidence before choosing practice.", shared | skill_read | {"memory_write"}, ("learn", "teach", "explain", "lesson", "practice", "quiz", "concept")),
+        AgentSpec("skill", "reasoning", "Plan and assess evidence-based skill mastery levels 0 through 6.", "Use structured mastery summaries; require demonstrations, projects, or tests backed by verified questions, exercises, implementations, or independent problem solving before claiming progress.", shared | skill_read | {"memory_write"}, ("skill", "mastery", "level", "practice plan")),
         AgentSpec("exam", "reasoning", "Manage syllabus, practice, timed tests, revision, and error analysis.", "Track accuracy, speed, attempts, weak topics, error categories, and coverage.", shared | {"memory_write"}, ("exam", "syllabus", "mock", "revision", "marks", "accuracy")),
         AgentSpec("research", "reasoning", "Collect, cross-check, synthesize, and cite research.", "Never invent sources; label uncertainty and separate evidence from inference.", shared, ("research", "source", "paper", "compare", "evidence", "latest")),
         AgentSpec("coding", "coding", "Implement, debug, test, and review code.", "Prefer runnable changes, narrow diffs, and execution evidence.", shared | {"file_read", "workspace_verify"}, ("code", "python", "javascript", "typescript", "debug", "function", "program")),

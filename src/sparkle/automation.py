@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from sparkle.config import data_root
+from sparkle.mastery import SkillMasteryStore
 from sparkle.notifications import NotificationStore
 from sparkle.orchestrator import Orchestrator
 from sparkle.projects import ProjectStore
@@ -579,10 +580,12 @@ class ProactiveEngine:
         memory: MemoryStore,
         knowledge: KnowledgeStore | None = None,
         projects: ProjectStore | None = None,
+        skills: SkillMasteryStore | None = None,
     ):
         self.memory = memory
         self.knowledge = knowledge
         self.projects = projects
+        self.skills = skills
 
     @staticmethod
     def _time(value: Any) -> datetime | None:
@@ -948,6 +951,39 @@ class ProactiveEngine:
             })
         return alerts
 
+    def _structured_skill_alerts(self) -> list[dict[str, Any]]:
+        if self.skills is None:
+            return []
+        alerts: list[dict[str, Any]] = []
+        for skill in self.skills.list(limit=100):
+            gap = skill["target_level"] - skill["current_level"]
+            if gap <= 0:
+                continue
+            alerts.append({
+                "protocol_version": self.PROTOCOL,
+                "type": "weak_learning",
+                "severity": "high" if gap >= 2 else "medium",
+                "category": "skills",
+                "key": skill["name"],
+                "source_kind": "skill",
+                "source_id": skill["name"],
+                "source_skill_name": skill["name"],
+                "evidence": {
+                    "mastery_level": skill["current_level"],
+                    "target_level": skill["target_level"],
+                    "mastery_gap": gap,
+                    "verified_evidence_count": skill[
+                        "verified_evidence_count"
+                    ],
+                    "total_evidence_count": skill["total_evidence_count"],
+                    "average_verified_score": skill[
+                        "average_verified_score"
+                    ],
+                    "evidence_type_count": len(skill["evidence_types"]),
+                },
+            })
+        return alerts
+
     def inspect(self, now: datetime | None = None) -> list[dict[str, Any]]:
         current = now or datetime.now(UTC)
         if current.tzinfo is None:
@@ -983,6 +1019,7 @@ class ProactiveEngine:
         alerts.extend(self._schedule_alerts(schedule_items, current))
         alerts.extend(self._research_alerts(current))
         alerts.extend(self._structured_project_alerts(current))
+        alerts.extend(self._structured_skill_alerts())
         alerts.sort(key=lambda alert: (
             self._SEVERITY_ORDER[alert["severity"]],
             alert["type"],

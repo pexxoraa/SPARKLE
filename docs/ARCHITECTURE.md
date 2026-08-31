@@ -38,6 +38,10 @@ tool is exposed to Personal, Project, and Productivity agents; create, update,
 and archive remain explicit interface actions. The proactive engine consumes
 validated project fields and emits content-free evidence rather than parsing
 memory prose.
+Structured skill mastery is also owned by an independent store. Its current
+level is derived from verified evidence rather than accepted as input. Only
+bounded content-free mastery summaries reach Personal, Learning, and Skill
+agents; all writes remain explicit interface actions.
 The agent-blueprint builder is a separate provider-neutral composition over the
 agent registry. It deterministically converts exact structured requirements to
 an `AgentSpec`, executes production routing fixtures without registry mutation,
@@ -91,6 +95,7 @@ and orchestration do not depend on cookie or browser implementation details.
 - `var/data_environment/agent_evaluations.sqlite3`
 - `var/data_environment/ai_system_blueprints.sqlite3`
 - `var/data_environment/projects.sqlite3`
+- `var/data_environment/skills.sqlite3`
 - `var/data_environment/automation-service.lock`
 - `var/data_environment/builds.sqlite3`
 - `var/data_environment/verifications.sqlite3`

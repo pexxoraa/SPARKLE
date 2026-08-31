@@ -29,7 +29,7 @@ MAX_MULTIMODAL_BODY_BYTES = 12_000_000
 class SparkleHandler(BaseHTTPRequestHandler):
     system: SparkleSystem
     dashboard_root = Path(__file__).with_name("dashboard")
-    server_version = "SPARKLE/0.22"
+    server_version = "SPARKLE/0.23"
 
     def log_message(self, format: str, *args: object) -> None:
         # Avoid request bodies, headers, query values, and secrets in logs.
@@ -378,6 +378,42 @@ class SparkleHandler(BaseHTTPRequestHandler):
                 "protocol_version": self.system.projects.PROTOCOL,
                 "events": events,
             })
+        if parsed.path == "/api/skills":
+            skill_query = query.get("q", [""])[0]
+            limit = int(query.get("limit", [50])[0])
+            include_archived = query.get("include_archived", [""])[0].lower() in {
+                "1", "true", "yes",
+            }
+            skills = (
+                self.system.skills.search(skill_query, limit=limit)
+                if skill_query else
+                self.system.skills.list(
+                    limit=limit, include_archived=include_archived,
+                )
+            )
+            return self._json({
+                "protocol_version": self.system.skills.PROTOCOL,
+                "skills": skills,
+            })
+        if parsed.path == "/api/skill-evidence":
+            name = query.get("name", [""])[0]
+            if not name:
+                return self._json({
+                    "ok": False, "error": "Skill evidence query requires name",
+                }, 400)
+            try:
+                evidence = self.system.skills.evidence(
+                    name, limit=int(query.get("limit", [100])[0]),
+                )
+            except (ValueError, KeyError) as exc:
+                return self._json({
+                    "ok": False, "error": str(exc),
+                    "error_type": type(exc).__name__,
+                }, 400)
+            return self._json({
+                "protocol_version": self.system.skills.PROTOCOL,
+                "evidence": evidence,
+            })
         if parsed.path == "/api/builds":
             return self._json({
                 "builds": self.system.workspaces.list(
@@ -599,6 +635,33 @@ class SparkleHandler(BaseHTTPRequestHandler):
                     data["name"], expected_version=data["expected_version"],
                 )
                 return self._json({"ok": True, "project": project})
+            if self.path == "/api/skills":
+                skill = self.system.skills.create(data)
+                return self._json({"ok": True, "skill": skill}, 201)
+            if self.path == "/api/skills/update":
+                if set(data) != {"name", "changes", "expected_version"}:
+                    raise ValueError(
+                        "Skill update requires name, changes, and expected_version"
+                    )
+                skill = self.system.skills.update(
+                    data["name"], data["changes"],
+                    expected_version=data["expected_version"],
+                )
+                return self._json({"ok": True, "skill": skill})
+            if self.path == "/api/skills/evidence":
+                result = self.system.skills.add_evidence(data)
+                return self._json({"ok": True, **result}, 201)
+            if self.path == "/api/skills/archive":
+                if set(data) != {"name", "expected_version", "approved"}:
+                    raise ValueError(
+                        "Skill archive requires name, expected_version, and approved"
+                    )
+                if data["approved"] is not True:
+                    raise ValueError("Skill archival requires explicit approval")
+                skill = self.system.skills.archive(
+                    data["name"], expected_version=data["expected_version"],
+                )
+                return self._json({"ok": True, "skill": skill})
             if self.path == "/api/notifications":
                 notification = self.system.notifications.deliver(
                     channel=str(data.get("channel", "dashboard")),

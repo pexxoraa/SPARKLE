@@ -16,6 +16,7 @@ from sparkle.content import content_contract_status
 from sparkle.development import DevelopmentVerifier, WorkspaceTestRunner
 from sparkle.external_worker import ExternalWorkerClient
 from sparkle.knowledge import KnowledgeIngestor
+from sparkle.mastery import SkillMasteryStore
 from sparkle.notifications import NotificationStore
 from sparkle.orchestrator import Orchestrator
 from sparkle.presence import PresenceEngine
@@ -37,6 +38,7 @@ from sparkle.tooling import (
     MemorySearchTool,
     MemoryWriteTool,
     ProjectSearchTool,
+    SkillSearchTool,
     ToolRegistry,
     WorkspaceScaffoldTool,
     WorkspacePackageTool,
@@ -79,8 +81,9 @@ class SparkleSystem:
         self.automations = AutomationStore()
         self.notifications = NotificationStore()
         self.projects = ProjectStore()
+        self.skills = SkillMasteryStore()
         self.proactive = ProactiveEngine(
-            self.memory, self.knowledge, self.projects,
+            self.memory, self.knowledge, self.projects, self.skills,
         )
         self.presence = PresenceEngine()
         self.voice = VoiceService()
@@ -118,6 +121,7 @@ class SparkleSystem:
         self.tools.register(MemoryWriteTool(self.memory))
         self.tools.register(KnowledgeSearchTool(self.knowledge))
         self.tools.register(ProjectSearchTool(self.projects))
+        self.tools.register(SkillSearchTool(self.skills))
         self.tools.register(FileReadTool(project_root()))
         self.tools.register(WorkspaceScaffoldTool(self.workspaces))
         self.tools.register(WorkspaceVerifyTool(self.development))
@@ -166,7 +170,7 @@ class SparkleSystem:
         models = self.models.list()
         return {
             "name": "SPARKLE",
-            "version": "0.22.0-alpha.1",
+            "version": "0.23.0-alpha.1",
             "status": "ready" if any(model["configured"] for model in models) else "limited",
             "active_model": self.models.active_id,
             "models": models,
@@ -209,6 +213,11 @@ class SparkleSystem:
                 "status": "ready",
                 "protocol_version": self.projects.PROTOCOL,
                 **self.projects.stats(),
+            },
+            "skills": {
+                "status": "ready",
+                "protocol_version": self.skills.PROTOCOL,
+                **self.skills.stats(),
             },
             "builders": {
                 "status": "ready", "workspaces": len(self.workspaces.list(limit=100)),

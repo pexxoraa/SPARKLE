@@ -80,6 +80,59 @@ class CLITests(unittest.TestCase):
             self.assertIn("explicit approval", error.getvalue())
             self.assertNotIn("Traceback", error.getvalue())
 
+    def test_structured_skill_evidence_lifecycle(self):
+        with tempfile.TemporaryDirectory() as directory:
+            skill = Path(directory) / "skill.json"
+            skill.write_text(json.dumps({
+                "name": "python",
+                "title": "Python software engineering",
+                "description": "Build reliable Python applications independently.",
+                "target_level": 4,
+            }), encoding="utf-8")
+            evidence = Path(directory) / "evidence.json"
+            evidence.write_text(json.dumps({
+                "skill_name": "python",
+                "evidence_type": "exercise",
+                "score": 88,
+                "verified": True,
+                "summary": "Private exercise evidence.",
+                "artifact_ref": "artifact://private/python-1",
+                "occurred_at": "2026-08-31T01:00:00Z",
+            }), encoding="utf-8")
+            changes = Path(directory) / "skill-changes.json"
+            changes.write_text(json.dumps({"target_level": 5}), encoding="utf-8")
+            output = io.StringIO()
+            error = io.StringIO()
+            with (
+                patch.dict(
+                    os.environ, {"SPARKLE_DATA_DIR": directory}, clear=False,
+                ),
+                contextlib.redirect_stdout(output),
+                contextlib.redirect_stderr(error),
+            ):
+                self.assertEqual(main(["skill-create", str(skill)]), 0)
+                self.assertEqual(main(["skill-evidence", str(evidence)]), 0)
+                self.assertEqual(main([
+                    "skill-update", "python", str(changes),
+                    "--expected-version", "2",
+                ]), 0)
+                self.assertEqual(main(["skills", "--query", "Python"]), 0)
+                self.assertEqual(entrypoint([
+                    "skill-archive", "python", "--expected-version", "3",
+                ]), 1)
+                self.assertEqual(main([
+                    "skill-archive", "python", "--expected-version", "3",
+                    "--approve",
+                ]), 0)
+                self.assertEqual(main([
+                    "skills", "--include-archived",
+                ]), 0)
+            self.assertIn("SPARKLE-SKILL/1", output.getvalue())
+            self.assertIn('"current_level": 1', output.getvalue())
+            self.assertIn('"archived": true', output.getvalue())
+            self.assertIn("explicit approval", error.getvalue())
+            self.assertNotIn("Traceback", error.getvalue())
+
     def test_ai_system_prepare_and_approved_materialization(self):
         with tempfile.TemporaryDirectory() as directory:
             requirements = Path(directory) / "robotics-ai.json"

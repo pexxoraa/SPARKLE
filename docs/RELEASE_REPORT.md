@@ -1,3 +1,45 @@
+# 0.23.0-alpha.1 verification report
+
+Date: 2026-08-31 UTC
+
+## Executed evidence
+
+- `SPARKLE-SKILL/1` validates bounded skill targets and question, exercise,
+  test, project, implementation, and independent-problem-solving evidence.
+  Levels 0–6 are recomputed from verified counts, type diversity, applied
+  evidence, and average score; no interface can write the current level.
+- Canonical evidence digests reject exact replay. Review found and closed this
+  integrity gap before broad regression; it did not produce a failed test run.
+- Nine focused mastery cases pass: promotion through level 6, unverified
+  evidence exclusion, duplicate rejection, validation, timezone normalization,
+  active/evidence bounds, optimistic metadata/archive behavior, least-
+  privilege agent reads, content-free proactive evidence, and matching
+  conditional-notification execution.
+- The final adjacent mastery/automation/CLI/API/dashboard/documentation suite
+  passed all 53 tests in 12.193 seconds. The complete suite passed all 205
+  tests in 28.498 seconds; dashboard JavaScript syntax and Git whitespace
+  checks passed.
+- The first fresh no-index wheel built and installed, and its mastery checks
+  passed, but the combined smoke then supplied an unsupported envelope-level
+  `metadata` field to the multimodal fixture. Because that shell did not fail
+  fast, later entrypoint checks ran; the gate is recorded as failed, not passed.
+  A new fail-fast environment used the actual `SPARKLE-CONTENT/1` constructor.
+  Installed mastery create/evidence/reload/search, duplicate refusal,
+  proactive non-disclosure, multimodal canonical round-trip, worker help, and
+  automation-service checks passed. The corrected wheel SHA-256 was
+  `a24c71033c316c8fae274ac705b134e08678bf7a2af379b2cf952c856a0410a6`.
+
+## Honest limits
+
+- Evidence verification is a trusted authenticated user/API assertion. SPARKLE
+  does not independently authenticate external artifacts or issue a
+  professional certification.
+- Deterministic mastery accounting does not establish live-provider teaching
+  quality, semantic assessment quality, or external learning-platform sync.
+- Exact-tree publication and CI evidence are pending.
+
+---
+
 # 0.22.0-alpha.1 verification report
 
 Date: 2026-08-31 UTC

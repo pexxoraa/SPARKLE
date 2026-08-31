@@ -168,6 +168,31 @@ agents can read them through `project_search`; model-facing writes are not
 available. The authenticated API provides equivalent create/update/archive,
 list/search, and content-free change-evidence routes.
 
+## Track evidence-based skill mastery
+
+Create a skill and add explicit evidence using the exact contract in
+[`SKILLS.md`](SKILLS.md):
+
+```bash
+sparkle skill-create skill.json
+sparkle skill-evidence evidence.json
+sparkle skills --query Python
+```
+
+The current level is derived from verified evidence and cannot be directly
+edited. Metadata updates use optimistic versions, and archive requires
+approval:
+
+```bash
+sparkle skill-update python changes.json --expected-version 2
+sparkle skill-archive python --expected-version 3 --approve
+```
+
+Personal, Learning, and Skill agents can read bounded summaries through
+`skill_search`; evidence summaries, artifact references, verification, and all
+writes remain outside model tools. The dashboard shows active skill levels and
+counts. The authenticated API exposes equivalent skill/evidence routes.
+
 ## Prepare an AI system scaffold
 
 Create a structured requirements file using the schema in

@@ -393,8 +393,10 @@ class APITests(SystemCase):
         self.assertIn(b"/api/proactive", script)
         self.assertIn(b"/api/notifications", script)
         self.assertIn(b"/api/projects?limit=50", script)
+        self.assertIn(b"/api/skills?limit=50", script)
         self.assertIn(b'notificationList', body)
         self.assertIn(b'projectList', body)
+        self.assertIn(b'skillList', body)
         self.assertIn(b"Artifacts & deployment", body)
         self.assertIn(b"Evidence-backed proactive alerts", body)
 
@@ -850,3 +852,49 @@ class APITests(SystemCase):
             "/api/projects?include_archived=true",
         )[2])["projects"]
         self.assertTrue(archived[0]["archived"])
+
+    def test_structured_skill_mastery_and_evidence_endpoints(self):
+        skill = {
+            "name": "python",
+            "title": "Python software engineering",
+            "description": "Build reliable Python applications independently.",
+            "target_level": 4,
+        }
+        status, _, body = self.request("/api/skills", skill)
+        self.assertEqual(status, 201)
+        created = json.loads(body)["skill"]
+        self.assertEqual(created["current_level"], 0)
+        evidence = {
+            "skill_name": "python",
+            "evidence_type": "exercise",
+            "score": 88,
+            "verified": True,
+            "summary": "Private exercise evidence.",
+            "artifact_ref": "artifact://private/python-1",
+            "occurred_at": "2026-08-31T01:00:00Z",
+        }
+        status, _, body = self.request("/api/skills/evidence", evidence)
+        self.assertEqual(status, 201)
+        self.assertEqual(json.loads(body)["skill"]["current_level"], 1)
+        records = json.loads(self.request(
+            "/api/skills?limit=50",
+        )[2])["skills"]
+        self.assertEqual(records[0]["verified_evidence_count"], 1)
+        detailed = json.loads(self.request(
+            "/api/skill-evidence?name=python",
+        )[2])["evidence"]
+        self.assertEqual(detailed[0]["summary"], "Private exercise evidence.")
+        stale = {
+            "name": "python", "changes": {"target_level": 5},
+            "expected_version": 1,
+        }
+        self.assertEqual(self.request("/api/skills/update", stale)[0], 400)
+        update = {**stale, "expected_version": 2}
+        self.assertEqual(self.request("/api/skills/update", update)[0], 200)
+        archive = {"name": "python", "expected_version": 3, "approved": False}
+        self.assertEqual(self.request("/api/skills/archive", archive)[0], 400)
+        archive["approved"] = True
+        self.assertEqual(self.request("/api/skills/archive", archive)[0], 200)
+        self.assertEqual(
+            json.loads(self.request("/api/skills")[2])["skills"], [],
+        )

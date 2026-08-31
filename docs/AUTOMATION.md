@@ -43,6 +43,13 @@ status, priority, progress, blocker/open-milestone counts, and normalized
 deadline timing. They never copy descriptions, risk text, blocker text,
 milestone names, or next-action text.
 
+Validated `SPARKLE-SKILL/1` records whose derived level is below their target
+also produce `weak_learning` directly. Evidence includes only the skill
+identifier, current/target level, gap, verified/total evidence counts, average
+verified score, and evidence-type count. Descriptions, evidence summaries, and
+artifact references are never copied. These alerts use the existing
+category/key conditional-automation boundary.
+
 Schedule evaluation considers at most 200 recent eligible records, looks no
 more than 30 days ahead, and emits at most 200 pair conflicts. Touching but
 non-overlapping intervals are not conflicts. Evidence contains only normalized

@@ -7,6 +7,7 @@ Implemented panels:
 - Command console with normal or multi-agent execution.
 - System state, active model, storage counts, voice state, and agents.
 - Durable memory records.
+- Read-only evidence-derived skill levels, targets, counts, and averages.
 - Evidence-backed proactive alerts and automation execution history.
 - Bounded dashboard notifications with delivery/read state and safe source
   labels.
