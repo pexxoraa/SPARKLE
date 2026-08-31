@@ -1,17 +1,17 @@
 # Build state
 
-Updated: 2026-08-30 UTC
+Updated: 2026-08-31 UTC
 
 | Field | State |
 |---|---|
 | SPARKLE version | 0.22.0-alpha.1 |
 | Current phase | Continuous improvement after verified Phase 36 release |
-| Current task | Publish the verified v0.22 Project Agent capability tree and confirm all four CI jobs |
-| Completed | v0.3-v0.21 private GitHub releases/CI; model abstraction/registry/MiniMax adapter; orchestrator/context/tracing; memory and knowledge lifecycle with backup; 16 built-in agents; persistent generated-agent installation; bounded structured Agent Blueprint generation/static routing evaluation/approval/rollback; isolated response-contract evaluation with bounded content-free evidence; provider-neutral AI System Blueprints; `SPARKLE-PROJECT/1` strict project lifecycle/priority/deadline/dependency/risk/milestone/blocker/next-action/progress records, optimistic updates, archive, content-free change evidence, direct proactive evidence, least-privilege agent reads, API/CLI/status/dashboard integration; bounded workspaces/static verification/fixed local tests; signed external-worker client and deployable worker; reproducible approval-gated application artifacts; supervised automation service; bounded dashboard notifications; safe tools; text API/CLI/dashboard; bearer/session/CSRF/origin/rate/audit security; eight bounded proactive rule types; provider-neutral deterministic text/image/audio/document content contracts; dedicated voice/presence contracts; 16-agent matrix; documentation audit; cohesive E2E |
-| In progress | Exact-tree v0.22 GitHub publication and four-job CI verification |
+| Current task | Finalize the v0.22 verification evidence, then inspect the first genuinely incomplete master-directive capability |
+| Completed | v0.3-v0.22 capability releases and four-job CI; model abstraction/registry/MiniMax adapter; orchestrator/context/tracing; memory and knowledge lifecycle with backup; 16 built-in agents; persistent generated-agent installation; bounded structured Agent Blueprint generation/static routing evaluation/approval/rollback; isolated response-contract evaluation with bounded content-free evidence; provider-neutral AI System Blueprints; `SPARKLE-PROJECT/1` strict project lifecycle/priority/deadline/dependency/risk/milestone/blocker/next-action/progress records, optimistic updates, archive, content-free change evidence, direct proactive evidence, least-privilege agent reads, API/CLI/status/dashboard integration; bounded workspaces/static verification/fixed local tests; signed external-worker client and deployable worker; reproducible approval-gated application artifacts; supervised automation service; bounded dashboard notifications; safe tools; text API/CLI/dashboard; bearer/session/CSRF/origin/rate/audit security; eight bounded proactive rule types; provider-neutral deterministic text/image/audio/document content contracts; dedicated voice/presence contracts; 16-agent matrix; documentation audit; cohesive E2E |
+| In progress | Tested v0.22 documentation evidence checkpoint and next-capability inspection |
 | Blocked | Real Bubblewrap isolation on this executor (namespace setup denied); named remote worker/TLS target and live hostile-code validation; live MiniMax call (no key in build process); semantic non-text provider mapping; voice hardware; browser/computer runtime adapters; public application deployment target |
 | Failed tests | No corrected v0.22 failure remains. The first focused project run exposed three SQLite search errors from an invalid escape expression; the next run exposed one incorrect literal-underscore test expectation. The implementation and fixture were corrected, and focused/adjacent suites pass. Historical v0.21 failures remain preserved in the release report |
-| Next action | Run the final exact-tree gate, fast-forward from the v0.21 documentation checkpoint, and verify all four CI jobs |
+| Next action | Run the complete documentation checkpoint, publish its exact tree, verify all four CI jobs, and inspect the next incomplete requirement |
 | Estimated directive completion | 91% |
 
 The percentage measures the full long-term directive, not code volume. Agent

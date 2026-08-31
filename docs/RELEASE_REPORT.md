@@ -1,6 +1,6 @@
 # 0.22.0-alpha.1 verification report
 
-Date: 2026-08-30 UTC
+Date: 2026-08-31 UTC
 
 ## Executed evidence
 
@@ -41,7 +41,20 @@ Date: 2026-08-30 UTC
   live-provider project-decision quality.
 - Third-party project-management, calendar synchronization, and external
   notification connectors remain absent.
-- Exact-tree publication and CI evidence are pending.
+- Third-party runtime limits remain unchanged by the successful private
+  repository publication and CI verification below.
+
+## GitHub publication and CI
+
+Result: PASS — private repository `pexxoraa/SPARKLE` received capability
+commit `8db4ab1d66ce1bdd81449d88d54ea3b4d8c98490` on `main` by a non-force
+fast-forward from the verified v0.21 documentation checkpoint. Its tree
+`db4fedf6cdb0aa5c8c96be4cefb1e6ef22e0d9ee` exactly matches local tested
+commit `434af780deeab61d666d6ca26119f93cf466c2df`.
+
+SPARKLE CI run #47 (`33331355984`) completed successfully. All required jobs
+passed: `test (3.12)`, `test (3.13)`, `worker-image`, and
+`automation-service`.
 
 ---
 
