@@ -629,7 +629,7 @@ class ExternalWorkerService:
 
 class WorkerHandler(BaseHTTPRequestHandler):
     service: ExternalWorkerService
-    server_version = "SPARKLE-Worker/0.23"
+    server_version = "SPARKLE-Worker/0.24"
 
     def log_message(self, format: str, *args: object) -> None:
         # Do not serialize client identity, headers, queries, or source bodies.

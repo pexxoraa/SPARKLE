@@ -4,6 +4,37 @@ Date: 2026-08-31 UTC
 
 ## Executed evidence
 
+- Release-state reconciliation confirmed that local commit
+  `e5895087e082287df197f4e5c27b925f6dbe4a4d` has tree
+  `8b0d76e414bd6e8bc547e3ad649e74b58a1b409a` and contains the complete
+  v0.24 draft-compiler increment described below. The repository's official
+  pre-reconciliation `make check` rerun passed all 213 tests in 28.658 seconds;
+  dashboard JavaScript syntax and Git whitespace checks also passed.
+- The supplied independent pytest evidence reports 213 passed tests, 173
+  passed subtests, and eight pytest warnings in approximately 26 seconds. This
+  runtime does not include pytest, so that display was not rerun here and is
+  recorded as independently supplied rather than local command evidence.
+- A tracked-tree audit found no generated archives, wheels, SQLite databases,
+  bytecode, virtual environments, symlinks, `.env` files, or known live-secret
+  prefixes. Ignored local build/cache directories are not release artifacts and
+  are excluded from Git. `CHANGELOG.md` was the only stale release surface; it
+  stopped at v0.9 and is now backfilled through v0.24 with a regression check
+  that binds its first entry to package metadata.
+- Read-only GitHub evidence during reconciliation showed private `main` still
+  at `78032c1fbbaeab7253421f8cdde6e70da5d6f97c`. GitHub did not contain
+  `e5895087e082287df197f4e5c27b925f6dbe4a4d` and reported no workflow runs
+  for that SHA. No remote publication or v0.24 CI is claimed.
+- After the reconciliation changes, the complete official gate passed all 213
+  tests in 28.252 seconds. A first fresh wheel smoke incorrectly addressed a
+  nonexistent singular `status["model"]` field and stopped with `KeyError`
+  after the wheel had built and installed; this was a harness failure, not a
+  product assertion. A new fresh, fail-fast, no-index gate installed
+  `sparkle-personal-ai==0.24.0a1`, verified version/status and the draft
+  protocol with the live credential absent, and passed the installed worker
+  help and automation-service configuration checks. The reconciled wheel
+  SHA-256 is
+  `560a647978d36e796c93bdb57c2ffe879a1e3c1111a09173bc8fa75a83f45be6`.
+
 - `SPARKLE-AI-SYSTEM-DRAFT/1` accepts 20–20,000 bytes of natural-language AI
   system requirements only with explicit operator approval, because the text
   is disclosed to the configured model provider.
@@ -37,7 +68,7 @@ Date: 2026-08-31 UTC
   and documentation updates, the first version-aligned documented tree passed all 213 tests
   in 28.180 seconds; dashboard JavaScript syntax and Git whitespace checks
   passed.
-- The first wheel command stopped before building because this runtime's
+- Before reconciliation, the first wheel command stopped before building because this runtime's
   `build` module has no executable `__main__`. A `pip wheel` retry was stopped
   by the runtime before execution because it could consider the network. The
   offline retry built successfully but its gate expected the wrong distribution

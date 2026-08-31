@@ -345,3 +345,17 @@ and passed installed draft compilation/isolation/content-free evidence,
 version/status, automation configuration, worker help, and mode-0600
 configuration gates. Its SHA-256 was
 `9c4a06f3994e564d6c96bfd92072e0dd4056f6a3b366afd4439e97a8446aaf6d`.
+
+Release-state reconciliation recovered the exact v0.24 capability commit/tree,
+backfilled the stale changelog, aligned the worker HTTP version marker, and
+expanded the version-consistency contract across release documents and runtime
+markers. The official pre-change gate passed all 213 tests in 28.658 seconds;
+the reconciled tree passed all 213 tests in 28.252 seconds. The supplied
+independent pytest run reported 213 passed tests, 173 passed subtests, and eight
+warnings in approximately 26 seconds; pytest is not installed in this runtime,
+so that presentation was not rerun locally. A first reconciliation wheel smoke
+used a nonexistent singular model-status field and stopped after installation.
+A new fresh fail-fast no-index gate passed version/status, draft protocol,
+credential-absence, worker entrypoint, and automation-service checks. Its
+SHA-256 was
+`560a647978d36e796c93bdb57c2ffe879a1e3c1111a09173bc8fa75a83f45be6`.

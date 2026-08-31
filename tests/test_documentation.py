@@ -79,6 +79,28 @@ class DocumentationContractTests(unittest.TestCase):
             f"| SPARKLE version | {display_version} |",
             (ROOT / "docs" / "BUILD_STATE.md").read_text(encoding="utf-8"),
         )
+        self.assertTrue(
+            (ROOT / "docs" / "RELEASE_REPORT.md").read_text(encoding="utf-8")
+            .startswith(f"# {display_version} verification report\n"),
+        )
+        changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+        first_release = re.search(r"^## ([^ ]+) [-—]", changelog, re.MULTILINE)
+        self.assertIsNotNone(first_release)
+        self.assertEqual(first_release.group(1), display_version)
+
+        short_version = ".".join(package_version.split(".")[:2])
+        source_markers = {
+            "src/sparkle/api.py": f"SPARKLE/{short_version}",
+            "src/sparkle/providers/minimax.py": f"SPARKLE/{short_version}",
+            "src/sparkle/worker_service.py": f"SPARKLE-Worker/{short_version}",
+            "src/sparkle/system.py": f'"version": "{display_version}"',
+        }
+        for path, marker in source_markers.items():
+            with self.subTest(path=path):
+                self.assertIn(
+                    marker,
+                    (ROOT / path).read_text(encoding="utf-8"),
+                )
 
     def test_build_state_keeps_required_truth_fields_and_honest_limits(self):
         build_state = (ROOT / "docs" / "BUILD_STATE.md").read_text(
