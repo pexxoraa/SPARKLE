@@ -412,3 +412,19 @@ gate passed. The `0.28.0a1` wheel SHA-256 is
 The identical tree is published at GitHub commit
 `efaad29824365655c28dcbc09880deec053be1ce`. SPARKLE CI run #54 passed Python
 3.12, Python 3.13, worker-image, and automation-service on that commit.
+
+The v0.29 Controlled Build increment adds eleven focused methods covering exact
+promotion lineage, separate approval, digest identity, stale approval,
+post-approval staged-tree tamper, deterministic archive contents, source
+mutation during packaging, idempotent and concurrent replay, conflicting
+requests, fail-closed artifact errors,
+content-free evidence, strict contracts, and CLI behavior. One authenticated
+HTTP/status wiring case is also added. The final reconciled complete suite
+passed 261/261 in 25.412 seconds; the latest focused controlled-build suite passed
+11/11 in 0.277 seconds; and the adjacent controlled-build/promotion/runtime/
+external-worker/service suite passed 52/52 in 4.273 seconds. Dashboard syntax
+passed. A fresh no-index `0.29.0a1` wheel passed installed version/status,
+controlled-build protocol, empty evidence/eligibility, CLI, worker-help, and
+automation checks. Wheel SHA-256:
+`59b96669cb86285395664964698cc5204828297c22c3878b4836d2cde41727d7`.
+Publication and new-head CI are pending.

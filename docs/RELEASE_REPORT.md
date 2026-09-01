@@ -1,8 +1,46 @@
-# 0.28.0-alpha.1 verification report
+# 0.29.0-alpha.1 verification report
 
 Date: 2026-09-01 UTC
 
-## Controlled source promotion
+## Promotion-bound controlled build
+
+- Added `SPARKLE-AI-SYSTEM-CONTROLLED-BUILD/1` as the first deterministic
+  consumer of a completed controlled source promotion. It cannot accept an
+  arbitrary application workspace or unpromoted candidate.
+- A separate expiring approval binds the exact promotion and destination
+  digest to the actor and request origin. Approval is consumed atomically when
+  the build enters its `building` state.
+- Preconditions re-read promotion and candidate evidence, reload the staged
+  tree, revalidate exact declared paths and content digest, and reject missing,
+  incomplete, mismatched, stale, tampered, replay-conflicting, or concurrent
+  requests before reporting success.
+- The build creates a deterministic content-addressed ZIP with a canonical
+  manifest and fixed entry metadata. The persisted archive is re-read and
+  verified against its recorded SHA-256 identity.
+- Content-free approval, request, lifecycle, eligibility, trace, CLI,
+  authenticated API, status, and dashboard surfaces record no source content,
+  credentials, or secrets.
+- The boundary does not import or execute promoted source, publish an artifact,
+  deploy a target, or modify production source.
+
+## v0.29 local verification state
+
+- The final reconciled complete official suite passed 261/261 in 25.412 seconds.
+- The focused controlled-build suite passed 11/11 in 0.277 seconds. Its cases
+  cover exact lineage, approval, identity, stale approval, staged-tree tamper,
+  deterministic archive contents, source mutation during packaging, concurrent
+  replay, conflict refusal, fail-closed artifact errors, content-free evidence,
+  and CLI behavior.
+- The authenticated HTTP/status integration case passed inside the complete
+  suite. The adjacent controlled-build/promotion/runtime/external-worker/service
+  suite passed 52/52 in 4.273 seconds, and dashboard JavaScript syntax passed.
+- A fresh no-index `0.29.0a1` wheel installed without dependencies and passed
+  version/status, controlled-build protocol, empty evidence/eligibility, CLI,
+  worker-help, and automation-service checks. Wheel SHA-256:
+  `59b96669cb86285395664964698cc5204828297c22c3878b4836d2cde41727d7`.
+- Publication and new-head CI evidence are still pending.
+
+## Inherited v0.28 controlled source promotion
 
 - Added `SPARKLE-AI-SYSTEM-SOURCE-PROMOTION/1` as a provider-neutral stage
   after successful runtime evaluation. Promotion approval is separate from
@@ -29,7 +67,7 @@ Date: 2026-09-01 UTC
   ineligible, awaiting approval, approval recorded, requested, promoting,
   promoted, rejected, and failed states without claiming build or deployment.
 
-## Local verification state
+## Published v0.28 verification evidence
 
 - The documented complete regression passed 249/249 in 24.766 seconds. The
   focused controlled-promotion suite passed 12/12 in 0.219 seconds, and the
@@ -62,8 +100,9 @@ Date: 2026-09-01 UTC
 
 ## Honest limits
 
-- Promotion stops at controlled staging. It does not build, execute, package,
-  publish, deploy, replace production source, or modify application workspaces.
+- Controlled build stops at a verified immutable source-bundle artifact. It
+  does not import or execute promoted source, publish the artifact, deploy a
+  target, replace production source, or modify application workspaces.
 - No named external worker endpoint or signing key is configured. No genuine
   external evaluation or executable Bubblewrap/hostile-canary isolation proof
   exists. `isolation_verified` remains false.

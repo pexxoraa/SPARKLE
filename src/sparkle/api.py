@@ -29,7 +29,7 @@ MAX_MULTIMODAL_BODY_BYTES = 12_000_000
 class SparkleHandler(BaseHTTPRequestHandler):
     system: SparkleSystem
     dashboard_root = Path(__file__).with_name("dashboard")
-    server_version = "SPARKLE/0.28"
+    server_version = "SPARKLE/0.29"
 
     def log_message(self, format: str, *args: object) -> None:
         # Avoid request bodies, headers, query values, and secrets in logs.
@@ -355,6 +355,18 @@ class SparkleHandler(BaseHTTPRequestHandler):
                 ),
                 "promotion_eligibility": self.system.ai_system_source_promoter.eligibility(
                     limit=int(query.get("limit", [50])[0])
+                ),
+            })
+        if parsed.path == "/api/ai-system-controlled-builds":
+            limit = int(query.get("limit", [50])[0])
+            return self._json({
+                "protocol_version": self.system.ai_system_controlled_builder.PROTOCOL,
+                "controlled_builds": self.system.controlled_builds.list(limit=limit),
+                "controlled_build_approvals": (
+                    self.system.controlled_builds.list_approvals(limit=limit)
+                ),
+                "controlled_build_eligibility": (
+                    self.system.ai_system_controlled_builder.eligibility(limit=limit)
                 ),
             })
         if parsed.path == "/api/memory":
@@ -787,6 +799,34 @@ class SparkleHandler(BaseHTTPRequestHandler):
                 return self._json({
                     "ok": True, "promotion_exclusion": exclusion,
                 })
+            if self.path == "/api/ai-systems/build/approve":
+                if set(data) - {"promotion_id", "actor", "approved"}:
+                    raise ValueError("Controlled build approval fields are unsupported")
+                approval = self.system.ai_system_controlled_builder.approve(
+                    data.get("promotion_id"),
+                    actor=data.get("actor"),
+                    source_origin="authenticated_api",
+                    approved=data.get("approved") is True,
+                )
+                return self._json({
+                    "ok": True, "controlled_build_approval": approval,
+                }, 201)
+            if self.path == "/api/ai-systems/build/request":
+                if set(data) - {"contract", "approved"}:
+                    raise ValueError("Controlled build request fields are unsupported")
+                contract = data.get("contract")
+                if not isinstance(contract, dict):
+                    raise ValueError("Controlled build contract must be an object")
+                if contract.get("source_origin") != "authenticated_api":
+                    raise ValueError("API build origin must be authenticated_api")
+                result = self.system.ai_system_controlled_builder.request(
+                    contract, approved=data.get("approved") is True,
+                )
+                status = 201 if result["status"] == "built" else 422
+                return self._json({
+                    "ok": result["status"] == "built",
+                    "controlled_build": result,
+                }, status)
             if self.path == "/api/agents/remove":
                 if data.get("approved") is not True:
                     raise ValueError("Agent removal requires explicit approval")

@@ -93,6 +93,14 @@ exclusive destination lock and temporary tree, verifies source and destination
 digests around atomic rename, rejects overwrite and replay conflicts, and then
 stops. It does not call a model or worker and cannot build, package, publish,
 deploy, or modify the application/production workspace.
+The Controlled Build service is the next separate operator boundary. It accepts
+only a completed promotion plus a new expiring approval bound to the exact
+promotion digest, actor, and origin. It revalidates promotion/candidate identity
+and exact staged bytes, then creates and re-verifies a deterministic immutable
+source-bundle ZIP in `build_environment/artifacts`. Its independent store and
+traces contain identities, digests, lifecycle states, sizes, and bounded error
+types—not source. It never imports or executes promoted code and cannot publish,
+deploy, or modify application/production workspaces.
 An independent artifact manager reads bounded application workspaces and emits
 deterministic content-addressed ZIPs; it never starts an executable.
 The automation service is another independent entrypoint over the existing

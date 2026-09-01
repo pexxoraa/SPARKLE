@@ -24,6 +24,11 @@ from sparkle.ai_system_promotion import (
     ControlledSourcePromotionService,
     SourcePromotionStore,
 )
+from sparkle.ai_system_build import (
+    ControlledBuildArtifactWorkspace,
+    ControlledBuildService,
+    ControlledBuildStore,
+)
 from sparkle.artifacts import ArtifactManager
 from sparkle.automation import AutomationRunner, AutomationStore, ProactiveEngine
 from sparkle.builders import WorkspaceManager
@@ -211,6 +216,17 @@ class SparkleSystem:
             self.source_promotions,
             self.source_promotion_workspace,
         )
+        self.controlled_builds = ControlledBuildStore()
+        self.controlled_build_workspace = ControlledBuildArtifactWorkspace(
+            self.source_promotion_workspace,
+        )
+        self.ai_system_controlled_builder = ControlledBuildService(
+            self.source_promotions,
+            self.source_candidates,
+            self.traces,
+            self.controlled_builds,
+            self.controlled_build_workspace,
+        )
         self.agent_evaluations = AgentEvaluationStore()
         self.agent_evaluator = AgentResponseEvaluator(
             self.agent_builder,
@@ -230,7 +246,7 @@ class SparkleSystem:
         models = self.models.list()
         return {
             "name": "SPARKLE",
-            "version": "0.28.0-alpha.1",
+            "version": "0.29.0-alpha.1",
             "status": "ready" if any(model["configured"] for model in models) else "limited",
             "active_model": self.models.active_id,
             "models": models,
@@ -275,6 +291,13 @@ class SparkleSystem:
                 ),
                 "source_promotion_protocol_version": (
                     self.ai_system_source_promoter.PROTOCOL
+                ),
+                "controlled_builds": len(self.controlled_builds.list(limit=100)),
+                "controlled_build_approvals": len(
+                    self.controlled_builds.list_approvals(limit=100)
+                ),
+                "controlled_build_protocol_version": (
+                    self.ai_system_controlled_builder.PROTOCOL
                 ),
             },
             "tools": self.tools.status(),

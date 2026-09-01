@@ -26,6 +26,11 @@ v0.28 adds `SPARKLE-AI-SYSTEM-SOURCE-PROMOTION/1`. A separate post-evaluation
 approval binds exact candidate, plan, evaluation, actor, and origin identity
 before exact source is atomically materialized into controlled staging. It
 does not build, package, publish, deploy, or modify production source.
+v0.29 adds `SPARKLE-AI-SYSTEM-CONTROLLED-BUILD/1`. A separate build approval
+binds the exact completed promotion digest, actor, and origin before the staged
+tree can become a deterministic content-addressed source-bundle artifact. The
+builder revalidates promotion lineage and staged content, but does not import
+or execute source, publish the artifact, deploy, or modify production source.
 
 ## Requirements contract
 

@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.29.0-alpha.1 - 2026-09-01
+
+- Added `SPARKLE-AI-SYSTEM-CONTROLLED-BUILD/1`, the first promotion-bound
+  build stage after controlled source promotion.
+- Added separate expiring build approval bound to the exact promotion digest,
+  actor, and request origin.
+- Revalidated promotion, candidate, staged paths, and exact staged content
+  before any artifact write.
+- Added deterministic content-addressed source-bundle artifacts with immutable
+  digest verification, replay/race safety, and fail-closed lifecycle evidence.
+- Added content-free build status, eligibility, trace, API, CLI, and dashboard
+  surfaces.
+- Controlled build does not import or execute source, publish an artifact,
+  deploy a target, or modify production source.
+
 ## 0.28.0-alpha.1 - 2026-09-01
 
 - Added `SPARKLE-AI-SYSTEM-SOURCE-PROMOTION/1` for explicit, post-evaluation,

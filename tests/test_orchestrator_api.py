@@ -150,6 +150,28 @@ class APITests(SystemCase):
         self.assertEqual(headers["X-RateLimit-Remaining"], "119")
         self.assertTrue(json.loads(body)["ok"])
 
+    def test_controlled_build_status_and_api_are_wired_fail_closed(self):
+        status = self.system.status()["ai_systems"]
+        self.assertEqual(status["controlled_builds"], 0)
+        self.assertEqual(status["controlled_build_approvals"], 0)
+        self.assertEqual(
+            status["controlled_build_protocol_version"],
+            self.system.ai_system_controlled_builder.PROTOCOL,
+        )
+        code, _, body = self.request("/api/ai-system-controlled-builds?limit=10")
+        self.assertEqual(code, 200)
+        payload = json.loads(body)
+        self.assertEqual(payload["controlled_builds"], [])
+        self.assertEqual(payload["controlled_build_eligibility"], [])
+        self.assertEqual(self.request(
+            "/api/ai-systems/build/approve",
+            {
+                "promotion_id": "SPK-PROMO-MISSING",
+                "actor": "build.operator",
+                "approved": True,
+            },
+        )[0], 400)
+
     def test_external_worker_route_is_operator_approved(self):
         class StubClient:
             def run(self, project_name):

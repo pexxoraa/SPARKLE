@@ -198,6 +198,26 @@ def build_parser() -> argparse.ArgumentParser:
         "ai-system-promotions",
         help="List content-free controlled source-promotion evidence",
     )
+    build_approve = sub.add_parser(
+        "ai-system-controlled-build-approve",
+        help="Approve one exact promotion for deterministic artifact building",
+    )
+    build_approve.add_argument("promotion_id")
+    build_approve.add_argument("actor")
+    build_approve.add_argument(
+        "--source-origin", choices=("cli", "operator"), default="cli",
+    )
+    build_approve.add_argument("--approve", action="store_true")
+    controlled_build = sub.add_parser(
+        "ai-system-controlled-build",
+        help="Build an immutable source bundle from one approved promotion",
+    )
+    controlled_build.add_argument("contract")
+    controlled_build.add_argument("--approve", action="store_true")
+    sub.add_parser(
+        "ai-system-controlled-builds",
+        help="List content-free controlled-build evidence",
+    )
     project_create = sub.add_parser(
         "project-create", help="Create a validated structured project record",
     )
@@ -569,6 +589,34 @@ def main(argv: list[str] | None = None) -> int:
             "promotion_approvals": system.source_promotions.list_approvals(limit=100),
             "promotion_eligibility": system.ai_system_source_promoter.eligibility(
                 limit=100
+            ),
+        })
+        return 0
+    if args.command == "ai-system-controlled-build-approve":
+        approval = system.ai_system_controlled_builder.approve(
+            args.promotion_id,
+            actor=args.actor,
+            source_origin=args.source_origin,
+            approved=bool(args.approve),
+        )
+        _print({"ok": True, "controlled_build_approval": approval})
+        return 0
+    if args.command == "ai-system-controlled-build":
+        result = system.ai_system_controlled_builder.request(
+            _load_manifest(args.contract), approved=bool(args.approve),
+        )
+        _print({"ok": result["status"] == "built", "controlled_build": result})
+        return 0 if result["status"] == "built" else 1
+    if args.command == "ai-system-controlled-builds":
+        _print({
+            "ok": True,
+            "protocol_version": system.ai_system_controlled_builder.PROTOCOL,
+            "controlled_builds": system.controlled_builds.list(limit=100),
+            "controlled_build_approvals": (
+                system.controlled_builds.list_approvals(limit=100)
+            ),
+            "controlled_build_eligibility": (
+                system.ai_system_controlled_builder.eligibility(limit=100)
             ),
         })
         return 0

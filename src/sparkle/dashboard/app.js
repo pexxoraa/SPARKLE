@@ -89,6 +89,8 @@ async function refresh() {
       metric('Runtime evaluations', state.ai_systems.runtime_evaluations),
       metric('Controlled promotions', state.ai_systems.source_promotions),
       metric('Promotion approvals', state.ai_systems.source_promotion_approvals),
+      metric('Controlled builds', state.ai_systems.controlled_builds),
+      metric('Build approvals', state.ai_systems.controlled_build_approvals),
       metric('Active projects', state.projects.active),
       metric('Blocked projects', state.projects.blocked),
       metric('Automation runs', state.automation.recent_runs),
@@ -189,8 +191,9 @@ async function loadPanel(panel) {
       : empty('No external worker submissions recorded yet.');
   }
   if (panel === 'releases') {
-    const [promotionData, artifactData, deploymentData] = await Promise.all([
+    const [promotionData, buildData, artifactData, deploymentData] = await Promise.all([
       api('/api/ai-system-source-promotions?limit=50'),
+      api('/api/ai-system-controlled-builds?limit=50'),
       api('/api/artifacts?limit=50'),
       api('/api/deployments?limit=50'),
     ]);
@@ -204,6 +207,16 @@ async function loadPanel(panel) {
         `<div class="list-item"><strong>candidate ${escapeHtml(item.candidate_id)} · ${escapeHtml(item.state)}</strong><small>${escapeHtml(item.reason || 'all current gates satisfied')} · built ${escapeHtml(item.built)} · deployed ${escapeHtml(item.deployed)}</small></div>`
       )).join('')
       : empty('No source candidates available for promotion assessment.');
+    qs('#controlledBuildList').innerHTML = buildData.controlled_builds.length
+      ? buildData.controlled_builds.map((build) => (
+        `<div class="list-item"><strong>${escapeHtml(build.build_id)} · ${escapeHtml(build.status)}</strong><small>${escapeHtml(build.build_kind)} · promotion ${escapeHtml(build.promotion_id)} · source executed ${escapeHtml(build.source_executed)} · published ${escapeHtml(build.published)} · deployed ${escapeHtml(build.deployed)}</small></div>`
+      )).join('')
+      : empty('No promotion-bound controlled builds recorded.');
+    qs('#controlledBuildEligibilityList').innerHTML = buildData.controlled_build_eligibility.length
+      ? buildData.controlled_build_eligibility.map((item) => (
+        `<div class="list-item"><strong>${escapeHtml(item.promotion_id)} · ${escapeHtml(item.state)}</strong><small>${escapeHtml(item.reason || 'all current gates satisfied')} · source executed ${escapeHtml(item.source_executed)}</small></div>`
+      )).join('')
+      : empty('No promotions available for controlled-build assessment.');
     qs('#artifactList').innerHTML = artifactData.artifacts.length
       ? artifactData.artifacts.map((artifact) => (
         `<div class="list-item"><strong>${escapeHtml(artifact.project_name)} · ${escapeHtml(artifact.status)}</strong><small>${escapeHtml(artifact.file_count)} files · SHA-256 ${escapeHtml(artifact.artifact_sha256)}</small></div>`
