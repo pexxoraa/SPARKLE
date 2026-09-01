@@ -427,4 +427,8 @@ passed. A fresh no-index `0.29.0a1` wheel passed installed version/status,
 controlled-build protocol, empty evidence/eligibility, CLI, worker-help, and
 automation checks. Wheel SHA-256:
 `59b96669cb86285395664964698cc5204828297c22c3878b4836d2cde41727d7`.
-Publication and new-head CI are pending.
+The capability is published at commit
+`0caff6c7ab1ffcf149edf052f1119a371a2ea326`, exact tree
+`d3afe3ede6252996c6663f428839378cb9c8d0bf`. SPARKLE CI run #56
+(`33545518032`) passed Python 3.12, Python 3.13, worker-image, and
+automation-service on that commit.

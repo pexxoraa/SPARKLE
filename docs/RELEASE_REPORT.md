@@ -38,7 +38,13 @@ Date: 2026-09-01 UTC
   version/status, controlled-build protocol, empty evidence/eligibility, CLI,
   worker-help, and automation-service checks. Wheel SHA-256:
   `59b96669cb86285395664964698cc5204828297c22c3878b4836d2cde41727d7`.
-- Publication and new-head CI evidence are still pending.
+- The capability is published as normal non-force descendant commit
+  `0caff6c7ab1ffcf149edf052f1119a371a2ea326`, tree
+  `d3afe3ede6252996c6663f428839378cb9c8d0bf`, with verified v0.28 HEAD
+  `5bd7059563cca0a844ff583dc358e88539290405` as its sole parent.
+- SPARKLE CI run #56 (`33545518032`) completed successfully for the published
+  capability. Python 3.12, Python 3.13, worker-image, and automation-service all
+  passed.
 
 ## Inherited v0.28 controlled source promotion
 
