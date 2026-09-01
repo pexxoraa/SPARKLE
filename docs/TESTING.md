@@ -396,3 +396,17 @@ passes independently in 0.832 seconds. The complete official suite passes
 no-index `0.27.0a1` wheel passed installed status/protocol/listing and automation
 checks; worker readiness correctly refused the absent signing key. Wheel
 SHA-256: `d71a6e4dd3de0b49f72e17dacfdac1e36d81c6b240e9713b23ea4f23a9a58ab9`.
+
+The v0.28 Controlled Source Promotion increment adds twelve focused methods
+covering successful exact staging, separate approval, failed/missing/mismatched
+evaluation and identity, stale approval, invalidation, supersession, source and
+metadata tamper, traversal, overwrite, deterministic and concurrent replay,
+partial-copy cleanup, digest failure, explicit reapproval/retry, lifecycle
+guards, content-free evidence, CLI, and trace non-claims. One authenticated API
+listing/refusal test is also added. The documented complete suite passed
+249/249 in 24.766 seconds; the focused promotion suite passed 12/12 in 0.219
+seconds and the runtime/worker suite passed 29/29 in 3.761 seconds. Dashboard
+syntax, whitespace, tracked-tree audits, and a fresh no-index wheel/install
+gate passed. The `0.28.0a1` wheel SHA-256 is
+`ad897af2dff56f4613acc67ce3ab0ec42c328ed7ba64263ebed26e2fbd49ebab`.
+Remote publication and new-head CI remain pending.

@@ -1,3 +1,62 @@
+# 0.28.0-alpha.1 verification report
+
+Date: 2026-09-01 UTC
+
+## Controlled source promotion
+
+- Added `SPARKLE-AI-SYSTEM-SOURCE-PROMOTION/1` as a provider-neutral stage
+  after successful runtime evaluation. Promotion approval is separate from
+  candidate approval and is bound to the exact candidate/content digest,
+  implementation plan/digest, evaluation/contract digest, actor, origin, and
+  expiry.
+- Preconditions re-read authoritative stores and reject missing, unapproved,
+  invalidated, superseded, tampered, mismatched, failed, stale, replayed, or
+  conflicting identities. Runtime success never creates promotion approval.
+- Exact candidate text is copied only into
+  `promotion_environment/staging/<system-name>`. The writer uses a private
+  lock, exclusive files, a temporary directory, digest verification before and
+  after atomic rename, no overwrite, and rollback of materialization it created
+  on failure.
+- Content-free evidence records promotion, request, candidate, plan,
+  evaluation, approval, actor/origin, source/destination digest, resulting
+  promoted-artifact identity, lifecycle, trace, timestamps, and bounded failure
+  class. It stores no source, outputs, review notes, credentials, or secrets.
+- Identical request replay is deterministic. Concurrent replay produces one
+  promotion and destination. Failed materialization consumes its approval and
+  requires a new explicit approval before a clean retry.
+- CLI and authenticated API operations expose separate approval, request,
+  exclusion, status, and result boundaries. Dashboard evidence distinguishes
+  ineligible, awaiting approval, approval recorded, requested, promoting,
+  promoted, rejected, and failed states without claiming build or deployment.
+
+## Local verification state
+
+- The documented complete regression passed 249/249 in 24.766 seconds. The
+  focused controlled-promotion suite passed 12/12 in 0.219 seconds, and the
+  runtime/external-worker/worker-service suite passed 29/29 in 3.761 seconds.
+- Dashboard JavaScript syntax and Git whitespace checks passed. The tracked-tree
+  audit found no secrets, generated databases, wheels, caches, virtual
+  environments, temporary files, unexpected binaries, symlinks, or oversized
+  files. The documented credential example is a non-secret placeholder.
+- A fresh no-index `0.28.0a1` wheel built and installed without dependencies.
+  Installed version/status, promotion protocol, empty promotion
+  evidence/eligibility, promotion CLI, worker entrypoint, and automation checks
+  passed. Wheel SHA-256:
+  `ad897af2dff56f4613acc67ce3ab0ec42c328ed7ba64263ebed26e2fbd49ebab`.
+- Local checkpoint creation, remote publication, and new-head CI are pending.
+- Completion remains 93%. No v0.28 commit or remote CI evidence exists yet.
+
+## Honest limits
+
+- Promotion stops at controlled staging. It does not build, execute, package,
+  publish, deploy, replace production source, or modify application workspaces.
+- No named external worker endpoint or signing key is configured. No genuine
+  external evaluation or executable Bubblewrap/hostile-canary isolation proof
+  exists. `isolation_verified` remains false.
+- Live MiniMax verification remains blocked by the intentionally absent key.
+
+---
+
 # 0.27.0-alpha.1 verification report
 
 Date: 2026-08-31 UTC

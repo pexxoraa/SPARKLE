@@ -164,6 +164,40 @@ def build_parser() -> argparse.ArgumentParser:
         "ai-system-runtime-evaluations",
         help="List content-free runtime evaluation evidence",
     )
+    promotion_approve = sub.add_parser(
+        "ai-system-promotion-approve",
+        help="Approve one evaluated candidate for controlled staging promotion",
+    )
+    promotion_approve.add_argument("candidate_id", type=int)
+    promotion_approve.add_argument("evaluation_id")
+    promotion_approve.add_argument("actor")
+    promotion_approve.add_argument(
+        "--source-origin", choices=("cli", "operator"), default="cli",
+    )
+    promotion_approve.add_argument("--approve", action="store_true")
+    promote = sub.add_parser(
+        "ai-system-promote",
+        help="Promote exact approved candidate source into controlled staging",
+    )
+    promote.add_argument("contract")
+    promote.add_argument("--approve", action="store_true")
+    promotion_exclude = sub.add_parser(
+        "ai-system-promotion-exclude",
+        help="Invalidate or supersede a candidate for promotion",
+    )
+    promotion_exclude.add_argument("candidate_id", type=int)
+    promotion_exclude.add_argument("status", choices=("invalidated", "superseded"))
+    promotion_exclude.add_argument("reason")
+    promotion_exclude.add_argument("actor")
+    promotion_exclude.add_argument("--replacement-candidate-id", type=int)
+    promotion_exclude.add_argument(
+        "--source-origin", choices=("cli", "operator"), default="cli",
+    )
+    promotion_exclude.add_argument("--approve", action="store_true")
+    sub.add_parser(
+        "ai-system-promotions",
+        help="List content-free controlled source-promotion evidence",
+    )
     project_create = sub.add_parser(
         "project-create", help="Create a validated structured project record",
     )
@@ -497,6 +531,45 @@ def main(argv: list[str] | None = None) -> int:
             "ok": True,
             "protocol_version": system.ai_system_runtime_evaluator.PROTOCOL,
             "runtime_evaluations": system.runtime_evaluations.list(limit=100),
+        })
+        return 0
+    if args.command == "ai-system-promotion-approve":
+        approval = system.ai_system_source_promoter.approve(
+            args.candidate_id,
+            args.evaluation_id,
+            actor=args.actor,
+            source_origin=args.source_origin,
+            approved=bool(args.approve),
+        )
+        _print({"ok": True, "promotion_approval": approval})
+        return 0
+    if args.command == "ai-system-promote":
+        result = system.ai_system_source_promoter.request(
+            _load_manifest(args.contract), approved=bool(args.approve),
+        )
+        _print({"ok": result["status"] == "promoted", "source_promotion": result})
+        return 0 if result["status"] == "promoted" else 1
+    if args.command == "ai-system-promotion-exclude":
+        exclusion = system.ai_system_source_promoter.exclude_candidate(
+            args.candidate_id,
+            status=args.status,
+            reason=_load_text(args.reason),
+            actor=args.actor,
+            source_origin=args.source_origin,
+            approved=bool(args.approve),
+            replacement_candidate_id=args.replacement_candidate_id,
+        )
+        _print({"ok": True, "promotion_exclusion": exclusion})
+        return 0
+    if args.command == "ai-system-promotions":
+        _print({
+            "ok": True,
+            "protocol_version": system.ai_system_source_promoter.PROTOCOL,
+            "source_promotions": system.source_promotions.list(limit=100),
+            "promotion_approvals": system.source_promotions.list_approvals(limit=100),
+            "promotion_eligibility": system.ai_system_source_promoter.eligibility(
+                limit=100
+            ),
         })
         return 0
     if args.command == "project-create":

@@ -941,6 +941,35 @@ class APITests(SystemCase):
         self.assertEqual(status, 400)
         self.assertEqual(self.system.runtime_evaluations.list(), [])
 
+    def test_source_promotion_api_requires_separate_approval_and_lists_evidence(self):
+        status, _, body = self.request("/api/ai-system-source-promotions")
+        self.assertEqual(status, 200)
+        payload = json.loads(body)
+        self.assertEqual(
+            payload["protocol_version"],
+            "SPARKLE-AI-SYSTEM-SOURCE-PROMOTION/1",
+        )
+        self.assertEqual(payload["source_promotions"], [])
+        self.assertEqual(payload["promotion_approvals"], [])
+        self.assertEqual(payload["promotion_eligibility"], [])
+        status, _, _ = self.request(
+            "/api/ai-systems/promotion/approve",
+            {
+                "candidate_id": 1,
+                "evaluation_id": "SPK-EVAL-" + "A" * 32,
+                "actor": "release.operator",
+                "approved": False,
+            },
+        )
+        self.assertEqual(status, 400)
+        self.assertEqual(self.system.source_promotions.list(), [])
+        status, _, _ = self.request(
+            "/api/ai-systems/promotion/request",
+            {"contract": {}, "approved": False},
+        )
+        self.assertEqual(status, 400)
+        self.assertEqual(self.system.source_promotions.list(), [])
+
     def test_structured_project_lifecycle_and_evidence_endpoints(self):
         project = {
             "name": "sparkle_core",

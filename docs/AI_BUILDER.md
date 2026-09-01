@@ -22,6 +22,10 @@ v0.27 adds `SPARKLE-AI-SYSTEM-RUNTIME-EVALUATION/1` for explicitly approved
 candidates. It prepares a separate bounded evaluation bundle and can submit it
 only through the existing authenticated external-worker client. The current
 environment provides contract evidence, not live isolated-runtime evidence.
+v0.28 adds `SPARKLE-AI-SYSTEM-SOURCE-PROMOTION/1`. A separate post-evaluation
+approval binds exact candidate, plan, evaluation, actor, and origin identity
+before exact source is atomically materialized into controlled staging. It
+does not build, package, publish, deploy, or modify production source.
 
 ## Requirements contract
 
@@ -239,6 +243,60 @@ successful fixed-test result and all declared criteria passed. It does not mean
 production verified or deployed. `isolation_verified` remains false unless
 separate executable hostile-canary evidence proves the deployed worker.
 
+## Controlled source promotion
+
+Promotion is a separate operator action after runtime evaluation:
+
+```text
+APPROVED CANDIDATE → SUCCESSFUL RUNTIME EVALUATION
+→ PROMOTION APPROVAL → PROMOTION REQUEST → PROMOTING → PROMOTED → STOP
+```
+
+Candidate approval and runtime success do not imply promotion approval. The
+promotion approval expires after 24 hours and binds candidate ID/digest, plan
+ID/digest, evaluation ID/contract digest, actor, and request origin. CLI and
+authenticated API origins are explicit and must match the approval.
+
+`SPARKLE-AI-SYSTEM-SOURCE-PROMOTION/1` requires a unique request ID and repeats
+those identities rather than trusting caller metadata. The service re-reads
+the authoritative candidate, plan, evaluation, approval, and exclusion stores;
+recomputes every candidate file byte count and SHA-256; checks the canonical
+candidate digest and manifest; and refuses failed evaluations, mismatches,
+stale approvals, invalidated or superseded candidates, traversal, conflicts,
+and overwrite.
+
+The only destination is
+`promotion_environment/staging/<candidate-system-name>`. A private exclusive
+lock serializes the destination. Files are written exactly into a temporary
+directory with exclusive creation, verified against the source digest, renamed
+atomically without an allowed overwrite, then re-read and verified. Failures
+remove only partial materialization created by that attempt. Failed attempts
+require a new explicit approval before retry.
+
+Persisted requested, promoting, promoted, rejected, and failed events are
+content-free. Traces include identifiers, actor/origin, destination, digests,
+resulting promoted-source identity, timestamps, lifecycle, and bounded failure
+class. They never contain candidate source, runtime output, review notes, API
+tokens, signing material, or credentials.
+
+`PROMOTED` means exact evaluated source exists in controlled staging. It does
+not mean built, executed, packaged, published, production verified, deployed,
+or isolated. All those flags remain false and the workflow stops.
+
+CLI:
+
+- `ai-system-promotion-approve`
+- `ai-system-promote`
+- `ai-system-promotion-exclude`
+- `ai-system-promotions`
+
+Authenticated API:
+
+- `POST /api/ai-systems/promotion/approve`
+- `POST /api/ai-systems/promotion/request`
+- `POST /api/ai-systems/promotion/exclude`
+- `GET /api/ai-system-source-promotions`
+
 ## Evidence and persistence
 
 Blueprint attempts are stored separately in
@@ -285,4 +343,5 @@ is deterministic and provider neutral. Runtime-evaluation contracts and the
 authenticated worker boundary have deterministic integration evidence. Live
 MiniMax conversion, semantic fidelity of generated content, an actual human
 review, a named isolated-worker evaluation, provider-specific multimodal
-mapping, production promotion, and real deployment remain incomplete.
+mapping, production build/package/publish, and real deployment remain
+incomplete. Controlled staging promotion is not production promotion.

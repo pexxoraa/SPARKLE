@@ -87,6 +87,8 @@ async function refresh() {
       metric('Source candidates', state.ai_systems.source_candidates),
       metric('Provider disclosures', state.ai_systems.provider_disclosures),
       metric('Runtime evaluations', state.ai_systems.runtime_evaluations),
+      metric('Controlled promotions', state.ai_systems.source_promotions),
+      metric('Promotion approvals', state.ai_systems.source_promotion_approvals),
       metric('Active projects', state.projects.active),
       metric('Blocked projects', state.projects.blocked),
       metric('Automation runs', state.automation.recent_runs),
@@ -187,10 +189,21 @@ async function loadPanel(panel) {
       : empty('No external worker submissions recorded yet.');
   }
   if (panel === 'releases') {
-    const [artifactData, deploymentData] = await Promise.all([
+    const [promotionData, artifactData, deploymentData] = await Promise.all([
+      api('/api/ai-system-source-promotions?limit=50'),
       api('/api/artifacts?limit=50'),
       api('/api/deployments?limit=50'),
     ]);
+    qs('#promotionList').innerHTML = promotionData.source_promotions.length
+      ? promotionData.source_promotions.map((promotion) => (
+        `<div class="list-item"><strong>${escapeHtml(promotion.promotion_id)} · ${escapeHtml(promotion.status)}</strong><small>candidate ${escapeHtml(promotion.candidate_id)} · ${escapeHtml(promotion.destination)} · runtime ${escapeHtml(promotion.evaluation_id)} · built ${escapeHtml(promotion.built)} · deployed ${escapeHtml(promotion.deployed)}</small></div>`
+      )).join('')
+      : empty('No controlled source promotions recorded.');
+    qs('#promotionEligibilityList').innerHTML = promotionData.promotion_eligibility.length
+      ? promotionData.promotion_eligibility.map((item) => (
+        `<div class="list-item"><strong>candidate ${escapeHtml(item.candidate_id)} · ${escapeHtml(item.state)}</strong><small>${escapeHtml(item.reason || 'all current gates satisfied')} · built ${escapeHtml(item.built)} · deployed ${escapeHtml(item.deployed)}</small></div>`
+      )).join('')
+      : empty('No source candidates available for promotion assessment.');
     qs('#artifactList').innerHTML = artifactData.artifacts.length
       ? artifactData.artifacts.map((artifact) => (
         `<div class="list-item"><strong>${escapeHtml(artifact.project_name)} · ${escapeHtml(artifact.status)}</strong><small>${escapeHtml(artifact.file_count)} files · SHA-256 ${escapeHtml(artifact.artifact_sha256)}</small></div>`

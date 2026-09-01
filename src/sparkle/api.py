@@ -29,7 +29,7 @@ MAX_MULTIMODAL_BODY_BYTES = 12_000_000
 class SparkleHandler(BaseHTTPRequestHandler):
     system: SparkleSystem
     dashboard_root = Path(__file__).with_name("dashboard")
-    server_version = "SPARKLE/0.27"
+    server_version = "SPARKLE/0.28"
 
     def log_message(self, format: str, *args: object) -> None:
         # Avoid request bodies, headers, query values, and secrets in logs.
@@ -341,6 +341,19 @@ class SparkleHandler(BaseHTTPRequestHandler):
             return self._json({
                 "protocol_version": self.system.ai_system_runtime_evaluator.PROTOCOL,
                 "runtime_evaluations": self.system.runtime_evaluations.list(
+                    limit=int(query.get("limit", [50])[0])
+                ),
+            })
+        if parsed.path == "/api/ai-system-source-promotions":
+            return self._json({
+                "protocol_version": self.system.ai_system_source_promoter.PROTOCOL,
+                "source_promotions": self.system.source_promotions.list(
+                    limit=int(query.get("limit", [50])[0])
+                ),
+                "promotion_approvals": self.system.source_promotions.list_approvals(
+                    limit=int(query.get("limit", [50])[0])
+                ),
+                "promotion_eligibility": self.system.ai_system_source_promoter.eligibility(
                     limit=int(query.get("limit", [50])[0])
                 ),
             })
@@ -725,6 +738,55 @@ class SparkleHandler(BaseHTTPRequestHandler):
                     "ok": result["status"] == "evaluated",
                     "runtime_evaluation": result,
                 }, 201)
+            if self.path == "/api/ai-systems/promotion/approve":
+                if set(data) - {
+                    "candidate_id", "evaluation_id", "actor", "approved",
+                }:
+                    raise ValueError("Source promotion approval fields are unsupported")
+                approval = self.system.ai_system_source_promoter.approve(
+                    data.get("candidate_id"),
+                    data.get("evaluation_id"),
+                    actor=data.get("actor"),
+                    source_origin="authenticated_api",
+                    approved=data.get("approved") is True,
+                )
+                return self._json({
+                    "ok": True, "promotion_approval": approval,
+                }, 201)
+            if self.path == "/api/ai-systems/promotion/request":
+                if set(data) - {"contract", "approved"}:
+                    raise ValueError("Source promotion request fields are unsupported")
+                contract = data.get("contract")
+                if not isinstance(contract, dict):
+                    raise ValueError("Source promotion contract must be an object")
+                if contract.get("source_origin") != "authenticated_api":
+                    raise ValueError("API promotion origin must be authenticated_api")
+                result = self.system.ai_system_source_promoter.request(
+                    contract, approved=data.get("approved") is True,
+                )
+                status = 201 if result["status"] == "promoted" else 422
+                return self._json({
+                    "ok": result["status"] == "promoted",
+                    "source_promotion": result,
+                }, status)
+            if self.path == "/api/ai-systems/promotion/exclude":
+                if set(data) - {
+                    "candidate_id", "status", "reason", "actor", "approved",
+                    "replacement_candidate_id",
+                }:
+                    raise ValueError("Source promotion exclusion fields are unsupported")
+                exclusion = self.system.ai_system_source_promoter.exclude_candidate(
+                    data.get("candidate_id"),
+                    status=data.get("status"),
+                    reason=data.get("reason"),
+                    actor=data.get("actor"),
+                    source_origin="authenticated_api",
+                    approved=data.get("approved") is True,
+                    replacement_candidate_id=data.get("replacement_candidate_id"),
+                )
+                return self._json({
+                    "ok": True, "promotion_exclusion": exclusion,
+                })
             if self.path == "/api/agents/remove":
                 if data.get("approved") is not True:
                     raise ValueError("Agent removal requires explicit approval")

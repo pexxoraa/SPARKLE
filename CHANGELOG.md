@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.28.0-alpha.1 - 2026-09-01
+
+- Added `SPARKLE-AI-SYSTEM-SOURCE-PROMOTION/1` for explicit, post-evaluation,
+  approval-bound promotion into a dedicated controlled staging environment.
+- Added exact candidate/plan/evaluation/approval identity checks, immutable
+  source and destination digests, atomic no-overwrite materialization,
+  invalidation/supersession, bounded lifecycle traces, deterministic replay,
+  API, CLI, status, dashboard eligibility, and negative security tests.
+- Promotion stops at staging. It does not build, package, publish, deploy,
+  modify production source, or establish external-worker isolation evidence.
+
 ## 0.27.0-alpha.1 - 2026-08-31
 
 - Added bounded `SPARKLE-AI-SYSTEM-RUNTIME-EVALUATION/1` requests for approved

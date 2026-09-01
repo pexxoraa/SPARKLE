@@ -84,6 +84,15 @@ request, persists a monotonic lifecycle, evaluates bounded result criteria,
 and annotates a content-free trace. It never uses the local process executor,
 promotes source, packages an artifact, or deploys. Signed sandbox fields remain
 claims; only separately executed isolation can set verified isolation evidence.
+The Controlled Source Promotion service is a separate post-evaluation operator
+boundary. It composes existing candidate, plan, runtime-evaluation, and trace
+stores with an independent promotion evidence store and dedicated staging
+workspace. A new expiring approval binds the exact candidate, plan,
+evaluation, actor, and origin. The service revalidates source identity, uses an
+exclusive destination lock and temporary tree, verifies source and destination
+digests around atomic rename, rejects overwrite and replay conflicts, and then
+stops. It does not call a model or worker and cannot build, package, publish,
+deploy, or modify the application/production workspace.
 An independent artifact manager reads bounded application workspaces and emits
 deterministic content-addressed ZIPs; it never starts an executable.
 The automation service is another independent entrypoint over the existing
@@ -127,8 +136,10 @@ and orchestration do not depend on cookie or browser implementation details.
 - `var/data_environment/source_provider_disclosures.sqlite3`
 - `var/data_environment/source_candidates.sqlite3`
 - `var/data_environment/runtime_evaluations.sqlite3`
+- `var/data_environment/source_promotions.sqlite3`
 - `var/candidate_environment/source_candidates/`
 - `var/runtime_environment/evaluations/`
+- `var/promotion_environment/staging/`
 - `var/data_environment/projects.sqlite3`
 - `var/data_environment/skills.sqlite3`
 - `var/data_environment/automation-service.lock`

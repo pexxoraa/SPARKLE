@@ -45,6 +45,14 @@
   identity/schema/size/freshness checked and replay conflicts fail closed.
   Results persist output digests/lengths rather than output or source. Worker
   claims never set independent isolation evidence.
+- Controlled source promotion requires a separate expiring approval after a
+  successful runtime result. Approval and request are bound to authoritative
+  candidate/plan/evaluation digests, actor, and origin. Promotion re-reads and
+  hashes candidate content, rejects invalidation, supersession, tampering,
+  stale or mismatched approval, traversal, replay conflict, and overwrite, and
+  writes exact bytes only through a locked temporary tree and atomic rename
+  into `promotion_environment/staging`. It records no source or secret and
+  cannot build, package, publish, deploy, or modify production source.
 - Application scaffolding requires explicit approval, confines every path to a
   dedicated application root, rejects traversal and symlinks, enforces file and
   manifest size limits, and protects existing files by default.
