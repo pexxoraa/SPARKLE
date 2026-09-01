@@ -43,8 +43,22 @@ Date: 2026-09-01 UTC
   evidence/eligibility, promotion CLI, worker entrypoint, and automation checks
   passed. Wheel SHA-256:
   `ad897af2dff56f4613acc67ce3ab0ec42c328ed7ba64263ebed26e2fbd49ebab`.
-- Local checkpoint creation, remote publication, and new-head CI are pending.
-- Completion remains 93%. No v0.28 commit or remote CI evidence exists yet.
+- Local content checkpoint `4a886ce55825cd42e3807ba34933271204c64103`
+  and GitHub-published commit
+  `efaad29824365655c28dcbc09880deec053be1ce` have the identical verified tree
+  `21008f91275ea50a4a7d366acdd81871e7aaeb2f`. The SHA differs only because the
+  authenticated GitHub commit API assigned the remote commit metadata; both
+  commits have published v0.27 HEAD `8a320691a29c43ade27a8514a7361dc7ec502cbb`
+  as their sole parent.
+- Private GitHub `main` was advanced normally and non-force to the published
+  v0.28 commit. Post-publication Git data verification confirmed the exact
+  parent and tree.
+- SPARKLE CI run #54 (`33466540615`) completed successfully for the published
+  commit. Python 3.12, Python 3.13, worker-image, and automation-service all
+  passed.
+- Completion remains 93%. Controlled staging promotion is remotely published
+  and CI verified; it does not change any external-worker/isolation or live
+  provider limitation.
 
 ## Honest limits
 

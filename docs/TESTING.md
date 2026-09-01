@@ -409,4 +409,6 @@ seconds and the runtime/worker suite passed 29/29 in 3.761 seconds. Dashboard
 syntax, whitespace, tracked-tree audits, and a fresh no-index wheel/install
 gate passed. The `0.28.0a1` wheel SHA-256 is
 `ad897af2dff56f4613acc67ce3ab0ec42c328ed7ba64263ebed26e2fbd49ebab`.
-Remote publication and new-head CI remain pending.
+The identical tree is published at GitHub commit
+`efaad29824365655c28dcbc09880deec053be1ce`. SPARKLE CI run #54 passed Python
+3.12, Python 3.13, worker-image, and automation-service on that commit.
