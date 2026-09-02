@@ -13,6 +13,7 @@ from sparkle.config import load_json, model_config_path
 from sparkle.content import SUPPORTED_CONTENT_TYPES
 from sparkle.model import ModelAdapter, UnsupportedModalityError
 from sparkle.providers.minimax import MiniMaxMessagesAdapter
+from sparkle.providers.nvidia import NVIDIAChatCompletionsAdapter
 from sparkle.secrets import SecretResolver
 
 
@@ -29,7 +30,10 @@ class ModelRecord:
 
 
 class ModelRegistry:
-    BUILTIN_ADAPTERS = {"minimax_messages": MiniMaxMessagesAdapter}
+    BUILTIN_ADAPTERS = {
+        "minimax_messages": MiniMaxMessagesAdapter,
+        "nvidia_chat_completions": NVIDIAChatCompletionsAdapter,
+    }
     SAFE_IDENTIFIER = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_.:/+-]{0,127}$")
     SAFE_SECRET_REF = re.compile(r"^[A-Z][A-Z0-9_]{1,127}$")
     FORBIDDEN_SECRET_FIELDS = (

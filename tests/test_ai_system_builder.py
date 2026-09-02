@@ -75,7 +75,11 @@ class AISystemBuilderTests(unittest.TestCase):
         self.assertEqual(first, second)
         self.assertEqual(first["protocol_version"], "SPARKLE-AI-SYSTEM-BLUEPRINT/1")
         route = first["architecture"]["model_routes"][0]
-        self.assertEqual(route["record_id"], "minimax-m3-general")
+        self.assertEqual(route["record_id"], "nvidia-nemotron-3.5-lightning")
+        self.assertEqual(route["provider"], "nvidia")
+        self.assertEqual(
+            route["model_id"], "nvidia/nemotron-3.5-lightning-30b-a3b",
+        )
         self.assertEqual(route["modalities"], ["text"])
         self.assertFalse(first["model_calls_executed"])
         self.assertFalse(first["runtime_evaluation_executed"])

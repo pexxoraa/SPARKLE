@@ -81,7 +81,9 @@ class ConfigTests(unittest.TestCase):
             application_path = runtime / "application/config.json"
             model_path = runtime / "ai_environment/configurations/models.json"
             self.assertEqual(config.port, 8765)
-            self.assertEqual(registry.active_id, "minimax-m3-general")
+            self.assertEqual(
+                registry.active_id, "nvidia-nemotron-3.5-lightning",
+            )
             self.assertEqual(registry.path, model_path)
             self.assertTrue(application_path.is_file())
             self.assertTrue(model_path.is_file())
