@@ -4,6 +4,9 @@ Run `sparkle serve`, then open `http://127.0.0.1:8765`.
 
 Implemented panels:
 
+- Model and routing evidence showing the active provider/model, evidence-based
+  health, routing reason, fallback, attempts, latency, and reported usage. Test
+  harness records are labeled and absent usage remains unknown.
 - Command console with normal or multi-agent execution.
 - System state, active model, storage counts, voice state, and agents.
 - AI System Blueprint, content-free natural-language draft attempt, and

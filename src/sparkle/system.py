@@ -39,6 +39,7 @@ from sparkle.content import content_contract_status
 from sparkle.development import DevelopmentVerifier, WorkspaceTestRunner
 from sparkle.external_worker import ExternalWorkerClient
 from sparkle.knowledge import KnowledgeIngestor
+from sparkle.interaction import InteractionService
 from sparkle.mastery import SkillMasteryStore
 from sparkle.notifications import NotificationStore
 from sparkle.orchestrator import Orchestrator
@@ -110,6 +111,7 @@ class SparkleSystem:
         )
         self.presence = PresenceEngine()
         self.voice = VoiceService()
+        self.interactions = InteractionService()
         self.models = model_registry or ModelRegistry()
         self.model_router = ModelRouter(self.models)
         self.context = ContextBuilder(
@@ -342,6 +344,7 @@ class SparkleSystem:
                 "recent_audit_records": len(self.api_audit.recent(limit=100)),
             },
             "voice": self.voice.status(),
+            "interaction": self.interactions.status(),
             "multimodal": content_contract_status(),
             "automation": {
                 "status": "ready", "count": len(self.automations.list()),

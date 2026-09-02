@@ -24,6 +24,7 @@
       <nav>
         <button class="active" data-panel="console">Command console</button>
         <button data-panel="system">System map</button>
+        <button data-panel="models">Models & routing</button>
         <button data-panel="memory">Memory</button>
         <button data-panel="skills">Skills & mastery</button>
         <button data-panel="automations">Automations</button>
@@ -45,13 +46,14 @@
           <div class="orb" aria-hidden="true"><i></i><i></i><i></i><span>✦</span></div>
           <div><p class="eyebrow">READY FOR EXECUTION</p><h2>Understand. Reason. Act.<br>Verify. Remember.</h2><p>One core, specialized agents, provider-independent intelligence.</p></div>
         </div>
-        <div id="conversation" class="conversation"><div class="message system-message">SPARKLE is ready. Live answers require a configured MiniMax server-side key.</div></div>
+        <div id="conversation" class="conversation"><div class="message system-message">SPARKLE is ready. Live Nemotron answers require a configured NVIDIA server-side key.</div></div>
         <form id="chatForm" class="composer">
           <textarea id="messageInput" rows="2" placeholder="What should SPARKLE work on?" required></textarea>
           <div class="composer-row"><label><input id="multiAgent" type="checkbox"> Multi-agent execution</label><button type="submit">Execute <span>→</span></button></div>
         </form>
       </section>
       <section id="system" class="panel"><div id="statusGrid" class="grid"></div><div class="card"><h3>Agent network</h3><div id="agentList" class="agent-list"></div></div></section>
+      <section id="models" class="panel"><div class="card"><h3>Provider-neutral model registry</h3><p>Configuration, runtime health, and live verification are distinct. Test-harness evidence never becomes live-provider evidence.</p><div id="modelList" class="list"></div></div><div class="card"><h3>Content-free routing and usage evidence</h3><p>Prompts, responses, and credentials are not stored here. Missing provider token counts remain unknown.</p><div id="modelRequestList" class="list"></div></div></section>
       <section id="memory" class="panel"><div class="card"><h3>Relevant memory records</h3><div id="memoryList" class="list"></div></div></section>
       <section id="skills" class="panel"><div class="card"><h3>Evidence-based skill mastery</h3><p>Levels 0–6 are derived only from verified questions, exercises, tests, projects, implementations, and independent problem solving.</p><div id="skillList" class="list"></div></div></section>
       <section id="automations" class="panel"><div class="card"><h3>Dashboard notifications</h3><p>Bounded local delivery from manual or automation actions.</p><div id="notificationList" class="list"></div></div><div class="card"><h3>Evidence-backed proactive alerts</h3><p>Generated only from validated memory, knowledge, project, and skill evidence.</p><div id="proactiveList" class="list"></div></div><div class="card"><h3>Automation execution history</h3><div id="automationList" class="list"></div></div></section>

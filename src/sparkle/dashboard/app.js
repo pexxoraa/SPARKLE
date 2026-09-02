@@ -75,9 +75,12 @@ async function refresh() {
     qs('#systemLabel').textContent = state.status === 'ready'
       ? 'All core systems ready'
       : 'Core ready · provider key missing';
-    qs('#activeModel').textContent = state.models[0]?.model_id || state.active_model;
+    qs('#activeModel').textContent = state.active_model_id || state.active_model;
     qs('#statusGrid').innerHTML = [
       metric('System', state.status),
+      metric('Active provider', state.active_provider),
+      metric('Model health', state.models.find((model) => model.active)?.health || 'UNAVAILABLE'),
+      metric('Live Nemotron', state.model_runtime.live_nemotron_verified ? 'VERIFIED' : 'NOT VERIFIED'),
       metric('Memory', `${state.memory.records} records`),
       metric('Knowledge', `${state.knowledge.sources} sources`),
       metric('Generated agents', state.generated_agents.count),
@@ -114,6 +117,17 @@ async function refresh() {
 }
 
 async function loadPanel(panel) {
+  if (panel === 'models') {
+    const data = await api('/api/model-requests?limit=50');
+    qs('#modelList').innerHTML = state.models.map((model) => (
+      `<div class="list-item"><strong>${escapeHtml(model.provider)} · ${escapeHtml(model.model_id)}${model.active ? ' · ACTIVE' : ''}</strong><small>${escapeHtml(model.health)} · ${escapeHtml(model.health_reason)} · ${escapeHtml(model.configured ? 'configured' : 'credential unavailable')} · ${escapeHtml(model.health_evidence_source || 'no runtime evidence')}</small></div>`
+    )).join('');
+    qs('#modelRequestList').innerHTML = data.model_requests.length
+      ? data.model_requests.map((request) => (
+        `<div class="list-item"><strong>${escapeHtml(request.provider)} · ${escapeHtml(request.model)} · ${escapeHtml(request.status)}</strong><small>${escapeHtml(request.selection_reason)} · ${escapeHtml(request.latency_ms ?? 'pending')} ms · attempts ${escapeHtml(request.attempts)} · fallback ${escapeHtml(request.fallback)} · tokens ${escapeHtml(request.input_tokens ?? 'unknown')}/${escapeHtml(request.output_tokens ?? 'unknown')} · ${escapeHtml(request.test_harness ? 'TEST HARNESS' : 'PROVIDER')}</small></div>`
+      )).join('')
+      : empty('No model request evidence recorded. Live Nemotron is not verified.');
+  }
   if (panel === 'memory') {
     const data = await api('/api/memory?limit=50');
     qs('#memoryList').innerHTML = data.memories.length
