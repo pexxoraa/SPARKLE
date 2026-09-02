@@ -480,3 +480,25 @@ Hardening commit `07084b8bd2f0709d2fbd4313489b650a3e5d05ef`, tree
 automation-service, and controlled-execution-software. The real local
 Bubblewrap result remains `IsolationPreflightFailed`; all seven Level 3 canary
 fields remain false and no isolation verification is claimed.
+
+The free/local worker continuation added a credential-free
+`SPARKLE-WORKER-HOST-DIAGNOSTIC/1` command, overwrite-protected development
+TLS/HMAC bootstrap, externalized systemd configuration, and an offline wheel
+installer that deliberately does not create credentials or start the service.
+Fresh `make check` passed 273/273 in 31.233 seconds. Controlled execution passed
+9/9; worker 18/18; external-worker/runtime 14/14; promotion 12/12; build 11/11;
+and API/CLI 38/38. The TLS test accepted the explicitly trusted `localhost`
+certificate and rejected both default trust and a wrong hostname. The local
+diagnostic reported user, mount, and network namespaces unavailable,
+`no_new_privs` available, and Bubblewrap `IsolationPreflightFailed`; all seven
+canaries remained false and Level 3 remained blocked.
+
+Dashboard JavaScript, whitespace, secret, generated-artifact, symlink/path, and
+oversized-file audits passed. A fresh no-index/no-dependency `0.30.0a1` wheel
+installed in a new virtual environment and passed version, status, worker help,
+and credential-free diagnostic checks. Its SHA-256 was
+`12f939cfd268243e19885e2809664ca966fc3cce8096a9a8d0717ea373ec83da`.
+Commit `1e988eb96e66c59890ecd251c80b59a00532f3d2`, tree
+`7849e2364f4b01ceeca3f27fcf04f46d21bca1a8`, passed CI #63
+(`33605055320`) across all five jobs. This is software-platform evidence, not
+Level 3 isolation evidence.

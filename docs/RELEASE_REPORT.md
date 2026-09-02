@@ -75,6 +75,31 @@ SHA-256 is `d857f6e379400bfe9c1d1d404e4ecac099f37e17cbf18999310345a970f5b8c6`.
 The real local Bubblewrap preflight still fails closed and all seven canary
 fields are false. Level 3 remains BLOCKED; deployment remains frozen.
 
+## Free/local worker platform continuation
+
+Commit `1e988eb96e66c59890ecd251c80b59a00532f3d2`, tree
+`7849e2364f4b01ceeca3f27fcf04f46d21bca1a8`, adds a credential-free host
+diagnostic, reproducible development-only TLS and file-injected HMAC bootstrap,
+externalized systemd configuration, and an offline wheel installer that never
+creates credentials or starts the worker. The execution protocol and
+Bubblewrap preflight were not weakened or redesigned.
+
+Fresh evidence is 273/273 overall, 9/9 controlled execution, 18/18 worker,
+14/14 external-worker/runtime, 12/12 promotion, 11/11 build, and 38/38 API/CLI.
+Development TLS validation passed; an untrusted certificate and wrong hostname
+were rejected. Dashboard JavaScript, whitespace, offline packaging/install,
+secret, generated-artifact, symlink/path, and oversized-file audits passed. The
+fresh wheel SHA-256 is
+`12f939cfd268243e19885e2809664ca966fc3cce8096a9a8d0717ea373ec83da`.
+CI #63 (`33605055320`) passed Python 3.12, Python 3.13, worker-image,
+automation-service, and controlled-execution-software on that exact commit.
+
+The actual host diagnostic recorded unavailable user, mount, and network
+namespaces, available `no_new_privs`, Bubblewrap `IsolationPreflightFailed`,
+and seven false canaries. Level 3 therefore remains **BLOCKED**. No cloud
+infrastructure is required for continued software development and deployment
+remains frozen.
+
 ## Promotion-bound controlled build
 
 - Added `SPARKLE-AI-SYSTEM-CONTROLLED-BUILD/1` as the first deterministic
