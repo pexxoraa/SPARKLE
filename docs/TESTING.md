@@ -451,3 +451,8 @@ and oversized-file audits passed. A fresh no-index `0.30.0a1` wheel installed
 without dependencies and passed version/status, controlled-execution protocol,
 empty execution evidence, no-deployment status, CLI, and worker-help checks.
 Its SHA-256 is `e433bcea37ccbca85ca7bf5e8b3cbfb2e0f9835f448a1e12ad3f7561358f21a2`.
+The capability is published at commit
+`2a558379245ddfa29ec2eefcbef492327b59f885`, exact tree
+`49b743e115c15152ebd5403168bcb73c6e4281b4`. SPARKLE CI run #58
+(`33583190471`) passed Python 3.12, Python 3.13, worker-image, and
+automation-service on that exact commit.

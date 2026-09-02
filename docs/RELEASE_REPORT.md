@@ -44,8 +44,12 @@ passed. A fresh no-index `0.30.0a1` wheel installed without dependencies and
 passed version/status, controlled-execution protocol, empty execution evidence,
 no-deployment status, CLI, and worker-help checks. Wheel SHA-256:
 `e433bcea37ccbca85ca7bf5e8b3cbfb2e0f9835f448a1e12ad3f7561358f21a2`.
-Publication commits/tree, exact remote HEAD, and the new GitHub CI run are
-recorded only after those gates complete.
+The capability is published at commit
+`2a558379245ddfa29ec2eefcbef492327b59f885`, exact tree
+`49b743e115c15152ebd5403168bcb73c6e4281b4`, as a strict non-force descendant
+of v0.29 HEAD `6ca5be596b78eaaa3dec251953577b9547c59e73`.
+GitHub CI run #58 (`33583190471`) passed Python 3.12, Python 3.13,
+worker-image, and automation-service on that exact capability commit.
 
 ## Promotion-bound controlled build
 
