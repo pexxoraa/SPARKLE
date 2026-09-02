@@ -192,3 +192,10 @@ Production deployment still needs multi-user role/owner authorization, TLS at th
 distributed/edge rate limiting, audit retention, backup encryption, dependency scanning,
 containerized filesystem/network isolation for test/build execution, and a
 threat-model review.
+
+NVIDIA and MiniMax credentials are environment or secret-manager references,
+never registry values. Model request evidence stores identities, policy reason,
+timing, retry/fallback state, optional provider-reported usage, and safe error
+classes only. Test-harness executions are explicitly marked and cannot satisfy
+live-provider verification. Provider error bodies are reduced to bounded safe
+messages; authentication failures never echo submitted keys.

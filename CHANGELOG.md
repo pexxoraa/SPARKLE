@@ -1,5 +1,15 @@
 # Changelog
 
+- Made NVIDIA `nvidia/nemotron-3.5-lightning-30b-a3b` the primary configured
+  model through a provider-neutral NIM adapter; retained MiniMax as disabled
+  legacy support.
+- Added evidence-based model health, capability/tool/modality/stream/latency/
+  timeout request policy, explicit fallback, content-free usage/retry evidence,
+  API/CLI/dashboard visibility, and strict test-harness/live separation.
+- Added fail-closed provider-neutral browser/computer contracts, exact HTTPS
+  allowlists, redirect/result bounds, typed GUI actions, test-harness labeling,
+  and model-routing dashboard evidence. No live interaction is claimed.
+
 ## 0.30.0-alpha.1 - 2026-09-01
 
 - Added `SPARKLE-AI-SYSTEM-CONTROLLED-EXECUTION/1` with a separate expiring

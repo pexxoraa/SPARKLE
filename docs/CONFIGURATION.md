@@ -13,8 +13,9 @@ Environment overrides:
 
 | Variable | Purpose | Secret |
 |---|---|---|
-| `MINIMAX_API_KEY` | Preferred MiniMax credential reference | Yes |
-| `SPARKLE_LLM_API_KEY` | Existing deployment alias | Yes |
+| `NVIDIA_API_KEY` | Preferred NVIDIA NIM credential reference | Yes |
+| `MINIMAX_API_KEY` | Retained legacy MiniMax credential reference | Yes |
+| `SPARKLE_LLM_API_KEY` | Provider-neutral deployment alias | Yes |
 | `SPARKLE_DATA_DIR` | Runtime database root | No |
 | `SPARKLE_APPLICATION_CONFIG` | Explicit application configuration file | No |
 | `SPARKLE_MODEL_CONFIG` | Explicit writable model-registry file | No |
@@ -46,7 +47,9 @@ Model records may declare `"modalities": ["text"]`; accepted values are
 `text`, `image`, `audio`, and `document`. The list must be non-empty and unique.
 It describes intended configuration, while the instantiated adapter's
 `supported_modalities` remains the execution-time authority. The bundled
-MiniMax-M3 record is text-only.
+The active Nemotron 3.5 Lightning record and retained MiniMax-M3 record are
+text-only. Records also declare streaming/tool support, latency class, timeout,
+and explicit fallback permission. Secret values are forbidden in registry JSON.
 
 `application/config.json` contains the `security` policy:
 

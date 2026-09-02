@@ -366,7 +366,7 @@ Natural-language conversion and bounded candidate generation are locally
 verified with deterministic injected adapters; implementation-plan derivation
 is deterministic and provider neutral. Runtime-evaluation contracts and the
 authenticated worker boundary have deterministic integration evidence. Live
-MiniMax conversion, semantic fidelity of generated content, an actual human
+live-provider conversion, semantic fidelity of generated content, an actual human
 review, a named isolated-worker evaluation, provider-specific multimodal
 mapping, production build/package/publish, and real deployment remain
 incomplete. Controlled staging promotion is not production promotion.

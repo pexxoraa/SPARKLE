@@ -13,6 +13,8 @@ REQUIRED_DOCUMENTS = {
     "docs/CONFIGURATION.md",
     "docs/AI_ENVIRONMENT.md",
     "docs/MODEL_MANAGEMENT.md",
+    "docs/FOUNDATION_AUDIT.md",
+    "docs/INTERACTION.md",
     "docs/MEMORY.md",
     "docs/KNOWLEDGE.md",
     "docs/DATA_FLOW.md",

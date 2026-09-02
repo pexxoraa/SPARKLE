@@ -18,8 +18,11 @@ final system described in the long-term Definition of Done. See
 - Deterministic `SPARKLE-CONTENT/1` envelopes for bounded text, image, audio,
   document, and mixed-modality requests. Contract transport and tracing are
   tested; semantic non-text understanding awaits a capable provider adapter.
-- MiniMax-M3 adapter using MiniMax's recommended Messages endpoint directly
-  over HTTP. There is no OpenAI package or API dependency.
+- NVIDIA Nemotron 3.5 Lightning is the primary configured model through a
+  standard-library NIM Chat Completions adapter. MiniMax remains a disabled
+  legacy adapter; neither provider is imported by the core.
+- Evidence-based model health, capability/modality/tool/stream/latency/timeout
+  request policy, explicit fallback, and content-free usage records.
 - Model registry with add, remove, enable, disable, activate, route, inspect,
   and credential-presence checks.
 - Personal, Learning, Skill, Exam, Research, Coding, Software Engineering,
@@ -107,6 +110,9 @@ final system described in the long-term Definition of Done. See
 - Bounded per-client API rate limiting and a separate secret-free API audit
   database with dashboard visibility.
 - Voice and motion/presence interfaces that do not couple the core to hardware.
+- Fail-closed browser/computer interaction contracts with exact HTTPS
+  allowlists, bounded results, and typed GUI actions. Only deterministic test
+  harnesses exist; no live browser or GUI execution is claimed.
 - Unit, integration, API, security-boundary, and deterministic end-to-end tests.
 
 ## Quick start
@@ -129,13 +135,14 @@ For PDF and DOCX ingestion:
 python3 -m pip install -e '.[documents]'
 ```
 
-## Configure MiniMax-M3
+## Configure NVIDIA Nemotron
 
-Set one server-side environment variable. `MINIMAX_API_KEY` is preferred;
-`SPARKLE_LLM_API_KEY` is supported for existing SPARKLE deployments.
+Set `NVIDIA_API_KEY` outside source control. `SPARKLE_LLM_API_KEY` remains a
+provider-neutral deployment alias. Live Nemotron has not been verified in the
+published build because no key was available.
 
 ```bash
-export MINIMAX_API_KEY='configured-outside-source'
+export NVIDIA_API_KEY='configured-outside-source'
 sparkle smoke-test --live
 ```
 
@@ -161,3 +168,6 @@ Structured project contracts are documented in
 [`docs/PROJECTS.md`](docs/PROJECTS.md).
 Evidence-based skill contracts are documented in
 [`docs/SKILLS.md`](docs/SKILLS.md).
+Browser/computer boundaries are documented in
+[`docs/INTERACTION.md`](docs/INTERACTION.md). The capability classification is
+in [`docs/FOUNDATION_AUDIT.md`](docs/FOUNDATION_AUDIT.md).

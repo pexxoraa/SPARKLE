@@ -1,44 +1,41 @@
 # AI environment
 
-The AI environment contains registry records, routes, provider adapters, and
-model request/response contracts. The application asks for a capability; it
-does not select a vendor endpoint.
+The AI environment owns model records, provider adapters, health, request
+policy, routing, and content-free request evidence. The application requests a
+capability; it does not select a vendor endpoint.
 
-Each registry record declares a bounded `modalities` list and every adapter
-exposes its authoritative runtime `supported_modalities`. Routing first follows
-the configured capability and then may select another enabled compatible
-adapter. If no adapter supports the complete request, execution raises a safe
-provider-neutral unsupported-modality error before credential resolution or
-network access. Existing registry records that omit the field default to
-`["text"]` for backward compatibility.
+The active provider is NVIDIA and the active model is
+`nvidia/nemotron-3.5-lightning-30b-a3b`. The hosted NIM endpoint uses
+`POST /v1/chat/completions`, bearer authentication, SSE streaming, and
+OpenAI-style tool definitions. SPARKLE normalizes that surface behind the same
+`ModelAdapter` interface used by deterministic test adapters and the retained
+MiniMax adapter.
 
-Current MiniMax-M3 contract, verified against MiniMax documentation on
-2026-08-28:
+Registry records declare roles, modalities, enabled state, context/output
+bounds, endpoint, secret references, streaming/tool support, latency class,
+timeout, and whether the record may be used as a fallback. Loading fails closed
+on unknown adapters, identity mismatch, secret-value fields, unsafe or duplicate
+identifiers, invalid capabilities/modalities, invalid policy types, disabled
+routing targets, or capability-to-role mismatch.
 
-| Field | Value |
-|---|---|
-| Model ID | `MiniMax-M3` |
-| Endpoint | `https://api.minimax.io/anthropic/v1/messages` |
-| Authentication | `Authorization: Bearer <API_KEY>` |
-| Context | 1,000,000 input + output tokens |
-| Recommended M3 output limit | 131,072 tokens |
-| Maximum M3 output limit | 524,288 tokens |
-| Streaming | Server-sent events |
-| Tool calling | `tools`, `tool_use`, `tool_result` blocks |
-| Thinking | `adaptive` or `disabled`; disabled by default on Messages API |
-| Service tier | `standard` or `priority` |
-| Published account limit | 200 RPM and 10,000,000 TPM |
+Routing evaluates health and request requirements before credentials or network
+access. A provider is not healthy because a key name exists. Successful live
+requests create provider health evidence; deterministic injected adapters stay
+marked as test-harness evidence. Request records contain no prompt or response
+content and leave missing usage values unknown.
 
-Sources:
+The current NVIDIA integration is text-only. `SPARKLE-CONTENT/1` continues to
+carry bounded image, audio, and document inputs through the provider-neutral
+core, but semantic non-text execution requires a separately registered capable
+adapter. Unsupported combinations fail before provider access.
 
-- https://platform.minimax.io/docs/api-reference/api-overview
-- https://platform.minimax.io/docs/api-reference/text-chat-anthropic
-- https://platform.minimax.io/docs/guides/text-m3-function-call
-- https://platform.minimax.io/docs/guides/rate-limits
-- https://platform.minimax.io/docs/api-reference/errorcode
+Current evidence:
 
-The adapter uses the recommended Messages HTTP surface directly. It does not
-install the Anthropic SDK and does not expose that protocol to agents.
-The current MiniMax adapter advertises text only. SPARKLE does not infer or
-hard-code a MiniMax image, audio, or document mapping without separately
-verified provider documentation and executable tests.
+- NVIDIA adapter mapping, auth refusal, safe errors, retry, usage, tools, and
+  SSE normalization: tested with deterministic HTTP doubles.
+- Nemotron as the primary configured record: tested.
+- Switching to local/mock providers without core changes: tested.
+- Health, policy, fallback, timeout/latency filtering, and content-free usage:
+  tested.
+- Live NVIDIA Nemotron request: **NOT VERIFIED**.
+- Live MiniMax request: **NOT VERIFIED**; MiniMax is retained but disabled.

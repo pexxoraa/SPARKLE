@@ -13,17 +13,20 @@ flowchart TD
     Core --> Trace["Trace environment"]
 ```
 
-The public model contract is in `contracts.py` and `model.py`. The MiniMax
-protocol is isolated in `providers/minimax.py`. Agents select capabilities such
-as `reasoning` or `coding`; the model router maps capabilities to registry IDs.
-No agent imports a MiniMax class.
+The public model contract is in `contracts.py` and `model.py`. NVIDIA NIM and
+MiniMax protocols are isolated in `providers/nvidia.py` and
+`providers/minimax.py`. Agents select capabilities such as `reasoning` or
+`coding`; the request policy combines those requirements with modality, tools,
+streaming, health, latency, timeout, availability, and explicit fallback rules.
+No agent imports a provider class. `model_runtime.py` stores only content-free
+health, routing, latency, retry, fallback, usage, and error evidence.
 
 `content.py` defines the provider-neutral `SPARKLE-CONTENT/1` envelope. Legacy
 string messages remain strings and serialize exactly as before. Explicit
 envelopes carry bounded text, image, audio, or document parts into the same
 context, agent, routing, request, adapter, and trace path. Adapters declare
 their supported modalities and validation fails closed before a provider call.
-The MiniMax adapter remains text-only; a future adapter can add non-text
+The current NVIDIA and MiniMax adapters remain text-only; a future adapter can add non-text
 provider mapping without changing orchestration, agents, stores, or interfaces.
 See `MULTIMODAL.md` for the exact contract and evidence boundary.
 

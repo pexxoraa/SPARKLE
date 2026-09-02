@@ -126,6 +126,52 @@ CI #65 (`33606707170`) passed all five jobs on the exact capability commit.
 MiniMax was exercised only through deterministic HTTP doubles; no live-provider
 verification is claimed. Level 3 remains blocked and deployment remains frozen.
 
+## NVIDIA Nemotron and provider-neutral model runtime
+
+NVIDIA adapter commit `c7c1512d8b08b72df8330a769b8a2033037638e2`,
+tree `0f5b61f9830f8f456608e9f7b598cb9d53c1364e`, makes
+`nvidia/nemotron-3.5-lightning-30b-a3b` the primary configured model.
+MiniMax remains present as a disabled legacy record. The adapter normalizes NIM
+Chat Completions requests, responses, SSE text, tool calls, provider usage,
+bounded errors, retries, and bearer authentication without adding an SDK
+dependency. CI #67 (`33625302057`) passed all five jobs.
+
+Model runtime commit `5c7d5a06471663462cabbab4edf757adf5e4f1ad`,
+tree `3e36794da7776b62add3635c6de69eccbece622e`, adds
+evidence-based health, provider-neutral request policy, explicit fallback, and
+content-free request/usage evidence. Configuration alone is not healthy.
+Injected adapters are marked test harnesses and cannot satisfy live-provider
+verification. Missing usage remains unknown. CI #68 (`33626993684`) passed
+Python 3.12, Python 3.13, worker-image, automation-service, and
+controlled-execution-software.
+
+Fresh local evidence is 290/290 overall and 61/61 focused
+model/registry/provider/API/CLI/system tests. Live Nemotron is **NOT VERIFIED**
+because no NVIDIA credential was available. Level 3 remains **BLOCKED** and
+deployment remains **FROZEN**.
+
+## Foundation audit and bounded interaction contracts
+
+Commit `acaf61936e305da104bcb7ccaa37086273f880a0`, tree
+`e18e0bc8bb2ea7edfabc5661e075ff732e4c71f4`, adds provider-neutral browser and
+computer contracts without enabling live control. Browser requests require
+credential-free HTTPS on port 443, exact host allowlists, bounded time/output,
+and final-destination revalidation. Computer actions are a closed bounded set
+with no shell action. Disabled defaults fail closed and injected adapters are
+always labeled test harnesses. The dashboard now exposes active model, health,
+routing reason, fallback, latency, attempts, and reported-or-unknown usage.
+
+Fresh final evidence is 295/295 overall and 70/70 focused
+Nemotron/model/interaction/API/CLI tests. Dashboard JavaScript, whitespace,
+token-shaped secret, symlink, and oversized-file audits passed. A fresh offline
+wheel install passed; SHA-256 is
+`b3f7f94fc9e73afb90828e5239780b6287af17b8469ade1e06392620e3fe817c`.
+CI #69 (`33629696189`) passed Python 3.12, Python 3.13, worker-image,
+automation-service, and controlled-execution-software on the exact commit.
+
+Live Nemotron remains **NOT VERIFIED**, live browser/computer/voice remains
+unavailable, Level 3 remains **BLOCKED**, and deployment remains **FROZEN**.
+
 ## Promotion-bound controlled build
 
 - Added `SPARKLE-AI-SYSTEM-CONTROLLED-BUILD/1` as the first deterministic

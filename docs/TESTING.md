@@ -23,6 +23,14 @@ The API-security cases also cover deterministic fixed-window reset/rejection,
 bounded client state, rate limiting before authorization, quota response
 headers, query stripping, and absence of credentials, origins, headers, and
 client identities from audit records.
+
+NVIDIA/model-runtime coverage validates exact Nemotron identity, Bearer-secret
+resolution, request/response/SSE/tool/usage normalization, safe retry/errors,
+provider switching, evidence-based health, capability and latency policy,
+explicit fallback, content-free usage evidence, and unknown usage. Interaction
+coverage validates exact HTTPS allowlists, malformed ports, redirect escape,
+output bounds, typed GUI actions, fail-closed defaults, and test-harness labels.
+Neither suite claims a live NVIDIA request, browser execution, or GUI control.
 Supervised-automation coverage adds legacy-schema migration, expiring claims,
 explicit recovery records, old-token fencing, real deterministic orchestrator
 execution and traces, singleton lock refusal, mode-0600/no-follow lock policy,
@@ -522,3 +530,18 @@ oversized-file audits passed. Commit
 `ca6c483e1a6fc0b03b1a7b75f63dfd8f99589f6b`, tree
 `20e75254d987cab7fa7b92c76c65bb2380bd43a0`, passed all five CI #65
 (`33606707170`) jobs. No live MiniMax request was made.
+
+The Nemotron continuation adds deterministic NVIDIA NIM request/response,
+authentication refusal, tool-call, usage, retry, safe-error, and SSE tests. It
+also covers configuration-versus-runtime health, capability/modality/tool/
+stream filtering, latency and timeout policy, explicit fallback, retries,
+missing-usage handling, content-free persistence, test-harness separation,
+trace routing metadata, API, CLI, and status.
+
+Fresh `make check` passed 290/290. Focused provider, registry, runtime,
+orchestrator, API, CLI, and end-to-end coverage passed 61/61. Commit
+`c7c1512d8b08b72df8330a769b8a2033037638e2` passed CI #67
+(`33625302057`); commit
+`5c7d5a06471663462cabbab4edf757adf5e4f1ad` passed CI #68
+(`33626993684`). Both exact runs passed all five jobs. No live NVIDIA request
+was made, and no Level 3 or deployment claim changed.
