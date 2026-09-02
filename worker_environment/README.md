@@ -49,10 +49,20 @@ Configure loopback binding in `/etc/sparkle/worker.conf` and place a TLS reverse
 proxy in front, or configure direct certificate/key files. Run:
 
 ```bash
+python3 -m build --wheel
+sudo worker_environment/install-systemd-worker.sh "$PWD/dist/<wheel-name>.whl"
+sudo install -o root -g root -m 0600 \
+  worker_environment/worker.conf.example /etc/sparkle/worker.conf
 sudo systemctl daemon-reload
-sudo systemctl enable --now sparkle-worker
 sudo -u sparkle-worker /opt/sparkle/.venv/bin/sparkle-worker --check
+sudo systemctl enable --now sparkle-worker
 ```
+
+The installer accepts only an absolute regular non-symlink wheel, installs
+without dependencies, creates the dedicated account and directories, installs
+the hardened unit and a non-secret configuration example, and deliberately
+does not create a signing key or start the service. Inject the key separately
+before the preflight and service start.
 
 The systemd unit deliberately does not restrict namespace syscalls because the
 nested sandbox requires them. It compensates with an unprivileged account,
@@ -66,6 +76,36 @@ for each job and fails closed when that operation is unavailable.
 loopback for protocol tests. Its status and every response explicitly report
 filesystem/network isolation as false. Never expose it to untrusted source or
 use it as a production worker.
+
+Run the credential-free host diagnostic first:
+
+```bash
+make worker-diagnose
+```
+
+It reports each user, mount, and network namespace probe with its command,
+exit code, and bounded output; tests `no_new_privs`; and runs the real
+Bubblewrap preflight. `AVAILABLE`, `UNAVAILABLE`, and `NOT_VERIFIED` are
+distinct. The diagnostic always leaves `level_3_verified` false because host
+capability detection is not the full Level 3 acceptance workflow.
+
+For a separate local TLS/HMAC process worker, create development-only material
+in the ignored secrets directory:
+
+```bash
+worker_environment/bootstrap-local-worker.sh
+set -a
+. worker_environment/secrets/local-development/worker.env
+set +a
+sparkle-worker
+```
+
+The bootstrap refuses overwrite, generates a mode-0600 HMAC key file and a
+seven-day self-signed `localhost` certificate, and externalizes every path in
+`worker.env`. Trust `server.crt` explicitly in the local client. Never reuse
+these credentials or the process executor outside local development. The test
+suite proves valid certificate/hostname verification and rejection of an
+untrusted certificate and wrong hostname.
 
 ## Level 3 acceptance procedure
 

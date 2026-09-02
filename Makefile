@@ -1,4 +1,4 @@
-.PHONY: install test check run smoke worker-check worker-dev
+.PHONY: install test check run smoke worker-check worker-diagnose worker-dev
 
 install:
 	python3 -m pip install -e .
@@ -18,6 +18,9 @@ smoke:
 
 worker-check:
 	PYTHONPATH=src python3 -m sparkle.worker_service --check
+
+worker-diagnose:
+	PYTHONPATH=src python3 -m sparkle.worker_service --diagnose
 
 worker-dev:
 	PYTHONPATH=src SPARKLE_WORKER_EXECUTOR=process SPARKLE_WORKER_ALLOW_UNSAFE_PROCESS_EXECUTOR=true python3 -m sparkle.worker_service

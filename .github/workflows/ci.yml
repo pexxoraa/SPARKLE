@@ -45,6 +45,9 @@ jobs:
             tests.test_external_worker \
             tests.test_worker_service \
             tests.test_orchestrator_api
+          PYTHONPATH=src python -m sparkle.worker_service --diagnose
+          sh -n worker_environment/bootstrap-local-worker.sh
+          sh -n worker_environment/install-systemd-worker.sh
           node --check src/sparkle/dashboard/app.js
 
   automation-service:

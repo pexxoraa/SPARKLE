@@ -4,6 +4,9 @@ import base64
 import hashlib
 import json
 import os
+import shutil
+import socket
+import ssl
 import subprocess
 import sys
 import tempfile
@@ -35,6 +38,7 @@ from sparkle.worker_service import (
     build_server,
     resolve_worker_signing_key,
 )
+from sparkle.worker_diagnostics import AVAILABLE, WorkerIsolationDiagnostic
 
 
 SIGNING_KEY = b"unit-test-worker-signing-key-32-bytes-minimum"
@@ -185,6 +189,129 @@ class WorkerServiceTests(unittest.TestCase):
             WorkerConfig(executor_mode="process").validate()
         with self.assertRaisesRegex(ValueError, "SPARKLE_WORKER_PORT"):
             WorkerConfig.load({"SPARKLE_WORKER_PORT": "not-an-integer"})
+
+    def test_host_diagnostic_is_credential_free_and_never_claims_level3(self):
+        class ReadyBubblewrap:
+            def status(self):
+                return {
+                    "available": True,
+                    "filesystem_isolation": True,
+                    "network_isolation": True,
+                    "failure_type": None,
+                    "canaries": {
+                        name: True for name in FixedUnittestExecutor.CANARY_NAMES
+                    },
+                }
+
+        def runner(command, **_kwargs):
+            return subprocess.CompletedProcess(command, 0, "available\n", "")
+
+        diagnostic = WorkerIsolationDiagnostic(
+            runner=runner,
+            executable_finder=lambda name: f"/usr/bin/{name}",
+            bubblewrap_factory=ReadyBubblewrap,
+        ).run()
+        self.assertEqual(diagnostic["schema"], "SPARKLE-WORKER-HOST-DIAGNOSTIC/1")
+        self.assertTrue(diagnostic["isolation_preflight_passed"])
+        self.assertEqual(diagnostic["checks"]["user_namespace"]["state"], AVAILABLE)
+        self.assertEqual(diagnostic["checks"]["mount_namespace"]["state"], AVAILABLE)
+        self.assertEqual(diagnostic["checks"]["network_namespace"]["state"], AVAILABLE)
+        self.assertEqual(diagnostic["checks"]["no_new_privileges"]["state"], AVAILABLE)
+        self.assertEqual(diagnostic["level_3_status"], "BLOCKED")
+        self.assertFalse(diagnostic["level_3_verified"])
+        self.assertFalse(diagnostic["deployment_started"])
+
+        project = Path(__file__).resolve().parents[1]
+        secret = "diagnostic-must-not-print-this-secret"
+        completed = subprocess.run(
+            [sys.executable, "-m", "sparkle.worker_service", "--diagnose"],
+            cwd=project,
+            env={
+                "PYTHONPATH": str(project / "src"),
+                "SPARKLE_WORKER_SIGNING_KEY": secret,
+            },
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+        self.assertEqual(completed.returncode, 0)
+        observed = json.loads(completed.stdout)
+        self.assertFalse(observed["level_3_verified"])
+        self.assertNotIn(secret, completed.stdout + completed.stderr)
+
+    @unittest.skipUnless(shutil.which("openssl"), "OpenSSL is required")
+    def test_development_tls_bootstrap_validates_certificate_and_hostname(self):
+        project = Path(__file__).resolve().parents[1]
+        script = project / "worker_environment/bootstrap-local-worker.sh"
+        destination = self.root / "local-worker"
+        completed = subprocess.run(
+            [str(script), str(destination)],
+            cwd=project,
+            env={"PATH": "/usr/bin:/bin"},
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertIn("NON-ISOLATED", completed.stdout)
+        self.assertIn("Level 3 remains BLOCKED", completed.stdout)
+        key_file = destination / "worker-signing-key"
+        certificate = destination / "tls/server.crt"
+        private_key = destination / "tls/server.key"
+        self.assertEqual(key_file.stat().st_mode & 0o777, 0o600)
+        self.assertEqual(private_key.stat().st_mode & 0o777, 0o600)
+        self.assertNotIn(key_file.read_bytes().hex(), completed.stdout)
+
+        values = {}
+        for line in (destination / "worker.env").read_text(encoding="utf-8").splitlines():
+            name, value = line.split("=", 1)
+            values[name] = value
+        config = WorkerConfig.load(values)
+        config = WorkerConfig(**{
+            name: getattr(config, name)
+            for name in WorkerConfig.__dataclass_fields__
+            if name != "port"
+        }, port=0)
+        service = ExternalWorkerService(config, executor=FakeExecutor())
+        server = build_server(service)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        port = server.server_address[1]
+        try:
+            trusted = ssl.create_default_context(cafile=str(certificate))
+            with urllib.request.urlopen(
+                f"https://localhost:{port}/health", context=trusted, timeout=5,
+            ) as response:
+                self.assertTrue(json.loads(response.read())["ok"])
+            with self.assertRaises(urllib.error.URLError):
+                urllib.request.urlopen(f"https://localhost:{port}/health", timeout=5)
+            raw_socket = socket.create_connection(("127.0.0.1", port), timeout=5)
+            try:
+                wrong_hostname = ssl.create_default_context(cafile=str(certificate))
+                with self.assertRaises(ssl.SSLCertVerificationError):
+                    wrong_hostname.wrap_socket(
+                        raw_socket, server_hostname="wrong.invalid",
+                    )
+            finally:
+                raw_socket.close()
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=5)
+
+        refused = subprocess.run(
+            [str(script), str(destination)],
+            cwd=project,
+            env={"PATH": "/usr/bin:/bin"},
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+        self.assertNotEqual(refused.returncode, 0)
+        self.assertIn("Refusing to overwrite", refused.stderr)
 
     def test_signing_key_file_requires_private_regular_file(self):
         key_file = self.root / "worker.key"
@@ -487,8 +614,17 @@ class WorkerServiceTests(unittest.TestCase):
         dockerfile = (project / "worker_environment/Dockerfile").read_text()
         compose = (project / "worker_environment/compose.yaml").read_text()
         unit = (project / "worker_environment/sparkle-worker.service").read_text()
+        installer = (
+            project / "worker_environment/install-systemd-worker.sh"
+        ).read_text()
+        local_bootstrap = (
+            project / "worker_environment/bootstrap-local-worker.sh"
+        ).read_text()
+        worker_config = (
+            project / "worker_environment/worker.conf.example"
+        ).read_text()
         pyproject = (project / "pyproject.toml").read_text()
-        combined = dockerfile + compose + unit
+        combined = dockerfile + compose + unit + installer + local_bootstrap + worker_config
         self.assertIn('sparkle-worker = "sparkle.worker_service:entrypoint"', pyproject)
         self.assertIn("USER 10001:10001", dockerfile)
         self.assertIn('ENTRYPOINT ["python3", "-m", "sparkle.worker_service"]', dockerfile)
@@ -500,7 +636,18 @@ class WorkerServiceTests(unittest.TestCase):
         self.assertNotIn("privileged:", compose)
         self.assertIn("NoNewPrivileges=yes", unit)
         self.assertIn("ProtectSystem=strict", unit)
+        self.assertIn("pip install --no-deps", installer)
+        self.assertIn("installed but not started", installer)
+        self.assertIn("SPARKLE_WORKER_EXECUTOR=bubblewrap", worker_config)
+        self.assertIn("SPARKLE_WORKER_EXECUTOR=process", local_bootstrap)
+        self.assertIn("Refusing to overwrite", local_bootstrap)
         self.assertNotIn(SIGNING_KEY.decode(), combined)
+        for script in (installer, local_bootstrap):
+            checked = subprocess.run(
+                ["sh", "-n"], input=script, capture_output=True, text=True,
+                timeout=5, check=False,
+            )
+            self.assertEqual(checked.returncode, 0, checked.stderr)
         ci = (project / ".github/workflows/ci.yml").read_text(encoding="utf-8")
         acceptance_workflow = (
             project / ".github/workflows/level3-worker-acceptance.yml"

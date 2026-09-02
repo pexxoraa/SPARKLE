@@ -818,11 +818,20 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--check", action="store_true", help="Validate configuration and isolation preflight",
     )
+    parser.add_argument(
+        "--diagnose", action="store_true",
+        help="Report local namespace and Bubblewrap capabilities without credentials",
+    )
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    if args.diagnose:
+        from sparkle.worker_diagnostics import WorkerIsolationDiagnostic
+
+        print(json.dumps(WorkerIsolationDiagnostic().run(), indent=2, sort_keys=True))
+        return 0
     config = WorkerConfig.load()
     service = ExternalWorkerService(config)
     if args.check:

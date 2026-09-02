@@ -139,6 +139,14 @@ external and host-local network access fails, host processes are inaccessible,
 and the artifact cannot be modified. A separate process executor exists for loopback
 protocol testing only and always reports filesystem/network isolation false.
 
+The same worker binary exposes a credential-free host diagnostic for local and
+future VM use. It probes user, mount, and network namespace creation,
+`no_new_privs`, and the real Bubblewrap profile without changing the execution
+protocol. Development TLS/HMAC material is externalized under a Git-ignored
+directory and the local process harness continues to report isolation false.
+Moving the worker to a dedicated VM changes configuration and host capability,
+not architecture.
+
 The HTTP boundary composes an independent bearer access policy, bounded rate
 limiter, secret-free audit store, and process-local browser-session manager.
 Dashboard sessions wrap the API boundary only; agents, models, memory, tools,

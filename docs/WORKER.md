@@ -55,6 +55,22 @@ requires `SPARKLE_WORKER_ALLOW_UNSAFE_PROCESS_EXECUTOR=true`; status and signed
 results always report filesystem/network isolation false. It must not receive
 hostile code.
 
+## Free/local development platform
+
+`sparkle-worker --diagnose` runs without worker credentials. It executes and
+records bounded user/mount/network namespace probes, a `no_new_privs` probe,
+and the actual Bubblewrap hostile-canary preflight. Results use `AVAILABLE`,
+`UNAVAILABLE`, or `NOT_VERIFIED`; the command never converts capability
+detection into Level 3 evidence.
+
+`worker_environment/bootstrap-local-worker.sh` creates an overwrite-protected,
+Git-ignored development bundle containing a file-injected HMAC key, a seven-day
+self-signed `localhost` TLS certificate, private key, state directory, and
+externalized worker configuration. This bundle starts the explicit process
+test harness and is always **NON-ISOLATED**. Automated tests connect using the
+trusted development certificate, reject the untrusted certificate and wrong
+hostname, and confirm private key modes. No credential value is logged.
+
 ## Deployment
 
 The supported reference assets are in `worker_environment/`:
@@ -63,6 +79,9 @@ The supported reference assets are in `worker_environment/`:
 - `compose.yaml` adds a read-only worker, private state/tmp, file-mounted key,
   internal-only port, and a Caddy TLS gateway;
 - `sparkle-worker.service` supplies a hardened unprivileged systemd profile;
+- `install-systemd-worker.sh` installs an offline wheel and service without
+  creating credentials or starting the worker;
+- `worker.conf.example` externalizes worker identity, paths, limits, and policy;
 - `README.md` contains exact provisioning and readiness commands.
 
 The signing key must contain 32–4096 bytes. Generate and deliver it through the

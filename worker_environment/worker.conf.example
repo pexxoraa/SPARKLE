@@ -1,0 +1,18 @@
+# Non-secret worker configuration. Copy to /etc/sparkle/worker.conf.
+SPARKLE_WORKER_HOST=127.0.0.1
+SPARKLE_WORKER_PORT=8770
+SPARKLE_WORKER_ID=sparkle-level3-worker
+SPARKLE_WORKER_STATE_DIR=/var/lib/sparkle-worker
+SPARKLE_WORKER_EXECUTOR=bubblewrap
+SPARKLE_WORKER_BWRAP=/usr/bin/bwrap
+SPARKLE_WORKER_PYTHON=/usr/bin/python3
+SPARKLE_WORKER_MAX_BODY_BYTES=8000000
+SPARKLE_WORKER_MAX_CONCURRENCY=1
+SPARKLE_WORKER_REPLAY_TTL_SECONDS=86400
+SPARKLE_WORKER_MAX_REPLAY_ENTRIES=10000
+
+# For a local reverse proxy, retain loopback binding above. For direct TLS,
+# configure both certificate paths and bind an explicitly controlled address.
+# SPARKLE_WORKER_TLS_CERT_FILE=/etc/sparkle/tls/server.crt
+# SPARKLE_WORKER_TLS_KEY_FILE=/etc/sparkle/tls/server.key
+# SPARKLE_WORKER_TRUSTED_TLS_TERMINATION=false
