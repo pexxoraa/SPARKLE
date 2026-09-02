@@ -87,7 +87,7 @@ only SPARKLE's narrow runtime/configuration allowlist. SPARKLE refuses execution
 runner does not provide filesystem or network isolation.
 
 The separate external worker is also disabled by default. Enabling it requires
-an HTTPS URL and a signing key of at least 32 bytes supplied through one of the
+an HTTPS URL, a pinned `external_worker_id`, and a signing key of at least 32 bytes supplied through one of the
 configured `external_worker_secret_refs`. The URL may not contain credentials,
 a query, or a fragment. Status reports only configuration booleans—not the URL,
 secret-reference names, or secret value.
@@ -100,6 +100,13 @@ the configured signing-key value are rejected before transfer. Each invocation
 still requires explicit operator approval. Deploying and validating a
 compatible hardened worker is separate work; setting these values alone does
 not make filesystem or network isolation verified.
+
+Application-side worker settings are `SPARKLE_EXTERNAL_WORKER_URL` for the
+credential-free HTTPS `/v1/jobs` endpoint, `SPARKLE_EXTERNAL_WORKER_ID` for the
+exact expected public worker identity, and the configured secret-reference
+name (by default `SPARKLE_WORKER_SIGNING_KEY`) for HMAC injection. A controlled
+execution is not configured unless all three are present. The key value must be
+injected by the process secret manager and never placed in JSON configuration.
 
 The separate `sparkle-worker` process uses its own environment:
 

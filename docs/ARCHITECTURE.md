@@ -130,11 +130,13 @@ worker service.
 Interfaces call this object; they do not own intelligence.
 
 The production executor builds one immutable Bubblewrap command with a
-read-only runtime, a single writable ephemeral workspace, cleared environment,
+read-only runtime, a read-only artifact workspace, sandbox-private temporary
+storage, a cleared environment,
 all namespaces unshared, no network namespace interface, and the trusted
 unittest runner. Readiness is false unless an executable preflight confirms the
-host filesystem is hidden, the environment is allowlisted, and outbound
-network connection fails. A separate process executor exists for loopback
+host read/write and cross-workspace access fail, the environment is allowlisted,
+external and host-local network access fails, host processes are inaccessible,
+and the artifact cannot be modified. A separate process executor exists for loopback
 protocol testing only and always reports filesystem/network isolation false.
 
 The HTTP boundary composes an independent bearer access policy, bounded rate

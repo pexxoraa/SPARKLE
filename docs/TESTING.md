@@ -456,3 +456,27 @@ The capability is published at commit
 `49b743e115c15152ebd5403168bcb73c6e4281b4`. SPARKLE CI run #58
 (`33583190471`) passed Python 3.12, Python 3.13, worker-image, and
 automation-service on that exact commit.
+
+The v0.30 software-readiness continuation added exact execution-policy
+validation, legal lifecycle-transition enforcement, configured worker-identity
+pinning, timestamp ordering, richer content-free traces, single-execution
+API/CLI inspection, explicit executed/isolated/verified/deployed dashboard
+states, a read-only Bubblewrap artifact mount, seven named hostile canaries, an
+explicit non-isolated test harness, a five-job software CI matrix, and a manual
+infrastructure-dependent Level 3 workflow. The fresh suite passed 271/271;
+execution 9/9; worker 16/16; external-worker/runtime 14/14; promotion 12/12;
+build 11/11; API/CLI 38/38. Dashboard JavaScript and whitespace passed. The
+fresh offline wheel installed and passed status, CLI failure handling, worker
+help, and fail-closed acceptance-probe checks. Wheel SHA-256:
+`d857f6e379400bfe9c1d1d404e4ecac099f37e17cbf18999310345a970f5b8c6`.
+Secret, generated-artifact, symlink/path, and oversized-file audits passed.
+
+Hardening commit `07084b8bd2f0709d2fbd4313489b650a3e5d05ef`, tree
+`59d75d03e92996887e7b0014e313a380ae000080`, passed CI #60
+(`33592882854`). Software-readiness commit
+`f9f2860bce3714be6827bc6d21dadf9c0f09a14b`, tree
+`7e58d44b92bf55695ce97660b5ad418c1986d4fe`, passed CI #61
+(`33594016686`) with Python 3.12, Python 3.13, worker-image,
+automation-service, and controlled-execution-software. The real local
+Bubblewrap result remains `IsolationPreflightFailed`; all seven Level 3 canary
+fields remain false and no isolation verification is claimed.

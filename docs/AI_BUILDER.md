@@ -262,6 +262,12 @@ successful fixed-test result and all declared criteria passed. It does not mean
 production verified or deployed. `isolation_verified` remains false unless
 separate executable hostile-canary evidence proves the deployed worker.
 
+Controlled execution now binds `SPARKLE-CONTROLLED-EXECUTION-POLICY/1`, pins
+the configured worker ID, enforces its lifecycle graph, exposes content-free
+single-execution status/result inspection, and mounts the verified artifact
+read-only in the Bubblewrap profile. None of those software checks converts the
+local process harness into Level 3 evidence.
+
 ## Controlled source promotion
 
 Promotion is a separate operator action after runtime evaluation:

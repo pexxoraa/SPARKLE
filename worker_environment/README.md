@@ -30,8 +30,9 @@ Do not use `--privileged` or publish worker port 8770.
 3. Continue only if `ready` and both isolation fields are `true`. A check exit
    code of 2 is a safe refusal: the host/container runtime did not permit the
    required namespaces.
-4. Configure SPARKLE with the HTTPS `/v1/jobs` URL and the same signing key,
-   then run one explicitly approved external workspace test.
+4. Configure SPARKLE with the HTTPS `/v1/jobs` URL, exact public worker ID, and
+   the same signing key, then run one explicitly approved external workspace
+   test. The client rejects a signed result from any other worker ID.
 
 The Compose policy runs as UID 10001, drops all Linux capabilities, enables
 `no-new-privileges`, uses a read-only image, gives only `/tmp` and the replay
@@ -65,3 +66,27 @@ for each job and fails closed when that operation is unavailable.
 loopback for protocol tests. Its status and every response explicitly report
 filesystem/network isolation as false. Never expose it to untrusted source or
 use it as a production worker.
+
+## Level 3 acceptance procedure
+
+1. Record the VM distribution/kernel and successful user, mount, network, and
+   PID namespace probes. Record commands, exit codes, and output without keys.
+2. Run `sparkle-worker --check`. Require exit 0, the
+   `SPARKLE-WORKER-BUBBLEWRAP/1` profile, and all seven named canaries `true`.
+3. In the protected GitHub environment `sparkle-level3-worker`, configure
+   `SPARKLE_EXTERNAL_WORKER_URL` and `SPARKLE_EXTERNAL_WORKER_ID` as variables
+   and `SPARKLE_WORKER_SIGNING_KEY` as a secret.
+4. Manually run `SPARKLE Level 3 Worker Acceptance`. Require TLS validation,
+   response authentication, the pinned worker identity, all-true signed canary
+   evidence, and a result digest. This probe deliberately does not complete
+   Level 3 by itself.
+5. From SPARKLE, authorize and execute one real immutable controlled-build
+   artifact. Require equal authorized/executed artifact digests, verified
+   lifecycle/result, cleanup, and `isolation_verified: true`.
+6. Preserve the worker check, workflow run/job, controlled execution ID, worker
+   ID, artifact digest, result digest, timestamps, and negative-test outcomes.
+   Preserve no source, output containing secrets, HMAC key, TLS private key, or
+   SSH private key.
+
+Any false/absent canary, TLS error, wrong worker identity, invalid HMAC,
+artifact mismatch, ambiguous evidence, or cleanup failure blocks Level 3.

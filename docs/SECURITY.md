@@ -54,7 +54,8 @@
   into `promotion_environment/staging`. It records no source or secret and
   cannot build, package, publish, deploy, or modify production source.
 - Controlled execution requires a separate expiring authorization after build.
-  It binds every authoritative lineage identity plus timeout/output policy,
+  It binds every authoritative lineage identity plus the exact provider-neutral
+  execution policy, timeout, and output bound,
   rejects invalidated or superseded artifacts, validates the immutable archive
   and every extracted entry, and rechecks the archive immediately before the
   worker handoff. Requests and responses are HMAC-authenticated and freshness
@@ -63,8 +64,9 @@
   and no SPARKLE credentials. Network policy is disabled by default.
 - Process-mode execution is Level 2 functional evidence, not hostile-code
   isolation. Level 3 requires the real Bubblewrap preflight and harmless
-  filesystem-write, host-read, environment-secret, network, and process-root
-  canaries to pass on the deployed worker. They fail closed on this host because
+  host filesystem read/write, workspace escape, environment-secret, prohibited
+  network, host-process, and artifact-modification canaries to pass on the
+  deployed worker. The artifact is mounted read-only. They fail closed on this host because
   namespace creation is denied.
 - Application scaffolding requires explicit approval, confines every path to a
   dedicated application root, rejects traversal and symlinks, enforces file and
@@ -106,8 +108,10 @@
   origin. Transport failures are wrapped without endpoint or exception detail.
   Output is bounded and credential-pattern redacted before persistence.
 - Worker-reported filesystem, network, ephemeral, and resource-limit fields are
-  untrusted declarations. SPARKLE records them as `sandbox_claims` and always
-  reports `isolation_verified: false` in this release. The repository contains
+  insufficient declarations. SPARKLE pins the expected worker identity and sets
+  `isolation_verified` only when the signed response matches the fixed profile,
+  every named canary is true, and filesystem/network claims agree. The current
+  repository still reports false because no named validated worker exists. It contains
   hardened deployment profiles but no named validated remote worker and
   performs no automatic submission retries.
 - Permanent memory, knowledge-source, and automation deletion requires an

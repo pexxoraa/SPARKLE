@@ -21,8 +21,9 @@ status. It shares no memory, knowledge, trace, provider, or application store.
 | Job-ID reuse | SQLite job ID + request digest claim; exact replay only | Replay/conflict tests pass |
 | Traversal/symlink/secret source | Strict POSIX paths, sensitive-name/suffix rejection, decoded digest/key scan, exclusive materialization | Adversarial tests pass |
 | Secret disclosure | Separate resolver, no-follow private file open, cleared child env, exact-key and pattern redaction, safe logs/status | Permission/symlink/redaction tests pass |
-| Host filesystem access | Bubblewrap read-only runtime plus one writable ephemeral workspace | Command/preflight tests pass; live host preflight blocked |
-| Network access | All namespaces unshared; preflight attempts an outbound connection and requires failure | Command/preflight tests pass; live host preflight blocked |
+| Host filesystem access | Bubblewrap read-only runtime and read-only artifact mount; only sandbox-private temporary state is writable | Command/preflight tests pass; live host preflight blocked |
+| Network access | All namespaces unshared; preflight attempts external and host-local connections and requires both to fail | Command/preflight tests pass; live host preflight blocked |
+| Wrong worker | Application configuration pins the expected public worker ID and rejects a valid signed result from another identity | Identity-mismatch tests pass |
 | Resource exhaustion | Body/file/output bounds, semaphore, wall timeout, process-group kill, POSIX CPU/memory/file/FD/process/core limits | Bound/capacity/timeout tests pass |
 | Container misconfiguration | Unprivileged UID, read-only root, no capabilities, no-new-privileges, internal worker port, TLS gateway | Deployment-policy regression and repeated CI image build/entrypoint jobs pass |
 
@@ -43,8 +44,9 @@ workspace input, bounded output, and network disabled.
 ## Executor modes
 
 `bubblewrap` is the production default. Its readiness preflight creates a real
-sandbox and checks that a host canary is absent, only the fixed environment
-exists, and outbound network connection cannot succeed. A missing dependency,
+sandbox and emits exact results for host read/write, other-workspace access,
+secret environment, external/host-local network, host process, and read-only
+artifact modification canaries. A missing dependency, ambiguous result,
 timeout, denial, or nonzero result makes readiness false and jobs return 503
 without running source.
 
@@ -67,6 +69,16 @@ The signing key must contain 32–4096 bytes. Generate and deliver it through th
 deployment secret manager; do not put it in source, Compose environment,
 command arguments, logs, memory, knowledge, traces, issues, or chat. Both the
 client and worker need the same value.
+
+## Infrastructure acceptance
+
+The manual `SPARKLE Level 3 Worker Acceptance` workflow reads the endpoint and
+pinned worker ID from protected environment variables and the HMAC key from an
+environment secret. `worker_environment/level3_acceptance.py` submits a harmless
+fixed unittest and requires authenticated, profile-matched, all-true canary
+evidence. It intentionally reports `level_3_complete: false`: the final gate
+still requires a real approved controlled-build artifact through the controller.
+The workflow is manual-only and is not evidence until a named worker run passes.
 
 ## Verified local result
 

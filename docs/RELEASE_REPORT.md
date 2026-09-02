@@ -1,6 +1,6 @@
 # 0.30.0-alpha.1 verification report
 
-Date: 2026-09-01 UTC
+Date: 2026-09-02 UTC
 
 ## Controlled immutable-artifact execution
 
@@ -50,6 +50,30 @@ The capability is published at commit
 of v0.29 HEAD `6ca5be596b78eaaa3dec251953577b9547c59e73`.
 GitHub CI run #58 (`33583190471`) passed Python 3.12, Python 3.13,
 worker-image, and automation-service on that exact capability commit.
+
+## Software-readiness continuation
+
+Without changing the version or claiming Level 3, two later non-force commits
+completed the infrastructure-independent boundary. Commit
+`07084b8bd2f0709d2fbd4313489b650a3e5d05ef`, tree
+`59d75d03e92996887e7b0014e313a380ae000080`, binds the exact execution policy,
+enforces legal lifecycle transitions, pins the expected worker identity, and
+expands content-free traces. CI #60 (`33592882854`) passed all four then-current
+jobs. Commit `f9f2860bce3714be6827bc6d21dadf9c0f09a14b`, tree
+`7e58d44b92bf55695ce97660b5ad418c1986d4fe`, makes the artifact mount read-only,
+signs seven named canary outcomes, validates timestamps and worker identity,
+adds status/result API and CLI inspection, separates dashboard states, adds an
+explicit non-isolated test harness, and prepares a manual external acceptance
+workflow. CI #61 (`33594016686`) passed five jobs including the dedicated
+controlled-execution software job.
+
+Fresh evidence is 271/271 overall, 9/9 controlled execution, 16/16 worker,
+14/14 external-worker/runtime, 12/12 promotion, 11/11 build, and 38/38 API/CLI.
+Dashboard JavaScript, whitespace, offline packaging/install, secret,
+generated-artifact, symlink/path, and oversized-file audits passed. The wheel
+SHA-256 is `d857f6e379400bfe9c1d1d404e4ecac099f37e17cbf18999310345a970f5b8c6`.
+The real local Bubblewrap preflight still fails closed and all seven canary
+fields are false. Level 3 remains BLOCKED; deployment remains frozen.
 
 ## Promotion-bound controlled build
 
