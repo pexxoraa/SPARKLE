@@ -502,3 +502,23 @@ Commit `1e988eb96e66c59890ecd251c80b59a00532f3d2`, tree
 `7849e2364f4b01ceeca3f27fcf04f46d21bca1a8`, passed CI #63
 (`33605055320`) across all five jobs. This is software-platform evidence, not
 Level 3 isolation evidence.
+
+The provider-neutral model-registry continuation added external adapter
+factories, exact factory-result identity checks, strict bounded records and
+routing, recursive secret-value-field rejection, transactional failed
+mutations, deterministic fallback, credential-free local-provider status, and
+production modality-declaration enforcement. Explicit adapter injection remains
+a test-only future-provider harness. The first focused run correctly exposed
+four multimodal compatibility failures when that harness was treated as a
+production record; no failing code was published. After preserving the explicit
+test-only boundary, the focused model/config/multimodal suite passed 37/37.
+
+Fresh `make check` passed 277/277 in 29.609 seconds. A corrected fail-fast fresh
+no-index/no-dependency wheel gate passed installed version, status, default
+MiniMax registry loading, adapter disclosure, and worker help. Its SHA-256 was
+`c8f5bf81f985904a7103e441ae3b42df65d1a219e26d407eacc5b3b9d09c9f37`.
+Dashboard JavaScript, whitespace, secret, generated-artifact, symlink/path, and
+oversized-file audits passed. Commit
+`ca6c483e1a6fc0b03b1a7b75f63dfd8f99589f6b`, tree
+`20e75254d987cab7fa7b92c76c65bb2380bd43a0`, passed all five CI #65
+(`33606707170`) jobs. No live MiniMax request was made.

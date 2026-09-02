@@ -100,6 +100,32 @@ and seven false canaries. Level 3 therefore remains **BLOCKED**. No cloud
 infrastructure is required for continued software development and deployment
 remains frozen.
 
+## Provider-neutral model-registry hardening
+
+Commit `ca6c483e1a6fc0b03b1a7b75f63dfd8f99589f6b`, tree
+`20e75254d987cab7fa7b92c76c65bb2380bd43a0`, removes the core registry's
+closed adapter-factory assumption. Integrators can supply provider factories
+without changing orchestration. Factory results are bound to configured
+provider/model identity and declared modalities; credential-free local
+providers are represented correctly.
+
+Registry loading now rejects invalid or duplicate identities, roles,
+modalities, secret references, routing targets, capability-role mismatches,
+non-boolean state, and recursively named secret-value fields. Failed disable
+and remove operations roll back instead of leaving invalid in-memory state.
+Fallback selection is deterministic. Explicit adapter injection remains a
+test-only override for future-provider simulations and is never configuration
+loadable.
+
+Fresh evidence is 277/277 overall and 37/37 focused
+model/config/MiniMax/multimodal tests. A corrected fail-fast offline wheel gate
+passed; its SHA-256 is
+`c8f5bf81f985904a7103e441ae3b42df65d1a219e26d407eacc5b3b9d09c9f37`.
+Security, artifact, symlink/path, size, whitespace, and dashboard checks passed.
+CI #65 (`33606707170`) passed all five jobs on the exact capability commit.
+MiniMax was exercised only through deterministic HTTP doubles; no live-provider
+verification is claimed. Level 3 remains blocked and deployment remains frozen.
+
 ## Promotion-bound controlled build
 
 - Added `SPARKLE-AI-SYSTEM-CONTROLLED-BUILD/1` as the first deterministic
