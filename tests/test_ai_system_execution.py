@@ -21,38 +21,11 @@ from sparkle.cli import entrypoint, main
 from sparkle.worker_executor import FixedUnittestExecutor
 from sparkle.worker_service import ExternalWorkerService, WorkerConfig
 from tests import test_ai_system_build as build_tests
+from tests.controlled_execution_harness import (
+    AuthenticatedServiceTestHarness,
+    DeterministicWorkerTestHarness,
+)
 from tests.test_worker_service import SIGNING_KEY, ServiceResponse
-
-
-class DirectServiceOpener:
-    def __init__(self, service: ExternalWorkerService):
-        self.service = service
-        self.calls = 0
-
-    def __call__(self, request, timeout):
-        self.calls += 1
-        return ServiceResponse(self.service.handle_job(
-            dict(request.header_items()), request.data,
-        ))
-
-
-class StubWorker:
-    def __init__(self, changes=None):
-        self.changes = changes or {}
-        self.calls = 0
-
-    def run_controlled_execution(self, _name, _workspace, *, execution_context, **_limits):
-        self.calls += 1
-        value = {
-            "external_test_run_id": 1, "job_id": "SPK-WRK-" + "A" * 32,
-            "worker_id": "stub-worker", "status": "passed", "returncode": 0,
-            "timed_out": False, "output_limited": False, "output": "ok",
-            "output_sha256": "1" * 64, "result_digest": "2" * 64,
-            "response_verified": True, "isolation_verified": False,
-            "execution_context": execution_context,
-        }
-        value.update(self.changes)
-        return value
 
 
 class ControlledExecutionTests(unittest.TestCase):
@@ -77,7 +50,7 @@ class ControlledExecutionTests(unittest.TestCase):
             executor=FixedUnittestExecutor(allow_unsafe_process=True),
         )
         self.worker_service = worker_service
-        self.opener = DirectServiceOpener(worker_service)
+        self.opener = AuthenticatedServiceTestHarness(worker_service)
         self.client = ExternalWorkerClient(
             enabled=True, endpoint="https://worker.example/v1/jobs",
             expected_worker_id="level2-local-worker",
@@ -130,6 +103,21 @@ class ControlledExecutionTests(unittest.TestCase):
         self.assertFalse(result["production_modified"])
         self.assertEqual(self.opener.calls, 1)
         self.assertFalse((Path(self.build_case.temp.name) / "execution_environment" / "requests" / result["execution_id"]).exists())
+        inspected = self.service.inspect(result["execution_id"])
+        evidence = self.service.result(result["execution_id"])
+        self.assertEqual(inspected["status"], "verified")
+        self.assertEqual(evidence["result_digest"], result["result_digest"])
+        self.assertNotIn("output", evidence)
+        trace = next(
+            item for item in self.build_case.traces.recent(limit=100)
+            if item["trace_id"] == result["trace_id"]
+        )
+        metadata = trace["execution_metadata"]
+        self.assertEqual(metadata["execution_approval_id"], result["authorization_id"])
+        self.assertEqual(metadata["worker_id"], "level2-local-worker")
+        self.assertEqual(metadata["result_digest"], result["result_digest"])
+        self.assertEqual(metadata["lifecycle_states"][-1], "verified")
+        self.assertNotIn(SIGNING_KEY.decode(), json.dumps(metadata))
 
     def test_identity_authorization_staleness_and_replay_fail_closed(self):
         wrong = self.service.request(self.contract(
@@ -172,19 +160,21 @@ class ControlledExecutionTests(unittest.TestCase):
 
     def test_result_identity_timeout_output_and_execution_failures_are_distinct(self):
         cases = [
-            ({"execution_context": {}}, "result_integrity_failure"),
-            ({"timed_out": True, "status": "failed", "returncode": -9}, "timeout"),
-            ({"output_limited": True, "status": "failed"}, "output_limit_failure"),
-            ({"status": "failed", "returncode": 1}, "execution_failure"),
+            ("identity_mismatch", "result_integrity_failure"),
+            ("timeout", "timeout"),
+            ("output_limit", "output_limit_failure"),
+            ("execution_failure", "execution_failure"),
+            ("result_tamper", "protocol_failure"),
         ]
-        for index, (changes, expected) in enumerate(cases):
+        for index, (scenario, expected) in enumerate(cases):
             with self.subTest(expected=expected):
                 store = ControlledExecutionStore(Path(self.build_case.temp.name) / f"exec-{index}.sqlite3")
                 service = ControlledExecutionService(
                     self.build_case.store, self.build_case.workspace,
                     self.build_case.promotions, self.build_case.candidates,
                     self.build_case.plans, self.build_case.evaluations,
-                    self.build_case.traces, store, StubWorker(changes),
+                    self.build_case.traces, store,
+                    DeterministicWorkerTestHarness(scenario),
                 )
                 authorization = service.approve(
                     self.build["build_id"], actor="execution.operator",
@@ -257,6 +247,7 @@ class ControlledExecutionTests(unittest.TestCase):
         }))
 
     def test_cli_lists_execution_as_separate_from_deployment(self):
+        result = self.service.request(self.contract(), approved=True)
         output, error = io.StringIO(), io.StringIO()
         stub = type("ExecutionSystemStub", (), {
             "ai_system_controlled_executor": self.service,
@@ -267,6 +258,12 @@ class ControlledExecutionTests(unittest.TestCase):
             contextlib.redirect_stdout(output), contextlib.redirect_stderr(error),
         ):
             self.assertEqual(main(["ai-system-controlled-executions"]), 0)
+            self.assertEqual(main([
+                "ai-system-controlled-execution-status", result["execution_id"],
+            ]), 0)
+            self.assertEqual(main([
+                "ai-system-controlled-execution-result", result["execution_id"],
+            ]), 0)
             self.assertEqual(entrypoint([
                 "ai-system-execution-approve", self.build["build_id"],
                 "execution.operator",
@@ -274,6 +271,8 @@ class ControlledExecutionTests(unittest.TestCase):
         evidence = output.getvalue()
         self.assertIn(self.service.PROTOCOL, evidence)
         self.assertIn('"execution_is_deployment": false', evidence)
+        self.assertIn('"result_digest"', evidence)
+        self.assertIn('"isolation_verified": false', evidence)
         self.assertIn("explicit approval", error.getvalue())
         self.assertNotIn("Traceback", error.getvalue())
 
@@ -343,6 +342,10 @@ class ControlledExecutionTests(unittest.TestCase):
             authorization_id=authorization["authorization_id"],
         ), approved=True)
         self.assertEqual(rejected["status"], "worker_authentication_failure")
+
+        harness = DeterministicWorkerTestHarness("timeout")
+        self.assertFalse(harness.evidence()["level_3_evidence"])
+        self.assertFalse(harness.evidence()["isolated_production_worker"])
 
 
 if __name__ == "__main__":

@@ -377,6 +377,23 @@ class SparkleHandler(BaseHTTPRequestHandler):
                 "controlled_execution_authorizations": self.system.controlled_executions.list_authorizations(limit=limit),
                 "execution_is_deployment": False,
             })
+        execution_prefix = "/api/ai-system-controlled-executions/"
+        if parsed.path.startswith(execution_prefix):
+            suffix = parsed.path.removeprefix(execution_prefix)
+            if suffix.endswith("/result"):
+                execution_id = suffix.removesuffix("/result")
+                return self._json({
+                    "ok": True,
+                    "controlled_execution_result": (
+                        self.system.ai_system_controlled_executor.result(execution_id)
+                    ),
+                })
+            return self._json({
+                "ok": True,
+                "controlled_execution": (
+                    self.system.ai_system_controlled_executor.inspect(suffix)
+                ),
+            })
         if parsed.path == "/api/memory":
             return self._json({"memories": self.system.memory.search(query.get("q", [""])[0], limit=int(query.get("limit", [20])[0]))})
         if parsed.path == "/api/knowledge/search":

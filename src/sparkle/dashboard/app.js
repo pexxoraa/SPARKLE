@@ -222,7 +222,7 @@ async function loadPanel(panel) {
       : empty('No promotions available for controlled-build assessment.');
     qs('#controlledExecutionList').innerHTML = executionData.controlled_executions.length
       ? executionData.controlled_executions.map((execution) => (
-        `<div class="list-item"><strong>${escapeHtml(execution.execution_id)} · ${escapeHtml(execution.status)}</strong><small>artifact ${escapeHtml(execution.artifact_id)} · build ${escapeHtml(execution.build_id)} · verified ${escapeHtml(execution.verification_complete)} · deployed ${escapeHtml(execution.deployed)} · production modified ${escapeHtml(execution.production_modified)}</small></div>`
+        `<div class="list-item"><strong>${escapeHtml(execution.execution_id)} · ${escapeHtml(execution.status)}</strong><small>artifact ${escapeHtml(execution.artifact_id)} · build ${escapeHtml(execution.build_id)} · executed ${escapeHtml(execution.executed)} · isolated ${escapeHtml(execution.isolation_verified)} · result verified ${escapeHtml(execution.verification_complete)} · failure ${escapeHtml(execution.error_type || 'none')} · deployed ${escapeHtml(execution.deployed)} · production modified ${escapeHtml(execution.production_modified)}</small></div>`
       )).join('')
       : empty('No controlled executions recorded. Build, execution, verification, and deployment remain separate.');
     qs('#artifactList').innerHTML = artifactData.artifacts.length

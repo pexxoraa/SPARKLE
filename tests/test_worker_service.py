@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 import subprocess
+import sys
 import tempfile
 import threading
 import time
@@ -337,7 +338,12 @@ class WorkerServiceTests(unittest.TestCase):
 
         def successful(command, **_kwargs):
             captured.append(command)
-            return subprocess.CompletedProcess(command, 0, "", "")
+            evidence = {
+                name: True for name in FixedUnittestExecutor.CANARY_NAMES
+            }
+            return subprocess.CompletedProcess(
+                command, 0, json.dumps(evidence), "",
+            )
 
         # This test exercises command construction, not host dependency discovery.
         # The injected runner never executes the inert existing binary.
@@ -352,7 +358,15 @@ class WorkerServiceTests(unittest.TestCase):
         self.assertIn("--clearenv", command)
         self.assertNotIn("--share-net", command)
         self.assertIn("--ro-bind", command)
+        self.assertTrue(any(
+            command[index] == "--ro-bind" and command[index + 2] == "/workspace"
+            for index in range(len(command) - 2)
+        ))
         self.assertNotIn(SIGNING_KEY.decode(), " ".join(command))
+        self.assertEqual(
+            set(status["canaries"]), set(FixedUnittestExecutor.CANARY_NAMES),
+        )
+        self.assertTrue(all(status["canaries"].values()))
 
     def test_real_bubblewrap_preflight_is_honest_and_fail_closed(self):
         executor = BubblewrapExecutor()
@@ -372,6 +386,19 @@ class WorkerServiceTests(unittest.TestCase):
             )
             with self.assertRaisesRegex(Exception, "isolation is unavailable"):
                 executor.execute(job, worker_id="blocked-worker")
+
+    def test_bubblewrap_preflight_rejects_ambiguous_canary_evidence(self):
+        def ambiguous(command, **_kwargs):
+            return subprocess.CompletedProcess(command, 0, "{}", "")
+
+        executor = BubblewrapExecutor(
+            bubblewrap_binary="/usr/bin/true", preflight_runner=ambiguous,
+        )
+        status = executor.status()
+        self.assertFalse(status["available"])
+        self.assertFalse(status["hostile_canaries_passed"])
+        self.assertEqual(status["failure_type"], "IsolationPreflightFailed")
+        self.assertFalse(any(status["canaries"].values()))
 
     def test_client_to_service_to_real_executor_end_to_end(self):
         applications = self.root / "applications"
@@ -474,6 +501,32 @@ class WorkerServiceTests(unittest.TestCase):
         self.assertIn("NoNewPrivileges=yes", unit)
         self.assertIn("ProtectSystem=strict", unit)
         self.assertNotIn(SIGNING_KEY.decode(), combined)
+        ci = (project / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+        acceptance_workflow = (
+            project / ".github/workflows/level3-worker-acceptance.yml"
+        ).read_text(encoding="utf-8")
+        acceptance_probe = (
+            project / "worker_environment/level3_acceptance.py"
+        ).read_text(encoding="utf-8")
+        self.assertIn("controlled-execution-software", ci)
+        self.assertIn("workflow_dispatch", acceptance_workflow)
+        self.assertNotIn("push:", acceptance_workflow)
+        self.assertIn("secrets.SPARKLE_WORKER_SIGNING_KEY", acceptance_workflow)
+        self.assertIn('"level_3_complete": False', acceptance_probe)
+        self.assertIn('"requires_approved_artifact_followup": True', acceptance_probe)
+        self.assertNotIn(SIGNING_KEY.decode(), acceptance_workflow + acceptance_probe)
+        blocked = subprocess.run(
+            [sys.executable, str(project / "worker_environment/level3_acceptance.py")],
+            cwd=project,
+            env={"PYTHONPATH": str(project / "src")},
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+        self.assertEqual(blocked.returncode, 1)
+        self.assertNotIn("Traceback", blocked.stderr + blocked.stdout)
+        self.assertFalse(json.loads(blocked.stdout)["isolation_verified"])
 
 
 if __name__ == "__main__":

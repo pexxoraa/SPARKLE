@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import re
 import shutil
@@ -59,6 +60,11 @@ class FixedUnittestExecutor:
     """Materializes a validated bundle and runs only SPARKLE's unittest child."""
 
     MODE = "process"
+    CANARY_NAMES = (
+        "host_filesystem_read", "host_filesystem_write", "workspace_escape",
+        "secret_environment", "prohibited_network", "host_process_access",
+        "artifact_modification",
+    )
 
     def __init__(
         self,
@@ -90,6 +96,8 @@ class FixedUnittestExecutor:
             "resource_limits": os.name == "posix",
             "unsafe_process_mode": True,
             "hostile_canaries_passed": False,
+            "isolation_profile": None,
+            "canaries": {name: False for name in self.CANARY_NAMES},
             "failure_type": None if available else "UnsafeProcessExecutorDisabled",
         }
 
@@ -187,6 +195,7 @@ class BubblewrapExecutor(FixedUnittestExecutor):
     """Runs the fixed child in a no-network, minimal-filesystem namespace."""
 
     MODE = "bubblewrap"
+    ISOLATION_PROFILE = "SPARKLE-WORKER-BUBBLEWRAP/1"
     _SAFE_BINARY = re.compile(r"^/[A-Za-z0-9_./+-]+$")
 
     def __init__(
@@ -209,6 +218,7 @@ class BubblewrapExecutor(FixedUnittestExecutor):
         self.preflight_runner = preflight_runner or subprocess.run
         self._preflight_result: bool | None = None
         self._failure_type: str | None = None
+        self._canary_results = {name: False for name in self.CANARY_NAMES}
 
     def _runtime_mounts(self) -> list[Path]:
         roots = [
@@ -232,7 +242,7 @@ class BubblewrapExecutor(FixedUnittestExecutor):
             "--dev", "/dev",
             "--tmpfs", "/tmp",
             "--dir", "/workspace",
-            "--bind", str(project), "/workspace",
+            "--ro-bind", str(project), "/workspace",
             "--dir", "/opt",
             "--dir", "/opt/sparkle",
             "--ro-bind", str(self.runner_script), "/opt/sparkle/sandbox_runner.py",
@@ -278,41 +288,70 @@ class BubblewrapExecutor(FixedUnittestExecutor):
             self._failure_type = "ExecutorDependencyUnavailable"
             return False
         probe = """
-import os, socket, sys
-canary, allowed = sys.argv[1], set(sys.argv[2].split(','))
-assert not os.path.exists(canary)
-assert not os.path.exists('/proc/1/root' + canary)
-assert set(os.environ) <= allowed
-assert 'SPARKLE_WORKER_SIGNING_KEY' not in os.environ
-for path in (canary, '/escape-canary'):
+import json, os, socket, sys
+host_canary, other_workspace, allowed_raw, host_pid = sys.argv[1:]
+allowed = set(allowed_raw.split(','))
+results = {}
+results['host_filesystem_read'] = not os.path.exists(host_canary) and not os.path.exists('/proc/1/root' + host_canary)
+blocked_writes = True
+for path in (host_canary, '/escape-canary'):
     try:
         with open(path, 'wb') as handle: handle.write(b'blocked')
     except OSError:
         pass
     else:
-        raise SystemExit(2)
-s = socket.socket(); s.settimeout(0.2)
+        blocked_writes = False
+results['host_filesystem_write'] = blocked_writes
+results['workspace_escape'] = not os.path.exists(other_workspace)
+results['secret_environment'] = set(os.environ) <= allowed and 'SPARKLE_WORKER_SIGNING_KEY' not in os.environ
+network_blocked = True
+for address in (('1.1.1.1', 53), ('127.0.0.1', 1)):
+    sock = socket.socket(); sock.settimeout(0.2)
+    try:
+        sock.connect(address)
+    except OSError:
+        pass
+    else:
+        network_blocked = False
+    finally:
+        sock.close()
+results['prohibited_network'] = network_blocked
 try:
-    s.connect(('1.1.1.1', 53))
+    os.kill(int(host_pid), 0)
 except OSError:
-    pass
+    results['host_process_access'] = True
 else:
-    raise SystemExit(3)
-finally:
-    s.close()
+    results['host_process_access'] = False
+try:
+    with open('/workspace/.sparkle-artifact-canary', 'wb') as handle: handle.write(b'modified')
+except OSError:
+    results['artifact_modification'] = True
+else:
+    results['artifact_modification'] = False
+print(json.dumps(results, sort_keys=True, separators=(',', ':')))
+raise SystemExit(0 if all(results.values()) else 4)
 """
         with tempfile.TemporaryDirectory(prefix="sparkle-preflight-") as directory:
             root = Path(directory)
             workspace = root / "workspace"
             workspace.mkdir(mode=0o700)
+            artifact_canary = workspace / ".sparkle-artifact-canary"
+            artifact_canary.write_bytes(b"immutable")
+            artifact_canary.chmod(0o400)
             canary = root / "host-canary"
             canary.write_text("must-not-be-visible", encoding="utf-8")
+            other_workspace = root / "other-workspace"
+            other_workspace.mkdir(mode=0o700)
+            (other_workspace / "foreign-canary").write_text(
+                "must-not-be-visible", encoding="utf-8",
+            )
             allowed = ",".join({
                 "PATH", "LANG", "LC_ALL", "PYTHONHASHSEED",
                 "PYTHONDONTWRITEBYTECODE", "SPARKLE_TEST_SANDBOX",
             })
             command = self._base_command(workspace) + [
-                self.python_binary, "-I", "-c", probe, str(canary), allowed,
+                self.python_binary, "-I", "-c", probe, str(canary),
+                str(other_workspace), allowed, str(os.getpid()),
             ]
             try:
                 completed = self.preflight_runner(
@@ -326,9 +365,20 @@ finally:
             except (OSError, subprocess.SubprocessError) as exc:
                 self._failure_type = type(exc).__name__
                 return False
-        if completed.returncode != 0:
+            artifact_unchanged = artifact_canary.read_bytes() == b"immutable"
+        try:
+            reported = json.loads(completed.stdout.strip())
+        except (AttributeError, json.JSONDecodeError):
+            reported = {}
+        if (
+            completed.returncode != 0
+            or set(reported) != set(self.CANARY_NAMES)
+            or not all(reported.get(name) is True for name in self.CANARY_NAMES)
+            or not artifact_unchanged
+        ):
             self._failure_type = "IsolationPreflightFailed"
             return False
+        self._canary_results = {name: True for name in self.CANARY_NAMES}
         self._failure_type = None
         return True
 
@@ -347,6 +397,8 @@ finally:
             "unsafe_process_mode": False,
             "failure_type": self._failure_type,
             "hostile_canaries_passed": available,
+            "isolation_profile": self.ISOLATION_PROFILE,
+            "canaries": dict(self._canary_results),
         }
 
     def _sandbox_claims(self, worker_id: str) -> dict[str, Any]:

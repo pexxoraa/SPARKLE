@@ -1,0 +1,25 @@
+name: SPARKLE Level 3 Worker Acceptance
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dedicated-worker-boundary:
+    runs-on: ubuntu-latest
+    environment: sparkle-level3-worker
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install SPARKLE without external dependencies
+        run: python -m pip install . --no-deps
+      - name: Verify authenticated dedicated-worker boundary
+        env:
+          SPARKLE_EXTERNAL_WORKER_URL: ${{ vars.SPARKLE_EXTERNAL_WORKER_URL }}
+          SPARKLE_EXTERNAL_WORKER_ID: ${{ vars.SPARKLE_EXTERNAL_WORKER_ID }}
+          SPARKLE_WORKER_SIGNING_KEY: ${{ secrets.SPARKLE_WORKER_SIGNING_KEY }}
+        run: python worker_environment/level3_acceptance.py

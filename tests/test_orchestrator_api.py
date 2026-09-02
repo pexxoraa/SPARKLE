@@ -177,6 +177,25 @@ class APITests(SystemCase):
         execution_payload = json.loads(execution_body)
         self.assertEqual(execution_payload["controlled_executions"], [])
         self.assertFalse(execution_payload["execution_is_deployment"])
+        execution_id = "SPK-EXEC-" + "A" * 32
+        record = {
+            "execution_id": execution_id, "status": "verified",
+            "result_digest": "a" * 64, "isolation_verified": False,
+            "deployed": False,
+        }
+        executor = self.system.ai_system_controlled_executor
+        with (
+            patch.object(executor, "inspect", return_value=record),
+            patch.object(executor, "result", return_value=record),
+        ):
+            inspected = json.loads(self.request(
+                f"/api/ai-system-controlled-executions/{execution_id}",
+            )[2])
+            result = json.loads(self.request(
+                f"/api/ai-system-controlled-executions/{execution_id}/result",
+            )[2])
+        self.assertEqual(inspected["controlled_execution"]["status"], "verified")
+        self.assertFalse(result["controlled_execution_result"]["isolation_verified"])
         self.assertEqual(self.request(
             "/api/ai-systems/build/approve",
             {
@@ -440,6 +459,8 @@ class APITests(SystemCase):
         self.assertIn(b'skillList', body)
         self.assertIn(b"Artifacts & deployment", body)
         self.assertIn(b"Controlled execution & verification", body)
+        self.assertIn(b"Level 3 remains infrastructure-dependent", body)
+        self.assertIn(b"execution.isolation_verified", script)
         self.assertIn(b"Evidence-backed proactive alerts", body)
 
     def test_dashboard_notification_delivery_list_and_read_api(self):

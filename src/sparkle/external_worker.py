@@ -11,6 +11,7 @@ import time
 import urllib.request
 import uuid
 from collections.abc import Callable
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
@@ -38,6 +39,12 @@ class ExternalWorkerClient(SQLiteStore):
     PROTOCOL = "SPARKLE-WORKER/1"
     EXECUTION_PROTOCOL = "SPARKLE-WORKER-CONTROLLED-EXECUTION/1"
     OPERATION = "python_unittest"
+    ISOLATION_PROFILE = "SPARKLE-WORKER-BUBBLEWRAP/1"
+    ISOLATION_CANARIES = {
+        "host_filesystem_read", "host_filesystem_write", "workspace_escape",
+        "secret_environment", "prohibited_network", "host_process_access",
+        "artifact_modification",
+    }
     MAX_FILES = 500
     MAX_TOTAL_BYTES = 5_000_000
     MAX_FILE_BYTES = 500_000
@@ -172,6 +179,10 @@ class ExternalWorkerClient(SQLiteStore):
             "worker_identity_configured": bool(self.expected_worker_id),
             "expected_worker_id": self.expected_worker_id or None,
             "configured": self.enabled and endpoint_valid and signing_key_configured,
+            "controlled_execution_configured": bool(
+                self.enabled and endpoint_valid and signing_key_configured
+                and self.expected_worker_id
+            ),
             "https_required": True,
             "explicit_approval_required": True,
             "agent_tool_registered": False,
@@ -364,13 +375,35 @@ class ExternalWorkerClient(SQLiteStore):
                 "started_at", "completed_at", "output_sha256", "result_digest",
             )) or not isinstance(value["output_limited"], bool):
                 raise ExternalWorkerError("External worker result values are invalid")
+            try:
+                started_at = datetime.fromisoformat(value["started_at"])
+                completed_at = datetime.fromisoformat(value["completed_at"])
+            except ValueError as exc:
+                raise ExternalWorkerError("External worker result timestamps are invalid") from exc
+            if (
+                started_at.tzinfo is None or completed_at.tzinfo is None
+                or completed_at < started_at
+            ):
+                raise ExternalWorkerError("External worker result timestamps are invalid")
             isolation = value["isolation_evidence"]
             if (
                 not isinstance(isolation, dict)
-                or set(isolation) != {"executor_mode", "preflight_passed", "hostile_canaries_passed"}
+                or set(isolation) != {
+                    "profile_version", "executor_mode", "preflight_passed",
+                    "hostile_canaries_passed", "canaries",
+                }
+                or isolation["profile_version"] not in {
+                    None, self.ISOLATION_PROFILE,
+                }
                 or not isinstance(isolation["executor_mode"], str)
                 or not isinstance(isolation["preflight_passed"], bool)
                 or not isinstance(isolation["hostile_canaries_passed"], bool)
+                or not isinstance(isolation["canaries"], dict)
+                or set(isolation["canaries"]) != self.ISOLATION_CANARIES
+                or not all(
+                    isinstance(isolation["canaries"][name], bool)
+                    for name in self.ISOLATION_CANARIES
+                )
             ):
                 raise ExternalWorkerError("External worker isolation evidence is invalid")
             if hashlib.sha256(output.encode("utf-8")).hexdigest() != value["output_sha256"]:
@@ -594,6 +627,11 @@ class ExternalWorkerClient(SQLiteStore):
             "isolation_verified": bool(
                 value.get("isolation_evidence", {}).get("preflight_passed")
                 and value.get("isolation_evidence", {}).get("hostile_canaries_passed")
+                and value.get("isolation_evidence", {}).get("profile_version")
+                == self.ISOLATION_PROFILE
+                and all(
+                    value.get("isolation_evidence", {}).get("canaries", {}).values()
+                )
                 and value["sandbox"].get("filesystem_isolation")
                 and value["sandbox"].get("network_isolation")
             ),
@@ -604,6 +642,7 @@ class ExternalWorkerClient(SQLiteStore):
             "output_sha256": value.get("output_sha256"),
             "result_digest": value.get("result_digest"),
             "output_limited": bool(value.get("output_limited", False)),
+            "isolation_evidence": value.get("isolation_evidence"),
             "created_at": created_at,
         }
 

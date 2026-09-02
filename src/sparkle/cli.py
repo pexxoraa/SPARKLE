@@ -236,6 +236,16 @@ def build_parser() -> argparse.ArgumentParser:
     execution_cancel.add_argument("execution_id")
     execution_cancel.add_argument("--approve", action="store_true")
     sub.add_parser("ai-system-controlled-executions", help="List content-free controlled-execution evidence")
+    execution_status = sub.add_parser(
+        "ai-system-controlled-execution-status",
+        help="Inspect one controlled execution and its lifecycle",
+    )
+    execution_status.add_argument("execution_id")
+    execution_result = sub.add_parser(
+        "ai-system-controlled-execution-result",
+        help="Inspect one content-free controlled-execution result",
+    )
+    execution_result.add_argument("execution_id")
     project_create = sub.add_parser(
         "project-create", help="Create a validated structured project record",
     )
@@ -664,6 +674,22 @@ def main(argv: list[str] | None = None) -> int:
             "controlled_executions": system.controlled_executions.list(limit=100),
             "controlled_execution_authorizations": system.controlled_executions.list_authorizations(limit=100),
             "execution_is_deployment": False,
+        })
+        return 0
+    if args.command == "ai-system-controlled-execution-status":
+        _print({
+            "ok": True,
+            "controlled_execution": system.ai_system_controlled_executor.inspect(
+                args.execution_id,
+            ),
+        })
+        return 0
+    if args.command == "ai-system-controlled-execution-result":
+        _print({
+            "ok": True,
+            "controlled_execution_result": system.ai_system_controlled_executor.result(
+                args.execution_id,
+            ),
         })
         return 0
     if args.command == "project-create":

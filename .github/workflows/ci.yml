@@ -31,6 +31,22 @@ jobs:
       - name: Verify installed worker entrypoint
         run: docker run --rm sparkle-worker:ci --help
 
+  controlled-execution-software:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Verify controlled-execution software boundary
+        run: |
+          PYTHONPATH=src python -m unittest \
+            tests.test_ai_system_execution \
+            tests.test_external_worker \
+            tests.test_worker_service \
+            tests.test_orchestrator_api
+          node --check src/sparkle/dashboard/app.js
+
   automation-service:
     runs-on: ubuntu-latest
     steps:

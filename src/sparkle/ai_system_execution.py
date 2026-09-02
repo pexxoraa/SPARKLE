@@ -665,6 +665,27 @@ class ControlledExecutionService:
             raise ExecutionRejected("execution_not_cancellable")
         return self.store.transition(execution_id, current["status"], "cancelled", error_type="OperatorCancelled")
 
+    def inspect(self, execution_id: str) -> dict[str, Any]:
+        if not isinstance(execution_id, str) or not re.fullmatch(
+            r"SPK-EXEC-[A-F0-9]{32}", execution_id,
+        ):
+            raise ValueError("Controlled execution ID is invalid")
+        return self.store.by_execution_id(execution_id)
+
+    def result(self, execution_id: str) -> dict[str, Any]:
+        record = self.inspect(execution_id)
+        return {
+            name: record[name] for name in (
+                "execution_id", "execution_request_id", "status", "artifact_id",
+                "artifact_sha256", "build_id", "authorization_id", "worker_job_id",
+                "worker_id", "returncode", "timed_out", "output_limited",
+                "output_sha256", "output_chars", "result_digest",
+                "response_verified", "isolation_verified", "error_type",
+                "started_at", "completed_at", "verification_complete",
+                "published", "deployed", "production_modified",
+            )
+        }
+
     def exclude_artifact(self, artifact_id: int, *, status: str, reason: str,
                          actor: str, source_origin: str, approved: bool,
                          replacement_artifact_id: int | None = None) -> dict[str, Any]:
@@ -694,7 +715,7 @@ class ControlledExecutionService:
             execution_metadata={
                 "execution_id": result["execution_id"], "artifact_id": result["artifact_id"],
                 "artifact_sha256": result["artifact_sha256"],
-                "authorization_id": result["authorization_id"],
+                "execution_approval_id": result["authorization_id"],
                 "worker_id": result["worker_id"],
                 "lifecycle_states": [item["state"] for item in result["lifecycle"]],
                 "started_at": result["started_at"], "completed_at": result["completed_at"],

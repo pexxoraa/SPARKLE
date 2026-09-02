@@ -645,7 +645,9 @@ class ExternalWorkerService:
             if not self.executor.status()["available"]:
                 raise WorkerUnavailableError("Worker executor isolation is unavailable")
             try:
+                execution_started_at = utc_now()
                 result = self.executor.execute(job, worker_id=self.config.worker_id)
+                execution_completed_at = utc_now()
             except WorkerExecutionError as exc:
                 raise WorkerUnavailableError("Worker execution failed safely") from exc
             output = result.output
@@ -677,16 +679,18 @@ class ExternalWorkerService:
                 response_value.update({
                     "execution_context": job.execution_context,
                     "worker_id": self.config.worker_id,
-                    "started_at": utc_now(),
-                    "completed_at": utc_now(),
+                    "started_at": execution_started_at,
+                    "completed_at": execution_completed_at,
                     "output_sha256": hashlib.sha256(
                         response_value["output"].encode("utf-8")
                     ).hexdigest(),
                     "output_limited": result.output_limited,
                     "isolation_evidence": {
+                        "profile_version": executor_evidence.get("isolation_profile"),
                         "executor_mode": str(executor_evidence["mode"]),
                         "preflight_passed": bool(executor_evidence["preflight_passed"]),
                         "hostile_canaries_passed": bool(executor_evidence.get("hostile_canaries_passed", False)),
+                        "canaries": dict(executor_evidence.get("canaries", {})),
                     },
                 })
                 response_value["result_digest"] = hashlib.sha256(
