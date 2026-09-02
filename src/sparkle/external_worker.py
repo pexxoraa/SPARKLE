@@ -77,6 +77,7 @@ class ExternalWorkerClient(SQLiteStore):
         request_timeout_seconds: int = 15,
         job_timeout_seconds: int = 10,
         max_payload_bytes: int = 8_000_000,
+        expected_worker_id: str = "",
         secret_resolver: SecretResolver | None = None,
         opener: Callable[..., Any] | None = None,
         clock: Callable[[], float] | None = None,
@@ -90,6 +91,10 @@ class ExternalWorkerClient(SQLiteStore):
             raise ValueError("External worker payload limit must be from 1000000 to 20000000 bytes")
         if not secret_refs or not all(isinstance(item, str) and item for item in secret_refs):
             raise ValueError("External worker secret references must be non-empty names")
+        if expected_worker_id and not re.fullmatch(
+            r"[a-zA-Z0-9][a-zA-Z0-9_.-]{1,127}", expected_worker_id,
+        ):
+            raise ValueError("Expected worker ID must be a 2-128 character safe identifier")
         self.root = (root or data_root() / "applications").resolve()
         self.root.mkdir(parents=True, exist_ok=True)
         self.enabled = enabled
@@ -98,6 +103,7 @@ class ExternalWorkerClient(SQLiteStore):
         self.request_timeout_seconds = request_timeout_seconds
         self.job_timeout_seconds = job_timeout_seconds
         self.max_payload_bytes = max_payload_bytes
+        self.expected_worker_id = expected_worker_id
         self.secret_resolver = secret_resolver or SecretResolver()
         self.opener = opener or urllib.request.build_opener(_NoRedirectHandler()).open
         self.clock = clock or time.time
@@ -163,6 +169,8 @@ class ExternalWorkerClient(SQLiteStore):
             "endpoint_configured": bool(self.endpoint),
             "endpoint_https_valid": endpoint_valid,
             "signing_key_configured": signing_key_configured,
+            "worker_identity_configured": bool(self.expected_worker_id),
+            "expected_worker_id": self.expected_worker_id or None,
             "configured": self.enabled and endpoint_valid and signing_key_configured,
             "https_required": True,
             "explicit_approval_required": True,
@@ -350,6 +358,8 @@ class ExternalWorkerClient(SQLiteStore):
                 raise ExternalWorkerError("External worker execution identity is invalid")
             if value["worker_id"] != sandbox["worker_id"]:
                 raise ExternalWorkerError("External worker result identity is invalid")
+            if not self.expected_worker_id or value["worker_id"] != self.expected_worker_id:
+                raise ExternalWorkerError("External worker identity is not authorized")
             if not all(isinstance(value[name], str) and value[name] for name in (
                 "started_at", "completed_at", "output_sha256", "result_digest",
             )) or not isinstance(value["output_limited"], bool):
@@ -450,6 +460,8 @@ class ExternalWorkerClient(SQLiteStore):
         """Submit a verified artifact snapshot with exact execution identities."""
         if not isinstance(execution_context, dict):
             raise ValueError("Controlled execution context is invalid")
+        if not self.expected_worker_id:
+            raise ExternalWorkerError("Expected controlled-execution worker identity is not configured")
         if workspace.is_symlink() or not workspace.is_dir():
             raise ValueError("Controlled execution workspace is invalid")
         return self._run(

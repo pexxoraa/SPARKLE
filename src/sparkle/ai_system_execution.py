@@ -43,6 +43,31 @@ class ControlledExecutionStore(SQLiteStore):
         "protocol_failure", "execution_failure", "output_limit_failure",
         "isolation_failure", "result_integrity_failure", "cancelled",
     }
+    TRANSITIONS = {
+        "requested": {
+            "authorized", "rejected", "authorization_failure",
+            "artifact_mismatch", "execution_failure", "cancelled",
+        },
+        "authorized": {
+            "queued", "rejected", "authorization_failure",
+            "artifact_mismatch", "execution_failure", "cancelled",
+        },
+        "queued": {
+            "submitted", "rejected", "artifact_mismatch",
+            "execution_failure", "cancelled",
+        },
+        "submitted": {
+            "running", "worker_unavailable", "worker_authentication_failure",
+            "protocol_failure", "execution_failure", "result_integrity_failure",
+        },
+        "running": {
+            "completed", "timeout", "worker_unavailable",
+            "worker_authentication_failure", "protocol_failure",
+            "execution_failure", "output_limit_failure", "isolation_failure",
+            "result_integrity_failure",
+        },
+        "completed": {"verified", "result_integrity_failure"},
+    }
 
     def __init__(self, path: Path | None = None):
         super().__init__(path or data_root() / "data_environment" / "controlled_executions.sqlite3")
@@ -193,13 +218,12 @@ class ControlledExecutionStore(SQLiteStore):
             return self._with_events(connection, row)
 
     def transition(self, execution_id: str, expected: str, state: str, **values: Any) -> dict[str, Any]:
-        allowed = self.TERMINAL | {"authorized", "queued", "submitted", "running", "completed"}
         fields = {
             "worker_run_id", "worker_job_id", "worker_id", "returncode", "timed_out",
             "output_limited", "output_sha256", "output_chars", "result_digest",
             "response_verified", "isolation_verified", "error_type", "started_at", "completed_at",
         }
-        if state not in allowed or set(values) - fields:
+        if state not in self.TRANSITIONS.get(expected, set()) or set(values) - fields:
             raise ValueError("Controlled execution lifecycle transition is invalid")
         now = utc_now()
         assignments, parameters = ["status=?", "updated_at=?"], [state, now]
@@ -390,6 +414,7 @@ class ControlledExecutionService:
     ORIGINS = {"cli", "authenticated_api", "operator"}
     REQUEST = re.compile(r"^SPK-EXEC-REQ-[A-F0-9]{32}$")
     MODES = {"python_unittest"}
+    POLICY_VERSION = "SPARKLE-CONTROLLED-EXECUTION-POLICY/1"
 
     def __init__(self, builds: ControlledBuildStore, build_workspace: ControlledBuildArtifactWorkspace,
                  promotions: SourcePromotionStore, candidates: SourceCandidateStore,
@@ -468,12 +493,28 @@ class ControlledExecutionService:
             ttl_seconds=self.APPROVAL_TTL_SECONDS,
         )
 
+    @staticmethod
+    def execution_policy(timeout_seconds: int, max_output_chars: int) -> dict[str, Any]:
+        """Return the one provider-neutral policy accepted by protocol version 1."""
+        return {
+            "policy_version": ControlledExecutionService.POLICY_VERSION,
+            "environment": "cleared_allowlist",
+            "network": "disabled",
+            "filesystem": "read_only_artifact_ephemeral_workspace",
+            "memory_bytes": 512 * 1024 * 1024,
+            "cpu_seconds": timeout_seconds,
+            "max_processes": 32,
+            "max_workspace_bytes": ExternalWorkerClient.MAX_TOTAL_BYTES,
+            "timeout_seconds": timeout_seconds,
+            "max_output_chars": max_output_chars,
+        }
+
     def validate(self, contract: dict[str, Any]) -> tuple[dict[str, Any], str]:
         fields = {
             "protocol_version", "execution_request_id", "authorization_id", "build_id",
             "artifact_id", "artifact_sha256", "promotion_id", "candidate_id", "plan_id",
             "evaluation_id", "execution_mode", "timeout_seconds", "max_output_chars",
-            "actor", "source_origin",
+            "actor", "source_origin", "execution_policy",
         }
         if not isinstance(contract, dict) or set(contract) != fields:
             raise ValueError("Controlled execution contract fields are invalid")
@@ -486,6 +527,10 @@ class ControlledExecutionService:
                 raise ValueError("Controlled execution numeric identity is invalid")
         if not 1 <= contract["timeout_seconds"] <= 60 or not 100 <= contract["max_output_chars"] <= 12_000:
             raise ValueError("Controlled execution limits are invalid")
+        if contract["execution_policy"] != self.execution_policy(
+            contract["timeout_seconds"], contract["max_output_chars"],
+        ):
+            raise ValueError("Controlled execution policy is invalid")
         self._identity(contract["actor"], contract["source_origin"])
         canonical = json.dumps(contract, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
         if len(canonical) > 8_192:
@@ -590,7 +635,9 @@ class ControlledExecutionService:
             message = str(exc).lower()
             state = (
                 "worker_authentication_failure"
-                if any(word in message for word in ("signature", "authentication"))
+                if any(word in message for word in (
+                    "signature", "authentication", "worker identity", "not authorized",
+                ))
                 else "result_integrity_failure"
                 if any(word in message for word in ("result digest", "output digest", "execution identity", "result identity"))
                 else "worker_unavailable"
@@ -645,7 +692,16 @@ class ControlledExecutionService:
             data_accessed=["build_environment"], data_created=[f"controlled_execution:{result['execution_id']}"],
             storage_destinations=["data_environment", "trace_environment", "execution_environment"],
             execution_metadata={
-                "execution_id": result["execution_id"], "artifact_sha256": result["artifact_sha256"],
+                "execution_id": result["execution_id"], "artifact_id": result["artifact_id"],
+                "artifact_sha256": result["artifact_sha256"],
+                "authorization_id": result["authorization_id"],
+                "worker_id": result["worker_id"],
+                "lifecycle_states": [item["state"] for item in result["lifecycle"]],
+                "started_at": result["started_at"], "completed_at": result["completed_at"],
+                "timeout_seconds": result["timeout_seconds"],
+                "max_output_chars": result["max_output_chars"],
+                "result_status": result["status"], "result_digest": result["result_digest"],
+                "error_type": result["error_type"],
                 "response_verified": result["response_verified"], "isolation_verified": result["isolation_verified"],
                 "verification_complete": result["verification_complete"], "published": False,
                 "deployed": False, "production_modified": False,

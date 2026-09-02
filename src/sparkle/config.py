@@ -120,6 +120,7 @@ class AppConfig:
     external_worker_enabled: bool = False
     external_worker_url: str = ""
     external_worker_secret_refs: tuple[str, ...] = ("SPARKLE_WORKER_SIGNING_KEY",)
+    external_worker_id: str = ""
     external_worker_request_timeout_seconds: int = 15
     external_worker_job_timeout_seconds: int = 10
     external_worker_max_payload_bytes: int = 8_000_000
@@ -217,6 +218,10 @@ class AppConfig:
                 str(development.get("external_worker_url", "")),
             ).strip(),
             external_worker_secret_refs=tuple(worker_secret_refs),
+            external_worker_id=os.environ.get(
+                "SPARKLE_EXTERNAL_WORKER_ID",
+                str(development.get("external_worker_id", "")),
+            ).strip(),
             external_worker_request_timeout_seconds=environment_int(
                 "SPARKLE_EXTERNAL_WORKER_REQUEST_TIMEOUT_SECONDS",
                 int(development.get("external_worker_request_timeout_seconds", 15)),

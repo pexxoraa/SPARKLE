@@ -113,6 +113,7 @@ class ConfigTests(unittest.TestCase):
                     "external_worker_enabled": False,
                     "external_worker_url": "",
                     "external_worker_secret_refs": ["WORKER_KEY"],
+                    "external_worker_id": "worker-primary",
                     "external_worker_request_timeout_seconds": 22,
                     "external_worker_job_timeout_seconds": 14,
                     "external_worker_max_payload_bytes": 7000000,
@@ -142,6 +143,7 @@ class ConfigTests(unittest.TestCase):
         self.assertTrue(config.external_worker_enabled)
         self.assertEqual(config.external_worker_url, "https://worker.example/jobs")
         self.assertEqual(config.external_worker_secret_refs, ("WORKER_KEY",))
+        self.assertEqual(config.external_worker_id, "worker-primary")
         self.assertEqual(config.external_worker_request_timeout_seconds, 22)
         self.assertEqual(config.external_worker_job_timeout_seconds, 14)
         self.assertEqual(config.external_worker_max_payload_bytes, 7000000)

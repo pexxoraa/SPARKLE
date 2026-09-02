@@ -130,6 +130,7 @@ class SparkleSystem:
             enabled=self.config.external_worker_enabled,
             endpoint=self.config.external_worker_url,
             secret_refs=self.config.external_worker_secret_refs,
+            expected_worker_id=self.config.external_worker_id,
             request_timeout_seconds=self.config.external_worker_request_timeout_seconds,
             job_timeout_seconds=self.config.external_worker_job_timeout_seconds,
             max_payload_bytes=self.config.external_worker_max_payload_bytes,

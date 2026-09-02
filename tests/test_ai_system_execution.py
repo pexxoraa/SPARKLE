@@ -80,6 +80,7 @@ class ControlledExecutionTests(unittest.TestCase):
         self.opener = DirectServiceOpener(worker_service)
         self.client = ExternalWorkerClient(
             enabled=True, endpoint="https://worker.example/v1/jobs",
+            expected_worker_id="level2-local-worker",
             opener=self.opener,
             path=Path(self.build_case.temp.name) / "execution_worker.sqlite3",
         )
@@ -110,6 +111,9 @@ class ControlledExecutionTests(unittest.TestCase):
             "timeout_seconds": 10, "max_output_chars": 12000,
             "actor": "execution.operator", "source_origin": "operator",
         }
+        value["execution_policy"] = self.service.execution_policy(
+            value["timeout_seconds"], value["max_output_chars"],
+        )
         value.update(changes)
         return value
 
@@ -214,6 +218,7 @@ class ControlledExecutionTests(unittest.TestCase):
 
         client = ExternalWorkerClient(
             enabled=True, endpoint="https://worker.example/v1/jobs",
+            expected_worker_id="level2-local-worker",
             opener=TamperedOpener(self.worker_service),
             path=Path(self.build_case.temp.name) / "tampered-worker.sqlite3",
         )
@@ -292,6 +297,52 @@ class ControlledExecutionTests(unittest.TestCase):
         cancelled = self.service.cancel(records[0][0]["execution_id"], approved=True)
         self.assertEqual(cancelled["status"], "cancelled")
         self.assertFalse(cancelled["deployed"])
+
+    def test_policy_worker_identity_and_lifecycle_graph_fail_closed(self):
+        with self.assertRaisesRegex(ValueError, "policy"):
+            self.service.request(self.contract(execution_policy={}), approved=True)
+        unpinned = ExternalWorkerClient(
+            enabled=True, endpoint="https://worker.example/v1/jobs",
+            opener=self.opener,
+            path=Path(self.build_case.temp.name) / "unpinned-worker.sqlite3",
+        )
+        with self.assertRaisesRegex(Exception, "worker identity"):
+            unpinned.run_controlled_execution(
+                "execution_identity_test",
+                Path(self.build_case.temp.name),
+                execution_context={}, timeout_seconds=10, max_output_chars=100,
+            )
+        contract, digest = self.service.validate(self.contract(
+            execution_request_id="SPK-EXEC-REQ-" + "9" * 32,
+        ))
+        record, _ = self.store.create_or_find(contract, digest, "SPK-2026-999999")
+        with self.assertRaisesRegex(ValueError, "transition"):
+            self.store.transition(record["execution_id"], "requested", "verified")
+
+        wrong_client = ExternalWorkerClient(
+            enabled=True, endpoint="https://worker.example/v1/jobs",
+            expected_worker_id="different-worker",
+            opener=self.opener,
+            path=Path(self.build_case.temp.name) / "wrong-worker.sqlite3",
+        )
+        wrong_store = ControlledExecutionStore(
+            Path(self.build_case.temp.name) / "wrong-worker-execution.sqlite3",
+        )
+        wrong_service = ControlledExecutionService(
+            self.build_case.store, self.build_case.workspace,
+            self.build_case.promotions, self.build_case.candidates,
+            self.build_case.plans, self.build_case.evaluations,
+            self.build_case.traces, wrong_store, wrong_client,
+        )
+        authorization = wrong_service.approve(
+            self.build["build_id"], actor="execution.operator",
+            source_origin="operator", approved=True,
+        )
+        rejected = wrong_service.request(self.contract(
+            execution_request_id="SPK-EXEC-REQ-" + "8" * 32,
+            authorization_id=authorization["authorization_id"],
+        ), approved=True)
+        self.assertEqual(rejected["status"], "worker_authentication_failure")
 
 
 if __name__ == "__main__":
