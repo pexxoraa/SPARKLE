@@ -99,6 +99,9 @@ class ModelRegistryContractTests(unittest.TestCase):
             {**base, "models": [{**record("primary"), "roles": ["general", "general"]}]},
             {**base, "models": [{**record("primary"), "secret_refs": ["bad-ref"]}]},
             {**base, "models": [{**record("primary"), "nested": {"api_key": "value"}}]},
+            {**base, "models": [{**record("primary"), "supports_tools": "yes"}]},
+            {**base, "models": [{**record("primary"), "latency_class": "instant"}]},
+            {**base, "models": [{**record("primary"), "timeout_seconds": 0}]},
             {**base, "routing": {"default": "missing"}},
             {**base, "routing": {"coding": "primary"}},
         ]

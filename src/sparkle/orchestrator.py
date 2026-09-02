@@ -101,6 +101,7 @@ class Orchestrator:
             execution_metadata=execution_metadata,
         )
         adapter = None
+        routing_decisions: list[dict[str, object]] = []
         executed: list[str] = []
         data_accessed = (
             ["memory_environment", "knowledge_environment"]
@@ -122,12 +123,9 @@ class Orchestrator:
             messages = list(history or []) + [
                 Message(role="user", content=user_content)
             ]
-            adapter = self.models.select(
-                spec.capability, modalities=input_modalities,
-            )
             response = None
             for round_number in range(self.max_tool_rounds + 1):
-                response = adapter.complete(ModelRequest(
+                decision, response = self.models.complete(ModelRequest(
                     messages=messages,
                     system="\n\n".join(system_parts),
                     tools=(
@@ -138,7 +136,15 @@ class Orchestrator:
                     temperature=1.0,
                     thinking=True,
                     metadata={"user_id": user_id} if user_id else {},
-                ))
+                ), spec.capability, modalities=input_modalities,
+                    latency_policy=(
+                        "deep" if spec.capability in {"reasoning", "coding"}
+                        else "fast"
+                    ),
+                    max_timeout_seconds=120,
+                )
+                routing_decisions.append(decision.to_dict())
+                adapter = self.models.registry.adapter(decision.record_id)
                 if not response.tool_calls:
                     break
                 if execution_profile == "evaluation":
@@ -180,6 +186,10 @@ class Orchestrator:
                     "context_retrieval", "agent_reasoning",
                     "tool_loop" if executed else "direct_completion",
                 ]
+            final_execution_metadata = {
+                **execution_metadata,
+                "model_routing": routing_decisions,
+            }
             self.traces.finish(
                 trace_id, started, status="success", agent=spec.name, model=response.model,
                 provider=response.provider, tools=executed, data_accessed=data_accessed,
@@ -187,7 +197,7 @@ class Orchestrator:
                 storage_destinations=["trace_environment"],
                 processing_stage="completed",
                 output_modalities=["text"],
-                execution_metadata=execution_metadata,
+                execution_metadata=final_execution_metadata,
                 result_summary=(
                     "Agent evaluation model call completed"
                     if execution_profile == "evaluation" else response.text
@@ -195,6 +205,10 @@ class Orchestrator:
             )
             return result
         except Exception as exc:
+            failure_execution_metadata = {
+                **execution_metadata,
+                "model_routing": routing_decisions,
+            }
             self.traces.finish(
                 trace_id, started, status="failure", agent=spec.name,
                 model=(
@@ -207,7 +221,7 @@ class Orchestrator:
                 ),
                 tools=executed, data_accessed=data_accessed, storage_destinations=["trace_environment"],
                 processing_stage="failed", output_modalities=[],
-                execution_metadata=execution_metadata,
+                execution_metadata=failure_execution_metadata,
                 error_type=type(exc).__name__,
                 result_summary=(
                     "Agent evaluation model call failed"

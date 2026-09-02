@@ -11,7 +11,10 @@ from typing import Any
 
 from sparkle.config import load_json, model_config_path
 from sparkle.content import SUPPORTED_CONTENT_TYPES
-from sparkle.model import ModelAdapter, UnsupportedModalityError
+from sparkle.model import ModelAdapter, ModelError, UnsupportedModalityError
+from sparkle.model_runtime import (
+    ModelHealthMonitor, ModelRuntimeStore, RoutingDecision,
+)
 from sparkle.providers.minimax import MiniMaxMessagesAdapter
 from sparkle.providers.nvidia import NVIDIAChatCompletionsAdapter
 from sparkle.secrets import SecretResolver
@@ -48,6 +51,7 @@ class ModelRegistry:
         adapter_factories: Mapping[
             str, Callable[[dict[str, Any], SecretResolver], ModelAdapter]
         ] | None = None,
+        runtime_store: ModelRuntimeStore | None = None,
     ):
         self.path = path or model_config_path()
         self.secrets = secrets or SecretResolver()
@@ -63,6 +67,8 @@ class ModelRegistry:
         self._instances: dict[str, ModelAdapter] = {}
         self._injected_ids: set[str] = set()
         self._validate()
+        self.runtime = runtime_store or ModelRuntimeStore()
+        self.health = ModelHealthMonitor(self, self.runtime)
 
     @classmethod
     def _string(cls, value: Any, field: str) -> str:
@@ -127,6 +133,21 @@ class ModelRegistry:
                 raise ValueError("Model modalities must be unique supported content types")
             if not isinstance(raw["enabled"], bool):
                 raise ValueError("Model enabled must be boolean")
+            for boolean_field in (
+                "supports_streaming", "supports_tools", "allow_fallback",
+            ):
+                if boolean_field in raw and not isinstance(raw[boolean_field], bool):
+                    raise ValueError(f"Model {boolean_field} must be boolean")
+            latency_class = raw.get("latency_class", "balanced")
+            if latency_class not in {"fast", "balanced", "deep"}:
+                raise ValueError("Model latency_class is invalid")
+            timeout_seconds = raw.get("timeout_seconds", 120)
+            if (
+                isinstance(timeout_seconds, bool)
+                or not isinstance(timeout_seconds, (int, float))
+                or not 1 <= float(timeout_seconds) <= 600
+            ):
+                raise ValueError("Model timeout_seconds must be from 1 to 600")
             secret_refs = raw.get("secret_refs", [])
             if (
                 not isinstance(secret_refs, list)
@@ -171,6 +192,7 @@ class ModelRegistry:
         result = []
         for record in self._records.values():
             secret_refs = record.config.get("secret_refs", [])
+            health = self.health.status(record.id)
             result.append({
                 "id": record.id,
                 "provider": record.provider,
@@ -184,6 +206,10 @@ class ModelRegistry:
                     not secret_refs
                     or any(self.secrets.status(secret_refs).values())
                 ),
+                "health": health["state"],
+                "health_reason": health["reason"],
+                "health_observed_at": health.get("observed_at"),
+                "health_evidence_source": health.get("evidence_source"),
             })
         return result
 
@@ -331,3 +357,149 @@ class ModelRouter:
             model_id=preferred_adapter.model_id,
             provider=preferred_adapter.provider,
         )
+
+    def decide(
+        self,
+        capability: str = "general",
+        *,
+        modalities: set[str] | list[str] | tuple[str, ...] | None = None,
+        tools_required: bool = False,
+        streaming_required: bool = False,
+        latency_policy: str = "balanced",
+        max_timeout_seconds: float | None = None,
+        excluded: set[str] | None = None,
+    ) -> tuple[RoutingDecision, ModelAdapter]:
+        if not isinstance(capability, str) or not self.registry.SAFE_IDENTIFIER.fullmatch(capability):
+            raise ValueError("Model capability is invalid")
+        required = set(modalities or {"text"})
+        if latency_policy not in {"fast", "balanced", "deep"}:
+            raise ValueError("Model latency policy is invalid")
+        if max_timeout_seconds is not None and (
+            isinstance(max_timeout_seconds, bool)
+            or not isinstance(max_timeout_seconds, (int, float))
+            or not 1 <= float(max_timeout_seconds) <= 600
+        ):
+            raise ValueError("Model timeout policy must be from 1 to 600 seconds")
+        excluded_ids = set(excluded or set())
+        preferred = self.registry.routing.get(
+            capability, self.registry.routing.get("default", self.registry.active_id),
+        )
+        candidates = []
+        for record_id, record in self.registry._records.items():
+            if record_id in excluded_ids or not record.enabled:
+                continue
+            if excluded_ids and not bool(record.config.get("allow_fallback", False)):
+                continue
+            if capability not in record.roles:
+                continue
+            if (
+                record_id not in self.registry._injected_ids
+                and not required.issubset(record.modalities)
+            ):
+                continue
+            if tools_required and (
+                "tool_use" not in record.roles
+                or not bool(record.config.get("supports_tools", True))
+            ):
+                continue
+            if streaming_required and not bool(record.config.get("supports_streaming", True)):
+                continue
+            if (
+                max_timeout_seconds is not None
+                and float(record.config.get("timeout_seconds", 120))
+                > float(max_timeout_seconds)
+            ):
+                continue
+            health = self.registry.health.status(record_id)
+            if health["state"] == "UNAVAILABLE":
+                continue
+            rank = 0 if health["state"] == "HEALTHY" else 1
+            preferred_rank = 0 if record_id == preferred else 1
+            latency_orders = {
+                "fast": {"fast": 0, "balanced": 1, "deep": 2},
+                "balanced": {"balanced": 0, "fast": 1, "deep": 2},
+                "deep": {"deep": 0, "balanced": 1, "fast": 2},
+            }
+            latency_rank = latency_orders[latency_policy][
+                record.config.get("latency_class", "balanced")
+            ]
+            candidates.append((
+                rank, latency_rank, preferred_rank, record_id, record, health,
+            ))
+        if not candidates:
+            preferred_record = self.registry._records.get(preferred)
+            provider = preferred_record.provider if preferred_record else None
+            model_id = preferred_record.model_id if preferred_record else None
+            raise UnsupportedModalityError(
+                required, model_id=model_id, provider=provider,
+            )
+        (
+            _rank, _latency_rank, _preferred_rank, record_id, record, health,
+        ) = sorted(candidates)[0]
+        fallback = record_id != preferred
+        if fallback:
+            reason = "approved_fallback_after_health_or_capability_filter"
+        elif health["state"] == "HEALTHY":
+            reason = "configured_route_and_verified_healthy"
+        else:
+            reason = "configured_route_not_yet_live_verified"
+        decision = RoutingDecision(
+            record_id=record_id,
+            provider=record.provider,
+            model=record.model_id,
+            capability=capability,
+            health=health["state"],
+            selection_reason=reason,
+            fallback=fallback,
+            test_harness=record_id in self.registry._injected_ids,
+        )
+        return decision, self.registry.adapter(record_id)
+
+    def complete(
+        self,
+        request: Any,
+        capability: str = "general",
+        *,
+        modalities: set[str] | list[str] | tuple[str, ...] | None = None,
+        latency_policy: str = "balanced",
+        max_timeout_seconds: float | None = None,
+    ) -> tuple[RoutingDecision, Any]:
+        excluded: set[str] = set()
+        first_error: ModelError | None = None
+        while True:
+            try:
+                decision, adapter = self.decide(
+                    capability,
+                    modalities=modalities,
+                    tools_required=bool(request.tools),
+                    streaming_required=bool(request.stream),
+                    latency_policy=latency_policy,
+                    max_timeout_seconds=max_timeout_seconds,
+                    excluded=excluded,
+                )
+            except UnsupportedModalityError:
+                if first_error is not None:
+                    raise first_error
+                raise
+            request_id, started = self.registry.runtime.start(decision)
+            try:
+                response = adapter.complete(request)
+            except ModelError as exc:
+                self.registry.runtime.finish_failure(
+                    request_id, started, attempts=exc.attempts,
+                    error_type=exc.category,
+                )
+                self.registry.health.failure(decision.record_id, exc)
+                excluded.add(decision.record_id)
+                first_error = first_error or exc
+                continue
+            self.registry.runtime.finish_success(
+                request_id,
+                started,
+                attempts=response.attempts,
+                usage=response.usage,
+                usage_reported=response.usage_reported,
+                provider_request_id=response.provider_request_id,
+            )
+            self.registry.health.success(decision.record_id)
+            return decision, response

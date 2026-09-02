@@ -18,6 +18,20 @@ from sparkle.system import SparkleSystem
 
 
 class CLITests(unittest.TestCase):
+    def test_model_request_evidence_command_is_content_free(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = io.StringIO()
+            with (
+                patch.dict(
+                    os.environ, {"SPARKLE_DATA_DIR": directory}, clear=False,
+                ),
+                contextlib.redirect_stdout(output),
+            ):
+                self.assertEqual(main(["model-requests", "--limit", "5"]), 0)
+            payload = json.loads(output.getvalue())
+            self.assertTrue(payload["ok"])
+            self.assertEqual(payload["model_requests"], [])
+
     def test_structured_project_create_update_list_and_archive(self):
         with tempfile.TemporaryDirectory() as directory:
             manifest = Path(directory) / "project.json"

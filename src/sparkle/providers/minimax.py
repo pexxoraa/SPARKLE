@@ -134,7 +134,14 @@ class MiniMaxMessagesAdapter(ModelAdapter):
         if provider_code in AUTH_PROVIDER_CODES or status in {401, 403}:
             message = "MiniMax authentication failed; verify the configured server-side key"
         retryable = provider_code in RETRYABLE_PROVIDER_CODES or status in {408, 429, 500, 502, 503, 504}
-        return ModelError(message, retryable=retryable, status_code=status or provider_code)
+        category = {
+            401: "authentication_failure", 403: "authentication_failure",
+            408: "timeout", 429: "rate_limited",
+        }.get(status, "provider_failure")
+        return ModelError(
+            message, retryable=retryable, status_code=status or provider_code,
+            category=category,
+        )
 
     @staticmethod
     def _parse_response(data: dict[str, Any]) -> ModelResponse:
@@ -163,6 +170,7 @@ class MiniMaxMessagesAdapter(ModelAdapter):
                 cache_creation_input_tokens=int(usage_data.get("cache_creation_input_tokens", 0) or 0),
             ),
             provider_request_id=str(data.get("id")) if data.get("id") else None,
+            usage_reported="usage" in data,
             raw_assistant_content=content,
         )
 
@@ -184,16 +192,22 @@ class MiniMaxMessagesAdapter(ModelAdapter):
                 base = data.get("base_resp") if isinstance(data, dict) else None
                 if isinstance(base, dict) and base.get("status_code") not in {None, 0}:
                     raise self._safe_error(raw)
-                return self._parse_response(data)
+                result = self._parse_response(data)
+                result.attempts = attempt + 1
+                return result
             except urllib.error.HTTPError as exc:
                 last_error = self._safe_error(exc.read(), exc.code)
             except urllib.error.URLError as exc:
-                last_error = ModelError(f"MiniMax network failure: {exc.reason}", retryable=True)
+                last_error = ModelError(
+                    f"MiniMax network failure: {exc.reason}", retryable=True,
+                    category="connectivity_failure",
+                )
             except (json.JSONDecodeError, UnicodeDecodeError, KeyError, TypeError) as exc:
                 last_error = ModelError(f"MiniMax returned an invalid response: {type(exc).__name__}")
             except ModelError as exc:
                 last_error = exc
             if not last_error.retryable or attempt + 1 >= self._attempts:
+                last_error.attempts = attempt + 1
                 raise last_error
             delay = self._base_delay * (2**attempt) + random.uniform(0, self._base_delay / 4 if self._base_delay else 0)
             self._sleeper(delay)

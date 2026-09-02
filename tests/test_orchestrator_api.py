@@ -150,6 +150,29 @@ class APITests(SystemCase):
         self.assertEqual(headers["X-RateLimit-Remaining"], "119")
         self.assertTrue(json.loads(body)["ok"])
 
+    def test_model_health_routing_and_usage_evidence_api(self):
+        chat_status, _, _ = self.request(
+            "/api/chat", {"message": "Provide a short status."},
+        )
+        self.assertEqual(chat_status, 200)
+        status = json.loads(self.request("/api/health")[2])["status"]
+        self.assertIn(status["models"][0]["health"], {
+            "HEALTHY", "DEGRADED", "UNAVAILABLE",
+        })
+        self.assertFalse(status["model_runtime"]["live_nemotron_verified"])
+        requests = json.loads(
+            self.request("/api/model-requests?limit=10")[2]
+        )["model_requests"]
+        self.assertEqual(len(requests), 1)
+        self.assertTrue(requests[0]["test_harness"])
+        self.assertEqual(requests[0]["status"], "success")
+        self.assertNotIn("Provide a short status", json.dumps(requests))
+        trace = self.system.traces.recent()[0]
+        self.assertEqual(
+            trace["execution_metadata"]["model_routing"][0]["record_id"],
+            self.system.models.active_id,
+        )
+
     def test_controlled_build_status_and_api_are_wired_fail_closed(self):
         status = self.system.status()["ai_systems"]
         self.assertEqual(status["controlled_builds"], 0)

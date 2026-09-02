@@ -32,6 +32,10 @@ def build_parser() -> argparse.ArgumentParser:
     chat.add_argument("--multi", action="store_true")
     smoke = sub.add_parser("smoke-test", help="Verify configuration or make a safe live provider call")
     smoke.add_argument("--live", action="store_true")
+    model_requests = sub.add_parser(
+        "model-requests", help="List content-free model routing and usage evidence",
+    )
+    model_requests.add_argument("--limit", type=int, default=20)
     memory = sub.add_parser("remember", help="Store an explicit durable memory")
     memory.add_argument("category")
     memory.add_argument("key")
@@ -352,11 +356,11 @@ def live_smoke(system: SparkleSystem) -> int:
         return 2
     started = time.monotonic()
     try:
-        response = adapter.complete(ModelRequest(
+        _decision, response = system.model_router.complete(ModelRequest(
             messages=[Message(role="user", content="Reply with exactly SPARKLE_LIVE_OK")],
             system="This is a provider connectivity smoke test. Follow the user's exact output instruction.",
             max_output_tokens=64, thinking=False, temperature=0,
-        ))
+        ), "general", modalities={"text"}, latency_policy="fast")
     except ModelError as exc:
         _print({
             "ok": False, "stage": "live_request", "provider": health,
@@ -391,6 +395,12 @@ def main(argv: list[str] | None = None) -> int:
         if args.live:
             return live_smoke(system)
         _print({"ok": True, "models": system.models.list(), "live_call_executed": False})
+        return 0
+    if args.command == "model-requests":
+        _print({
+            "ok": True,
+            "model_requests": system.models.runtime.recent(limit=args.limit),
+        })
         return 0
     if args.command == "remember":
         memory_id = system.memory.remember(args.category, args.key, args.value, metadata={"source": "cli"})

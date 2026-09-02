@@ -281,6 +281,12 @@ class SparkleHandler(BaseHTTPRequestHandler):
             return self._json({"ok": True, "status": self.system.status()})
         if parsed.path == "/api/models":
             return self._json({"models": self.system.models.list()})
+        if parsed.path == "/api/model-requests":
+            return self._json({
+                "model_requests": self.system.models.runtime.recent(
+                    limit=int(query.get("limit", [50])[0])
+                ),
+            })
         if parsed.path == "/api/content-contract":
             return self._json(content_contract_status())
         if parsed.path == "/api/agents":

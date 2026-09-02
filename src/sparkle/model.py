@@ -9,10 +9,20 @@ from sparkle.contracts import ModelRequest, ModelResponse
 class ModelError(RuntimeError):
     """Provider-neutral model failure with safe diagnostic metadata."""
 
-    def __init__(self, message: str, *, retryable: bool = False, status_code: int | None = None):
+    def __init__(
+        self,
+        message: str,
+        *,
+        retryable: bool = False,
+        status_code: int | None = None,
+        category: str = "provider_failure",
+        attempts: int = 1,
+    ):
         super().__init__(message)
         self.retryable = retryable
         self.status_code = status_code
+        self.category = category
+        self.attempts = max(1, attempts)
 
 
 class UnsupportedModalityError(ModelError):

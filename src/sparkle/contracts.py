@@ -187,6 +187,8 @@ class ModelResponse:
     tool_calls: list[ToolCall] = field(default_factory=list)
     usage: TokenUsage = field(default_factory=TokenUsage)
     provider_request_id: str | None = None
+    attempts: int = 1
+    usage_reported: bool = False
     raw_assistant_content: list[dict[str, Any]] = field(default_factory=list, repr=False)
 
     def public_dict(self) -> dict[str, Any]:

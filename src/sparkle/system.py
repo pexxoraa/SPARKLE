@@ -253,12 +253,29 @@ class SparkleSystem:
 
     def status(self) -> dict[str, Any]:
         models = self.models.list()
+        active = next(model for model in models if model["active"])
+        recent_model_requests = self.models.runtime.recent(limit=20)
         return {
             "name": "SPARKLE",
             "version": "0.30.0-alpha.1",
             "status": "ready" if any(model["configured"] for model in models) else "limited",
             "active_model": self.models.active_id,
+            "active_provider": active["provider"],
+            "active_model_id": active["model_id"],
             "models": models,
+            "model_runtime": {
+                "health_states": ["HEALTHY", "DEGRADED", "UNAVAILABLE"],
+                "recent_requests": recent_model_requests,
+                "last_routing": (
+                    recent_model_requests[0] if recent_model_requests else None
+                ),
+                "live_nemotron_verified": any(
+                    item["provider"] == "nvidia"
+                    and item["status"] == "success"
+                    and not item["test_harness"]
+                    for item in recent_model_requests
+                ),
+            },
             "memory": {"status": "ready", "records": len(self.memory.recent(limit=100))},
             "knowledge": {"status": "ready", **self.knowledge.stats()},
             "trace": {"status": "ready", "recent": len(self.traces.recent(limit=100))},

@@ -137,7 +137,13 @@ class NVIDIAChatCompletionsAdapter(ModelAdapter):
         if status in {401, 403}:
             detail = "NVIDIA authentication failed; verify the configured server-side key"
         retryable = status in {408, 409, 429, 500, 502, 503, 504}
-        return ModelError(detail, retryable=retryable, status_code=status)
+        category = {
+            401: "authentication_failure", 403: "authentication_failure",
+            404: "model_unavailable", 408: "timeout", 429: "rate_limited",
+        }.get(status, "provider_failure")
+        return ModelError(
+            detail, retryable=retryable, status_code=status, category=category,
+        )
 
     @staticmethod
     def _tool_calls(value: Any) -> list[ToolCall]:
@@ -192,6 +198,7 @@ class NVIDIAChatCompletionsAdapter(ModelAdapter):
                 output_tokens=int(usage_data.get("completion_tokens", 0) or 0),
             ),
             provider_request_id=str(data.get("id")) if data.get("id") else None,
+            usage_reported="usage" in data,
             raw_assistant_content=raw_content,
         )
 
@@ -214,12 +221,15 @@ class NVIDIAChatCompletionsAdapter(ModelAdapter):
                 value = json.loads(raw.decode("utf-8"))
                 if not isinstance(value, dict):
                     raise TypeError("response root is not an object")
-                return self._parse_response(value)
+                result = self._parse_response(value)
+                result.attempts = attempt + 1
+                return result
             except urllib.error.HTTPError as exc:
                 last_error = self._safe_error(exc.read(), exc.code)
             except urllib.error.URLError as exc:
                 last_error = ModelError(
                     f"NVIDIA network failure: {exc.reason}", retryable=True,
+                    category="connectivity_failure",
                 )
             except (json.JSONDecodeError, UnicodeDecodeError, KeyError, TypeError) as exc:
                 last_error = ModelError(
@@ -227,6 +237,7 @@ class NVIDIAChatCompletionsAdapter(ModelAdapter):
                     retryable=False,
                 )
             if not last_error.retryable or attempt + 1 >= self._attempts:
+                last_error.attempts = attempt + 1
                 raise last_error
             delay = self._base_delay * (2**attempt)
             delay += random.uniform(0, self._base_delay / 4 if self._base_delay else 0)
