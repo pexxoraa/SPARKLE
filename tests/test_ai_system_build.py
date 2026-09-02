@@ -95,6 +95,14 @@ class ControlledBuildTests(unittest.TestCase):
                     "path": "src/runtime_ai/__init__.py",
                     "content": "from .system import value\n",
                 },
+                {
+                    "path": "tests/test_runtime_ai.py",
+                    "content": (
+                        "import unittest\nfrom src.runtime_ai import value\n"
+                        "class RuntimeAI(unittest.TestCase):\n"
+                        "    def test_value(self): self.assertEqual(value(), 42)\n"
+                    ),
+                },
             ],
         )
         self.candidates.mark_generated(
@@ -182,6 +190,7 @@ class ControlledBuildTests(unittest.TestCase):
             "SPARKLE_ARTIFACT_MANIFEST.json",
             "src/runtime_ai/__init__.py",
             "src/runtime_ai/system.py",
+            "tests/test_runtime_ai.py",
         })
         serialized = json.dumps(result)
         self.assertNotIn("def value", serialized)

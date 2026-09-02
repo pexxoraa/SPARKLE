@@ -68,6 +68,7 @@ class ControlledBuildStore(SQLiteStore):
                     source_origin TEXT NOT NULL,
                     status TEXT NOT NULL,
                     trace_id TEXT NOT NULL,
+                    artifact_id INTEGER,
                     artifact_name TEXT,
                     artifact_sha256 TEXT,
                     artifact_bytes INTEGER,
@@ -87,6 +88,15 @@ class ControlledBuildStore(SQLiteStore):
                 CREATE INDEX IF NOT EXISTS idx_controlled_builds_promotion
                 ON controlled_builds(promotion_id, id);
             """)
+            columns = {
+                row["name"] for row in connection.execute(
+                    "PRAGMA table_info(controlled_builds)"
+                ).fetchall()
+            }
+            if "artifact_id" not in columns:
+                connection.execute(
+                    "ALTER TABLE controlled_builds ADD COLUMN artifact_id INTEGER"
+                )
 
     def approve(
         self,
@@ -221,6 +231,7 @@ class ControlledBuildStore(SQLiteStore):
             raise ValueError("Controlled build state is invalid")
         fields = {
             "artifact_name", "artifact_sha256", "artifact_bytes", "file_count",
+            "artifact_id",
             "error_type", "completed_at",
         }
         if set(values) - fields:
@@ -259,6 +270,15 @@ class ControlledBuildStore(SQLiteStore):
                 (max(1, min(limit, 100)),),
             ).fetchall()
         return [self._build(row) for row in rows]
+
+    def by_build_id(self, build_id: str) -> dict[str, Any]:
+        with self.connect() as connection:
+            row = connection.execute(
+                "SELECT * FROM controlled_builds WHERE build_id=?", (build_id,),
+            ).fetchone()
+            if row is None:
+                raise KeyError("Controlled build does not exist")
+            return self._with_events(connection, row)
 
     def list_approvals(self, *, limit: int = 50) -> list[dict[str, Any]]:
         with self.connect() as connection:
@@ -313,6 +333,7 @@ class ControlledBuildStore(SQLiteStore):
             "source_origin": row["source_origin"],
             "status": row["status"],
             "trace_id": row["trace_id"],
+            "artifact_id": row["artifact_id"],
             "artifact_name": row["artifact_name"],
             "artifact_sha256": row["artifact_sha256"],
             "artifact_bytes": row["artifact_bytes"],
@@ -596,6 +617,7 @@ class ControlledBuildService:
             result = self.store.transition(
                 build_id, "building", "built",
                 artifact_name=artifact["artifact_name"],
+                artifact_id=artifact["artifact_id"],
                 artifact_sha256=artifact["artifact_sha256"],
                 artifact_bytes=artifact["artifact_bytes"],
                 file_count=artifact["file_count"],

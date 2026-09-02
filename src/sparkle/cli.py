@@ -218,6 +218,24 @@ def build_parser() -> argparse.ArgumentParser:
         "ai-system-controlled-builds",
         help="List content-free controlled-build evidence",
     )
+    execution_approve = sub.add_parser(
+        "ai-system-execution-approve", help="Authorize one exact immutable build artifact for execution",
+    )
+    execution_approve.add_argument("build_id")
+    execution_approve.add_argument("actor")
+    execution_approve.add_argument("--timeout-seconds", type=int, default=10)
+    execution_approve.add_argument("--max-output-chars", type=int, default=12000)
+    execution_approve.add_argument("--source-origin", choices=("cli", "operator"), default="cli")
+    execution_approve.add_argument("--approve", action="store_true")
+    controlled_execution = sub.add_parser(
+        "ai-system-controlled-execute", help="Execute one authorized immutable build artifact",
+    )
+    controlled_execution.add_argument("contract")
+    controlled_execution.add_argument("--approve", action="store_true")
+    execution_cancel = sub.add_parser("ai-system-execution-cancel", help="Cancel a queued controlled execution")
+    execution_cancel.add_argument("execution_id")
+    execution_cancel.add_argument("--approve", action="store_true")
+    sub.add_parser("ai-system-controlled-executions", help="List content-free controlled-execution evidence")
     project_create = sub.add_parser(
         "project-create", help="Create a validated structured project record",
     )
@@ -618,6 +636,34 @@ def main(argv: list[str] | None = None) -> int:
             "controlled_build_eligibility": (
                 system.ai_system_controlled_builder.eligibility(limit=100)
             ),
+        })
+        return 0
+    if args.command == "ai-system-execution-approve":
+        authorization = system.ai_system_controlled_executor.approve(
+            args.build_id, actor=args.actor, source_origin=args.source_origin,
+            approved=bool(args.approve), timeout_seconds=args.timeout_seconds,
+            max_output_chars=args.max_output_chars,
+        )
+        _print({"ok": True, "controlled_execution_authorization": authorization})
+        return 0
+    if args.command == "ai-system-controlled-execute":
+        result = system.ai_system_controlled_executor.request(
+            _load_manifest(args.contract), approved=bool(args.approve),
+        )
+        _print({"ok": result["status"] == "verified", "controlled_execution": result})
+        return 0 if result["status"] == "verified" else 1
+    if args.command == "ai-system-execution-cancel":
+        result = system.ai_system_controlled_executor.cancel(
+            args.execution_id, approved=bool(args.approve),
+        )
+        _print({"ok": result["status"] == "cancelled", "controlled_execution": result})
+        return 0
+    if args.command == "ai-system-controlled-executions":
+        _print({
+            "ok": True, "protocol_version": system.ai_system_controlled_executor.PROTOCOL,
+            "controlled_executions": system.controlled_executions.list(limit=100),
+            "controlled_execution_authorizations": system.controlled_executions.list_authorizations(limit=100),
+            "execution_is_deployment": False,
         })
         return 0
     if args.command == "project-create":

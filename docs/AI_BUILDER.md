@@ -32,6 +32,20 @@ tree can become a deterministic content-addressed source-bundle artifact. The
 builder revalidates promotion lineage and staged content, but does not import
 or execute source, publish the artifact, deploy, or modify production source.
 
+v0.30 adds `SPARKLE-AI-SYSTEM-CONTROLLED-EXECUTION/1`. A successful build does
+not authorize execution. A separate expiring authorization binds the full
+authoritative lineage, immutable artifact identity, execution mode, timeout,
+output bound, actor, and origin. The execution controller verifies and extracts
+only that artifact, submits through the existing authenticated worker, records
+explicit lifecycle and failure states, and verifies the signed result. It does
+not publish, deploy, replace production, or turn `executed` into `deployed`.
+
+CLI operations are `ai-system-execution-approve`,
+`ai-system-controlled-execute`, `ai-system-execution-cancel`, and
+`ai-system-controlled-executions`. API operations are
+`POST /api/ai-systems/execution/approve`, `/request`, `/cancel`, and
+`GET /api/ai-system-controlled-executions`.
+
 ## Requirements contract
 
 The root object accepts only these fields:

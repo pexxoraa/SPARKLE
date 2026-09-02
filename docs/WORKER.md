@@ -31,6 +31,15 @@ still records `isolation_verified: false`: a signed claim is not independent
 proof. Changing that field requires a named deployment, captured preflight,
 hostile canary suite, and operator-reviewed evidence.
 
+Controlled execution uses `SPARKLE-WORKER-CONTROLLED-EXECUTION/1` over the same
+service, HMAC, replay store, fixed executor, and `/v1/jobs` route. Its strict
+context binds execution/request, artifact, build, promotion, candidate, plan,
+evaluation, authorization, and mode identities. The signed result adds worker
+identity, start/end timestamps, output digest, canonical result digest,
+output-limit state, and executable isolation evidence. The fixed signed policy
+is 512 MiB address space, CPU equal to the wall timeout, 32 processes, 5 MB
+workspace input, bounded output, and network disabled.
+
 ## Executor modes
 
 `bubblewrap` is the production default. Its readiness preflight creates a real
@@ -68,3 +77,7 @@ reported no filesystem/network isolation. The real Bubblewrap preflight ran
 and safely refused readiness because this build executor does not allow the
 required namespace setup. Therefore protocol integration is tested, but live
 hostile-code isolation and remote deployment remain blocked rather than passed.
+On the v0.30 build host Bubblewrap 0.9.0 exists, but the executable preflight
+returns `IsolationPreflightFailed` because namespace setup is denied. Therefore
+Level 3 is blocked and `isolation_verified` remains false; this is not reported
+as a missing binary or as a pass.

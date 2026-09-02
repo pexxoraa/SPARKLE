@@ -7,7 +7,7 @@ registry, provider adapters, specialist agents, persistent memory, a separate
 knowledge index, execution traces, automations, proactive rules, a CLI, an HTTP
 API, and a local dashboard.
 
-Current release: `0.29.0-alpha.1`. This is a tested foundation release, not the
+Current release: `0.30.0-alpha.1`. This is a tested foundation release, not the
 final system described in the long-term Definition of Done. See
 [`docs/BUILD_STATE.md`](docs/BUILD_STATE.md) and
 [`docs/ACCEPTANCE.md`](docs/ACCEPTANCE.md) for exact evidence and gaps.
@@ -93,6 +93,11 @@ final system described in the long-term Definition of Done. See
   SHA-256 manifests, immutable integrity checks, portable-path validation, and
   explicit approval. Append-only deployment events remain unverified evidence;
   they do not execute or claim an external deployment.
+- Controlled execution authorizes one exact immutable controlled-build artifact,
+  verifies and safely extracts it, submits it through the authenticated worker,
+  and verifies an identity-bound result. Execution, verification, publication,
+  deployment, and production modification remain distinct states. Local worker
+  execution is demonstrated; Bubblewrap isolation is not verified on this host.
 - Text/Markdown/source-code ingestion; optional PDF and DOCX ingestion.
 - Dashboard and JSON API served with Python's standard library.
 - Optional secret-resolved bearer authentication, exact origin controls, and
@@ -148,6 +153,8 @@ The multimodal contract is specified in
 [`docs/MULTIMODAL.md`](docs/MULTIMODAL.md).
 Worker deployment and security evidence are documented in
 [`docs/WORKER.md`](docs/WORKER.md).
+Controlled execution contracts, lifecycle, limits, and evidence levels are in
+[`docs/EXECUTION.md`](docs/EXECUTION.md).
 Dashboard notification contracts are documented in
 [`docs/NOTIFICATIONS.md`](docs/NOTIFICATIONS.md).
 Structured project contracts are documented in

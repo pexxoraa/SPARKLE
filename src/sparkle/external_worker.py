@@ -36,6 +36,7 @@ class ExternalWorkerClient(SQLiteStore):
     """Submits one fixed test operation to an explicitly configured HTTPS worker."""
 
     PROTOCOL = "SPARKLE-WORKER/1"
+    EXECUTION_PROTOCOL = "SPARKLE-WORKER-CONTROLLED-EXECUTION/1"
     OPERATION = "python_unittest"
     MAX_FILES = 500
     MAX_TOTAL_BYTES = 5_000_000
@@ -50,6 +51,11 @@ class ExternalWorkerClient(SQLiteStore):
     _SANDBOX_FIELDS = {
         "worker_id", "filesystem_isolation", "network_isolation", "ephemeral",
         "resource_limits",
+    }
+    _EXECUTION_RESPONSE_FIELDS = _RESPONSE_FIELDS | {
+        "execution_context", "worker_id", "started_at", "completed_at",
+        "output_sha256", "result_digest", "output_limited",
+        "isolation_evidence",
     }
     _SENSITIVE_PARTS = {
         ".git", ".ssh", ".env", "secrets", "credentials", "id_rsa", "id_ed25519",
@@ -270,6 +276,7 @@ class ExternalWorkerClient(SQLiteStore):
 
     def _validate_response(
         self, response: Any, body: bytes, *, key: bytes, expected_job_id: str,
+        expected_context: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         status_code = response.getcode() if hasattr(response, "getcode") else None
         if status_code != 200:
@@ -298,9 +305,14 @@ class ExternalWorkerClient(SQLiteStore):
             value = json.loads(body.decode("utf-8"))
         except (UnicodeDecodeError, json.JSONDecodeError) as exc:
             raise ExternalWorkerError("External worker response is not valid UTF-8 JSON") from exc
-        if not isinstance(value, dict) or set(value) != self._RESPONSE_FIELDS:
+        fields = (
+            self._EXECUTION_RESPONSE_FIELDS
+            if expected_context is not None else self._RESPONSE_FIELDS
+        )
+        if not isinstance(value, dict) or set(value) != fields:
             raise ExternalWorkerError("External worker response schema is invalid")
-        if value["protocol_version"] != self.PROTOCOL or value["job_id"] != expected_job_id:
+        expected_protocol = self.EXECUTION_PROTOCOL if expected_context is not None else self.PROTOCOL
+        if value["protocol_version"] != expected_protocol or value["job_id"] != expected_job_id:
             raise ExternalWorkerError("External worker response identity is invalid")
         if value["status"] not in {"passed", "failed"}:
             raise ExternalWorkerError("External worker response status is invalid")
@@ -329,8 +341,35 @@ class ExternalWorkerClient(SQLiteStore):
         ):
             raise ExternalWorkerError("External worker sandbox claims are invalid")
         passed = returncode == 0 and not timed_out
+        if expected_context is not None and value.get("output_limited"):
+            passed = False
         if (value["status"] == "passed") != passed:
             raise ExternalWorkerError("External worker response status is inconsistent")
+        if expected_context is not None:
+            if value["execution_context"] != expected_context:
+                raise ExternalWorkerError("External worker execution identity is invalid")
+            if value["worker_id"] != sandbox["worker_id"]:
+                raise ExternalWorkerError("External worker result identity is invalid")
+            if not all(isinstance(value[name], str) and value[name] for name in (
+                "started_at", "completed_at", "output_sha256", "result_digest",
+            )) or not isinstance(value["output_limited"], bool):
+                raise ExternalWorkerError("External worker result values are invalid")
+            isolation = value["isolation_evidence"]
+            if (
+                not isinstance(isolation, dict)
+                or set(isolation) != {"executor_mode", "preflight_passed", "hostile_canaries_passed"}
+                or not isinstance(isolation["executor_mode"], str)
+                or not isinstance(isolation["preflight_passed"], bool)
+                or not isinstance(isolation["hostile_canaries_passed"], bool)
+            ):
+                raise ExternalWorkerError("External worker isolation evidence is invalid")
+            if hashlib.sha256(output.encode("utf-8")).hexdigest() != value["output_sha256"]:
+                raise ExternalWorkerError("External worker output digest is invalid")
+            digest_value = dict(value)
+            result_digest = digest_value.pop("result_digest")
+            calculated = hashlib.sha256(self._canonical_json(digest_value)).hexdigest()
+            if not hmac.compare_digest(result_digest, calculated):
+                raise ExternalWorkerError("External worker result digest is invalid")
         value["output"] = self._safe_output(output)
         value["duration_ms"] = round(float(duration_ms), 2)
         return value
@@ -399,6 +438,25 @@ class ExternalWorkerClient(SQLiteStore):
             max_output_chars=output_limit,
         )
 
+    def run_controlled_execution(
+        self,
+        project_name: str,
+        workspace: Path,
+        *,
+        execution_context: dict[str, Any],
+        timeout_seconds: int,
+        max_output_chars: int,
+    ) -> dict[str, Any]:
+        """Submit a verified artifact snapshot with exact execution identities."""
+        if not isinstance(execution_context, dict):
+            raise ValueError("Controlled execution context is invalid")
+        if workspace.is_symlink() or not workspace.is_dir():
+            raise ValueError("Controlled execution workspace is invalid")
+        return self._run(
+            project_name, workspace.resolve(), timeout_seconds=timeout_seconds,
+            max_output_chars=max_output_chars, execution_context=execution_context,
+        )
+
     def run(self, project_name: str) -> dict[str, Any]:
         return self._run(project_name, self._project_root(project_name))
 
@@ -409,6 +467,7 @@ class ExternalWorkerClient(SQLiteStore):
         *,
         timeout_seconds: int | None = None,
         max_output_chars: int | None = None,
+        execution_context: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         if not self.enabled:
             raise ExternalWorkerError(
@@ -428,7 +487,9 @@ class ExternalWorkerClient(SQLiteStore):
         if not re.fullmatch(r"SPK-WRK-[A-F0-9]{32}", job_id):
             raise ExternalWorkerError("External worker job identifier is invalid")
         payload = {
-            "protocol_version": self.PROTOCOL,
+            "protocol_version": (
+                self.EXECUTION_PROTOCOL if execution_context is not None else self.PROTOCOL
+            ),
             "job_id": job_id,
             "operation": self.OPERATION,
             "project_name": project_name,
@@ -441,6 +502,15 @@ class ExternalWorkerClient(SQLiteStore):
             },
             "files": files,
         }
+        if execution_context is not None:
+            payload["execution_context"] = execution_context
+            payload["limits"].update({
+                "memory_bytes": 512 * 1024 * 1024,
+                "cpu_seconds": timeout_seconds or self.job_timeout_seconds,
+                "max_processes": 32,
+                "max_workspace_bytes": self.MAX_TOTAL_BYTES,
+                "network_policy": "disabled",
+            })
         body = self._canonical_json(payload)
         if len(body) > self.max_payload_bytes:
             raise ValueError("External worker request exceeds the serialized payload bound")
@@ -465,6 +535,7 @@ class ExternalWorkerClient(SQLiteStore):
                     raise ExternalWorkerError("External worker response exceeds its size bound")
                 value = self._validate_response(
                     response, response_body, key=signing_key, expected_job_id=job_id,
+                    expected_context=execution_context,
                 )
         except ExternalWorkerError as exc:
             self._record(
@@ -508,7 +579,19 @@ class ExternalWorkerClient(SQLiteStore):
             "total_bytes": total_bytes,
             "response_verified": True,
             "sandbox_claims": value["sandbox"],
-            "isolation_verified": False,
+            "isolation_verified": bool(
+                value.get("isolation_evidence", {}).get("preflight_passed")
+                and value.get("isolation_evidence", {}).get("hostile_canaries_passed")
+                and value["sandbox"].get("filesystem_isolation")
+                and value["sandbox"].get("network_isolation")
+            ),
+            "execution_context": value.get("execution_context"),
+            "worker_id": value.get("worker_id"),
+            "started_at": value.get("started_at"),
+            "completed_at": value.get("completed_at"),
+            "output_sha256": value.get("output_sha256"),
+            "result_digest": value.get("result_digest"),
+            "output_limited": bool(value.get("output_limited", False)),
             "created_at": created_at,
         }
 

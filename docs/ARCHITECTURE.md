@@ -101,6 +101,19 @@ source-bundle ZIP in `build_environment/artifacts`. Its independent store and
 traces contain identities, digests, lifecycle states, sizes, and bounded error
 types—not source. It never imports or executes promoted code and cannot publish,
 deploy, or modify application/production workspaces.
+
+Controlled execution is the next independent boundary. A separate authorization
+binds the exact controlled build, artifact ID/digest, promotion, candidate,
+implementation plan, evaluation, execution mode, timeout, output limit, actor,
+and origin. The controller never executes staging or caller-selected paths. It
+opens the controlled-build ZIP as a stable regular file, verifies the archive
+and canonical manifest, safely extracts regular UTF-8 entries into an ephemeral
+execution workspace, rechecks the archive immediately before handoff, and then
+uses the existing HMAC-authenticated worker service. The worker request also
+binds fixed memory, CPU, process, workspace, and disabled-network policy. Its
+signed result binds the execution context, worker, timestamps, status, output
+digest, and result digest. Result verification is separate from isolation
+verification, and both are separate from publication and deployment.
 An independent artifact manager reads bounded application workspaces and emits
 deterministic content-addressed ZIPs; it never starts an executable.
 The automation service is another independent entrypoint over the existing

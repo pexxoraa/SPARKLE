@@ -29,6 +29,7 @@ from sparkle.ai_system_build import (
     ControlledBuildService,
     ControlledBuildStore,
 )
+from sparkle.ai_system_execution import ControlledExecutionService, ControlledExecutionStore
 from sparkle.artifacts import ArtifactManager
 from sparkle.automation import AutomationRunner, AutomationStore, ProactiveEngine
 from sparkle.builders import WorkspaceManager
@@ -227,6 +228,13 @@ class SparkleSystem:
             self.controlled_builds,
             self.controlled_build_workspace,
         )
+        self.controlled_executions = ControlledExecutionStore()
+        self.ai_system_controlled_executor = ControlledExecutionService(
+            self.controlled_builds, self.controlled_build_workspace,
+            self.source_promotions, self.source_candidates,
+            self.ai_system_implementation_plans, self.runtime_evaluations,
+            self.traces, self.controlled_executions, self.external_worker,
+        )
         self.agent_evaluations = AgentEvaluationStore()
         self.agent_evaluator = AgentResponseEvaluator(
             self.agent_builder,
@@ -246,7 +254,7 @@ class SparkleSystem:
         models = self.models.list()
         return {
             "name": "SPARKLE",
-            "version": "0.29.0-alpha.1",
+            "version": "0.30.0-alpha.1",
             "status": "ready" if any(model["configured"] for model in models) else "limited",
             "active_model": self.models.active_id,
             "models": models,
@@ -299,6 +307,14 @@ class SparkleSystem:
                 "controlled_build_protocol_version": (
                     self.ai_system_controlled_builder.PROTOCOL
                 ),
+                "controlled_executions": len(self.controlled_executions.list(limit=100)),
+                "controlled_execution_authorizations": len(
+                    self.controlled_executions.list_authorizations(limit=100)
+                ),
+                "controlled_execution_protocol_version": (
+                    self.ai_system_controlled_executor.PROTOCOL
+                ),
+                "execution_is_deployment": False,
             },
             "tools": self.tools.status(),
             "api_security": {

@@ -29,7 +29,7 @@ MAX_MULTIMODAL_BODY_BYTES = 12_000_000
 class SparkleHandler(BaseHTTPRequestHandler):
     system: SparkleSystem
     dashboard_root = Path(__file__).with_name("dashboard")
-    server_version = "SPARKLE/0.29"
+    server_version = "SPARKLE/0.30"
 
     def log_message(self, format: str, *args: object) -> None:
         # Avoid request bodies, headers, query values, and secrets in logs.
@@ -368,6 +368,14 @@ class SparkleHandler(BaseHTTPRequestHandler):
                 "controlled_build_eligibility": (
                     self.system.ai_system_controlled_builder.eligibility(limit=limit)
                 ),
+            })
+        if parsed.path == "/api/ai-system-controlled-executions":
+            limit = int(query.get("limit", [50])[0])
+            return self._json({
+                "protocol_version": self.system.ai_system_controlled_executor.PROTOCOL,
+                "controlled_executions": self.system.controlled_executions.list(limit=limit),
+                "controlled_execution_authorizations": self.system.controlled_executions.list_authorizations(limit=limit),
+                "execution_is_deployment": False,
             })
         if parsed.path == "/api/memory":
             return self._json({"memories": self.system.memory.search(query.get("q", [""])[0], limit=int(query.get("limit", [20])[0]))})
@@ -827,6 +835,34 @@ class SparkleHandler(BaseHTTPRequestHandler):
                     "ok": result["status"] == "built",
                     "controlled_build": result,
                 }, status)
+            if self.path == "/api/ai-systems/execution/approve":
+                if set(data) - {"build_id", "actor", "approved", "timeout_seconds", "max_output_chars"}:
+                    raise ValueError("Controlled execution authorization fields are unsupported")
+                authorization = self.system.ai_system_controlled_executor.approve(
+                    data.get("build_id"), actor=data.get("actor"),
+                    source_origin="authenticated_api", approved=data.get("approved") is True,
+                    timeout_seconds=data.get("timeout_seconds", 10),
+                    max_output_chars=data.get("max_output_chars", 12000),
+                )
+                return self._json({"ok": True, "controlled_execution_authorization": authorization}, 201)
+            if self.path == "/api/ai-systems/execution/request":
+                if set(data) - {"contract", "approved"}:
+                    raise ValueError("Controlled execution request fields are unsupported")
+                contract = data.get("contract")
+                if not isinstance(contract, dict) or contract.get("source_origin") != "authenticated_api":
+                    raise ValueError("API execution contract must use authenticated_api")
+                result = self.system.ai_system_controlled_executor.request(
+                    contract, approved=data.get("approved") is True,
+                )
+                status = 201 if result["status"] == "verified" else 422
+                return self._json({"ok": result["status"] == "verified", "controlled_execution": result}, status)
+            if self.path == "/api/ai-systems/execution/cancel":
+                if set(data) - {"execution_id", "approved"}:
+                    raise ValueError("Controlled execution cancellation fields are unsupported")
+                result = self.system.ai_system_controlled_executor.cancel(
+                    data.get("execution_id"), approved=data.get("approved") is True,
+                )
+                return self._json({"ok": True, "controlled_execution": result})
             if self.path == "/api/agents/remove":
                 if data.get("approved") is not True:
                     raise ValueError("Agent removal requires explicit approval")

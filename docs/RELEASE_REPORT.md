@@ -1,6 +1,51 @@
-# 0.29.0-alpha.1 verification report
+# 0.30.0-alpha.1 verification report
 
 Date: 2026-09-01 UTC
+
+## Controlled immutable-artifact execution
+
+- `SPARKLE-AI-SYSTEM-CONTROLLED-EXECUTION/1` is implemented after controlled
+  build. A successful build is insufficient authorization. A separate one-use,
+  expiring authorization binds build, artifact ID/digest, promotion, candidate,
+  implementation plan, successful evaluation, mode, timeout, output limit,
+  actor, and origin.
+- The controller accepts no source-tree or staging path. It reloads the
+  authoritative chain, rejects invalidated/superseded artifacts, opens the ZIP
+  as a stable regular file, verifies record/digest/manifest/entries, safely
+  extracts to an ephemeral workspace, and rechecks the archive immediately
+  before submission.
+- The existing worker boundary is extended, not duplicated. The v0.30 envelope
+  reuses HMAC authentication/freshness, strict schemas, replay storage, fixed
+  unittest execution, timeout/process-group termination, output limits,
+  minimal environment, POSIX rlimits, and cleanup. Its signed result binds the
+  execution/request and artifact lineage, worker ID, status, output digest,
+  canonical result digest, timestamps, and isolation evidence.
+- API, CLI, status, dashboard, and content-free traces distinguish BUILD,
+  EXECUTION, VERIFICATION, and DEPLOYMENT. A verified execution never publishes,
+  deploys, replaces production, or claims production state.
+
+## Evidence levels
+
+- Level 1 — contract implemented: **yes**.
+- Level 2 — genuine local worker execution: **yes**, through the real service,
+  HMAC request/response path, fixed process executor, result verifier, and
+  ephemeral cleanup. This is functional worker evidence, not hostile isolation.
+- Level 3 — independently executable isolation evidence: **blocked on this
+  host**. Bubblewrap 0.9.0 is installed, but the real hostile-canary preflight
+  returns `IsolationPreflightFailed` because namespace setup is denied. The
+  preflight safely tests host read/write, process-root view, secret environment,
+  outbound network, and workspace boundary. No isolation pass is claimed.
+
+The final local suite passed 269/269 in 26.130 seconds. Controlled execution
+passed 8/8 in 0.484 seconds; runtime/worker 29/29 in 3.779 seconds; promotion
+12/12 in 0.237 seconds; build 11/11 in 0.294 seconds. Dashboard JavaScript,
+whitespace, secret, generated-artifact, symlink, and oversized-file audits
+passed. A fresh no-index `0.30.0a1` wheel installed without dependencies and
+passed version/status, controlled-execution protocol, empty execution evidence,
+no-deployment status, CLI, and worker-help checks. Wheel SHA-256:
+`e433bcea37ccbca85ca7bf5e8b3cbfb2e0f9835f448a1e12ad3f7561358f21a2`.
+Publication commits/tree, exact remote HEAD, and the new GitHub CI run are
+recorded only after those gates complete.
 
 ## Promotion-bound controlled build
 

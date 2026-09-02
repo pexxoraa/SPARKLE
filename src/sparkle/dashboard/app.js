@@ -91,6 +91,8 @@ async function refresh() {
       metric('Promotion approvals', state.ai_systems.source_promotion_approvals),
       metric('Controlled builds', state.ai_systems.controlled_builds),
       metric('Build approvals', state.ai_systems.controlled_build_approvals),
+      metric('Controlled executions', state.ai_systems.controlled_executions),
+      metric('Execution authorizations', state.ai_systems.controlled_execution_authorizations),
       metric('Active projects', state.projects.active),
       metric('Blocked projects', state.projects.blocked),
       metric('Automation runs', state.automation.recent_runs),
@@ -191,9 +193,10 @@ async function loadPanel(panel) {
       : empty('No external worker submissions recorded yet.');
   }
   if (panel === 'releases') {
-    const [promotionData, buildData, artifactData, deploymentData] = await Promise.all([
+    const [promotionData, buildData, executionData, artifactData, deploymentData] = await Promise.all([
       api('/api/ai-system-source-promotions?limit=50'),
       api('/api/ai-system-controlled-builds?limit=50'),
+      api('/api/ai-system-controlled-executions?limit=50'),
       api('/api/artifacts?limit=50'),
       api('/api/deployments?limit=50'),
     ]);
@@ -217,6 +220,11 @@ async function loadPanel(panel) {
         `<div class="list-item"><strong>${escapeHtml(item.promotion_id)} · ${escapeHtml(item.state)}</strong><small>${escapeHtml(item.reason || 'all current gates satisfied')} · source executed ${escapeHtml(item.source_executed)}</small></div>`
       )).join('')
       : empty('No promotions available for controlled-build assessment.');
+    qs('#controlledExecutionList').innerHTML = executionData.controlled_executions.length
+      ? executionData.controlled_executions.map((execution) => (
+        `<div class="list-item"><strong>${escapeHtml(execution.execution_id)} · ${escapeHtml(execution.status)}</strong><small>artifact ${escapeHtml(execution.artifact_id)} · build ${escapeHtml(execution.build_id)} · verified ${escapeHtml(execution.verification_complete)} · deployed ${escapeHtml(execution.deployed)} · production modified ${escapeHtml(execution.production_modified)}</small></div>`
+      )).join('')
+      : empty('No controlled executions recorded. Build, execution, verification, and deployment remain separate.');
     qs('#artifactList').innerHTML = artifactData.artifacts.length
       ? artifactData.artifacts.map((artifact) => (
         `<div class="list-item"><strong>${escapeHtml(artifact.project_name)} · ${escapeHtml(artifact.status)}</strong><small>${escapeHtml(artifact.file_count)} files · SHA-256 ${escapeHtml(artifact.artifact_sha256)}</small></div>`

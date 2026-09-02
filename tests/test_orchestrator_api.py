@@ -158,11 +158,25 @@ class APITests(SystemCase):
             status["controlled_build_protocol_version"],
             self.system.ai_system_controlled_builder.PROTOCOL,
         )
+        self.assertEqual(status["controlled_executions"], 0)
+        self.assertEqual(status["controlled_execution_authorizations"], 0)
+        self.assertFalse(status["execution_is_deployment"])
+        self.assertEqual(
+            status["controlled_execution_protocol_version"],
+            self.system.ai_system_controlled_executor.PROTOCOL,
+        )
         code, _, body = self.request("/api/ai-system-controlled-builds?limit=10")
         self.assertEqual(code, 200)
         payload = json.loads(body)
         self.assertEqual(payload["controlled_builds"], [])
         self.assertEqual(payload["controlled_build_eligibility"], [])
+        execution_code, _, execution_body = self.request(
+            "/api/ai-system-controlled-executions?limit=10"
+        )
+        self.assertEqual(execution_code, 200)
+        execution_payload = json.loads(execution_body)
+        self.assertEqual(execution_payload["controlled_executions"], [])
+        self.assertFalse(execution_payload["execution_is_deployment"])
         self.assertEqual(self.request(
             "/api/ai-systems/build/approve",
             {
@@ -170,6 +184,10 @@ class APITests(SystemCase):
                 "actor": "build.operator",
                 "approved": True,
             },
+        )[0], 400)
+        self.assertEqual(self.request(
+            "/api/ai-systems/execution/approve",
+            {"build_id": "SPK-BUILD-MISSING", "actor": "execution.operator", "approved": True},
         )[0], 400)
 
     def test_external_worker_route_is_operator_approved(self):
@@ -412,6 +430,7 @@ class APITests(SystemCase):
         self.assertNotIn(b"localStorage", script)
         self.assertNotIn(b"sessionStorage", script)
         self.assertIn(b"/api/artifacts?limit=50", script)
+        self.assertIn(b"/api/ai-system-controlled-executions?limit=50", script)
         self.assertIn(b"/api/proactive", script)
         self.assertIn(b"/api/notifications", script)
         self.assertIn(b"/api/projects?limit=50", script)
@@ -420,6 +439,7 @@ class APITests(SystemCase):
         self.assertIn(b'projectList', body)
         self.assertIn(b'skillList', body)
         self.assertIn(b"Artifacts & deployment", body)
+        self.assertIn(b"Controlled execution & verification", body)
         self.assertIn(b"Evidence-backed proactive alerts", body)
 
     def test_dashboard_notification_delivery_list_and_read_api(self):

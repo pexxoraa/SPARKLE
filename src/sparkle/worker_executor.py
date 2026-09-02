@@ -41,6 +41,7 @@ class WorkerJob:
     max_output_chars: int
     files: tuple[WorkerSourceFile, ...]
     request_hash: str
+    execution_context: dict[str, Any] | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -51,6 +52,7 @@ class ExecutorResult:
     output: str
     duration_ms: float
     sandbox: dict[str, Any]
+    output_limited: bool = False
 
 
 class FixedUnittestExecutor:
@@ -87,6 +89,7 @@ class FixedUnittestExecutor:
             "ephemeral_workspace": True,
             "resource_limits": os.name == "posix",
             "unsafe_process_mode": True,
+            "hostile_canaries_passed": False,
             "failure_type": None if available else "UnsafeProcessExecutorDisabled",
         }
 
@@ -164,6 +167,7 @@ class FixedUnittestExecutor:
                 output_file.seek(0)
                 output = output_file.read(job.max_output_chars + 1)
         duration_ms = round((time.monotonic() - started) * 1000, 2)
+        output_limited = len(output or "") > job.max_output_chars
         safe_output = ExternalWorkerClient._safe_output(output or "")[
             : job.max_output_chars
         ]
@@ -175,6 +179,7 @@ class FixedUnittestExecutor:
             output=safe_output,
             duration_ms=duration_ms,
             sandbox=self._sandbox_claims(worker_id),
+            output_limited=output_limited,
         )
 
 
@@ -272,18 +277,30 @@ class BubblewrapExecutor(FixedUnittestExecutor):
         ):
             self._failure_type = "ExecutorDependencyUnavailable"
             return False
-        probe = (
-            "import os,socket,sys;"
-            "canary=sys.argv[1];"
-            "assert not os.path.exists(canary);"
-            "assert set(os.environ)<=set(sys.argv[2].split(','));"
-            "s=socket.socket();s.settimeout(0.2);"
-            "result=0;"
-            "\ntry:s.connect(('1.1.1.1',53));result=1"
-            "\nexcept OSError:pass"
-            "\nfinally:s.close()"
-            "\nraise SystemExit(result)"
-        )
+        probe = """
+import os, socket, sys
+canary, allowed = sys.argv[1], set(sys.argv[2].split(','))
+assert not os.path.exists(canary)
+assert not os.path.exists('/proc/1/root' + canary)
+assert set(os.environ) <= allowed
+assert 'SPARKLE_WORKER_SIGNING_KEY' not in os.environ
+for path in (canary, '/escape-canary'):
+    try:
+        with open(path, 'wb') as handle: handle.write(b'blocked')
+    except OSError:
+        pass
+    else:
+        raise SystemExit(2)
+s = socket.socket(); s.settimeout(0.2)
+try:
+    s.connect(('1.1.1.1', 53))
+except OSError:
+    pass
+else:
+    raise SystemExit(3)
+finally:
+    s.close()
+"""
         with tempfile.TemporaryDirectory(prefix="sparkle-preflight-") as directory:
             root = Path(directory)
             workspace = root / "workspace"
@@ -329,6 +346,7 @@ class BubblewrapExecutor(FixedUnittestExecutor):
             "resource_limits": os.name == "posix",
             "unsafe_process_mode": False,
             "failure_type": self._failure_type,
+            "hostile_canaries_passed": available,
         }
 
     def _sandbox_claims(self, worker_id: str) -> dict[str, Any]:

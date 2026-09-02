@@ -4,14 +4,14 @@ Updated: 2026-09-01 UTC
 
 | Field | State |
 |---|---|
-| SPARKLE version | 0.29.0-alpha.1 |
-| Current phase | Continuous improvement — Phase 20/21 promotion-bound controlled build |
-| Current task | Reconcile published controlled-build and CI evidence without extending it into source execution, publication, or deployment |
+| SPARKLE version | 0.30.0-alpha.1 |
+| Current phase | Continuous improvement — controlled immutable-artifact execution |
+| Current task | Verify and publish `SPARKLE-AI-SYSTEM-CONTROLLED-EXECUTION/1` without conflating execution with deployment |
 | Completed | v0.3-v0.22 capability releases and four-job CI; v0.23 capability publication and four-job CI; model abstraction/registry/MiniMax adapter; orchestrator/context/tracing; memory and knowledge lifecycle with backup; 16 built-in agents; persistent generated-agent installation; bounded structured Agent Blueprint generation/static routing evaluation/approval/rollback; isolated response-contract evaluation with bounded content-free evidence; provider-neutral AI System Blueprints; approval-gated `SPARKLE-AI-SYSTEM-DRAFT/1` natural-language conversion through the model router with isolated no-context/no-tool execution, exact duplicate-free JSON and full Blueprint revalidation, bounded content-free evidence, API/CLI/status/dashboard integration, and deterministic adapter tests; `SPARKLE-PROJECT/1` strict project lifecycle and evidence; `SPARKLE-SKILL/1` strict targets/evidence types/transactional derived levels/duplicate and future-evidence protection/optimistic metadata/archive/content-free proactive and least-privilege agent reads/API/CLI/status/dashboard integration; bounded workspaces/static verification/fixed local tests; signed external-worker client and deployable worker; reproducible approval-gated application artifacts; supervised automation service; bounded dashboard notifications; safe tools; text API/CLI/dashboard; bearer/session/CSRF/origin/rate/audit security; provider-neutral deterministic text/image/audio/document content contracts; dedicated voice/presence contracts; 16-agent matrix; documentation audit; cohesive E2E |
-| In progress | v0.29 adds provider-neutral `SPARKLE-AI-SYSTEM-CONTROLLED-BUILD/1`: a separate expiring approval bound to the exact completed promotion, actor, and origin; promotion/candidate/destination digest revalidation; deterministic content-addressed source-bundle creation; immutable artifact verification; replay/race protection; content-free lifecycle/trace evidence; and API/CLI/status/dashboard integration. The verified capability is published at commit `0caff6c7ab1ffcf149edf052f1119a371a2ea326`, tree `d3afe3ede6252996c6663f428839378cb9c8d0bf`; SPARKLE CI run #56 passed Python 3.12, Python 3.13, worker-image, and automation-service |
+| In progress | v0.30 adds provider-neutral `SPARKLE-AI-SYSTEM-CONTROLLED-EXECUTION/1`: separate expiring authorization bound to exact build/artifact/promotion/candidate/plan/evaluation identities and limits; immutable ZIP verification and safe extraction; the existing HTTPS/HMAC worker boundary; signed result identity/digest verification; distinct lifecycle failures; API/CLI/status/dashboard integration; and explicit no-deployment state. Local Level 2 execution is demonstrated. The fresh local gate passed 269/269; execution 8/8; runtime/worker 29/29; promotion 12/12; build 11/11; dashboard, whitespace, package/install, secret, generated-artifact, symlink, and oversized-file audits passed. Publication and new CI evidence remain pending. |
 | Blocked | Real Bubblewrap isolation on this executor (namespace setup denied); named remote worker/TLS target and live hostile-code validation; live MiniMax call (no key in build process); semantic non-text provider mapping; voice hardware; browser/computer runtime adapters; public application deployment target |
 | Failed tests | The first v0.26 full run executed all 228 tests; 227 passed and the documentation version contract failed because BUILD_STATE still said v0.25 while package metadata had advanced to v0.26. This expected reconciliation-order failure is now corrected. Earlier historical harness and fixture failures remain recorded in the release report |
-| Next action | Controlled build is reconciled. Keep source execution, artifact publication, and deployment as later separate stages; do not merge their trust boundaries |
+| Next action | Complete v0.30 verification and publish normally; independently demonstrate Bubblewrap hostile-canary isolation on a namespace-capable worker before claiming Level 3 |
 | Estimated directive completion | 93% |
 
 The v0.28 controlled-promotion boundary accepts only an approved immutable
@@ -35,6 +35,18 @@ or failed evidence. Identical replays are deterministic; conflicting requests,
 stale or mismatched approvals, promotion tampering, and archive integrity
 failures fail closed. This boundary does not import or execute promoted source,
 publish an artifact, deploy a target, or modify production source.
+
+The v0.30 controlled-execution boundary accepts only a `built` controlled-build
+record and a new unexpired authorization bound to the exact artifact ID and
+digest, full promotion lineage, requested mode, timeout, output limit, actor,
+and origin. It revalidates the authoritative chain, artifact database record,
+regular-file identity, ZIP digest, manifest, entry paths, entry types, sizes,
+and per-file digests. It rechecks the artifact immediately before submitting an
+ephemeral extracted snapshot through the existing authenticated worker. The
+signed result binds execution ID, request ID, artifact digest, worker identity,
+status, output digest, result digest, and timestamps. `VERIFIED` means the
+controlled execution result was authenticated and internally consistent; it
+does not mean published, deployed, production, or isolation-verified.
 
 Release-state reconciliation confirmed local v0.24 implementation at commit
 `e5895087e082287df197f4e5c27b925f6dbe4a4d`, tree

@@ -53,6 +53,19 @@
   writes exact bytes only through a locked temporary tree and atomic rename
   into `promotion_environment/staging`. It records no source or secret and
   cannot build, package, publish, deploy, or modify production source.
+- Controlled execution requires a separate expiring authorization after build.
+  It binds every authoritative lineage identity plus timeout/output policy,
+  rejects invalidated or superseded artifacts, validates the immutable archive
+  and every extracted entry, and rechecks the archive immediately before the
+  worker handoff. Requests and responses are HMAC-authenticated and freshness
+  checked; worker replay storage and controller request identity prevent silent
+  duplicate or conflicting execution. The child receives a minimal environment
+  and no SPARKLE credentials. Network policy is disabled by default.
+- Process-mode execution is Level 2 functional evidence, not hostile-code
+  isolation. Level 3 requires the real Bubblewrap preflight and harmless
+  filesystem-write, host-read, environment-secret, network, and process-root
+  canaries to pass on the deployed worker. They fail closed on this host because
+  namespace creation is denied.
 - Application scaffolding requires explicit approval, confines every path to a
   dedicated application root, rejects traversal and symlinks, enforces file and
   manifest size limits, and protects existing files by default.

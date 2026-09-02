@@ -432,3 +432,22 @@ The capability is published at commit
 `d3afe3ede6252996c6663f428839378cb9c8d0bf`. SPARKLE CI run #56
 (`33545518032`) passed Python 3.12, Python 3.13, worker-image, and
 automation-service on that commit.
+
+The v0.30 Controlled Execution increment adds focused positive and negative
+coverage for immutable-artifact execution through the real local worker service,
+full identity and authorization binding, stale authorization, request replay,
+artifact tampering and invalidation, safe extraction/path enforcement, signed
+result identity/digest verification, distinct timeout/output/execution/result
+failures, CLI evidence, cleanup, and the no-deployment boundary. Worker coverage
+also exercises the strict v0.30 envelope, fixed resource/network policy, HMAC
+authentication, replay storage, output-limit signaling, and executable
+Bubblewrap hostile-canary preflight. Bubblewrap 0.9.0 is present locally but
+its real preflight fails namespace setup; isolation evidence remains blocked,
+not passed. The final local suite passed 269/269 in 26.130 seconds. Controlled
+execution passed 8/8 in 0.484 seconds; runtime/worker passed 29/29 in 3.779
+seconds; promotion passed 12/12 in 0.237 seconds; build passed 11/11 in 0.294
+seconds. Dashboard JavaScript, whitespace, secret, generated-artifact, symlink,
+and oversized-file audits passed. A fresh no-index `0.30.0a1` wheel installed
+without dependencies and passed version/status, controlled-execution protocol,
+empty execution evidence, no-deployment status, CLI, and worker-help checks.
+Its SHA-256 is `e433bcea37ccbca85ca7bf5e8b3cbfb2e0f9835f448a1e12ad3f7561358f21a2`.

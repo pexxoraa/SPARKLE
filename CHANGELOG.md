@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.30.0-alpha.1 - 2026-09-01
+
+- Added `SPARKLE-AI-SYSTEM-CONTROLLED-EXECUTION/1` with a separate expiring
+  authorization bound to the exact immutable artifact and authoritative lineage.
+- Added stable archive verification, safe ephemeral extraction, last-boundary
+  digest checking, artifact invalidation/supersession, and replay protection.
+- Extended the existing HMAC worker with an exact controlled-execution envelope,
+  signed result digest and identities, fixed resource/network policy, output-limit
+  failure, and executable hostile-canary evidence.
+- Added content-free lifecycle traces plus API, CLI, status, and dashboard views
+  that keep build, execution, verification, publication, and deployment separate.
+- Demonstrated local Level 2 worker execution. Bubblewrap 0.9.0 is present but
+  namespace setup is denied on this host, so Level 3 remains blocked and is not claimed.
+
 ## 0.29.0-alpha.1 - 2026-09-01
 
 - Added `SPARKLE-AI-SYSTEM-CONTROLLED-BUILD/1`, the first promotion-bound

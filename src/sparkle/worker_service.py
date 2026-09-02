@@ -241,9 +241,19 @@ class WorkerRequestValidator:
     REQUEST_FIELDS = {
         "protocol_version", "job_id", "operation", "project_name", "limits", "files",
     }
+    EXECUTION_REQUEST_FIELDS = REQUEST_FIELDS | {"execution_context"}
+    EXECUTION_CONTEXT_FIELDS = {
+        "execution_id", "execution_request_id", "artifact_id",
+        "artifact_sha256", "build_id", "promotion_id", "candidate_id",
+        "plan_id", "evaluation_id", "authorization_id", "execution_mode",
+    }
     LIMIT_FIELDS = {
         "timeout_seconds", "max_output_chars", "requested_network_isolation",
         "requested_filesystem_isolation", "requested_ephemeral",
+    }
+    EXECUTION_LIMIT_FIELDS = LIMIT_FIELDS | {
+        "memory_bytes", "cpu_seconds", "max_processes",
+        "max_workspace_bytes", "network_policy",
     }
     FILE_FIELDS = {"path", "sha256", "content_base64"}
 
@@ -307,12 +317,20 @@ class WorkerRequestValidator:
             payload = json.loads(body.decode("utf-8"))
         except (UnicodeDecodeError, json.JSONDecodeError) as exc:
             raise WorkerServiceError("Worker request body is invalid") from exc
-        if not isinstance(payload, dict) or set(payload) != self.REQUEST_FIELDS:
+        if not isinstance(payload, dict) or frozenset(payload) not in {
+            frozenset(self.REQUEST_FIELDS), frozenset(self.EXECUTION_REQUEST_FIELDS),
+        }:
             raise WorkerServiceError("Worker request schema is invalid")
+        controlled = payload.get("protocol_version") == ExternalWorkerClient.EXECUTION_PROTOCOL
+        if controlled != (set(payload) == self.EXECUTION_REQUEST_FIELDS):
+            raise WorkerServiceError("Worker request protocol schema is invalid")
         job_id = payload["job_id"]
         project_name = payload["project_name"]
         if (
-            payload["protocol_version"] != ExternalWorkerClient.PROTOCOL
+            payload["protocol_version"] not in {
+                ExternalWorkerClient.PROTOCOL,
+                ExternalWorkerClient.EXECUTION_PROTOCOL,
+            }
             or payload["operation"] != ExternalWorkerClient.OPERATION
             or not isinstance(job_id, str)
             or not re.fullmatch(r"SPK-WRK-[A-F0-9]{32}", job_id)
@@ -320,8 +338,30 @@ class WorkerRequestValidator:
             or not WorkspaceManager.NAME_PATTERN.fullmatch(project_name)
         ):
             raise WorkerServiceError("Worker request identity is invalid")
+        execution_context = None
+        if controlled:
+            execution_context = payload["execution_context"]
+            if (
+                not isinstance(execution_context, dict)
+                or set(execution_context) != self.EXECUTION_CONTEXT_FIELDS
+                or not re.fullmatch(r"SPK-EXEC-[A-F0-9]{32}", execution_context.get("execution_id", ""))
+                or not re.fullmatch(r"SPK-EXEC-REQ-[A-F0-9]{32}", execution_context.get("execution_request_id", ""))
+                or not isinstance(execution_context.get("artifact_id"), int)
+                or isinstance(execution_context.get("artifact_id"), bool)
+                or execution_context["artifact_id"] < 1
+                or not re.fullmatch(r"[a-f0-9]{64}", execution_context.get("artifact_sha256", ""))
+                or not str(execution_context.get("build_id", "")).startswith("SPK-BUILD-")
+                or not str(execution_context.get("promotion_id", "")).startswith("SPK-PROMO-")
+                or not isinstance(execution_context.get("candidate_id"), int)
+                or not isinstance(execution_context.get("plan_id"), int)
+                or not str(execution_context.get("evaluation_id", "")).startswith("SPK-EVAL-")
+                or not str(execution_context.get("authorization_id", "")).startswith("SPK-EXEC-AUTH-")
+                or execution_context.get("execution_mode") != ExternalWorkerClient.OPERATION
+            ):
+                raise WorkerServiceError("Worker execution context is invalid")
         limits = payload["limits"]
-        if not isinstance(limits, dict) or set(limits) != self.LIMIT_FIELDS:
+        expected_limits = self.EXECUTION_LIMIT_FIELDS if controlled else self.LIMIT_FIELDS
+        if not isinstance(limits, dict) or set(limits) != expected_limits:
             raise WorkerServiceError("Worker request limits are invalid")
         timeout_seconds = limits["timeout_seconds"]
         max_output_chars = limits["max_output_chars"]
@@ -340,6 +380,14 @@ class WorkerRequestValidator:
             )
         ):
             raise WorkerServiceError("Worker request limits are invalid")
+        if controlled and (
+            limits["memory_bytes"] != 512 * 1024 * 1024
+            or limits["cpu_seconds"] != timeout_seconds
+            or limits["max_processes"] != 32
+            or limits["max_workspace_bytes"] != ExternalWorkerClient.MAX_TOTAL_BYTES
+            or limits["network_policy"] != "disabled"
+        ):
+            raise WorkerServiceError("Worker execution policy is unsupported")
         files = payload["files"]
         if not isinstance(files, list) or not 1 <= len(files) <= ExternalWorkerClient.MAX_FILES:
             raise WorkerServiceError("Worker source file count is invalid")
@@ -394,6 +442,7 @@ class WorkerRequestValidator:
             max_output_chars=max_output_chars,
             files=tuple(accepted),
             request_hash=hashlib.sha256(body).hexdigest(),
+            execution_context=execution_context,
         )
 
 
@@ -553,8 +602,9 @@ class ExternalWorkerService:
         )
         return {
             "service": "SPARKLE external test worker",
-            "version": "0.29.0-alpha.1",
+            "version": "0.30.0-alpha.1",
             "protocol": ExternalWorkerClient.PROTOCOL,
+            "controlled_execution_protocol": ExternalWorkerClient.EXECUTION_PROTOCOL,
             "operation": ExternalWorkerClient.OPERATION,
             "ready": bool(executor["available"]),
             "worker_id": self.config.worker_id,
@@ -606,7 +656,11 @@ class ExternalWorkerService:
             if secret_text:
                 output = output.replace(secret_text, "[REDACTED]")
             response_value = {
-                "protocol_version": ExternalWorkerClient.PROTOCOL,
+                "protocol_version": (
+                    ExternalWorkerClient.EXECUTION_PROTOCOL
+                    if job.execution_context is not None
+                    else ExternalWorkerClient.PROTOCOL
+                ),
                 "job_id": job.job_id,
                 "status": result.status,
                 "returncode": result.returncode,
@@ -615,6 +669,29 @@ class ExternalWorkerService:
                 "duration_ms": result.duration_ms,
                 "sandbox": result.sandbox,
             }
+            if job.execution_context is not None:
+                executor_evidence = self.executor.status()
+                response_value["status"] = (
+                    "failed" if result.output_limited else result.status
+                )
+                response_value.update({
+                    "execution_context": job.execution_context,
+                    "worker_id": self.config.worker_id,
+                    "started_at": utc_now(),
+                    "completed_at": utc_now(),
+                    "output_sha256": hashlib.sha256(
+                        response_value["output"].encode("utf-8")
+                    ).hexdigest(),
+                    "output_limited": result.output_limited,
+                    "isolation_evidence": {
+                        "executor_mode": str(executor_evidence["mode"]),
+                        "preflight_passed": bool(executor_evidence["preflight_passed"]),
+                        "hostile_canaries_passed": bool(executor_evidence.get("hostile_canaries_passed", False)),
+                    },
+                })
+                response_value["result_digest"] = hashlib.sha256(
+                    ExternalWorkerClient._canonical_json(response_value)
+                ).hexdigest()
             response_body = ExternalWorkerClient._canonical_json(response_value)
             if len(response_body) > ExternalWorkerClient.MAX_RESPONSE_BYTES:
                 raise WorkerUnavailableError("Worker response exceeded its bound")
@@ -629,7 +706,7 @@ class ExternalWorkerService:
 
 class WorkerHandler(BaseHTTPRequestHandler):
     service: ExternalWorkerService
-    server_version = "SPARKLE-Worker/0.29"
+    server_version = "SPARKLE-Worker/0.30"
 
     def log_message(self, format: str, *args: object) -> None:
         # Do not serialize client identity, headers, queries, or source bodies.
