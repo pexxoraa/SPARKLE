@@ -118,7 +118,7 @@ The separate `sparkle-worker` process uses its own environment:
 | `SPARKLE_WORKER_HOST` / `SPARKLE_WORKER_PORT` | Worker bind address | No |
 | `SPARKLE_WORKER_ID` | Bounded public worker identifier | No |
 | `SPARKLE_WORKER_STATE_DIR` | Independent replay database root | No |
-| `SPARKLE_WORKER_SIGNING_KEY_FILE` | Mode-0600/0400 key file | Reference path |
+| `SPARKLE_WORKER_SIGNING_KEY_FILE` | Private operator file, or exact systemd credential projection | Reference path |
 | `SPARKLE_WORKER_SIGNING_KEY` | Environment fallback for local secret managers | Yes |
 | `SPARKLE_WORKER_EXECUTOR` | `bubblewrap` (default) or explicit unsafe `process` | No |
 | `SPARKLE_WORKER_BWRAP` / `SPARKLE_WORKER_PYTHON` | Fixed executable paths | No |
@@ -130,9 +130,15 @@ The separate `sparkle-worker` process uses its own environment:
 | `SPARKLE_WORKER_TLS_CERT_FILE` / `SPARKLE_WORKER_TLS_KEY_FILE` | Optional direct TLS pair | Key file is secret |
 | `SPARKLE_WORKER_TRUSTED_TLS_TERMINATION` | Permit non-loopback HTTP only behind the supplied trusted edge | No |
 
-Non-loopback startup requires direct TLS or explicit trusted termination. The
-key file is opened without symlink following and must deny group/other access.
-Health/status reports only presence and control state. See `WORKER.md`.
+Non-loopback startup requires direct TLS or explicit trusted termination.
+Ordinary operator-managed key files are opened without symlink following and
+must deny all group/other access (mode `0600` or `0400`). The packaged systemd
+unit instead sets this variable to the exact
+`$CREDENTIALS_DIRECTORY/sparkle-worker-signing-key` projection. That projection
+is accepted at systemd's mode `0440` only when its directory and file pass the
+separate root-owned, non-writable credential checks; an arbitrary caller-chosen
+`0440` file remains rejected. Health/status reports only presence and control
+state. See `WORKER.md`.
 
 The separately installed `sparkle-automations` process reads its two bounds
 from the variables above or equivalent CLI flags. The lease should exceed the

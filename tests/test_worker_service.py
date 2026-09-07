@@ -16,6 +16,8 @@ import unittest
 import urllib.error
 import urllib.request
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
 
 from sparkle.external_worker import ExternalWorkerClient
 from sparkle.secrets import SecretNotFoundError, SecretResolver
@@ -189,6 +191,13 @@ class WorkerServiceTests(unittest.TestCase):
             WorkerConfig(executor_mode="process").validate()
         with self.assertRaisesRegex(ValueError, "SPARKLE_WORKER_PORT"):
             WorkerConfig.load({"SPARKLE_WORKER_PORT": "not-an-integer"})
+        loaded = WorkerConfig.load({
+            "CREDENTIALS_DIRECTORY": str(self.root / "credentials"),
+            "SPARKLE_WORKER_SIGNING_KEY_FILE": str(
+                self.root / "credentials/sparkle-worker-signing-key"
+            ),
+        })
+        self.assertEqual(loaded.credentials_directory, self.root / "credentials")
 
     def test_host_diagnostic_is_credential_free_and_never_claims_level3(self):
         class ReadyBubblewrap:
@@ -319,14 +328,119 @@ class WorkerServiceTests(unittest.TestCase):
         key_file.chmod(0o600)
         config = self.config(signing_key_file=key_file)
         self.assertEqual(resolve_worker_signing_key(config), SIGNING_KEY)
-        key_file.chmod(0o644)
-        with self.assertRaisesRegex(ValueError, "permissions"):
-            resolve_worker_signing_key(config)
+        for exposed_mode in (0o640, 0o604):
+            key_file.chmod(exposed_mode)
+            with self.assertRaisesRegex(ValueError, "permissions"):
+                resolve_worker_signing_key(config)
         key_file.chmod(0o600)
         link = self.root / "link.key"
         link.symlink_to(key_file)
         with self.assertRaises(SecretNotFoundError):
             resolve_worker_signing_key(self.config(signing_key_file=link))
+        loaded = WorkerConfig.load({
+            "SPARKLE_WORKER_SIGNING_KEY_FILE": str(link),
+            "SPARKLE_WORKER_EXECUTOR": "process",
+            "SPARKLE_WORKER_ALLOW_UNSAFE_PROCESS_EXECUTOR": "true",
+        })
+        self.assertEqual(loaded.signing_key_file, link)
+        with self.assertRaises(SecretNotFoundError):
+            resolve_worker_signing_key(loaded)
+        key_file.write_bytes(b"too-short")
+        with self.assertRaisesRegex(ValueError, "32-4096"):
+            resolve_worker_signing_key(config)
+        with self.assertRaises(SecretNotFoundError):
+            resolve_worker_signing_key(
+                self.config(signing_key_file=self.root / "missing.key")
+            )
+
+    def test_systemd_projected_signing_key_requires_exact_trusted_contract(self):
+        credentials = self.root / "credentials"
+        credentials.mkdir(mode=0o700)
+        projected = credentials / "sparkle-worker-signing-key"
+        projected.write_bytes(SIGNING_KEY)
+        projected.chmod(0o440)
+        config = self.config(
+            signing_key_file=projected,
+            credentials_directory=credentials,
+        )
+        real_fstat = os.fstat
+
+        def root_owned_metadata(descriptor):
+            metadata = real_fstat(descriptor)
+            return SimpleNamespace(
+                st_mode=metadata.st_mode,
+                st_uid=0,
+                st_gid=0,
+                st_size=metadata.st_size,
+            )
+
+        with patch(
+            "sparkle.worker_service.os.fstat",
+            side_effect=root_owned_metadata,
+        ):
+            self.assertEqual(resolve_worker_signing_key(config), SIGNING_KEY)
+
+            for invalid_mode in (0o400, 0o444, 0o640):
+                projected.chmod(invalid_mode)
+                with self.assertRaisesRegex(
+                    ValueError, "root-owned with mode 0440",
+                ):
+                    resolve_worker_signing_key(config)
+            projected.chmod(0o440)
+
+        fstat_calls = 0
+
+        def wrong_file_owner_metadata(descriptor):
+            nonlocal fstat_calls
+            fstat_calls += 1
+            metadata = real_fstat(descriptor)
+            return SimpleNamespace(
+                st_mode=metadata.st_mode,
+                st_uid=0 if fstat_calls == 1 else 1_000,
+                st_gid=0,
+                st_size=metadata.st_size,
+            )
+
+        with patch(
+            "sparkle.worker_service.os.fstat",
+            side_effect=wrong_file_owner_metadata,
+        ), self.assertRaisesRegex(ValueError, "root-owned with mode 0440"):
+            resolve_worker_signing_key(config)
+
+        wrong_name = credentials / "caller-selected-key"
+        wrong_name.write_bytes(SIGNING_KEY)
+        wrong_name.chmod(0o440)
+        with self.assertRaisesRegex(ValueError, "permissions"):
+            resolve_worker_signing_key(self.config(
+                signing_key_file=wrong_name,
+                credentials_directory=credentials,
+            ))
+
+        def untrusted_directory_metadata(descriptor):
+            metadata = real_fstat(descriptor)
+            return SimpleNamespace(
+                st_mode=metadata.st_mode,
+                st_uid=1_000,
+                st_gid=1_000,
+                st_size=metadata.st_size,
+            )
+
+        with patch(
+            "sparkle.worker_service.os.fstat",
+            side_effect=untrusted_directory_metadata,
+        ), self.assertRaisesRegex(ValueError, "directory is not trusted"):
+            resolve_worker_signing_key(config)
+
+        projected.unlink()
+        source_key = self.root / "source.key"
+        source_key.write_bytes(SIGNING_KEY)
+        source_key.chmod(0o600)
+        projected.symlink_to(source_key)
+        with patch(
+            "sparkle.worker_service.os.fstat",
+            side_effect=root_owned_metadata,
+        ), self.assertRaises(SecretNotFoundError):
+            resolve_worker_signing_key(config)
 
     def test_validator_authenticates_and_materializes_exact_schema(self):
         headers, body = signed(request_value())
@@ -659,6 +773,15 @@ class WorkerServiceTests(unittest.TestCase):
         self.assertNotIn("privileged:", compose)
         self.assertIn("NoNewPrivileges=yes", unit)
         self.assertIn("ProtectSystem=strict", unit)
+        self.assertIn(
+            "LoadCredential=sparkle-worker-signing-key:/etc/sparkle/worker-signing-key",
+            unit,
+        )
+        self.assertIn(
+            "SPARKLE_WORKER_SIGNING_KEY_FILE=%d/sparkle-worker-signing-key",
+            unit,
+        )
+        self.assertNotIn("SPARKLE_WORKER_SIGNING_KEY=", unit)
         self.assertIn("pip install --no-deps", installer)
         self.assertIn("installed but not started", installer)
         self.assertIn("SPARKLE_WORKER_EXECUTOR=bubblewrap", worker_config)

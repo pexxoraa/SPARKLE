@@ -96,6 +96,18 @@ deployment secret manager; do not put it in source, Compose environment,
 command arguments, logs, memory, knowledge, traces, issues, or chat. Both the
 client and worker need the same value.
 
+For the packaged systemd unit, keep the operator-managed source at
+`/etc/sparkle/worker-signing-key` as a root-owned, root-group regular
+non-symlink file with mode `0600`. `LoadCredential=` projects it into the
+service namespace and sets `CREDENTIALS_DIRECTORY`; systemd's root-owned mode
+`0440` projection is intentionally distinct from an ordinary key file. SPARKLE
+accepts that mode only for the exact
+`$CREDENTIALS_DIRECTORY/sparkle-worker-signing-key` file, after opening the
+root-owned non-group/world-writable directory without following a final
+symlink and checking that the projected file is regular, non-symlink,
+root-owned, root-group, readable, and exactly mode `0440`. Other key paths keep
+the strict mode-`0600`/`0400` policy. Key contents are never emitted.
+
 ## Infrastructure acceptance
 
 The manual `SPARKLE Level 3 Worker Acceptance` workflow reads the endpoint and

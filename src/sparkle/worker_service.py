@@ -102,6 +102,7 @@ class WorkerConfig:
     state_dir: Path = Path("var/worker_environment")
     signing_key_refs: tuple[str, ...] = ("SPARKLE_WORKER_SIGNING_KEY",)
     signing_key_file: Path | None = None
+    credentials_directory: Path | None = None
     executor_mode: str = "bubblewrap"
     bubblewrap_binary: str = ""
     python_binary: str = default_worker_python()
@@ -121,6 +122,7 @@ class WorkerConfig:
             "SPARKLE_WORKER_STATE_DIR", "var/worker_environment",
         )).expanduser().resolve()
         key_file = values.get("SPARKLE_WORKER_SIGNING_KEY_FILE", "").strip()
+        credentials_directory = values.get("CREDENTIALS_DIRECTORY", "").strip()
         cert_file = values.get("SPARKLE_WORKER_TLS_CERT_FILE", "").strip()
         private_key_file = values.get("SPARKLE_WORKER_TLS_KEY_FILE", "").strip()
         config = cls(
@@ -132,7 +134,14 @@ class WorkerConfig:
                 "SPARKLE_WORKER_ID", "sparkle-worker",
             ).strip(),
             state_dir=state_dir,
-            signing_key_file=Path(key_file).expanduser().resolve() if key_file else None,
+            signing_key_file=(
+                Path(os.path.abspath(os.path.expanduser(key_file)))
+                if key_file else None
+            ),
+            credentials_directory=(
+                Path(os.path.abspath(os.path.expanduser(credentials_directory)))
+                if credentials_directory else None
+            ),
             executor_mode=values.get(
                 "SPARKLE_WORKER_EXECUTOR", "bubblewrap",
             ).strip().lower(),
@@ -212,16 +221,59 @@ def resolve_worker_signing_key(
 ) -> bytes:
     if config.signing_key_file is not None:
         path = config.signing_key_file
-        flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0)
+        flags = (
+            os.O_RDONLY
+            | getattr(os, "O_CLOEXEC", 0)
+            | getattr(os, "O_NOFOLLOW", 0)
+        )
+        directory_descriptor: int | None = None
+        projected = (
+            config.credentials_directory is not None
+            and path.parent == config.credentials_directory
+            and path.name == "sparkle-worker-signing-key"
+        )
+        descriptor: int | None = None
         try:
-            descriptor = os.open(path, flags)
-        except OSError as exc:
-            raise SecretNotFoundError("Worker signing-key file is unreadable") from exc
-        try:
+            try:
+                if projected:
+                    directory_flags = (
+                        os.O_RDONLY
+                        | getattr(os, "O_CLOEXEC", 0)
+                        | getattr(os, "O_DIRECTORY", 0)
+                        | getattr(os, "O_NOFOLLOW", 0)
+                    )
+                    directory_descriptor = os.open(
+                        config.credentials_directory, directory_flags,
+                    )
+                    directory_metadata = os.fstat(directory_descriptor)
+                    if (
+                        not stat.S_ISDIR(directory_metadata.st_mode)
+                        or directory_metadata.st_uid != 0
+                        or directory_metadata.st_gid != 0
+                        or directory_metadata.st_mode & 0o022
+                    ):
+                        raise ValueError(
+                            "Worker systemd credential directory is not trusted"
+                        )
+                    descriptor = os.open(path.name, flags, dir_fd=directory_descriptor)
+                else:
+                    descriptor = os.open(path, flags)
+            except OSError as exc:
+                raise SecretNotFoundError(
+                    "Worker signing-key file is unreadable"
+                ) from exc
             metadata = os.fstat(descriptor)
             if not stat.S_ISREG(metadata.st_mode):
                 raise ValueError("Worker signing-key file must be a regular non-symlink file")
-            if metadata.st_mode & 0o077:
+            if projected and (
+                metadata.st_uid != 0
+                or metadata.st_gid != 0
+                or stat.S_IMODE(metadata.st_mode) != 0o440
+            ):
+                raise ValueError(
+                    "Worker systemd credential must be root-owned with mode 0440"
+                )
+            if not projected and metadata.st_mode & 0o077:
                 raise ValueError(
                     "Worker signing-key file permissions must deny group/other access"
                 )
@@ -229,7 +281,10 @@ def resolve_worker_signing_key(
                 raise ValueError("Worker signing-key file must contain 32-4096 bytes")
             key = os.read(descriptor, 4_097).strip()
         finally:
-            os.close(descriptor)
+            if descriptor is not None:
+                os.close(descriptor)
+            if directory_descriptor is not None:
+                os.close(directory_descriptor)
     else:
         key = (resolver or SecretResolver()).first(config.signing_key_refs).encode("utf-8")
     if not 32 <= len(key) <= 4_096:

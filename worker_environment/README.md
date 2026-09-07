@@ -44,9 +44,13 @@ mandatory; container boundaries alone are not accepted as evidence.
 
 Install SPARKLE in `/opt/sparkle/.venv`, create an unprivileged `sparkle-worker`
 account and mode-0700 `/var/lib/sparkle-worker`, then install the unit. Put the
-key at `/etc/sparkle/worker-signing-key` with root ownership and mode `0600`.
-Configure loopback binding in `/etc/sparkle/worker.conf` and place a TLS reverse
-proxy in front, or configure direct certificate/key files. Run:
+key at `/etc/sparkle/worker-signing-key` as a root-owned, root-group regular
+non-symlink file with mode `0600` and 32–4096 bytes. `LoadCredential=` projects
+it into the service namespace as root-owned mode `0440`; SPARKLE accepts that
+mode only for the exact file beneath systemd's `CREDENTIALS_DIRECTORY`.
+Arbitrary group-readable key files remain rejected. Configure loopback binding
+in `/etc/sparkle/worker.conf` and place a TLS reverse proxy in front, or
+configure direct certificate/key files. Run:
 
 ```bash
 python3 -m build --wheel
