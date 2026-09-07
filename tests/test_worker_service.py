@@ -463,8 +463,28 @@ class WorkerServiceTests(unittest.TestCase):
     def test_bubblewrap_command_and_preflight_require_all_isolation_controls(self):
         captured: list[list[str]] = []
 
-        def successful(command, **_kwargs):
+        def successful(command, **kwargs):
             captured.append(command)
+            self.assertEqual(kwargs["env"], {
+                "PATH": str(Path(command[0]).parent),
+            })
+            probe_index = command.index("-c") + 1
+            probe = command[probe_index]
+            host_canary = Path(command[probe_index + 1])
+            allowed = set(command[probe_index + 3].split(","))
+            self.assertTrue(host_canary.is_file())
+            self.assertIn("host_root_canary = '/proc/1/root' + host_canary", probe)
+            self.assertIn("not os.path.exists(host_canary)", probe)
+            self.assertIn("not os.path.exists(host_root_canary)", probe)
+            self.assertIn("for path in (host_canary, host_root_canary)", probe)
+            self.assertNotIn("/escape-canary", probe)
+            self.assertIn("sandbox_writable_area", probe)
+            self.assertIn("set(os.environ) == allowed", probe)
+            self.assertIn("os.environ.get('PWD') == '/workspace'", probe)
+            self.assertEqual(allowed, {
+                "PATH", "LANG", "LC_ALL", "PYTHONHASHSEED",
+                "PYTHONDONTWRITEBYTECODE", "SPARKLE_TEST_SANDBOX", "PWD",
+            })
             evidence = {
                 name: True for name in FixedUnittestExecutor.CANARY_NAMES
             }
@@ -490,6 +510,7 @@ class WorkerServiceTests(unittest.TestCase):
             for index in range(len(command) - 2)
         ))
         self.assertNotIn(SIGNING_KEY.decode(), " ".join(command))
+        self.assertNotIn("UNRELATED_HOST_SECRET", " ".join(command))
         self.assertEqual(
             set(status["canaries"]), set(FixedUnittestExecutor.CANARY_NAMES),
         )
@@ -501,6 +522,8 @@ class WorkerServiceTests(unittest.TestCase):
         self.assertEqual(status["filesystem_isolation"], status["available"])
         self.assertEqual(status["network_isolation"], status["available"])
         self.assertEqual(status["preflight_passed"], status["available"])
+        if status["available"]:
+            self.assertTrue(all(status["canaries"].values()))
         if not status["available"]:
             self.assertIsNotNone(status["failure_type"])
             content = b"import unittest\nclass T(unittest.TestCase): pass\n"

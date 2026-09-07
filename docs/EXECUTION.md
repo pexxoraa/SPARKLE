@@ -49,6 +49,11 @@ or released. Those flags and stages remain separate.
 - environment: fixed allowlist; no SPARKLE credentials
 - artifact mount: read-only; writable state is temporary and separate
 
+The Bubblewrap environment check requires the exact fixed variables plus
+`PWD=/workspace`. Host-write refusal is measured only against the external host
+canary through its direct and `/proc/1/root` paths. Sandbox-private temporary
+storage may be writable and is not host-escape evidence.
+
 ## Evidence levels
 
 - Level 1: the controller and worker contracts are implemented and tested.

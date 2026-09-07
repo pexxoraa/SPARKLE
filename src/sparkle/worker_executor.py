@@ -292,9 +292,10 @@ import json, os, socket, sys
 host_canary, other_workspace, allowed_raw, host_pid = sys.argv[1:]
 allowed = set(allowed_raw.split(','))
 results = {}
-results['host_filesystem_read'] = not os.path.exists(host_canary) and not os.path.exists('/proc/1/root' + host_canary)
+host_root_canary = '/proc/1/root' + host_canary
+results['host_filesystem_read'] = not os.path.exists(host_canary) and not os.path.exists(host_root_canary)
 blocked_writes = True
-for path in (host_canary, '/escape-canary'):
+for path in (host_canary, host_root_canary):
     try:
         with open(path, 'wb') as handle: handle.write(b'blocked')
     except OSError:
@@ -303,7 +304,14 @@ for path in (host_canary, '/escape-canary'):
         blocked_writes = False
 results['host_filesystem_write'] = blocked_writes
 results['workspace_escape'] = not os.path.exists(other_workspace)
-results['secret_environment'] = set(os.environ) <= allowed and 'SPARKLE_WORKER_SIGNING_KEY' not in os.environ
+results['secret_environment'] = set(os.environ) == allowed and os.environ.get('PWD') == '/workspace' and 'SPARKLE_WORKER_SIGNING_KEY' not in os.environ
+sandbox_writable_area = False
+try:
+    with open('/tmp/sandbox-write-canary', 'xb') as handle: handle.write(b'sandbox-private')
+except OSError:
+    pass
+else:
+    sandbox_writable_area = True
 network_blocked = True
 for address in (('1.1.1.1', 53), ('127.0.0.1', 1)):
     sock = socket.socket(); sock.settimeout(0.2)
@@ -329,7 +337,7 @@ except OSError:
 else:
     results['artifact_modification'] = False
 print(json.dumps(results, sort_keys=True, separators=(',', ':')))
-raise SystemExit(0 if all(results.values()) else 4)
+raise SystemExit(0 if all(results.values()) and sandbox_writable_area else 4)
 """
         with tempfile.TemporaryDirectory(prefix="sparkle-preflight-") as directory:
             root = Path(directory)
@@ -347,7 +355,7 @@ raise SystemExit(0 if all(results.values()) else 4)
             )
             allowed = ",".join({
                 "PATH", "LANG", "LC_ALL", "PYTHONHASHSEED",
-                "PYTHONDONTWRITEBYTECODE", "SPARKLE_TEST_SANDBOX",
+                "PYTHONDONTWRITEBYTECODE", "SPARKLE_TEST_SANDBOX", "PWD",
             })
             command = self._base_command(workspace) + [
                 self.python_binary, "-I", "-c", probe, str(canary),

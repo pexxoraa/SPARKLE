@@ -50,6 +50,13 @@ artifact modification canaries. A missing dependency, ambiguous result,
 timeout, denial, or nonzero result makes readiness false and jobs return 503
 without running source.
 
+The environment canary requires the exact deterministic sandbox keys and
+`PWD=/workspace`; `--clearenv` remains mandatory, arbitrary inherited values
+and `SPARKLE_WORKER_SIGNING_KEY` remain forbidden. The host-write canary tries
+the host canary's direct path and its `/proc/1/root` equivalent. A successful
+write under the sandbox-private `/tmp` is checked separately as expected
+scratch behavior and is never classified as host filesystem access.
+
 `process` exists for deterministic local protocol and integration testing. It
 requires `SPARKLE_WORKER_ALLOW_UNSAFE_PROCESS_EXECUTOR=true`; status and signed
 results always report filesystem/network isolation false. It must not receive
@@ -112,3 +119,10 @@ On the v0.30 build host Bubblewrap 0.9.0 exists, but the executable preflight
 returns `IsolationPreflightFailed` because namespace setup is denied. Therefore
 Level 3 is blocked and `isolation_verified` remains false; this is not reported
 as a missing binary or as a pass.
+
+The corrected preflight semantics are software-tested. This execution
+environment still cannot start Bubblewrap because required `/proc` namespace
+mapping files and kernel settings are unavailable. A separate Ubuntu host may
+run the same preflight, but its result becomes Level 3 evidence only after all
+seven executable canaries, authenticated worker acceptance, an approved
+immutable artifact execution, result verification, and cleanup succeed.
