@@ -62,12 +62,20 @@
   checked; worker replay storage and controller request identity prevent silent
   duplicate or conflicting execution. The child receives a minimal environment
   and no SPARKLE credentials. Network policy is disabled by default.
+- The hardened systemd worker explicitly leaves `ProtectKernelTunables=no`
+  because its API-filesystem namespace setup blocks Bubblewrap's required
+  private `/proc` mount on the supported Ubuntu host. The dedicated
+  unprivileged identity, empty capability and ambient-capability sets,
+  `NoNewPrivileges=yes`, strict read-only host filesystem, module/log
+  protections, and per-job Bubblewrap boundary remain enforced. The exception
+  is accepted only when the real service-scoped preflight passes all canaries.
 - Process-mode execution is Level 2 functional evidence, not hostile-code
   isolation. Level 3 requires the real Bubblewrap preflight and harmless
   host filesystem read/write, workspace escape, environment-secret, prohibited
   network, host-process, and artifact-modification canaries to pass on the
-  deployed worker. The artifact is mounted read-only. They fail closed on this host because
-  namespace creation is denied.
+  deployed worker. The artifact is mounted read-only. They fail closed in the
+  build executor because namespace creation is denied; that result is not used
+  to override evidence from, or substitute for, the dedicated Linux host.
 - Application scaffolding requires explicit approval, confines every path to a
   dedicated application root, rejects traversal and symlinks, enforces file and
   manifest size limits, and protects existing files by default.

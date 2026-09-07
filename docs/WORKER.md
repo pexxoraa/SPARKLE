@@ -108,6 +108,25 @@ symlink and checking that the projected file is regular, non-symlink,
 root-owned, root-group, readable, and exactly mode `0440`. Other key paths keep
 the strict mode-`0600`/`0400` policy. Key contents are never emitted.
 
+The systemd profile intentionally sets `ProtectKernelTunables=no`. Enabling it
+changes the service's `/proc` and `/sys` API-filesystem view and implies
+`MountAPIVFS=yes`; on the supported Ubuntu host that outer setup reproducibly
+prevents unprivileged Bubblewrap from mounting its private `/proc`. SPARKLE
+cannot retain the directive and still establish the required per-job PID/process
+boundary. This does not grant host-tunable access: the service runs as the
+dedicated unprivileged account with `CapabilityBoundingSet=` and
+`AmbientCapabilities=` empty and `NoNewPrivileges=yes`. Kernel module and log
+protection, strict read-only host paths, protected home directories, private
+devices/tmp, and all Bubblewrap controls remain active. Bubblewrap still uses
+`--unshare-all`, `--clearenv`, a private `/proc`, read-only artifact binding,
+network isolation, and the seven mandatory fail-closed canaries.
+
+Whether the complete unit can create the private `/proc` is explicitly a Linux
+host acceptance test. CI verifies the unit contract and Bubblewrap command but
+does not claim the host mount succeeded. Run the service-scoped preflight in
+`worker_environment/README.md`; require exit 0 and seven true canaries before
+starting or enabling the service.
+
 ## Infrastructure acceptance
 
 The manual `SPARKLE Level 3 Worker Acceptance` workflow reads the endpoint and
@@ -132,9 +151,13 @@ returns `IsolationPreflightFailed` because namespace setup is denied. Therefore
 Level 3 is blocked and `isolation_verified` remains false; this is not reported
 as a missing binary or as a pass.
 
-The corrected preflight semantics are software-tested. This execution
-environment still cannot start Bubblewrap because required `/proc` namespace
-mapping files and kernel settings are unavailable. A separate Ubuntu host may
-run the same preflight, but its result becomes Level 3 evidence only after all
-seven executable canaries, authenticated worker acceptance, an approved
-immutable artifact execution, result verification, and cleanup succeed.
+The corrected preflight semantics are software-tested. The build executor still
+cannot start Bubblewrap because required `/proc` namespace mapping files and
+kernel settings are unavailable. On the dedicated Ubuntu development host,
+unprivileged Bubblewrap and a minimal systemd profile can create the private
+`/proc`; adding only `ProtectKernelTunables=yes` reproduces the mount denial.
+The repository unit now carries the explicit compatibility exception, but that
+host must still rerun the complete hardened service preflight. Level 3 remains
+blocked until all seven executable canaries, authenticated worker acceptance,
+an approved immutable artifact execution, result verification, and cleanup
+succeed.

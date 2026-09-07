@@ -821,6 +821,46 @@ class WorkerServiceTests(unittest.TestCase):
         self.assertNotIn("Traceback", blocked.stderr + blocked.stdout)
         self.assertFalse(json.loads(blocked.stdout)["isolation_verified"])
 
+    def test_systemd_profile_preserves_nested_bubblewrap_boundary(self):
+        project = Path(__file__).resolve().parents[1]
+        unit = (
+            project / "worker_environment/sparkle-worker.service"
+        ).read_text(encoding="utf-8")
+        for required in (
+            "User=sparkle-worker",
+            "Group=sparkle-worker",
+            "SPARKLE_WORKER_EXECUTOR=bubblewrap",
+            "NoNewPrivileges=yes",
+            "PrivateDevices=yes",
+            "PrivateTmp=yes",
+            "ProtectHome=yes",
+            "ProtectKernelLogs=yes",
+            "ProtectKernelModules=yes",
+            "ProtectSystem=strict",
+            "ReadWritePaths=/var/lib/sparkle-worker",
+            "RestrictSUIDSGID=yes",
+            "CapabilityBoundingSet=",
+            "AmbientCapabilities=",
+        ):
+            self.assertIn(required, unit)
+        self.assertIn("ProtectKernelTunables=no", unit)
+        self.assertNotIn("ProtectKernelTunables=yes", unit)
+        self.assertNotIn("SPARKLE_WORKER_ALLOW_UNSAFE_PROCESS_EXECUTOR", unit)
+
+        executor = BubblewrapExecutor(
+            bubblewrap_binary="/bin/true",
+            python_binary="/usr/bin/python3",
+            preflight_runner=lambda *_args, **_kwargs: subprocess.CompletedProcess(
+                [], 1, "", "host acceptance required",
+            ),
+        )
+        command = executor._base_command(self.root)
+        self.assertIn("--unshare-all", command)
+        self.assertIn("--clearenv", command)
+        proc_index = command.index("--proc")
+        self.assertEqual(command[proc_index + 1], "/proc")
+        self.assertNotEqual(executor.MODE, FixedUnittestExecutor.MODE)
+
 
 if __name__ == "__main__":
     unittest.main()

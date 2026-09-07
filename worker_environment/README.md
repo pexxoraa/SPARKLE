@@ -69,10 +69,39 @@ does not create a signing key or start the service. Inject the key separately
 before the preflight and service start.
 
 The systemd unit deliberately does not restrict namespace syscalls because the
-nested sandbox requires them. It compensates with an unprivileged account,
-read-only host paths, no capabilities, private devices/tmp, and a narrow
-address-family set. The worker itself unshares network/filesystem namespaces
-for each job and fails closed when that operation is unavailable.
+nested sandbox requires them. It also sets `ProtectKernelTunables=no`
+explicitly: `ProtectKernelTunables=yes` changes the unit's kernel API filesystem
+view, implies `MountAPIVFS=yes`, and on the supported Ubuntu host prevents
+Bubblewrap from mounting the private `/proc` required inside its per-job user
+and mount namespaces. This is a narrow compatibility exception, not permission
+to change host tunables. The worker remains unprivileged with empty capability
+and ambient-capability sets plus `NoNewPrivileges=yes`; it therefore has no
+host capability with which to modify protected kernel settings. The unit keeps
+`ProtectKernelModules=yes`, `ProtectKernelLogs=yes`, `ProtectSystem=strict`,
+`ProtectHome=yes`, private devices/tmp, and the narrow address-family set.
+Bubblewrap still unshares all namespaces, creates its private `/proc`, clears
+the environment, mounts the artifact read-only, and must pass all seven
+canaries before any job runs.
+
+The systemd/Bubblewrap compatibility result is a host acceptance test, not a
+unit-test claim. After installing a new wheel and unit, start—but do not
+enable—the exact hardened service and invoke its health check, which runs the
+real Bubblewrap preflight:
+
+```bash
+sudo systemctl stop sparkle-worker
+sudo systemctl daemon-reload
+sudo systemctl start sparkle-worker
+curl --fail --silent --show-error http://127.0.0.1:8770/health
+sudo systemctl status sparkle-worker --no-pager
+sudo journalctl -u sparkle-worker -n 80 --no-pager
+sudo systemctl stop sparkle-worker
+```
+
+Require exit code 0, `ready: true`, profile
+`SPARKLE-WORKER-BUBBLEWRAP/1`, and all seven canaries `true`. Any absent or
+false value is a hard stop. Do not enable or start the long-running service on
+failure.
 
 ## Development-only protocol smoke test
 

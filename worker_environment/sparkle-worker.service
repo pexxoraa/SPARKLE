@@ -28,7 +28,11 @@ ProtectHome=yes
 ProtectHostname=yes
 ProtectKernelLogs=yes
 ProtectKernelModules=yes
-ProtectKernelTunables=yes
+# Bubblewrap must mount a private /proc inside its per-job user/mount namespace.
+# Enabling ProtectKernelTunables implies MountAPIVFS and blocks that mount on
+# the supported Ubuntu host. The unprivileged account, empty capability sets,
+# and NoNewPrivileges still prevent this service from changing host tunables.
+ProtectKernelTunables=no
 ProtectSystem=strict
 ReadWritePaths=/var/lib/sparkle-worker
 RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
