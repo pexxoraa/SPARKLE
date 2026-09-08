@@ -7,7 +7,7 @@
     "src/sparkle/retrieval.py": "b4e18e89dc3454f6db3ea614fc8e32b9bb9eff197643573deded261bd81b8d87",
     "src/sparkle/result_validation.py": "d3a78c21a36e231971f24a14d5fddff041b1552e0400b8d719342038ab0552ab",
     "benchmarks/retrieval.py": "a7ba97ced5c28ce3404878826c7c760e63372e2befae792aa10ae729c089c073",
-    "benchmarks/agents.py": "70dd22f4b61aec0d63e64dd60dcbac089f62b743ea59c4cb1b5b4bd67dc0e832",
+    "benchmarks/agents.py": "88e392de352c4ebfd57d7e96da4ca2395598d74c9102ed267d539f1318d7c233",
     "benchmarks/run.py": "b3883aeb6d03d8b0eab734502481946a7221a5e119a60566d60a4a7374b13194"
   },
   "retrieval": {

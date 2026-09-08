@@ -10,6 +10,7 @@ from pathlib import Path
 from sparkle.config import AppConfig
 from sparkle.contracts import ModelResponse, ToolCall
 from sparkle.providers.mock import DeterministicAdapter
+from sparkle.model import ModelError
 from sparkle.registry import ModelRegistry
 from sparkle.result_validation import validate_result
 from sparkle.system import SparkleSystem
@@ -98,6 +99,8 @@ def run_agents(root, *, adapter_factory=None):
                 parsed=json.loads(result.text)
                 protocol_success=isinstance(parsed,dict)
                 actual=parsed if protocol_success else {}
+            except ModelError as exc:
+                failure="provider_" + exc.category
             except Exception as exc:
                 failure=type(exc).__name__  # no potentially sensitive provider error text
             memory=system.memory.recent(limit=20)

@@ -10,6 +10,7 @@ from typing import Any
 
 from sparkle.contracts import Message, ModelRequest, ModelResponse, TokenUsage, ToolCall
 from sparkle.model import ModelAdapter, ModelError
+from sparkle.provider_http import deadline_urlopen
 from sparkle.secrets import SecretNotFoundError, SecretResolver
 
 
@@ -29,7 +30,7 @@ class NVIDIAChatCompletionsAdapter(ModelAdapter):
     ):
         self._config = config
         self._secrets = secrets
-        self._opener = opener or urllib.request.urlopen
+        self._opener = opener or deadline_urlopen
         self._sleeper = sleeper
         self.model_id = str(config["model_id"])
         self._base_url = str(config["base_url"])
@@ -226,16 +227,20 @@ class NVIDIAChatCompletionsAdapter(ModelAdapter):
                 result.attempts = attempt + 1
                 return result
             except urllib.error.HTTPError as exc:
-                last_error = self._safe_error(exc.read(), exc.code)
+                last_error = self._safe_error(b"", exc.code)
+            except ModelError as exc:
+                last_error = exc
+            except TimeoutError:
+                last_error = ModelError("NVIDIA request timed out", retryable=True, category="timeout")
             except urllib.error.URLError as exc:
                 last_error = ModelError(
-                    f"NVIDIA network failure: {exc.reason}", retryable=True,
-                    category="connectivity_failure",
+                    "NVIDIA network request failed", retryable=True,
+                    category="timeout" if isinstance(exc.reason, TimeoutError) else "connectivity_failure",
                 )
-            except (json.JSONDecodeError, UnicodeDecodeError, KeyError, TypeError) as exc:
+            except (ValueError, UnicodeDecodeError, KeyError, TypeError) as exc:
                 last_error = ModelError(
                     f"NVIDIA returned an invalid response: {type(exc).__name__}",
-                    retryable=False,
+                    retryable=False, category="malformed_response",
                 )
             if not last_error.retryable or attempt + 1 >= self._attempts:
                 last_error.attempts = attempt + 1
@@ -275,11 +280,14 @@ class NVIDIAChatCompletionsAdapter(ModelAdapter):
                     if isinstance(content, str) and content:
                         yield content
         except urllib.error.HTTPError as exc:
-            raise self._safe_error(exc.read(), exc.code) from exc
+            raise self._safe_error(b"", exc.code) from exc
+        except TimeoutError:
+            raise ModelError("NVIDIA stream timed out", retryable=True, category="timeout") from None
         except urllib.error.URLError as exc:
-            raise ModelError(f"NVIDIA network failure: {exc.reason}", retryable=True) from exc
-        except (json.JSONDecodeError, UnicodeDecodeError, TypeError) as exc:
+            raise ModelError("NVIDIA stream network failure", retryable=True,
+                             category="timeout" if isinstance(exc.reason, TimeoutError) else "connectivity_failure") from None
+        except (ValueError, UnicodeDecodeError, TypeError, AttributeError, IndexError) as exc:
             raise ModelError(
                 f"NVIDIA returned an invalid stream: {type(exc).__name__}",
-                retryable=False,
+                retryable=False, category="malformed_response",
             ) from exc
