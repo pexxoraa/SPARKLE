@@ -15,13 +15,22 @@ def utc_now() -> str:
     return datetime.now(UTC).isoformat()
 
 
+class ClosingConnection(sqlite3.Connection):
+    """Keep SQLite transaction semantics and release the handle on context exit."""
+    def __exit__(self, *args):
+        try:
+            return super().__exit__(*args)
+        finally:
+            self.close()
+
+
 class SQLiteStore:
     def __init__(self, path: Path):
         self.path = path
         path.parent.mkdir(parents=True, exist_ok=True)
 
     def connect(self) -> sqlite3.Connection:
-        connection = sqlite3.connect(self.path, timeout=10)
+        connection = sqlite3.connect(self.path, timeout=10, factory=ClosingConnection)
         connection.row_factory = sqlite3.Row
         connection.execute("PRAGMA journal_mode=WAL")
         connection.execute("PRAGMA foreign_keys=ON")
@@ -32,7 +41,7 @@ class SQLiteStore:
         if target == self.path.resolve():
             raise ValueError("Backup destination must differ from the live database")
         target.parent.mkdir(parents=True, exist_ok=True)
-        with self.connect() as source, sqlite3.connect(target) as backup:
+        with self.connect() as source, sqlite3.connect(target, factory=ClosingConnection) as backup:
             source.backup(backup)
         return target
 

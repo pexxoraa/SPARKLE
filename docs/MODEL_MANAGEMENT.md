@@ -244,3 +244,90 @@ skip); final 347 ran (346 passed, one live skip). Focused transport/provider/run
 benchmark/documentation suite: 54/54. Seven new loopback/IPC tests passed. Wheel
 build and fresh offline installation passed; current-tree secret/path/symlink/size
 audit passed over 177 files. No live provider call or benchmark outcome is claimed.
+
+### Diagnose the live benchmark lifecycle without guessing from a stack frame
+
+The latest host interruption in select(..., min(remaining, 0.1)) does not prove
+an expired deadline. The actual host cause remains UNRESOLVED without timing and
+attempt evidence. No further parent-deadline failure was reproduced. In particular:
+
+- `max_timeout_seconds=120` is an argument to ModelRouter.complete, NOT a
+  ModelRequest field. Registry selection accepts models whose configured timeout
+  is at most 120. It neither creates a task deadline nor overwrites adapter state.
+- The configured NVIDIA adapter uses timeout_seconds=120 and three attempts.
+  Each attempt enters a NEW DeadlineResponse; its parent sets
+  deadline_monotonic = monotonic_start + 120 before process startup.
+- The child receives the relative socket timeout (120), not that absolute value.
+  It owns urlopen/TLS/headers/body reads. Only the parent owns and enforces the
+  absolute wall deadline. Child cooperation is not required for expiry.
+- The parent recomputes remaining from that same absolute deadline. An unreadable
+  channel (including a child blocked before headers) produces repeated waits of
+  at most 0.1 seconds. Nonpositive remaining raises category=timeout, and context
+  exit terminates/kills/reaps the child with bounded waits.
+- Child progress frames now identify opening, body and http_complete. Only done
+  completes the response. HTTP completion without done still hits the deadline;
+  an EOF without done is a connectivity failure, never successful completion.
+- Cleanup joins remain bounded (0.1 + 0.2 + 0.2 seconds, plus OS scheduling).
+  A child ignoring SIGTERM is killed. Tests assert exit codes and no active orphan.
+- Retry count/backoff have NOT changed. Three attempts can consume roughly six
+  minutes per model call. The benchmark's max_tool_rounds=4 permits up to five
+  calls per task. A task can approach 30 minutes when earlier calls finish near
+  their deadlines; twelve tasks are not governed by one 120-second global timer.
+
+The smoke uses 64 output tokens and thinking=False. Agent calls use up to 4096
+output tokens with thinking=True and may request tools. Smoke connectivity does
+not establish agent latency, quality, or task completion. Retry amplification and
+repeated model rounds are possible explanations, not verified diagnoses of the
+host's interrupted run. No interruption has been converted into provider_timeout.
+
+#### Content-free timing diagnostics (optional)
+
+After installing this verified checkpoint, the host may perform ONE controlled
+live rerun, using its existing environment-injected credential:
+
+```sh
+SPARKLE_PROVIDER_DIAGNOSTICS=1 SPARKLE_BENCHMARK_LIVE=1 PYTHONPATH=src \
+  python -m unittest tests.test_benchmarks_live -v 2>provider-timing.log
+```
+
+Ordinary CI leaves both flags unset. No live benchmark ran during this change.
+Diagnostic events contain only locally generated call IDs, task ordinal, attempt
+numbers, monotonic timestamps/deadlines, durations, remaining seconds, worker PID,
+exit code, alive boolean, fixed phase names and allowlisted error categories.
+No prompt, response, tool arguments, model content, URL, key, authorization header
+or provider error message is included. The unittest runner also writes its usual
+summary/traceback to this stderr file; it is not a pure JSON document.
+
+Use task_start/task_end to locate the task, call_start/call_end to count model
+rounds, attempt_start/attempt_failure/retry_wait to identify retry amplification,
+worker_phase to locate HTTP progress, transport_wait (every five seconds) to
+observe the SAME deadline, and deadline_expired/cleanup_end to verify termination.
+A manual interrupt is recorded as interrupted, not timeout. Every model call has
+a new locally generated correlation ID. Numeric monotonic timestamps are meaningful
+only within that run/machine.
+
+Diagnostics are opt-in and best-effort. A bounded queue and daemon writer keep a
+blocked stderr consumer from blocking the provider deadline/cleanup. Events can be
+dropped if the queue fills or the interpreter exits; missing diagnostics do not
+constitute success or failure evidence. This instrumentation changes no budget,
+task, score, validator or acceptance criterion.
+
+The secondary SQLite ResourceWarning had a concrete local cause: SQLite connection
+context managers manage transactions but do not close connections. The shared
+SQLiteStore now uses a connection subclass that commits/rolls back through SQLite's
+existing context behavior and closes in finally. Backup destinations close too.
+Regression tests prove persisted commits, rollback and closed handles. This fixes
+the shared-store lifecycle; it does not prove the cause of the host HTTP wait.
+
+Lifecycle diagnostic verification (2026-09-08): baseline 347 ran (346 passed, one
+optional live skip); final 355 ran in 81.205 seconds (354 passed, one optional live
+skip). Focused lifecycle/IPC/provider/runtime/benchmark/documentation: 62/62.
+Eight new tests cover no first frame, HTTP completion without IPC completion,
+SIGTERM-ignore kill escalation, repeated near-deadline attempts, safe opt-in
+logging, nonblocking diagnostic overflow, SQLite commit/close and rollback/close.
+Two initial fixture timing assertions were corrected to separate spawn time from
+cleanup and allow the intended child stage to execute; production budgets were
+not altered. Existing loopback/partial-frame tests remain passing. Wheel build,
+fresh offline installation and current-tree audits passed (179 files). Benchmark
+outcomes and metrics are identical; only storage.py and agents.py implementation
+hashes were refreshed. No live benchmark ran; host cause remains unconfirmed.

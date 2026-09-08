@@ -88,7 +88,8 @@ class ProviderDeadlineTests(unittest.TestCase):
                 else: opener.return_value=ReadTimeout()
                 _http_worker(pipe, 'https://example.invalid', b'{}', {}, 'POST', 1.25)
                 self.assertEqual(opener.call_args.kwargs['timeout'], 1.25)
-            self.assertEqual(pipe.messages, [('error', 'timeout')])
+            self.assertEqual(pipe.messages[-1], ('error', 'timeout'))
+            self.assertEqual(pipe.messages[0], ('phase', 'opening'))
 
     def test_timeout_retry_limit_and_backoff_preserved(self):
         calls=[]; delays=[]

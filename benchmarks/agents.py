@@ -11,6 +11,7 @@ from sparkle.config import AppConfig
 from sparkle.contracts import ModelResponse, ToolCall
 from sparkle.providers.mock import DeterministicAdapter
 from sparkle.model import ModelError
+from sparkle.provider_diagnostics import emit
 from sparkle.registry import ModelRegistry
 from sparkle.result_validation import validate_result
 from sparkle.system import SparkleSystem
@@ -76,7 +77,8 @@ def run_agents(root, *, adapter_factory=None):
     rows=[]
     previous=os.environ.get('SPARKLE_DATA_DIR')
     try:
-        for task in fixture['tasks']:
+        for task_number, task in enumerate(fixture['tasks'], 1):
+            emit('task_start', task_number=task_number)
             state=root/task['task_id']; state.mkdir(parents=True)
             os.environ['SPARKLE_DATA_DIR']=str(state)
             adapter=adapter_factory() if adapter_factory else ScriptedOutcomeAdapter(task['script'])
@@ -135,6 +137,7 @@ def run_agents(root, *, adapter_factory=None):
                          'memory_events':{'count':len(memory),'value':observations['memory_value']},
                          'failure_reason':failure or (None if passed else validation['validation_status']),
                          'trace_completed':system.traces.recent()[0]['status']=='success'})
+            emit('task_end', task_number=task_number, outcome_correct=passed)
     finally:
         if previous is None: os.environ.pop('SPARKLE_DATA_DIR',None)
         else: os.environ['SPARKLE_DATA_DIR']=previous

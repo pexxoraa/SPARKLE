@@ -17,6 +17,7 @@ import urllib.error
 import urllib.request
 
 from sparkle.model import ModelError
+from sparkle.provider_diagnostics import emit
 
 MAX_RESPONSE_BYTES = 16 * 1024 * 1024
 MAX_FRAME_BYTES = 128 * 1024
@@ -43,8 +44,10 @@ class _MessageWriter:
 
 def _http_worker(connection, url, data, headers, method, timeout):
     try:
+        connection.send(('phase', 'opening'))
         request = urllib.request.Request(url, data=data, headers=headers, method=method)
         with urllib.request.urlopen(request, timeout=timeout) as response:
+            connection.send(('phase', 'body'))
             streaming = headers.get('Accept') == 'text/event-stream'
             total = 0
             while True:
@@ -56,6 +59,7 @@ def _http_worker(connection, url, data, headers, method, timeout):
                     connection.send(('error', 'malformed_response'))
                     return
                 connection.send(('data', chunk))
+            connection.send(('phase', 'http_complete'))
             connection.send(('done', None))
     except urllib.error.HTTPError as exc:
         # Never read an error body: it can stall or echo a credential.
@@ -79,7 +83,9 @@ class DeadlineResponse:
         self.process = None
 
     def __enter__(self):
-        self.deadline = time.monotonic() + self.timeout
+        self.started = time.monotonic()
+        self.deadline = self.started + self.timeout
+        self.next_diagnostic = self.started + 5
         context = multiprocessing.get_context('spawn')
         self.reader, channel = socket.socketpair()
         self.reader.setblocking(False)
@@ -92,6 +98,8 @@ class DeadlineResponse:
         try:
             self.process.start()
             self.worker_pid = self.process.pid
+            emit('transport_start', worker_pid=self.worker_pid, timeout_seconds=self.timeout,
+                 deadline_monotonic=self.deadline)
         except Exception:
             self.reader.close()
             raise ModelError('Provider transport could not start', category='connectivity_failure') from None
@@ -101,8 +109,16 @@ class DeadlineResponse:
 
     def _receive(self):
         while True:
-            remaining = self.deadline - time.monotonic()
+            now = time.monotonic()
+            remaining = self.deadline - now
+            if now >= self.next_diagnostic:
+                emit('transport_wait', worker_pid=self.worker_pid, elapsed_seconds=now-self.started,
+                     remaining_seconds=remaining, deadline_monotonic=self.deadline,
+                     child_alive=self.process.is_alive())
+                self.next_diagnostic = now + 5
             if remaining <= 0:
+                emit('deadline_expired', worker_pid=self.worker_pid, elapsed_seconds=now-self.started,
+                     remaining_seconds=remaining, deadline_monotonic=self.deadline)
                 raise ModelError('Provider request deadline exceeded', category='timeout', retryable=True)
             if len(self.buffer) >= 4:
                 size = struct.unpack('!I', self.buffer[:4])[0]
@@ -115,7 +131,7 @@ class DeadlineResponse:
                         kind, value = json.loads(payload)
                         if kind == 'data':
                             value = base64.b64decode(value, validate=True)
-                        elif kind not in {'done', 'http_error', 'error'}:
+                        elif kind not in {'done', 'http_error', 'error', 'phase'}:
                             raise ValueError('Unknown IPC message')
                     except (ValueError, TypeError):
                         raise ModelError('Invalid provider IPC frame', category='malformed_response') from None
@@ -137,6 +153,10 @@ class DeadlineResponse:
         total = 0
         while True:
             kind, value = self._receive()
+            if kind == 'phase':
+                emit('worker_phase', phase=value, worker_pid=self.worker_pid,
+                     elapsed_seconds=time.monotonic()-self.started)
+                continue
             if kind == 'done':
                 return
             if kind == 'http_error':
@@ -154,6 +174,7 @@ class DeadlineResponse:
         return b''.join(self)
 
     def __exit__(self, *_args):
+        emit('cleanup_start', worker_pid=self.worker_pid, elapsed_seconds=time.monotonic()-self.started)
         # Cleanup is bounded too; no abandoned I/O threads or retry processes.
         self.process.join(0.1)
         if self.process.is_alive():
@@ -167,6 +188,8 @@ class DeadlineResponse:
         if self.process.is_alive():
             raise ModelError('Provider transport cleanup failed', category='connectivity_failure')
         self.process.close()
+        emit('cleanup_end', worker_pid=self.worker_pid, worker_exitcode=self.worker_exitcode,
+             elapsed_seconds=time.monotonic()-self.started, child_alive=False)
 
 
 def deadline_urlopen(request, timeout):

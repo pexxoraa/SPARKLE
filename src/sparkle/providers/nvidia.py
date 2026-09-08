@@ -11,6 +11,7 @@ from typing import Any
 from sparkle.contracts import Message, ModelRequest, ModelResponse, TokenUsage, ToolCall
 from sparkle.model import ModelAdapter, ModelError
 from sparkle.provider_http import deadline_urlopen
+from sparkle.provider_diagnostics import diagnosed_call, emit
 from sparkle.secrets import SecretNotFoundError, SecretResolver
 
 
@@ -204,6 +205,7 @@ class NVIDIAChatCompletionsAdapter(ModelAdapter):
             raw_assistant_content=raw_content,
         )
 
+    @diagnosed_call
     def complete(self, request: ModelRequest) -> ModelResponse:
         self.validate_request(request)
         request.stream = False
@@ -214,6 +216,7 @@ class NVIDIAChatCompletionsAdapter(ModelAdapter):
         body = json.dumps(self._payload(request), separators=(",", ":")).encode("utf-8")
         last_error: ModelError | None = None
         for attempt in range(self._attempts):
+            emit("attempt_start", attempt=attempt+1, timeout_seconds=self._timeout)
             http_request = urllib.request.Request(
                 self._base_url, data=body, headers=headers, method="POST",
             )
@@ -242,11 +245,13 @@ class NVIDIAChatCompletionsAdapter(ModelAdapter):
                     f"NVIDIA returned an invalid response: {type(exc).__name__}",
                     retryable=False, category="malformed_response",
                 )
+            emit("attempt_failure", attempt=attempt+1, category=last_error.category)
             if not last_error.retryable or attempt + 1 >= self._attempts:
                 last_error.attempts = attempt + 1
                 raise last_error
             delay = self._base_delay * (2**attempt)
             delay += random.uniform(0, self._base_delay / 4 if self._base_delay else 0)
+            emit("retry_wait", attempt=attempt+1, delay_seconds=delay)
             self._sleeper(delay)
         raise last_error or ModelError("NVIDIA request failed")
 
