@@ -113,8 +113,9 @@ class NVIDIAChatCompletionsAdapter(ModelAdapter):
             "temperature": request.temperature,
             "stream": request.stream,
         }
+        # Omission leaves the provider default active, including default-on reasoning.
+        payload["chat_template_kwargs"] = {"enable_thinking": request.thinking}
         if request.thinking:
-            payload["chat_template_kwargs"] = {"enable_thinking": True}
             budget = int(self._config.get("reasoning_budget", 0))
             if budget > 0:
                 payload["reasoning_budget"] = min(budget, payload["max_tokens"])

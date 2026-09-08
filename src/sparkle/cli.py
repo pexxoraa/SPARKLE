@@ -356,7 +356,7 @@ def live_smoke(system: SparkleSystem) -> int:
         return 2
     started = time.monotonic()
     try:
-        _decision, response = system.model_router.complete(ModelRequest(
+        decision, response = system.model_router.complete(ModelRequest(
             messages=[Message(role="user", content="Reply with exactly SPARKLE_LIVE_OK")],
             system="This is a provider connectivity smoke test. Follow the user's exact output instruction.",
             max_output_tokens=64, thinking=False, temperature=0,
@@ -364,18 +364,35 @@ def live_smoke(system: SparkleSystem) -> int:
     except ModelError as exc:
         _print({
             "ok": False, "stage": "live_request", "provider": health,
-            "error": str(exc), "retryable": exc.retryable, "secret_value_exposed": False,
+            "error_type": exc.category, "retryable": exc.retryable,
+            "live_provider_connectivity": False, "secret_value_exposed": False,
         })
         return 1
     exact = response.text.strip() == "SPARKLE_LIVE_OK"
+    # Validate the provider envelope independently of model instruction following.
+    # A truncated response is transport evidence, not a completed answer.
+    connected = (
+        not decision.test_harness
+        and not decision.fallback
+        and response.provider == decision.provider == adapter.provider
+        and response.model == decision.model == adapter.model_id
+        and bool(response.provider_request_id and response.provider_request_id.strip())
+        and response.finish_reason in {"stop", "length", "end_turn", "max_tokens"}
+        and not response.tool_calls
+    )
     _print({
-        "ok": exact, "stage": "live_request", "provider": response.provider, "model": response.model,
+        "ok": connected, "live_provider_connectivity": connected,
+        "exact_output_compliance": exact and response.finish_reason in {"stop", "end_turn"},
+        "output_truncated": response.finish_reason in {"length", "max_tokens"},
+        "stage": "live_request", "provider": response.provider, "model": response.model,
         "finish_reason": response.finish_reason, "exact_response_match": exact,
         "provider_request_id": response.provider_request_id,
-        "usage": response.usage, "duration_ms": round((time.monotonic() - started) * 1000, 2),
+        "usage": {"input_tokens": response.usage.input_tokens,
+                  "output_tokens": response.usage.output_tokens} if response.usage_reported else None,
+        "usage_reported": response.usage_reported, "duration_ms": round((time.monotonic() - started) * 1000, 2),
         "secret_value_exposed": False,
     })
-    return 0 if exact else 1
+    return 0 if connected else 1
 
 
 def main(argv: list[str] | None = None) -> int:
