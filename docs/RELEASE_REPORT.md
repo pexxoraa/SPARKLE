@@ -2154,3 +2154,22 @@ Python 3.12 and Python 3.13. The workflow uses `actions/checkout@v7` and
   not a guarantee that arbitrary secrets can be recognized.
 - No credentials were created or used. Model live verification remains pending.
 - Level 3 remains BLOCKED; deployment remains FROZEN.
+
+
+## Published retrieval checkpoint — 2026-09-08
+
+- Capability commit: `7cc716fd6121b680bc024728f9fffd34a0c677de`.
+- Exact published tree: `d785ab0a14a37944f9d7d04854381a0e9d3443e7`.
+- Parent: `21c6f5797460650ce352c5e589bceab84a3443e4`.
+- Remote main and tree verified after a non-force fast-forward; local worktree
+  clean at this capability checkpoint.
+- [CI #74](https://github.com/pexxoraa/SPARKLE/actions/runs/34179742080):
+  **5/5 jobs passed** for this exact commit: Python 3.12, Python 3.13,
+  worker-image, controlled-execution-software, automation-service.
+- Local full suite 304/304, focused retrieval 22/22, pipeline/security 92/92,
+  documentation 4/4. Final wheel SHA-256:
+  `6c03c82c2fe0658ae8111bfa72e07c3f65bf2ef5a7e000046aaccdfce88bad52`.
+- Version unchanged. Level 3 BLOCKED. Deployment FROZEN.
+
+This documentation follow-up records the capability checkpoint; its own commit
+and exact CI result are reported separately after publication.

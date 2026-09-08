@@ -1,6 +1,6 @@
 # Build state
 
-Updated: 2026-09-07 UTC
+Updated: 2026-09-08 UTC
 
 | Field | State |
 |---|---|
@@ -8,7 +8,7 @@ Updated: 2026-09-07 UTC
 | Current phase | Infrastructure-independent foundation completion while preserving controlled execution boundaries |
 | Current task | Indexed knowledge retrieval and integrated research-context verification; Level 3 parked |
 | Completed | Existing promotion/build/execution foundations; NVIDIA Nemotron 3.5 Lightning primary adapter; retained disabled MiniMax adapter; evidence-based model health; capability/modality/tool/stream/latency/timeout request policy; explicit fallback; content-free usage/retry/routing evidence; orchestrator, trace, API, CLI, status, dashboard; fail-closed provider-neutral browser/computer contracts; all previously published memory, knowledge, agent, builder, project, skill, automation, security, and worker capabilities |
-| In progress | Fresh baseline 297/297; retrieval milestone 304/304 full suite and 22/22 focused tests passed. Publication evidence is recorded below after exact remote/CI verification. |
+| In progress | Retrieval capability 7cc716f published; CI #74 passed all five jobs. Full suite 304/304. Evidence documentation follow-up; semantic retrieval/agent-quality evaluation remains unfinished. |
 | Blocked | Level 3 = BLOCKED: user reports standalone Bubblewrap and seven canaries verified on Ubuntu; hardened systemd acceptance, authenticated external-worker acceptance and approved immutable artifact acceptance remain incomplete. Live model credentials, browser/computer/voice runtimes remain unavailable or unimplemented. |
 | Failed tests | Initial retrieval focused run: 21/22 passed, one chunk whitespace-preservation failure; fixed and rerun 22/22. Final full suite 304/304. Historical failures below are not current failures. |
 | Next action | Evaluate retrieval/agent outcomes and independent result validation, then project/task integration. Do not resume the parked systemd investigation. Deployment remains frozen. |
@@ -168,3 +168,22 @@ complete.
   not a guarantee that arbitrary secrets can be recognized.
 - No credentials were created or used. Model live verification remains pending.
 - Level 3 remains BLOCKED; deployment remains FROZEN.
+
+
+## Published retrieval checkpoint — 2026-09-08
+
+- Capability commit: `7cc716fd6121b680bc024728f9fffd34a0c677de`.
+- Exact published tree: `d785ab0a14a37944f9d7d04854381a0e9d3443e7`.
+- Parent: `21c6f5797460650ce352c5e589bceab84a3443e4`.
+- Remote main and tree verified after a non-force fast-forward; local worktree
+  clean at this capability checkpoint.
+- [CI #74](https://github.com/pexxoraa/SPARKLE/actions/runs/34179742080):
+  **5/5 jobs passed** for this exact commit: Python 3.12, Python 3.13,
+  worker-image, controlled-execution-software, automation-service.
+- Local full suite 304/304, focused retrieval 22/22, pipeline/security 92/92,
+  documentation 4/4. Final wheel SHA-256:
+  `6c03c82c2fe0658ae8111bfa72e07c3f65bf2ef5a7e000046aaccdfce88bad52`.
+- Version unchanged. Level 3 BLOCKED. Deployment FROZEN.
+
+This documentation follow-up records the capability checkpoint; its own commit
+and exact CI result are reported separately after publication.
