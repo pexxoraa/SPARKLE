@@ -194,3 +194,53 @@ normalization, HTTP-error safety and all-12-task timeout/runtime evidence. Wheel
 build and fresh offline installation passed. Baseline tasks, scores and retrieval
 metrics are identical; only the agents.py implementation fingerprint changed in
 the reproducible report. No authenticated live benchmark was rerun.
+
+### Partial-IPC deadline correction
+
+The HTTP child owns the HTTPS socket; the caller owns the monotonic deadline.
+A second inspection found a gap in the initial process transport: Pipe.poll()
+only establishes that bytes are readable, not that a whole framed message has
+arrived. The following blocking Connection.recv() could wait outside the deadline.
+A harmless reproducer on the previous implementation sent a partial completion
+frame, delayed the remainder, and returned SUCCESS after 1.603 seconds despite a
+0.8-second deadline. Previous doubles only sent complete IPC frames and missed
+this case. Python documents poll as checking for any available data:
+https://docs.python.org/3/library/multiprocessing.html#connection-objects
+
+The observed host traceback in poll(remaining) does not establish that this
+specific defect caused that interruption. No elapsed duration or attempt number
+was supplied. A finite wait inside poll is expected; three attempts and multiple
+agent calls can appear idle for minutes. We do not claim to have reproduced the
+host's live response or rerun its benchmark.
+
+The parent now reads a private socketpair nonblocking, assembling bounded JSON
+frames incrementally (no pickle receive). It waits at most 100 ms per readiness
+check and recomputes the SAME absolute deadline after every partial read. Socket
+or IPC trickling never extends it. Partial frames, including late completion
+frames, cannot bypass expiry. The child may still wait in urllib while reading
+headers/body; the independent parent deadline terminates it. Parent-side response
+size and frame bounds also fail closed.
+
+Configured timeout remains per attempt from before process startup through the
+complete body/stream. Cleanup retains at most 0.5 seconds of explicit join waits,
+with terminate then kill escalation; actual scheduling is OS-dependent. Child
+exit code and closed resources are asserted in tests; failed cleanup is a
+structured failure, never success. Retry/backoff semantics are unchanged. Default
+three 120-second attempts can still consume approximately 360 seconds plus
+backoff/cleanup PER MODEL CALL, not for the whole 12-task benchmark.
+
+New regression tests exercise the real transport against a loopback HTTP server:
+normal success, slow headers, slow body, periodic bytes and incomplete body.
+Additional IPC cases stall inside a partial frame and send a late completion.
+They assert deadline failure, process exit, no remaining active child and closed
+IPC descriptors. Existing tests retain safe timeout normalization, bounded retry
+counts and provider_timeout runtime/benchmark classification. Loopback tests do
+not contact NVIDIA and do not constitute live model or agent-quality evidence.
+Tasks, scores, validators, baseline reports, Level 3 and deployment gates remain
+unchanged. A credentialed host rerun remains pending after publication and CI.
+
+Partial-IPC verification (2026-09-08): baseline 340 tests ran (339 passed, one live
+skip); final 347 ran (346 passed, one live skip). Focused transport/provider/runtime/
+benchmark/documentation suite: 54/54. Seven new loopback/IPC tests passed. Wheel
+build and fresh offline installation passed; current-tree secret/path/symlink/size
+audit passed over 177 files. No live provider call or benchmark outcome is claimed.

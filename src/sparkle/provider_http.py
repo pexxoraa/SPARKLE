@@ -5,6 +5,11 @@ Credentials travel in private process IPC, never command arguments or files.
 """
 from __future__ import annotations
 
+import base64
+import json
+import select
+import socket
+import struct
 import math
 import multiprocessing
 import time
@@ -14,6 +19,26 @@ import urllib.request
 from sparkle.model import ModelError
 
 MAX_RESPONSE_BYTES = 16 * 1024 * 1024
+MAX_FRAME_BYTES = 128 * 1024
+
+
+class _MessageWriter:
+    """Bounded JSON frames over private IPC; no blocking parent pickle receive."""
+    def __init__(self, channel):
+        self.channel = channel
+
+    def send(self, message):
+        kind, value = message
+        if kind == 'data':
+            value = base64.b64encode(value).decode('ascii')
+        payload = json.dumps([kind, value], separators=(',', ':')).encode('utf-8')
+        if len(payload) > MAX_FRAME_BYTES:
+            raise ValueError('Provider IPC frame too large')
+        self.channel.sendall(struct.pack('!I', len(payload)) + payload)
+
+    def close(self):
+        self.channel.close()
+
 
 
 def _http_worker(connection, url, data, headers, method, timeout):
@@ -56,13 +81,17 @@ class DeadlineResponse:
     def __enter__(self):
         self.deadline = time.monotonic() + self.timeout
         context = multiprocessing.get_context('spawn')
-        self.reader, writer = context.Pipe(duplex=False)
+        self.reader, channel = socket.socketpair()
+        self.reader.setblocking(False)
+        writer = _MessageWriter(channel)
+        self.buffer = bytearray()
         self.process = context.Process(target=self.worker, args=(
             writer, self.request.full_url, self.request.data,
             dict(self.request.header_items()), self.request.get_method(), self.timeout,
         ), daemon=True)
         try:
             self.process.start()
+            self.worker_pid = self.process.pid
         except Exception:
             self.reader.close()
             raise ModelError('Provider transport could not start', category='connectivity_failure') from None
@@ -70,21 +99,55 @@ class DeadlineResponse:
             writer.close()
         return self
 
-    def __iter__(self):
+    def _receive(self):
         while True:
             remaining = self.deadline - time.monotonic()
-            if remaining <= 0 or not self.reader.poll(remaining):
+            if remaining <= 0:
                 raise ModelError('Provider request deadline exceeded', category='timeout', retryable=True)
+            if len(self.buffer) >= 4:
+                size = struct.unpack('!I', self.buffer[:4])[0]
+                if size > MAX_FRAME_BYTES:
+                    raise ModelError('Provider IPC frame too large', category='malformed_response')
+                if len(self.buffer) >= size + 4:
+                    payload = bytes(self.buffer[4:size + 4])
+                    del self.buffer[:size + 4]
+                    try:
+                        kind, value = json.loads(payload)
+                        if kind == 'data':
+                            value = base64.b64decode(value, validate=True)
+                        elif kind not in {'done', 'http_error', 'error'}:
+                            raise ValueError('Unknown IPC message')
+                    except (ValueError, TypeError):
+                        raise ModelError('Invalid provider IPC frame', category='malformed_response') from None
+                    return kind, value
+            # Readiness is not a complete frame. Every partial receive returns to
+            # the SAME deadline; no blocking recv() follows a readiness check.
+            ready, _, _ = select.select([self.reader], [], [], min(remaining, 0.1))
+            if not ready:
+                continue
             try:
-                kind, value = self.reader.recv()
-            except EOFError:
-                raise ModelError('Provider transport ended without completion', category='connectivity_failure', retryable=True) from None
+                chunk = self.reader.recv(65536)
+            except BlockingIOError:
+                continue
+            if not chunk:
+                raise ModelError('Provider transport ended without completion', category='connectivity_failure', retryable=True)
+            self.buffer.extend(chunk)
+
+    def __iter__(self):
+        total = 0
+        while True:
+            kind, value = self._receive()
             if kind == 'done':
                 return
             if kind == 'http_error':
                 raise urllib.error.HTTPError(self.request.full_url, value, 'Provider HTTP failure', {}, None)
             if kind == 'error':
+                if value not in {'timeout', 'connectivity_failure', 'malformed_response'}:
+                    value = 'malformed_response'
                 raise ModelError('Provider transport failed', category=value, retryable=value in {'timeout', 'connectivity_failure'})
+            total += len(value)
+            if total > MAX_RESPONSE_BYTES:
+                raise ModelError('Provider response too large', category='malformed_response')
             yield value
 
     def read(self):
@@ -99,8 +162,11 @@ class DeadlineResponse:
         if self.process.is_alive():
             self.process.kill()
             self.process.join(0.2)
-        self.process.close()
+        self.worker_exitcode = self.process.exitcode
         self.reader.close()
+        if self.process.is_alive():
+            raise ModelError('Provider transport cleanup failed', category='connectivity_failure')
+        self.process.close()
 
 
 def deadline_urlopen(request, timeout):
