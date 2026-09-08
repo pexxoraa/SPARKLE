@@ -8,7 +8,7 @@ Updated: 2026-09-08 UTC
 | Current phase | Infrastructure-independent foundation completion while preserving controlled execution boundaries |
 | Current task | Retrieval benchmark, four-agent outcome harness and independent deterministic result validation |
 | Completed | Existing promotion/build/execution foundations; NVIDIA Nemotron 3.5 Lightning primary adapter; retained disabled MiniMax adapter; evidence-based model health; capability/modality/tool/stream/latency/timeout request policy; explicit fallback; content-free usage/retry/routing evidence; orchestrator, trace, API, CLI, status, dashboard; fail-closed provider-neutral browser/computer contracts; all previously published memory, knowledge, agent, builder, project, skill, automation, security, and worker capabilities |
-| In progress | Local benchmark/evidence implementation; exact verification and publication recorded below. No live-model or real semantic quality claim. |
+| In progress | Benchmark capability and CI-discovered migration fix published; CI #77 passed 5/5 jobs. Final documentation checkpoint. Live-model and real semantic quality remain unverified. |
 | Blocked | Level 3 = BLOCKED: user reports standalone Bubblewrap and seven canaries verified on Ubuntu; hardened systemd acceptance, authenticated external-worker acceptance and approved immutable artifact acceptance remain incomplete. Live model credentials, browser/computer/voice runtimes remain unavailable or unimplemented. |
 | Failed tests | Initial retrieval focused run: 21/22 passed, one chunk whitespace-preservation failure; fixed and rerun 22/22. Final full suite 304/304. Historical failures below are not current failures. |
 | Next action | Evaluate real embedding and live-agent outcomes when authorized providers are available; expand reviewed tasks and validators. Keep Level 3 parked and deployment frozen. |
@@ -250,3 +250,24 @@ Fresh verification after the fix: **321 run, 320 passed, 1 optional live test
 skipped, zero failures** (38.637 seconds); automation/benchmark focus **32/32**.
 Benchmark metrics and evidence remain unchanged. Level 3 remains parked/BLOCKED;
 deployment remains FROZEN. Exact follow-up publication/CI evidence follows.
+
+
+## Verified benchmark checkpoint — 2026-09-08
+
+- Benchmark capability: `d3e529598430c9939a1b900fb0d5aa01d22466b5`.
+- CI-driven migration fix / verified code HEAD:
+  `b73495dc86fd0745a31a596891aff40c1c719caa`.
+- Verified code tree: `cd41f390574d4be5fd6675318c302f95ca113eab`.
+- [CI #77](https://github.com/pexxoraa/SPARKLE/actions/runs/34194421673): all
+  **5/5 jobs passed**, including Python 3.12 and 3.13 full suites and exact
+  benchmark reproduction. CI #76's migration race remains documented above.
+- Local final suite: 321 run, 320 passed, 1 explicitly skipped live test;
+  automation/benchmark focus 32/32; retrieval/HTTP focus 22/22; docs 4/4.
+- Fresh wheel with the migration fix installed offline and passed startup/
+  independent-validator smoke. Post-fix audit covered 173 files without
+  recognized secret, path, symlink or oversized-file findings.
+- Remote HEAD/tree and strict non-force lineage verified; worktree clean at
+  the code checkpoint. This documentation follow-up receives separate CI.
+- Credential-free benchmark/validator milestone complete; live agent competence,
+  trained semantic retrieval, NVIDIA authentication and production-scale quality
+  remain unverified. Level 3 BLOCKED/PARKED; deployment FROZEN. Version unchanged.
