@@ -43,6 +43,9 @@ class AutomationStore(SQLiteStore):
 
     def initialize(self) -> None:
         with self.connect() as connection:
+            # Service and observers may initialize simultaneously. Reserve the
+            # writer before reading schema so migrations cannot use stale columns.
+            connection.execute("BEGIN IMMEDIATE")
             connection.execute("""
                 CREATE TABLE IF NOT EXISTS automations (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -2216,3 +2216,23 @@ No capability category, version, Level 3 or deployment status is upgraded.
 - Scripted agent outcomes: 12/12 validated. Controls: 1 rejected, 2 inconclusive.
 - Live provider/real semantic quality remains pending; Level 3 BLOCKED and
   deployment FROZEN. No production-retriever or worker changes.
+
+
+## CI-discovered automation migration race — 2026-09-08
+
+Benchmark capability `d3e529598430c9939a1b900fb0d5aa01d22466b5`, tree
+`724ff0fad93521784d3e1a3a2022c8d889d66c66`, was published as a strict descendant
+of `ca893e4`. [CI #76](https://github.com/pexxoraa/SPARKLE/actions/runs/34193484793)
+passed four jobs, including Python 3.13 benchmark reproduction, but Python 3.12
+failed an existing automation SIGTERM test: simultaneous startup attempted to add
+`claim_token` twice. This was a real schema check/migration race, not a benchmark
+metric failure or a reason to rerun until green.
+
+The fix acquires SQLite's write reservation before schema creation/inspection
+and holds it through migration. A coordinated two-connection test reproduces the
+published duplicate-column error and passes with the fix. A six-initializer test
+also preserves stored records. No automation policy or worker boundary changes.
+Fresh verification after the fix: **321 run, 320 passed, 1 optional live test
+skipped, zero failures** (38.637 seconds); automation/benchmark focus **32/32**.
+Benchmark metrics and evidence remain unchanged. Level 3 remains parked/BLOCKED;
+deployment remains FROZEN. Exact follow-up publication/CI evidence follows.
