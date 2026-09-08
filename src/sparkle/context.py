@@ -18,7 +18,7 @@ class ContextBundle:
             sections.append(f"Relevant personal memory:\n{values}")
         if self.knowledge:
             values = "\n".join(
-                f"- {item['title']} (chunk {item['position']}): {item['content']}" for item in self.knowledge
+                f"- {item['title']} (source {item['source_id']}, chunk {item['chunk_id']}, position {item['position']}): {item['content']}" for item in self.knowledge
             )
             sections.append(f"Relevant stored knowledge:\n{values}")
         return "\n\n".join(sections)

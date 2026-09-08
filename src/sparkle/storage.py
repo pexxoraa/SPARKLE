@@ -4,7 +4,6 @@ import hashlib
 import json
 import re
 import sqlite3
-from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -200,9 +199,46 @@ class KnowledgeStore(SQLiteStore):
                     "ALTER TABLE sources ADD COLUMN content_digest TEXT"
                 )
 
+            # Serialize the one-time migration with concurrent initializers. Index,
+            # backfill and maintenance triggers commit together or roll back together.
+            connection.commit()
+            connection.execute("BEGIN IMMEDIATE")
+            indexed = connection.execute(
+                "SELECT 1 FROM sqlite_master WHERE name='knowledge_search'"
+            ).fetchone()
+            if not indexed:
+                connection.execute(
+                    "CREATE VIRTUAL TABLE knowledge_search USING fts5("
+                    "title, content, tokenize='unicode61 remove_diacritics 2')"
+                )
+                connection.execute("""
+                    INSERT INTO knowledge_search(rowid, title, content)
+                    SELECT chunks.id, sources.title, chunks.content
+                    FROM chunks JOIN sources ON sources.id=chunks.source_id
+                """)
+                for statement in (
+                    """CREATE TRIGGER knowledge_chunk_insert AFTER INSERT ON chunks BEGIN
+                        INSERT INTO knowledge_search(rowid,title,content)
+                        VALUES(new.id,(SELECT title FROM sources WHERE id=new.source_id),new.content);
+                    END""",
+                    """CREATE TRIGGER knowledge_chunk_delete AFTER DELETE ON chunks BEGIN
+                        DELETE FROM knowledge_search WHERE rowid=old.id;
+                    END""",
+                    """CREATE TRIGGER knowledge_chunk_update AFTER UPDATE ON chunks BEGIN
+                        UPDATE knowledge_search SET content=new.content,
+                        title=(SELECT title FROM sources WHERE id=new.source_id)
+                        WHERE rowid=old.id;
+                    END""",
+                    """CREATE TRIGGER knowledge_title_update AFTER UPDATE OF title ON sources BEGIN
+                        UPDATE knowledge_search SET title=new.title
+                        WHERE rowid IN (SELECT id FROM chunks WHERE source_id=new.id);
+                    END""",
+                ):
+                    connection.execute(statement)
+
     @staticmethod
     def _terms(text: str) -> list[str]:
-        return [term.lower() for term in re.findall(r"[a-zA-Z0-9_]+", text) if len(term) > 1]
+        return [term.lower() for term in re.findall(r"[^\W_]+", text, flags=re.UNICODE) if len(term) > 1]
 
     def ingest_text(
         self,
@@ -214,6 +250,8 @@ class KnowledgeStore(SQLiteStore):
         metadata: dict[str, Any] | None = None,
         chunk_chars: int = 1800,
     ) -> int:
+        if type(chunk_chars) is not int or not 1 <= chunk_chars <= 100_000:
+            raise ValueError("chunk_chars must be an integer between 1 and 100000")
         if not title.strip() or not content.strip():
             raise ValueError("Knowledge title and content cannot be empty")
         if metadata is not None and not isinstance(metadata, dict):
@@ -240,10 +278,12 @@ class KnowledgeStore(SQLiteStore):
             raise ValueError("Knowledge metadata exceeds 4096 bytes")
         content_digest = hashlib.sha256(content.encode("utf-8")).hexdigest()
         paragraphs = [part.strip() for part in re.split(r"\n\s*\n", content) if part.strip()]
+        paragraphs = [part[offset:offset + chunk_chars] for part in paragraphs
+                      for offset in range(0, len(part), chunk_chars)]
         chunks: list[str] = []
         current = ""
         for paragraph in paragraphs:
-            candidate = f"{current}\n\n{paragraph}".strip()
+            candidate = f"{current}\n\n{paragraph}" if current else paragraph
             if current and len(candidate) > chunk_chars:
                 chunks.append(current)
                 current = paragraph
@@ -267,31 +307,33 @@ class KnowledgeStore(SQLiteStore):
         return source_id
 
     def search(self, query: str, *, limit: int = 5) -> list[dict[str, Any]]:
-        query_terms = self._terms(query)
+        if not isinstance(query, str):
+            raise ValueError("Knowledge query must be text")
+        # Bound retrieval work without rejecting an otherwise valid long chat request.
+        query_terms = list(dict.fromkeys(self._terms(query[:16_384])))[:64]
         if not query_terms:
             return []
+        # Only literal Unicode tokens enter MATCH; caller FTS operators are data.
+        match = " OR ".join('"' + term + '"' for term in query_terms)
         with self.connect() as connection:
             rows = connection.execute("""
-                SELECT chunks.id, chunks.source_id, chunks.position, chunks.content, chunks.token_terms,
-                       sources.title, sources.source_uri, sources.media_type
-                FROM chunks JOIN sources ON sources.id=chunks.source_id
-            """).fetchall()
-        query_counts = Counter(query_terms)
-        ranked: list[tuple[float, sqlite3.Row]] = []
-        for row in rows:
-            document_counts = Counter(row["token_terms"].split())
-            score = sum(min(count, document_counts.get(term, 0)) for term, count in query_counts.items())
-            if score:
-                length_normalizer = max(1.0, len(document_counts) ** 0.25)
-                ranked.append((score / length_normalizer, row))
-        ranked.sort(key=lambda item: item[0], reverse=True)
+                SELECT chunks.id, chunks.source_id, chunks.position, chunks.content,
+                       sources.title, sources.source_uri, sources.media_type,
+                       bm25(knowledge_search, 3.0, 1.0) AS relevance
+                FROM knowledge_search
+                JOIN chunks ON chunks.id=knowledge_search.rowid
+                JOIN sources ON sources.id=chunks.source_id
+                WHERE knowledge_search MATCH ?
+                ORDER BY relevance, chunks.id LIMIT ?
+            """, (match, max(1, min(limit, 50)))).fetchall()
         return [
             {
                 "chunk_id": row["id"], "source_id": row["source_id"], "title": row["title"],
                 "source_uri": row["source_uri"], "media_type": row["media_type"],
-                "position": row["position"], "content": row["content"], "score": round(score, 4),
+                "position": row["position"], "content": row["content"],
+                "score": -row["relevance"],
             }
-            for score, row in ranked[:max(1, min(limit, 50))]
+            for row in rows
         ]
 
     def stats(self) -> dict[str, int]:

@@ -75,6 +75,28 @@ class SystemEndToEndTests(unittest.TestCase):
         except urllib.error.HTTPError as exc:
             return exc.code, json.loads(exc.read())
 
+    def test_title_retrieval_reaches_research_context_and_trace_over_http(self):
+        status, _ = self.request("/api/knowledge", {
+            "title": "Asterion maintenance",
+            "content": "The approved interval is forty hours.",
+        })
+        self.assertEqual(status, 201)
+        status, response = self.request("/api/chat", {
+            "agent": "research", "message": "Explain Asterion maintenance",
+        })
+        self.assertEqual(status, 200)
+        system_prompt = str(self.adapter.last_request.system)
+        self.assertIn("The approved interval is forty hours.", system_prompt)
+        self.assertIn("source 1, chunk 1, position 0", system_prompt)
+        status, traces = self.request("/api/traces?limit=10")
+        self.assertEqual(status, 200)
+        trace = next(t for t in traces["traces"]
+                     if t["trace_id"] == response["result"]["trace_id"])
+        self.assertEqual(trace["status"], "success")
+        self.assertIn("knowledge_environment", trace["data_accessed"])
+        # This is deterministic adapter integration, not factual/live-model evidence.
+        self.assertEqual(response["result"]["provider"], "deterministic")
+
     def test_contextual_mixed_request_crosses_the_complete_http_pipeline(self):
         memory_status, _ = self.request("/api/memory", {
             "category": "goals",

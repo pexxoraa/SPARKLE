@@ -2,6 +2,21 @@
 
 Date: 2026-09-02 UTC
 
+## 2026-09-07 foundation retrieval milestone
+
+Inspected published `21c6f5797460650ce352c5e589bceab84a3443e4`, tree
+`f09e534de2bdd5fa123cbc010b7e10322caa1ca1`, clean main, matching remote.
+Fresh baseline: 297/297. Updated full suite: 304/304; focused retrieval/storage/
+HTTP integration: 22/22. The first focused run caught whitespace loss during
+chunk splitting (21/22); corrected before final verification.
+
+Knowledge now has transactional FTS5 migration and maintenance, Unicode/title
+ranking, bounded queries/chunks and attributable context. No semantic retrieval,
+live NVIDIA, autonomous agent quality or Level 3 claim is made. The
+[46-category foundation audit](FOUNDATION_AUDIT.md) supersedes the unsupported
+93% completion estimate. Version remains unchanged. Level 3 stays BLOCKED and
+deployment FROZEN; prior host Bubblewrap evidence is user-reported, not rerun.
+
 ## Controlled immutable-artifact execution
 
 - `SPARKLE-AI-SYSTEM-CONTROLLED-EXECUTION/1` is implemented after controlled
@@ -2121,3 +2136,21 @@ Result: PASS — SPARKLE CI run #5 completed successfully in 15 seconds for
 commit `32be63286ca0ce9b5dd07eea6b07c4942a93a5a9`. Both matrix jobs passed on
 Python 3.12 and Python 3.13. The workflow uses `actions/checkout@v7` and
 `actions/setup-python@v7`; the successful run reported no annotations.
+
+
+## Retrieval milestone local verification (2026-09-07)
+
+- Baseline official suite: 297/297.
+- Updated official suite: 304/304.
+- Retrieval/storage/HTTP integration: 22/22.
+- Execution/worker/runtime/promotion/build/security/artifact regression: 92/92.
+- Documentation contracts: 4/4.
+- Dashboard JavaScript syntax and whitespace: passed.
+- Fresh wheel build and offline installation: passed, including installed
+  Unicode/title retrieval and deletion smoke.
+- Tracked source plus new test audit: 158 files; no symlinks, unsafe relative
+  paths, generated binaries/databases/keys, files over 5 MiB, or detected
+  private-key/provider-token material. This is a bounded pattern/path audit,
+  not a guarantee that arbitrary secrets can be recognized.
+- No credentials were created or used. Model live verification remains pending.
+- Level 3 remains BLOCKED; deployment remains FROZEN.

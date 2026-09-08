@@ -200,3 +200,14 @@ The orchestrator supplies only tools allowed by the selected agent. A model can
 request a tool, the registry validates the allowlist, the result is returned as
 a tool message, and the full provider response state is preserved for
 interleaved thinking. The loop stops after the configured maximum.
+
+
+## Knowledge retrieval integration (2026-09-07)
+
+Context and the knowledge tool share a persisted SQLite FTS5 index over knowledge
+only. Transactional backfill preserves source/chunk identity; maintenance triggers
+track writes and deletes. Unicode title/content BM25 replaces loading all chunks
+into Python. Context now includes source/chunk IDs; the model layer remains
+provider-neutral. This is lexical retrieval, not semantic understanding or result
+verification. See [Knowledge](KNOWLEDGE.md) and the
+[foundation audit](FOUNDATION_AUDIT.md). Level 3 remains parked and BLOCKED.

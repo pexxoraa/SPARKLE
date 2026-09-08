@@ -1,18 +1,18 @@
 # Build state
 
-Updated: 2026-09-02 UTC
+Updated: 2026-09-07 UTC
 
 | Field | State |
 |---|---|
 | SPARKLE version | 0.30.0-alpha.1 |
 | Current phase | Infrastructure-independent foundation completion while preserving controlled execution boundaries |
-| Current task | Publish the evidence-backed foundation audit; await only genuine external prerequisites |
+| Current task | Indexed knowledge retrieval and integrated research-context verification; Level 3 parked |
 | Completed | Existing promotion/build/execution foundations; NVIDIA Nemotron 3.5 Lightning primary adapter; retained disabled MiniMax adapter; evidence-based model health; capability/modality/tool/stream/latency/timeout request policy; explicit fallback; content-free usage/retry/routing evidence; orchestrator, trace, API, CLI, status, dashboard; fail-closed provider-neutral browser/computer contracts; all previously published memory, knowledge, agent, builder, project, skill, automation, security, and worker capabilities |
-| In progress | NVIDIA adapter commit `c7c1512d8b08b72df8330a769b8a2033037638e2` passed CI #67. Model runtime commit `5c7d5a06471663462cabbab4edf757adf5e4f1ad` passed CI #68. Interaction/dashboard commit `acaf61936e305da104bcb7ccaa37086273f880a0`, tree `e18e0bc8bb2ea7edfabc5661e075ff732e4c71f4`, passed CI #69 (`33629696189`) across all five jobs. Fresh evidence is 295/295 and focused model/interaction/API/CLI coverage is 70/70. |
-| Blocked | Real Bubblewrap isolation on this executor; named isolated worker/TLS endpoint and hostile-canary evidence; live Nemotron call without a credential; semantic non-text provider mapping; voice hardware/providers; live browser/computer runtime adapters; public application deployment target |
-| Failed tests | The first v0.26 full run executed all 228 tests; 227 passed and the documentation version contract failed because BUILD_STATE still said v0.25 while package metadata had advanced to v0.26. This expected reconciliation-order failure is now corrected. Earlier historical harness and fixture failures remain recorded in the release report |
-| Next action | Supply an NVIDIA key for live-model verification or a namespace-capable worker for Level 3. Deployment remains frozen. |
-| Estimated directive completion | 93% |
+| In progress | Fresh baseline 297/297; retrieval milestone 304/304 full suite and 22/22 focused tests passed. Publication evidence is recorded below after exact remote/CI verification. |
+| Blocked | Level 3 = BLOCKED: user reports standalone Bubblewrap and seven canaries verified on Ubuntu; hardened systemd acceptance, authenticated external-worker acceptance and approved immutable artifact acceptance remain incomplete. Live model credentials, browser/computer/voice runtimes remain unavailable or unimplemented. |
+| Failed tests | Initial retrieval focused run: 21/22 passed, one chunk whitespace-preservation failure; fixed and rerun 22/22. Final full suite 304/304. Historical failures below are not current failures. |
+| Next action | Evaluate retrieval/agent outcomes and independent result validation, then project/task integration. Do not resume the parked systemd investigation. Deployment remains frozen. |
+| Estimated directive completion | 12/46 (26.1%) fully verified category coverage, not effort completion; 93% withdrawn. See FOUNDATION_AUDIT.md for all 46 classifications and limitations. |
 
 The v0.28 controlled-promotion boundary accepts only an approved immutable
 candidate with a matching materialized plan, successful runtime evaluation,
@@ -150,3 +150,21 @@ deployment adapters, external email/SMS/push/calendar/webhook delivery, external
 polling, live browser control, real voice, physical embodiment, multi-user role authorization,
 TLS/edge rate limiting, and deployment are not
 complete.
+
+
+## Retrieval milestone local verification (2026-09-07)
+
+- Baseline official suite: 297/297.
+- Updated official suite: 304/304.
+- Retrieval/storage/HTTP integration: 22/22.
+- Execution/worker/runtime/promotion/build/security/artifact regression: 92/92.
+- Documentation contracts: 4/4.
+- Dashboard JavaScript syntax and whitespace: passed.
+- Fresh wheel build and offline installation: passed, including installed
+  Unicode/title retrieval and deletion smoke.
+- Tracked source plus new test audit: 158 files; no symlinks, unsafe relative
+  paths, generated binaries/databases/keys, files over 5 MiB, or detected
+  private-key/provider-token material. This is a bounded pattern/path audit,
+  not a guarantee that arbitrary secrets can be recognized.
+- No credentials were created or used. Model live verification remains pending.
+- Level 3 remains BLOCKED; deployment remains FROZEN.

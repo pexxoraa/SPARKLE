@@ -545,3 +545,20 @@ orchestrator, API, CLI, and end-to-end coverage passed 61/61. Commit
 `5c7d5a06471663462cabbab4edf757adf5e4f1ad` passed CI #68
 (`33626993684`). Both exact runs passed all five jobs. No live NVIDIA request
 was made, and no Level 3 or deployment claim changed.
+
+
+## Indexed knowledge integration
+
+```bash
+PYTHONPATH=src python3 -m unittest tests.test_knowledge_retrieval tests.test_storage tests.test_system_e2e -v
+```
+
+This milestone passes 22/22 focused tests and 304/304 official tests. New cases
+exercise legacy backfill/reopen, atomic migration failure, update/delete/rollback,
+Unicode/title ranking, literal query syntax, output/query bounds, long paragraphs,
+and HTTP ingestion through research context with source/chunk identity and a
+matching trace. The HTTP test uses the deterministic model: model response
+quality, semantic retrieval and external integration are not verified by it.
+CI's existing full-suite jobs discover these tests on Python 3.12 and 3.13.
+SQLite FTS5 is required; wheel installation alone does not test it, so the fresh
+installation smoke also ingests and retrieves a Unicode/title source.
