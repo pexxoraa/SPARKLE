@@ -2173,3 +2173,46 @@ Python 3.12 and Python 3.13. The workflow uses `actions/checkout@v7` and
 
 This documentation follow-up records the capability checkpoint; its own commit
 and exact CI result are reported separately after publication.
+
+
+## 2026-09-08 measurable evaluation milestone
+
+Baseline inspected: `ca893e430f5905d5c4663f43eda576eb8800fedb`, tree
+`ca75de89229d299d796dacbf9e8bceda470fc95b`, clean main.
+Fresh baseline: 304/304 tests. See [benchmark methodology](BENCHMARKS.md)
+and [machine-generated report](../benchmarks/evidence/REPORT.md).
+
+The frozen 16-query lexical baseline is Recall@1 0.625, Recall@3/5 0.75,
+MRR 0.71875. Token-hash semantic/hybrid results are labeled test-double
+experiments; no production retriever switch or semantic-quality claim is made.
+Twelve scripted tasks across Personal, Research, Learning and Coding independently
+validate real tool/state outcomes. Wrong-answer and missing/subjective-evidence
+controls distinguish rejection and inconclusive results from execution success.
+Context is now bounded, attributed untrusted data outside the system role.
+
+A stronger coding fixture initially requested unsupported `python_syntax`;
+SPARKLE rejected it, producing 11/12 task passes and one failed benchmark test.
+The fixture was corrected to the existing `python_compile` contract. No verifier
+or security boundary was loosened. Optional live evaluation is explicitly skipped
+without opt-in; NVIDIA is still IMPLEMENTED BUT INSUFFICIENTLY VERIFIED.
+No capability category, version, Level 3 or deployment status is upgraded.
+
+
+### Final local verification
+
+- Official discovery suite: **319 run; 318 passed; 1 optional live test skipped;
+  0 failures**, in 30.883 seconds. Baseline was 304/304.
+- Focused benchmark/retrieval/HTTP suite: **22/22**.
+- Documentation contracts: **4/4**.
+- Regenerated benchmark JSON and Markdown match committed evidence byte-for-byte.
+- Fresh wheel build/offline installation and installed retrieval/context/validator
+  smoke: passed. Wheel SHA-256:
+  `6c418ae309fa5f38edf61a83e798aa031f8dbce67e3d90bb82d6c436cdb8f8cc`.
+- Dashboard JavaScript and whitespace: passed. Audit of 172 tracked/proposed
+  files found no symlinks, unsafe paths, unintended generated binaries/databases,
+  files above 5 MiB, or recognized private-key/provider-token material. Intended
+  benchmark JSON/Markdown evidence is version-controlled, not excluded as output.
+- Lexical Recall@1/3/5: 0.625 / 0.75 / 0.75; MRR 0.71875.
+- Scripted agent outcomes: 12/12 validated. Controls: 1 rejected, 2 inconclusive.
+- Live provider/real semantic quality remains pending; Level 3 BLOCKED and
+  deployment FROZEN. No production-retriever or worker changes.

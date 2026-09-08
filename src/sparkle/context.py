@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 
 from sparkle.content import ContentEnvelope
@@ -12,16 +13,25 @@ class ContextBundle:
     knowledge: list[dict]
 
     def render(self) -> str:
-        sections: list[str] = []
-        if self.memory:
-            values = "\n".join(f"- [{item['category']}] {item['value']}" for item in self.memory)
-            sections.append(f"Relevant personal memory:\n{values}")
-        if self.knowledge:
-            values = "\n".join(
-                f"- {item['title']} (source {item['source_id']}, chunk {item['chunk_id']}, position {item['position']}): {item['content']}" for item in self.knowledge
-            )
-            sections.append(f"Relevant stored knowledge:\n{values}")
-        return "\n\n".join(sections)
+        if not self.memory and not self.knowledge:
+            return ""
+        payload = {
+            "trust": "untrusted_retrieved_data",
+            "memory": [{"category": r["category"], "value": r["value"][:1000]}
+                       for r in self.memory[:5]],
+            "knowledge": [{"source_id": r["source_id"], "chunk_id": r["chunk_id"],
+                           "position": r["position"], "title": r["title"][:256],
+                           "content": r["content"][:1800]} for r in self.knowledge[:5]],
+            "bounded_excerpt": True,
+        }
+        while True:
+            rendered = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+            if len(rendered.encode("utf-8")) <= 12000:
+                return rendered
+            if payload["knowledge"]:
+                payload["knowledge"].pop()
+            else:
+                payload["memory"].pop()
 
 
 class ContextBuilder:

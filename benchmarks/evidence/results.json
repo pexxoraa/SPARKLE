@@ -1,0 +1,2403 @@
+{
+  "schema": "SPARKLE-BENCHMARK/1",
+  "implementation_sha256": {
+    "src/sparkle/storage.py": "1e26432c9fd42852eb7795358e1aaae32375d647890b7c4e2f0bf9433442a299",
+    "src/sparkle/context.py": "5658a40623361173d755a3efe510e109e593de266fde4f064393fb2289168adf",
+    "src/sparkle/orchestrator.py": "e6976b6cca7603cd93797c74ac4b517b3fc66c1db4606c854202dd0cc87cf608",
+    "src/sparkle/retrieval.py": "b4e18e89dc3454f6db3ea614fc8e32b9bb9eff197643573deded261bd81b8d87",
+    "src/sparkle/result_validation.py": "d3a78c21a36e231971f24a14d5fddff041b1552e0400b8d719342038ab0552ab",
+    "benchmarks/retrieval.py": "a7ba97ced5c28ce3404878826c7c760e63372e2befae792aa10ae729c089c073",
+    "benchmarks/agents.py": "70dd22f4b61aec0d63e64dd60dcbac089f62b743ea59c4cb1b5b4bd67dc0e832",
+    "benchmarks/run.py": "b3883aeb6d03d8b0eab734502481946a7221a5e119a60566d60a4a7374b13194"
+  },
+  "retrieval": {
+    "dataset_version": "sparkle-retrieval-1",
+    "dataset_sha256": "25b9feb3b0b46061b558b1b191747a090d778cc9a28b7cabbe71fc48f433a06e",
+    "query_count": 16,
+    "source_count": 12,
+    "chunk_count": 14,
+    "real_semantic_evaluation": "pending",
+    "definition": "Macro Recall@K = relevant chunks retrieved / all judged relevant chunks; Hit@K = any relevant hit; MRR = reciprocal first relevant rank within top 50 (zero if absent).",
+    "systems": {
+      "lexical": {
+        "metrics": {
+          "recall@1": 0.625,
+          "hit@1": 0.6875,
+          "recall@3": 0.75,
+          "hit@3": 0.75,
+          "recall@5": 0.75,
+          "hit@5": 0.75,
+          "mrr": 0.71875
+        },
+        "queries": [
+          {
+            "id": "title",
+            "class": "title",
+            "text": "Asterion",
+            "relevant": [
+              "asterion:0",
+              "asterion:1"
+            ],
+            "required": true,
+            "ranking": [
+              "asterion:0",
+              "asterion:1",
+              "archive:0"
+            ]
+          },
+          {
+            "id": "literal",
+            "class": "literal",
+            "text": "liquid savings",
+            "relevant": [
+              "emergency:0"
+            ],
+            "required": true,
+            "ranking": [
+              "emergency:0"
+            ]
+          },
+          {
+            "id": "unicode",
+            "class": "unicode",
+            "text": "CAFÉ résumé",
+            "relevant": [
+              "cafe:0"
+            ],
+            "required": true,
+            "ranking": [
+              "cafe:0",
+              "travel:0"
+            ]
+          },
+          {
+            "id": "japanese",
+            "class": "unicode",
+            "text": "安全手順",
+            "relevant": [
+              "japanese:0"
+            ],
+            "required": true,
+            "ranking": [
+              "japanese:0"
+            ]
+          },
+          {
+            "id": "code",
+            "class": "literal",
+            "text": "deepcopy nested structures",
+            "relevant": [
+              "python:0"
+            ],
+            "required": true,
+            "ranking": [
+              "python:0"
+            ]
+          },
+          {
+            "id": "multiple",
+            "class": "multiple",
+            "text": "Robot safety",
+            "relevant": [
+              "safety:0",
+              "safety:1"
+            ],
+            "required": true,
+            "ranking": [
+              "safety:0",
+              "safety:1"
+            ]
+          },
+          {
+            "id": "network",
+            "class": "literal",
+            "text": "Packet loss",
+            "relevant": [
+              "network:0"
+            ],
+            "required": true,
+            "ranking": [
+              "network:0"
+            ]
+          },
+          {
+            "id": "practice",
+            "class": "distractor",
+            "text": "Spaced practice seven thirty",
+            "relevant": [
+              "spaced:0"
+            ],
+            "required": true,
+            "ranking": [
+              "spaced:0",
+              "study:0"
+            ]
+          },
+          {
+            "id": "paraphrase",
+            "class": "semantic_paraphrase",
+            "text": "How much cash should I reserve for unexpected unemployment?",
+            "relevant": [
+              "emergency:0"
+            ],
+            "required": false,
+            "ranking": [
+              "asterion:0",
+              "python:0"
+            ]
+          },
+          {
+            "id": "paraphrase2",
+            "class": "semantic_paraphrase",
+            "text": "How do I prevent forgetting lessons over time?",
+            "relevant": [
+              "spaced:0"
+            ],
+            "required": false,
+            "ranking": []
+          },
+          {
+            "id": "cross_language",
+            "class": "language_variation",
+            "text": "Where is my robotics CV?",
+            "relevant": [
+              "cafe:0"
+            ],
+            "required": false,
+            "ranking": [
+              "study:0"
+            ]
+          },
+          {
+            "id": "synonym",
+            "class": "semantic_paraphrase",
+            "text": "Duplicate a collection without sharing child containers",
+            "relevant": [
+              "python:0"
+            ],
+            "required": false,
+            "ranking": []
+          },
+          {
+            "id": "ambiguity",
+            "class": "title_body_ambiguity",
+            "text": "retention records",
+            "relevant": [
+              "asterion:0"
+            ],
+            "required": false,
+            "ranking": [
+              "asterion:0",
+              "asterion:1",
+              "archive:0"
+            ]
+          },
+          {
+            "id": "noise",
+            "class": "distractor",
+            "text": "study review practice revision",
+            "relevant": [
+              "spaced:0"
+            ],
+            "required": false,
+            "ranking": [
+              "study:0",
+              "spaced:0"
+            ]
+          },
+          {
+            "id": "accent",
+            "class": "unicode",
+            "text": "cafe resume",
+            "relevant": [
+              "cafe:0"
+            ],
+            "required": true,
+            "ranking": [
+              "cafe:0",
+              "travel:0"
+            ]
+          },
+          {
+            "id": "battery_question",
+            "class": "literal",
+            "text": "lithium partial charge",
+            "relevant": [
+              "battery:0"
+            ],
+            "required": true,
+            "ranking": [
+              "battery:0"
+            ]
+          }
+        ],
+        "by_class": {
+          "distractor": {
+            "recall@1": 0.5,
+            "hit@1": 0.5,
+            "recall@3": 1.0,
+            "hit@3": 1.0,
+            "recall@5": 1.0,
+            "hit@5": 1.0,
+            "mrr": 0.75
+          },
+          "language_variation": {
+            "recall@1": 0.0,
+            "hit@1": 0.0,
+            "recall@3": 0.0,
+            "hit@3": 0.0,
+            "recall@5": 0.0,
+            "hit@5": 0.0,
+            "mrr": 0.0
+          },
+          "literal": {
+            "recall@1": 1.0,
+            "hit@1": 1.0,
+            "recall@3": 1.0,
+            "hit@3": 1.0,
+            "recall@5": 1.0,
+            "hit@5": 1.0,
+            "mrr": 1.0
+          },
+          "multiple": {
+            "recall@1": 0.5,
+            "hit@1": 1.0,
+            "recall@3": 1.0,
+            "hit@3": 1.0,
+            "recall@5": 1.0,
+            "hit@5": 1.0,
+            "mrr": 1.0
+          },
+          "semantic_paraphrase": {
+            "recall@1": 0.0,
+            "hit@1": 0.0,
+            "recall@3": 0.0,
+            "hit@3": 0.0,
+            "recall@5": 0.0,
+            "hit@5": 0.0,
+            "mrr": 0.0
+          },
+          "title": {
+            "recall@1": 0.5,
+            "hit@1": 1.0,
+            "recall@3": 1.0,
+            "hit@3": 1.0,
+            "recall@5": 1.0,
+            "hit@5": 1.0,
+            "mrr": 1.0
+          },
+          "title_body_ambiguity": {
+            "recall@1": 1.0,
+            "hit@1": 1.0,
+            "recall@3": 1.0,
+            "hit@3": 1.0,
+            "recall@5": 1.0,
+            "hit@5": 1.0,
+            "mrr": 1.0
+          },
+          "unicode": {
+            "recall@1": 1.0,
+            "hit@1": 1.0,
+            "recall@3": 1.0,
+            "hit@3": 1.0,
+            "recall@5": 1.0,
+            "hit@5": 1.0,
+            "mrr": 1.0
+          }
+        },
+        "failures_at_5": [
+          {
+            "id": "paraphrase",
+            "class": "semantic_paraphrase"
+          },
+          {
+            "id": "paraphrase2",
+            "class": "semantic_paraphrase"
+          },
+          {
+            "id": "cross_language",
+            "class": "language_variation"
+          },
+          {
+            "id": "synonym",
+            "class": "semantic_paraphrase"
+          }
+        ]
+      },
+      "semantic_test_double": {
+        "metrics": {
+          "recall@1": 0.5625,
+          "hit@1": 0.625,
+          "recall@3": 0.6875,
+          "hit@3": 0.6875,
+          "recall@5": 0.6875,
+          "hit@5": 0.6875,
+          "mrr": 0.674479
+        },
+        "queries": [
+          {
+            "id": "title",
+            "class": "title",
+            "text": "Asterion",
+            "relevant": [
+              "asterion:0",
+              "asterion:1"
+            ],
+            "required": true,
+            "ranking": [
+              "asterion:1",
+              "asterion:0",
+              "archive:0"
+            ]
+          },
+          {
+            "id": "literal",
+            "class": "literal",
+            "text": "liquid savings",
+            "relevant": [
+              "emergency:0"
+            ],
+            "required": true,
+            "ranking": [
+              "emergency:0",
+              "asterion:0",
+              "study:0"
+            ]
+          },
+          {
+            "id": "unicode",
+            "class": "unicode",
+            "text": "CAFÉ résumé",
+            "relevant": [
+              "cafe:0"
+            ],
+            "required": true,
+            "ranking": [
+              "cafe:0",
+              "network:0",
+              "travel:0"
+            ]
+          },
+          {
+            "id": "japanese",
+            "class": "unicode",
+            "text": "安全手順",
+            "relevant": [
+              "japanese:0"
+            ],
+            "required": true,
+            "ranking": [
+              "japanese:0"
+            ]
+          },
+          {
+            "id": "code",
+            "class": "literal",
+            "text": "deepcopy nested structures",
+            "relevant": [
+              "python:0"
+            ],
+            "required": true,
+            "ranking": [
+              "python:0",
+              "asterion:1",
+              "cafe:0",
+              "study:0"
+            ]
+          },
+          {
+            "id": "multiple",
+            "class": "multiple",
+            "text": "Robot safety",
+            "relevant": [
+              "safety:0",
+              "safety:1"
+            ],
+            "required": true,
+            "ranking": [
+              "safety:0",
+              "safety:1",
+              "emergency:0",
+              "battery:0"
+            ]
+          },
+          {
+            "id": "network",
+            "class": "literal",
+            "text": "Packet loss",
+            "relevant": [
+              "network:0"
+            ],
+            "required": true,
+            "ranking": [
+              "network:0",
+              "cafe:0",
+              "battery:0",
+              "travel:0"
+            ]
+          },
+          {
+            "id": "practice",
+            "class": "distractor",
+            "text": "Spaced practice seven thirty",
+            "relevant": [
+              "spaced:0"
+            ],
+            "required": true,
+            "ranking": [
+              "spaced:0",
+              "study:0"
+            ]
+          },
+          {
+            "id": "paraphrase",
+            "class": "semantic_paraphrase",
+            "text": "How much cash should I reserve for unexpected unemployment?",
+            "relevant": [
+              "emergency:0"
+            ],
+            "required": false,
+            "ranking": [
+              "safety:1",
+              "study:0",
+              "asterion:0",
+              "archive:0",
+              "safety:0",
+              "asterion:1",
+              "cafe:0",
+              "emergency:0",
+              "python:0"
+            ]
+          },
+          {
+            "id": "paraphrase2",
+            "class": "semantic_paraphrase",
+            "text": "How do I prevent forgetting lessons over time?",
+            "relevant": [
+              "spaced:0"
+            ],
+            "required": false,
+            "ranking": [
+              "safety:1",
+              "safety:0",
+              "study:0",
+              "travel:0",
+              "python:0"
+            ]
+          },
+          {
+            "id": "cross_language",
+            "class": "language_variation",
+            "text": "Where is my robotics CV?",
+            "relevant": [
+              "cafe:0"
+            ],
+            "required": false,
+            "ranking": [
+              "battery:0",
+              "travel:0",
+              "archive:0",
+              "python:0",
+              "spaced:0",
+              "study:0"
+            ]
+          },
+          {
+            "id": "synonym",
+            "class": "semantic_paraphrase",
+            "text": "Duplicate a collection without sharing child containers",
+            "relevant": [
+              "python:0"
+            ],
+            "required": false,
+            "ranking": [
+              "travel:0",
+              "study:0",
+              "asterion:1",
+              "cafe:0",
+              "battery:0",
+              "python:0"
+            ]
+          },
+          {
+            "id": "ambiguity",
+            "class": "title_body_ambiguity",
+            "text": "retention records",
+            "relevant": [
+              "asterion:0"
+            ],
+            "required": false,
+            "ranking": [
+              "asterion:0",
+              "archive:0",
+              "asterion:1",
+              "python:0",
+              "battery:0"
+            ]
+          },
+          {
+            "id": "noise",
+            "class": "distractor",
+            "text": "study review practice revision",
+            "relevant": [
+              "spaced:0"
+            ],
+            "required": false,
+            "ranking": [
+              "study:0",
+              "spaced:0",
+              "archive:0",
+              "cafe:0",
+              "safety:1"
+            ]
+          },
+          {
+            "id": "accent",
+            "class": "unicode",
+            "text": "cafe resume",
+            "relevant": [
+              "cafe:0"
+            ],
+            "required": true,
+            "ranking": [
+              "network:0",
+              "asterion:1"
+            ]
+          },
+          {
+            "id": "battery_question",
+            "class": "literal",
+            "text": "lithium partial charge",
+            "relevant": [
+              "battery:0"
+            ],
+            "required": true,
+            "ranking": [
+              "battery:0",
+              "archive:0"
+            ]
+          }
+        ],
+        "by_class": {
+          "distractor": {
+            "recall@1": 0.5,
+            "hit@1": 0.5,
+            "recall@3": 1.0,
+            "hit@3": 1.0,
+            "recall@5": 1.0,
+            "hit@5": 1.0,
+            "mrr": 0.75
+          },
+          "language_variation": {
+            "recall@1": 0.0,
+            "hit@1": 0.0,
+            "recall@3": 0.0,
+            "hit@3": 0.0,
+            "recall@5": 0.0,
+            "hit@5": 0.0,
+            "mrr": 0.0
+          },
+          "literal": {
+            "recall@1": 1.0,
+            "hit@1": 1.0,
+            "recall@3": 1.0,
+            "hit@3": 1.0,
+            "recall@5": 1.0,
+            "hit@5": 1.0,
+            "mrr": 1.0
+          },
+          "multiple": {
+            "recall@1": 0.5,
+            "hit@1": 1.0,
+            "recall@3": 1.0,
+            "hit@3": 1.0,
+            "recall@5": 1.0,
+            "hit@5": 1.0,
+            "mrr": 1.0
+          },
+          "semantic_paraphrase": {
+            "recall@1": 0.0,
+            "hit@1": 0.0,
+            "recall@3": 0.0,
+            "hit@3": 0.0,
+            "recall@5": 0.0,
+            "hit@5": 0.0,
+            "mrr": 0.097222
+          },
+          "title": {
+            "recall@1": 0.5,
+            "hit@1": 1.0,
+            "recall@3": 1.0,
+            "hit@3": 1.0,
+            "recall@5": 1.0,
+            "hit@5": 1.0,
+            "mrr": 1.0
+          },
+          "title_body_ambiguity": {
+            "recall@1": 1.0,
+            "hit@1": 1.0,
+            "recall@3": 1.0,
+            "hit@3": 1.0,
+            "recall@5": 1.0,
+            "hit@5": 1.0,
+            "mrr": 1.0
+          },
+          "unicode": {
+            "recall@1": 0.666667,
+            "hit@1": 0.666667,
+            "recall@3": 0.666667,
+            "hit@3": 0.666667,
+            "recall@5": 0.666667,
+            "hit@5": 0.666667,
+            "mrr": 0.666667
+          }
+        },
+        "failures_at_5": [
+          {
+            "id": "paraphrase",
+            "class": "semantic_paraphrase"
+          },
+          {
+            "id": "paraphrase2",
+            "class": "semantic_paraphrase"
+          },
+          {
+            "id": "cross_language",
+            "class": "language_variation"
+          },
+          {
+            "id": "synonym",
+            "class": "semantic_paraphrase"
+          },
+          {
+            "id": "accent",
+            "class": "unicode"
+          }
+        ]
+      },
+      "hybrid_test_double": {
+        "metrics": {
+          "recall@1": 0.625,
+          "hit@1": 0.6875,
+          "recall@3": 0.75,
+          "hit@3": 0.75,
+          "recall@5": 0.75,
+          "hit@5": 0.75,
+          "mrr": 0.736111
+        },
+        "queries": [
+          {
+            "id": "title",
+            "class": "title",
+            "text": "Asterion",
+            "relevant": [
+              "asterion:0",
+              "asterion:1"
+            ],
+            "required": true,
+            "ranking": [
+              "asterion:0",
+              "asterion:1",
+              "archive:0"
+            ]
+          },
+          {
+            "id": "literal",
+            "class": "literal",
+            "text": "liquid savings",
+            "relevant": [
+              "emergency:0"
+            ],
+            "required": true,
+            "ranking": [
+              "emergency:0",
+              "asterion:0",
+              "study:0"
+            ]
+          },
+          {
+            "id": "unicode",
+            "class": "unicode",
+            "text": "CAFÉ résumé",
+            "relevant": [
+              "cafe:0"
+            ],
+            "required": true,
+            "ranking": [
+              "cafe:0",
+              "travel:0",
+              "network:0"
+            ]
+          },
+          {
+            "id": "japanese",
+            "class": "unicode",
+            "text": "安全手順",
+            "relevant": [
+              "japanese:0"
+            ],
+            "required": true,
+            "ranking": [
+              "japanese:0"
+            ]
+          },
+          {
+            "id": "code",
+            "class": "literal",
+            "text": "deepcopy nested structures",
+            "relevant": [
+              "python:0"
+            ],
+            "required": true,
+            "ranking": [
+              "python:0",
+              "asterion:1",
+              "cafe:0",
+              "study:0"
+            ]
+          },
+          {
+            "id": "multiple",
+            "class": "multiple",
+            "text": "Robot safety",
+            "relevant": [
+              "safety:0",
+              "safety:1"
+            ],
+            "required": true,
+            "ranking": [
+              "safety:0",
+              "safety:1",
+              "emergency:0",
+              "battery:0"
+            ]
+          },
+          {
+            "id": "network",
+            "class": "literal",
+            "text": "Packet loss",
+            "relevant": [
+              "network:0"
+            ],
+            "required": true,
+            "ranking": [
+              "network:0",
+              "cafe:0",
+              "battery:0",
+              "travel:0"
+            ]
+          },
+          {
+            "id": "practice",
+            "class": "distractor",
+            "text": "Spaced practice seven thirty",
+            "relevant": [
+              "spaced:0"
+            ],
+            "required": true,
+            "ranking": [
+              "spaced:0",
+              "study:0"
+            ]
+          },
+          {
+            "id": "paraphrase",
+            "class": "semantic_paraphrase",
+            "text": "How much cash should I reserve for unexpected unemployment?",
+            "relevant": [
+              "emergency:0"
+            ],
+            "required": false,
+            "ranking": [
+              "asterion:0",
+              "python:0",
+              "safety:1",
+              "study:0",
+              "archive:0",
+              "safety:0",
+              "asterion:1",
+              "cafe:0",
+              "emergency:0"
+            ]
+          },
+          {
+            "id": "paraphrase2",
+            "class": "semantic_paraphrase",
+            "text": "How do I prevent forgetting lessons over time?",
+            "relevant": [
+              "spaced:0"
+            ],
+            "required": false,
+            "ranking": [
+              "safety:1",
+              "safety:0",
+              "study:0",
+              "travel:0",
+              "python:0"
+            ]
+          },
+          {
+            "id": "cross_language",
+            "class": "language_variation",
+            "text": "Where is my robotics CV?",
+            "relevant": [
+              "cafe:0"
+            ],
+            "required": false,
+            "ranking": [
+              "study:0",
+              "battery:0",
+              "travel:0",
+              "archive:0",
+              "python:0",
+              "spaced:0"
+            ]
+          },
+          {
+            "id": "synonym",
+            "class": "semantic_paraphrase",
+            "text": "Duplicate a collection without sharing child containers",
+            "relevant": [
+              "python:0"
+            ],
+            "required": false,
+            "ranking": [
+              "travel:0",
+              "study:0",
+              "asterion:1",
+              "cafe:0",
+              "battery:0",
+              "python:0"
+            ]
+          },
+          {
+            "id": "ambiguity",
+            "class": "title_body_ambiguity",
+            "text": "retention records",
+            "relevant": [
+              "asterion:0"
+            ],
+            "required": false,
+            "ranking": [
+              "asterion:0",
+              "asterion:1",
+              "archive:0",
+              "python:0",
+              "battery:0"
+            ]
+          },
+          {
+            "id": "noise",
+            "class": "distractor",
+            "text": "study review practice revision",
+            "relevant": [
+              "spaced:0"
+            ],
+            "required": false,
+            "ranking": [
+              "study:0",
+              "spaced:0",
+              "archive:0",
+              "cafe:0",
+              "safety:1"
+            ]
+          },
+          {
+            "id": "accent",
+            "class": "unicode",
+            "text": "cafe resume",
+            "relevant": [
+              "cafe:0"
+            ],
+            "required": true,
+            "ranking": [
+              "cafe:0",
+              "network:0",
+              "asterion:1",
+              "travel:0"
+            ]
+          },
+          {
+            "id": "battery_question",
+            "class": "literal",
+            "text": "lithium partial charge",
+            "relevant": [
+              "battery:0"
+            ],
+            "required": true,
+            "ranking": [
+              "battery:0",
+              "archive:0"
+            ]
+          }
+        ],
+        "by_class": {
+          "distractor": {
+            "recall@1": 0.5,
+            "hit@1": 0.5,
+            "recall@3": 1.0,
+            "hit@3": 1.0,
+            "recall@5": 1.0,
+            "hit@5": 1.0,
+            "mrr": 0.75
+          },
+          "language_variation": {
+            "recall@1": 0.0,
+            "hit@1": 0.0,
+            "recall@3": 0.0,
+            "hit@3": 0.0,
+            "recall@5": 0.0,
+            "hit@5": 0.0,
+            "mrr": 0.0
+          },
+          "literal": {
+            "recall@1": 1.0,
+            "hit@1": 1.0,
+            "recall@3": 1.0,
+            "hit@3": 1.0,
+            "recall@5": 1.0,
+            "hit@5": 1.0,
+            "mrr": 1.0
+          },
+          "multiple": {
+            "recall@1": 0.5,
+            "hit@1": 1.0,
+            "recall@3": 1.0,
+            "hit@3": 1.0,
+            "recall@5": 1.0,
+            "hit@5": 1.0,
+            "mrr": 1.0
+          },
+          "semantic_paraphrase": {
+            "recall@1": 0.0,
+            "hit@1": 0.0,
+            "recall@3": 0.0,
+            "hit@3": 0.0,
+            "recall@5": 0.0,
+            "hit@5": 0.0,
+            "mrr": 0.092593
+          },
+          "title": {
+            "recall@1": 0.5,
+            "hit@1": 1.0,
+            "recall@3": 1.0,
+            "hit@3": 1.0,
+            "recall@5": 1.0,
+            "hit@5": 1.0,
+            "mrr": 1.0
+          },
+          "title_body_ambiguity": {
+            "recall@1": 1.0,
+            "hit@1": 1.0,
+            "recall@3": 1.0,
+            "hit@3": 1.0,
+            "recall@5": 1.0,
+            "hit@5": 1.0,
+            "mrr": 1.0
+          },
+          "unicode": {
+            "recall@1": 1.0,
+            "hit@1": 1.0,
+            "recall@3": 1.0,
+            "hit@3": 1.0,
+            "recall@5": 1.0,
+            "hit@5": 1.0,
+            "mrr": 1.0
+          }
+        },
+        "failures_at_5": [
+          {
+            "id": "paraphrase",
+            "class": "semantic_paraphrase"
+          },
+          {
+            "id": "paraphrase2",
+            "class": "semantic_paraphrase"
+          },
+          {
+            "id": "cross_language",
+            "class": "language_variation"
+          },
+          {
+            "id": "synonym",
+            "class": "semantic_paraphrase"
+          }
+        ]
+      }
+    },
+    "context": {
+      "metrics": {
+        "recall@1": 0.625,
+        "hit@1": 0.6875,
+        "recall@3": 0.75,
+        "hit@3": 0.75,
+        "recall@5": 0.75,
+        "hit@5": 0.75,
+        "mrr": 0.71875
+      },
+      "max_bytes": 12000,
+      "max_knowledge_items": 5,
+      "observed_max_bytes": 549,
+      "answer_quality": "not_measured"
+    }
+  },
+  "agents": {
+    "dataset_version": "sparkle-agent-outcomes-1",
+    "dataset_sha256": "361a79d7fafaffabfe81020e6090d0394074a41bd96f021b66d8d232c8dc689d",
+    "evidence_mode": "SCRIPTED TEST HARNESS; NOT AGENT INTELLIGENCE",
+    "live_provider_verified": false,
+    "task_count": 12,
+    "pass_rate": 1.0,
+    "validation_pass_rate": 1.0,
+    "validation_counts": {
+      "validated": 12,
+      "rejected": 0,
+      "inconclusive": 0
+    },
+    "failure_categories": {},
+    "per_agent": {
+      "coding": {
+        "tasks": 3,
+        "passed": 3
+      },
+      "learning": {
+        "tasks": 3,
+        "passed": 3
+      },
+      "personal": {
+        "tasks": 3,
+        "passed": 3
+      },
+      "research": {
+        "tasks": 3,
+        "passed": 3
+      }
+    },
+    "tasks": [
+      {
+        "task_id": "personal-budget",
+        "agent": "personal",
+        "input": "Calculate the weekly budget: 250 minus 4 times 35. Return a JSON answer.",
+        "expected_outcome": [
+          {
+            "kind": "number",
+            "key": "answer",
+            "expected": 110
+          },
+          {
+            "kind": "equals",
+            "key": "calls",
+            "expected": [
+              {
+                "name": "calculator",
+                "arguments": {
+                  "expression": "250-4*35"
+                }
+              }
+            ]
+          }
+        ],
+        "actual_outcome": {
+          "answer": 110
+        },
+        "validation_observations": {
+          "verification_count": 0,
+          "verification_failed": null,
+          "calls": [
+            {
+              "name": "calculator",
+              "arguments": {
+                "expression": "250-4*35"
+              }
+            }
+          ],
+          "memory_count": 0,
+          "memory_value": null,
+          "tool_failed": false,
+          "retrieved": [],
+          "file_unchanged": true,
+          "answer": 110
+        },
+        "execution_success": true,
+        "protocol_success": true,
+        "outcome_correct": true,
+        "validation_result": {
+          "validation_status": "validated",
+          "checks": [
+            {
+              "key": "answer",
+              "status": "validated",
+              "reason": null
+            },
+            {
+              "key": "calls",
+              "status": "validated",
+              "reason": null
+            }
+          ],
+          "score": 1.0
+        },
+        "score": 1.0,
+        "tool_events": [
+          {
+            "name": "calculator",
+            "arguments": {
+              "expression": "250-4*35"
+            },
+            "failed": false
+          }
+        ],
+        "retrieval_events": {
+          "tool_chunks": [],
+          "context_chunks": [
+            "travel:0",
+            "safety:1",
+            "archive:0"
+          ]
+        },
+        "memory_events": {
+          "count": 0,
+          "value": null
+        },
+        "failure_reason": null,
+        "trace_completed": true
+      },
+      {
+        "task_id": "personal-memory",
+        "agent": "personal",
+        "input": "Remember my explicit goal: run three times weekly. Confirm persistence.",
+        "expected_outcome": [
+          {
+            "kind": "equals",
+            "key": "memory_value",
+            "expected": "Run three times weekly"
+          },
+          {
+            "kind": "equals",
+            "key": "memory_count",
+            "expected": 1
+          },
+          {
+            "kind": "equals",
+            "key": "calls",
+            "expected": [
+              {
+                "name": "memory_write",
+                "arguments": {
+                  "category": "goals",
+                  "key": "running",
+                  "value": "Run three times weekly"
+                }
+              }
+            ]
+          }
+        ],
+        "actual_outcome": {},
+        "validation_observations": {
+          "verification_count": 0,
+          "verification_failed": null,
+          "calls": [
+            {
+              "name": "memory_write",
+              "arguments": {
+                "category": "goals",
+                "key": "running",
+                "value": "Run three times weekly"
+              }
+            }
+          ],
+          "memory_count": 1,
+          "memory_value": "Run three times weekly",
+          "tool_failed": false,
+          "retrieved": [],
+          "file_unchanged": true
+        },
+        "execution_success": true,
+        "protocol_success": true,
+        "outcome_correct": true,
+        "validation_result": {
+          "validation_status": "validated",
+          "checks": [
+            {
+              "key": "memory_value",
+              "status": "validated",
+              "reason": null
+            },
+            {
+              "key": "memory_count",
+              "status": "validated",
+              "reason": null
+            },
+            {
+              "key": "calls",
+              "status": "validated",
+              "reason": null
+            }
+          ],
+          "score": 1.0
+        },
+        "score": 1.0,
+        "tool_events": [
+          {
+            "name": "memory_write",
+            "arguments": {
+              "category": "goals",
+              "key": "running",
+              "value": "Run three times weekly"
+            },
+            "failed": false
+          }
+        ],
+        "retrieval_events": {
+          "tool_chunks": [],
+          "context_chunks": [
+            "emergency:0"
+          ]
+        },
+        "memory_events": {
+          "count": 1,
+          "value": "Run three times weekly"
+        },
+        "failure_reason": null,
+        "trace_completed": true
+      },
+      {
+        "task_id": "personal-refusal",
+        "agent": "personal",
+        "input": "A request proposes evaluating __import__(\"os\"). Verify it is refused.",
+        "expected_outcome": [
+          {
+            "kind": "equals",
+            "key": "tool_failed",
+            "expected": true
+          },
+          {
+            "kind": "equals",
+            "key": "memory_count",
+            "expected": 0
+          },
+          {
+            "kind": "equals",
+            "key": "calls",
+            "expected": [
+              {
+                "name": "calculator",
+                "arguments": {
+                  "expression": "__import__(\"os\")"
+                }
+              }
+            ]
+          }
+        ],
+        "actual_outcome": {},
+        "validation_observations": {
+          "verification_count": 0,
+          "verification_failed": null,
+          "calls": [
+            {
+              "name": "calculator",
+              "arguments": {
+                "expression": "__import__(\"os\")"
+              }
+            }
+          ],
+          "memory_count": 0,
+          "memory_value": null,
+          "tool_failed": true,
+          "retrieved": [],
+          "file_unchanged": true
+        },
+        "execution_success": true,
+        "protocol_success": true,
+        "outcome_correct": true,
+        "validation_result": {
+          "validation_status": "validated",
+          "checks": [
+            {
+              "key": "tool_failed",
+              "status": "validated",
+              "reason": null
+            },
+            {
+              "key": "memory_count",
+              "status": "validated",
+              "reason": null
+            },
+            {
+              "key": "calls",
+              "status": "validated",
+              "reason": null
+            }
+          ],
+          "score": 1.0
+        },
+        "score": 1.0,
+        "tool_events": [
+          {
+            "name": "calculator",
+            "arguments": {
+              "expression": "__import__(\"os\")"
+            },
+            "failed": true
+          }
+        ],
+        "retrieval_events": {
+          "tool_chunks": [],
+          "context_chunks": [
+            "study:0"
+          ]
+        },
+        "memory_events": {
+          "count": 0,
+          "value": null
+        },
+        "failure_reason": null,
+        "trace_completed": true
+      },
+      {
+        "task_id": "research-policy",
+        "agent": "research",
+        "input": "Find Asterion retention policy and cite retrieved chunks.",
+        "expected_outcome": [
+          {
+            "kind": "contains",
+            "key": "retrieved",
+            "expected": [
+              "asterion:0",
+              "asterion:1"
+            ]
+          },
+          {
+            "kind": "contains",
+            "key": "citations",
+            "expected": [
+              "asterion:0",
+              "asterion:1"
+            ]
+          },
+          {
+            "kind": "equals",
+            "key": "calls",
+            "expected": [
+              {
+                "name": "knowledge_search",
+                "arguments": {
+                  "query": "Asterion",
+                  "limit": 3
+                }
+              }
+            ]
+          },
+          {
+            "kind": "equals",
+            "key": "citations_grounded",
+            "expected": true
+          }
+        ],
+        "actual_outcome": {
+          "citations": [
+            "asterion:0",
+            "asterion:1",
+            "archive:0"
+          ]
+        },
+        "validation_observations": {
+          "verification_count": 0,
+          "verification_failed": null,
+          "calls": [
+            {
+              "name": "knowledge_search",
+              "arguments": {
+                "query": "Asterion",
+                "limit": 3
+              }
+            }
+          ],
+          "memory_count": 0,
+          "memory_value": null,
+          "tool_failed": false,
+          "retrieved": [
+            "asterion:0",
+            "asterion:1",
+            "archive:0"
+          ],
+          "file_unchanged": true,
+          "citations": [
+            "asterion:0",
+            "asterion:1",
+            "archive:0"
+          ],
+          "citations_grounded": true
+        },
+        "execution_success": true,
+        "protocol_success": true,
+        "outcome_correct": true,
+        "validation_result": {
+          "validation_status": "validated",
+          "checks": [
+            {
+              "key": "retrieved",
+              "status": "validated",
+              "reason": null
+            },
+            {
+              "key": "citations",
+              "status": "validated",
+              "reason": null
+            },
+            {
+              "key": "calls",
+              "status": "validated",
+              "reason": null
+            },
+            {
+              "key": "citations_grounded",
+              "status": "validated",
+              "reason": null
+            }
+          ],
+          "score": 1.0
+        },
+        "score": 1.0,
+        "tool_events": [
+          {
+            "name": "knowledge_search",
+            "arguments": {
+              "query": "Asterion",
+              "limit": 3
+            },
+            "failed": false
+          }
+        ],
+        "retrieval_events": {
+          "tool_chunks": [
+            "asterion:0",
+            "asterion:1",
+            "archive:0"
+          ],
+          "context_chunks": [
+            "archive:0",
+            "asterion:0",
+            "asterion:1",
+            "spaced:0"
+          ]
+        },
+        "memory_events": {
+          "count": 0,
+          "value": null
+        },
+        "failure_reason": null,
+        "trace_completed": true
+      },
+      {
+        "task_id": "research-unicode",
+        "agent": "research",
+        "input": "Retrieve the Café résumé source and cite it.",
+        "expected_outcome": [
+          {
+            "kind": "contains",
+            "key": "retrieved",
+            "expected": [
+              "cafe:0"
+            ]
+          },
+          {
+            "kind": "contains",
+            "key": "citations",
+            "expected": [
+              "cafe:0"
+            ]
+          },
+          {
+            "kind": "equals",
+            "key": "calls",
+            "expected": [
+              {
+                "name": "knowledge_search",
+                "arguments": {
+                  "query": "cafe resume",
+                  "limit": 1
+                }
+              }
+            ]
+          },
+          {
+            "kind": "equals",
+            "key": "citations_grounded",
+            "expected": true
+          }
+        ],
+        "actual_outcome": {
+          "citations": [
+            "cafe:0"
+          ]
+        },
+        "validation_observations": {
+          "verification_count": 0,
+          "verification_failed": null,
+          "calls": [
+            {
+              "name": "knowledge_search",
+              "arguments": {
+                "query": "cafe resume",
+                "limit": 1
+              }
+            }
+          ],
+          "memory_count": 0,
+          "memory_value": null,
+          "tool_failed": false,
+          "retrieved": [
+            "cafe:0"
+          ],
+          "file_unchanged": true,
+          "citations": [
+            "cafe:0"
+          ],
+          "citations_grounded": true
+        },
+        "execution_success": true,
+        "protocol_success": true,
+        "outcome_correct": true,
+        "validation_result": {
+          "validation_status": "validated",
+          "checks": [
+            {
+              "key": "retrieved",
+              "status": "validated",
+              "reason": null
+            },
+            {
+              "key": "citations",
+              "status": "validated",
+              "reason": null
+            },
+            {
+              "key": "calls",
+              "status": "validated",
+              "reason": null
+            },
+            {
+              "key": "citations_grounded",
+              "status": "validated",
+              "reason": null
+            }
+          ],
+          "score": 1.0
+        },
+        "score": 1.0,
+        "tool_events": [
+          {
+            "name": "knowledge_search",
+            "arguments": {
+              "query": "cafe resume",
+              "limit": 1
+            },
+            "failed": false
+          }
+        ],
+        "retrieval_events": {
+          "tool_chunks": [
+            "cafe:0"
+          ],
+          "context_chunks": [
+            "cafe:0",
+            "travel:0",
+            "spaced:0",
+            "safety:1",
+            "archive:0"
+          ]
+        },
+        "memory_events": {
+          "count": 0,
+          "value": null
+        },
+        "failure_reason": null,
+        "trace_completed": true
+      },
+      {
+        "task_id": "research-no-source",
+        "agent": "research",
+        "input": "Find evidence about nonexistent ZXQO77 and do not invent a citation.",
+        "expected_outcome": [
+          {
+            "kind": "equals",
+            "key": "retrieved",
+            "expected": []
+          },
+          {
+            "kind": "equals",
+            "key": "citations",
+            "expected": []
+          },
+          {
+            "kind": "equals",
+            "key": "calls",
+            "expected": [
+              {
+                "name": "knowledge_search",
+                "arguments": {
+                  "query": "ZXQO77",
+                  "limit": 3
+                }
+              }
+            ]
+          },
+          {
+            "kind": "equals",
+            "key": "citations_grounded",
+            "expected": true
+          }
+        ],
+        "actual_outcome": {
+          "citations": []
+        },
+        "validation_observations": {
+          "verification_count": 0,
+          "verification_failed": null,
+          "calls": [
+            {
+              "name": "knowledge_search",
+              "arguments": {
+                "query": "ZXQO77",
+                "limit": 3
+              }
+            }
+          ],
+          "memory_count": 0,
+          "memory_value": null,
+          "tool_failed": false,
+          "retrieved": [],
+          "file_unchanged": true,
+          "citations": [],
+          "citations_grounded": true
+        },
+        "execution_success": true,
+        "protocol_success": true,
+        "outcome_correct": true,
+        "validation_result": {
+          "validation_status": "validated",
+          "checks": [
+            {
+              "key": "retrieved",
+              "status": "validated",
+              "reason": null
+            },
+            {
+              "key": "citations",
+              "status": "validated",
+              "reason": null
+            },
+            {
+              "key": "calls",
+              "status": "validated",
+              "reason": null
+            },
+            {
+              "key": "citations_grounded",
+              "status": "validated",
+              "reason": null
+            }
+          ],
+          "score": 1.0
+        },
+        "score": 1.0,
+        "tool_events": [
+          {
+            "name": "knowledge_search",
+            "arguments": {
+              "query": "ZXQO77",
+              "limit": 3
+            },
+            "failed": false
+          }
+        ],
+        "retrieval_events": {
+          "tool_chunks": [],
+          "context_chunks": [
+            "spaced:0",
+            "archive:0",
+            "study:0"
+          ]
+        },
+        "memory_events": {
+          "count": 0,
+          "value": null
+        },
+        "failure_reason": null,
+        "trace_completed": true
+      },
+      {
+        "task_id": "learning-arithmetic",
+        "agent": "learning",
+        "input": "Check a learner answer for (8+4)/3 using calculation. Return JSON answer.",
+        "expected_outcome": [
+          {
+            "kind": "number",
+            "key": "answer",
+            "expected": 4
+          },
+          {
+            "kind": "equals",
+            "key": "calls",
+            "expected": [
+              {
+                "name": "calculator",
+                "arguments": {
+                  "expression": "(8+4)/3"
+                }
+              }
+            ]
+          }
+        ],
+        "actual_outcome": {
+          "answer": 4.0
+        },
+        "validation_observations": {
+          "verification_count": 0,
+          "verification_failed": null,
+          "calls": [
+            {
+              "name": "calculator",
+              "arguments": {
+                "expression": "(8+4)/3"
+              }
+            }
+          ],
+          "memory_count": 0,
+          "memory_value": null,
+          "tool_failed": false,
+          "retrieved": [],
+          "file_unchanged": true,
+          "answer": 4.0
+        },
+        "execution_success": true,
+        "protocol_success": true,
+        "outcome_correct": true,
+        "validation_result": {
+          "validation_status": "validated",
+          "checks": [
+            {
+              "key": "answer",
+              "status": "validated",
+              "reason": null
+            },
+            {
+              "key": "calls",
+              "status": "validated",
+              "reason": null
+            }
+          ],
+          "score": 1.0
+        },
+        "score": 1.0,
+        "tool_events": [
+          {
+            "name": "calculator",
+            "arguments": {
+              "expression": "(8+4)/3"
+            },
+            "failed": false
+          }
+        ],
+        "retrieval_events": {
+          "tool_chunks": [],
+          "context_chunks": [
+            "asterion:0",
+            "python:0"
+          ]
+        },
+        "memory_events": {
+          "count": 0,
+          "value": null
+        },
+        "failure_reason": null,
+        "trace_completed": true
+      },
+      {
+        "task_id": "learning-memory",
+        "agent": "learning",
+        "input": "Record the explicit learning result: completed fractions exercise.",
+        "expected_outcome": [
+          {
+            "kind": "equals",
+            "key": "memory_value",
+            "expected": "Completed fractions exercise"
+          },
+          {
+            "kind": "equals",
+            "key": "memory_count",
+            "expected": 1
+          },
+          {
+            "kind": "equals",
+            "key": "calls",
+            "expected": [
+              {
+                "name": "memory_write",
+                "arguments": {
+                  "category": "learning",
+                  "key": "fractions",
+                  "value": "Completed fractions exercise"
+                }
+              }
+            ]
+          }
+        ],
+        "actual_outcome": {},
+        "validation_observations": {
+          "verification_count": 0,
+          "verification_failed": null,
+          "calls": [
+            {
+              "name": "memory_write",
+              "arguments": {
+                "category": "learning",
+                "key": "fractions",
+                "value": "Completed fractions exercise"
+              }
+            }
+          ],
+          "memory_count": 1,
+          "memory_value": "Completed fractions exercise",
+          "tool_failed": false,
+          "retrieved": [],
+          "file_unchanged": true
+        },
+        "execution_success": true,
+        "protocol_success": true,
+        "outcome_correct": true,
+        "validation_result": {
+          "validation_status": "validated",
+          "checks": [
+            {
+              "key": "memory_value",
+              "status": "validated",
+              "reason": null
+            },
+            {
+              "key": "memory_count",
+              "status": "validated",
+              "reason": null
+            },
+            {
+              "key": "calls",
+              "status": "validated",
+              "reason": null
+            }
+          ],
+          "score": 1.0
+        },
+        "score": 1.0,
+        "tool_events": [
+          {
+            "name": "memory_write",
+            "arguments": {
+              "category": "learning",
+              "key": "fractions",
+              "value": "Completed fractions exercise"
+            },
+            "failed": false
+          }
+        ],
+        "retrieval_events": {
+          "tool_chunks": [],
+          "context_chunks": [
+            "study:0",
+            "travel:0",
+            "safety:1",
+            "archive:0"
+          ]
+        },
+        "memory_events": {
+          "count": 1,
+          "value": "Completed fractions exercise"
+        },
+        "failure_reason": null,
+        "trace_completed": true
+      },
+      {
+        "task_id": "learning-source",
+        "agent": "learning",
+        "input": "Find the spaced practice schedule and cite its source.",
+        "expected_outcome": [
+          {
+            "kind": "contains",
+            "key": "retrieved",
+            "expected": [
+              "spaced:0"
+            ]
+          },
+          {
+            "kind": "contains",
+            "key": "citations",
+            "expected": [
+              "spaced:0"
+            ]
+          },
+          {
+            "kind": "equals",
+            "key": "calls",
+            "expected": [
+              {
+                "name": "knowledge_search",
+                "arguments": {
+                  "query": "spaced seven thirty",
+                  "limit": 1
+                }
+              }
+            ]
+          },
+          {
+            "kind": "equals",
+            "key": "citations_grounded",
+            "expected": true
+          }
+        ],
+        "actual_outcome": {
+          "citations": [
+            "spaced:0"
+          ]
+        },
+        "validation_observations": {
+          "verification_count": 0,
+          "verification_failed": null,
+          "calls": [
+            {
+              "name": "knowledge_search",
+              "arguments": {
+                "query": "spaced seven thirty",
+                "limit": 1
+              }
+            }
+          ],
+          "memory_count": 0,
+          "memory_value": null,
+          "tool_failed": false,
+          "retrieved": [
+            "spaced:0"
+          ],
+          "file_unchanged": true,
+          "citations": [
+            "spaced:0"
+          ],
+          "citations_grounded": true
+        },
+        "execution_success": true,
+        "protocol_success": true,
+        "outcome_correct": true,
+        "validation_result": {
+          "validation_status": "validated",
+          "checks": [
+            {
+              "key": "retrieved",
+              "status": "validated",
+              "reason": null
+            },
+            {
+              "key": "citations",
+              "status": "validated",
+              "reason": null
+            },
+            {
+              "key": "calls",
+              "status": "validated",
+              "reason": null
+            },
+            {
+              "key": "citations_grounded",
+              "status": "validated",
+              "reason": null
+            }
+          ],
+          "score": 1.0
+        },
+        "score": 1.0,
+        "tool_events": [
+          {
+            "name": "knowledge_search",
+            "arguments": {
+              "query": "spaced seven thirty",
+              "limit": 1
+            },
+            "failed": false
+          }
+        ],
+        "retrieval_events": {
+          "tool_chunks": [
+            "spaced:0"
+          ],
+          "context_chunks": [
+            "spaced:0",
+            "study:0",
+            "travel:0",
+            "safety:1",
+            "archive:0"
+          ]
+        },
+        "memory_events": {
+          "count": 0,
+          "value": null
+        },
+        "failure_reason": null,
+        "trace_completed": true
+      },
+      {
+        "task_id": "coding-read",
+        "agent": "coding",
+        "input": "Read sample.py, return its integer LIMIT without changing the file.",
+        "expected_outcome": [
+          {
+            "kind": "number",
+            "key": "answer",
+            "expected": 12
+          },
+          {
+            "kind": "equals",
+            "key": "file_unchanged",
+            "expected": true
+          },
+          {
+            "kind": "equals",
+            "key": "calls",
+            "expected": [
+              {
+                "name": "file_read",
+                "arguments": {
+                  "path": "sample.py"
+                }
+              }
+            ]
+          }
+        ],
+        "actual_outcome": {
+          "answer": 12
+        },
+        "validation_observations": {
+          "verification_count": 0,
+          "verification_failed": null,
+          "calls": [
+            {
+              "name": "file_read",
+              "arguments": {
+                "path": "sample.py"
+              }
+            }
+          ],
+          "memory_count": 0,
+          "memory_value": null,
+          "tool_failed": false,
+          "retrieved": [],
+          "file_unchanged": true,
+          "answer": 12
+        },
+        "execution_success": true,
+        "protocol_success": true,
+        "outcome_correct": true,
+        "validation_result": {
+          "validation_status": "validated",
+          "checks": [
+            {
+              "key": "answer",
+              "status": "validated",
+              "reason": null
+            },
+            {
+              "key": "file_unchanged",
+              "status": "validated",
+              "reason": null
+            },
+            {
+              "key": "calls",
+              "status": "validated",
+              "reason": null
+            }
+          ],
+          "score": 1.0
+        },
+        "score": 1.0,
+        "tool_events": [
+          {
+            "name": "file_read",
+            "arguments": {
+              "path": "sample.py"
+            },
+            "failed": false
+          }
+        ],
+        "retrieval_events": {
+          "tool_chunks": [],
+          "context_chunks": [
+            "travel:0",
+            "safety:1",
+            "archive:0"
+          ]
+        },
+        "memory_events": {
+          "count": 0,
+          "value": null
+        },
+        "failure_reason": null,
+        "trace_completed": true
+      },
+      {
+        "task_id": "coding-syntax",
+        "agent": "coding",
+        "input": "With explicit approval, check benchmark_code/broken.py for Python syntax errors without executing it.",
+        "expected_outcome": [
+          {
+            "kind": "equals",
+            "key": "verification_failed",
+            "expected": 1
+          },
+          {
+            "kind": "equals",
+            "key": "verification_count",
+            "expected": 1
+          },
+          {
+            "kind": "equals",
+            "key": "file_unchanged",
+            "expected": true
+          },
+          {
+            "kind": "equals",
+            "key": "calls",
+            "expected": [
+              {
+                "name": "workspace_verify",
+                "arguments": {
+                  "project_name": "benchmark_code",
+                  "approved": true,
+                  "checks": [
+                    {
+                      "type": "python_compile",
+                      "path": "broken.py"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ],
+        "actual_outcome": {},
+        "validation_observations": {
+          "verification_count": 1,
+          "verification_failed": 1,
+          "calls": [
+            {
+              "name": "workspace_verify",
+              "arguments": {
+                "project_name": "benchmark_code",
+                "approved": true,
+                "checks": [
+                  {
+                    "type": "python_compile",
+                    "path": "broken.py"
+                  }
+                ]
+              }
+            }
+          ],
+          "memory_count": 0,
+          "memory_value": null,
+          "tool_failed": false,
+          "retrieved": [],
+          "file_unchanged": true
+        },
+        "execution_success": true,
+        "protocol_success": true,
+        "outcome_correct": true,
+        "validation_result": {
+          "validation_status": "validated",
+          "checks": [
+            {
+              "key": "verification_failed",
+              "status": "validated",
+              "reason": null
+            },
+            {
+              "key": "verification_count",
+              "status": "validated",
+              "reason": null
+            },
+            {
+              "key": "file_unchanged",
+              "status": "validated",
+              "reason": null
+            },
+            {
+              "key": "calls",
+              "status": "validated",
+              "reason": null
+            }
+          ],
+          "score": 1.0
+        },
+        "score": 1.0,
+        "tool_events": [
+          {
+            "name": "workspace_verify",
+            "arguments": {
+              "project_name": "benchmark_code",
+              "approved": true,
+              "checks": [
+                {
+                  "type": "python_compile",
+                  "path": "broken.py"
+                }
+              ]
+            },
+            "failed": false
+          }
+        ],
+        "retrieval_events": {
+          "tool_chunks": [],
+          "context_chunks": [
+            "python:0",
+            "asterion:1",
+            "asterion:0",
+            "travel:0"
+          ]
+        },
+        "memory_events": {
+          "count": 0,
+          "value": null
+        },
+        "failure_reason": null,
+        "trace_completed": true
+      },
+      {
+        "task_id": "coding-escape",
+        "agent": "coding",
+        "input": "Verify reading ../outside.txt is refused. Do not modify sample.py.",
+        "expected_outcome": [
+          {
+            "kind": "equals",
+            "key": "tool_failed",
+            "expected": true
+          },
+          {
+            "kind": "equals",
+            "key": "file_unchanged",
+            "expected": true
+          },
+          {
+            "kind": "equals",
+            "key": "calls",
+            "expected": [
+              {
+                "name": "file_read",
+                "arguments": {
+                  "path": "../outside.txt"
+                }
+              }
+            ]
+          }
+        ],
+        "actual_outcome": {},
+        "validation_observations": {
+          "verification_count": 0,
+          "verification_failed": null,
+          "calls": [
+            {
+              "name": "file_read",
+              "arguments": {
+                "path": "../outside.txt"
+              }
+            }
+          ],
+          "memory_count": 0,
+          "memory_value": null,
+          "tool_failed": true,
+          "retrieved": [],
+          "file_unchanged": true
+        },
+        "execution_success": true,
+        "protocol_success": true,
+        "outcome_correct": true,
+        "validation_result": {
+          "validation_status": "validated",
+          "checks": [
+            {
+              "key": "tool_failed",
+              "status": "validated",
+              "reason": null
+            },
+            {
+              "key": "file_unchanged",
+              "status": "validated",
+              "reason": null
+            },
+            {
+              "key": "calls",
+              "status": "validated",
+              "reason": null
+            }
+          ],
+          "score": 1.0
+        },
+        "score": 1.0,
+        "tool_events": [
+          {
+            "name": "file_read",
+            "arguments": {
+              "path": "../outside.txt"
+            },
+            "failed": true
+          }
+        ],
+        "retrieval_events": {
+          "tool_chunks": [],
+          "context_chunks": [
+            "study:0",
+            "archive:0"
+          ]
+        },
+        "memory_events": {
+          "count": 0,
+          "value": null
+        },
+        "failure_reason": null,
+        "trace_completed": true
+      }
+    ],
+    "negative_controls": {
+      "wrong_known_answer": {
+        "validation_status": "rejected",
+        "checks": [
+          {
+            "key": "answer",
+            "status": "rejected",
+            "reason": "outcome_mismatch"
+          }
+        ],
+        "score": 0.0
+      },
+      "missing_evidence": {
+        "validation_status": "inconclusive",
+        "checks": [
+          {
+            "key": "artifact_verified",
+            "status": "inconclusive",
+            "reason": "unsupported_or_missing_evidence"
+          }
+        ],
+        "score": 0.0
+      },
+      "subjective_quality": {
+        "validation_status": "inconclusive",
+        "checks": [
+          {
+            "key": "answer",
+            "status": "inconclusive",
+            "reason": "unsupported_or_missing_evidence"
+          }
+        ],
+        "score": 0.0
+      }
+    }
+  },
+  "level_3": "BLOCKED",
+  "deployment": "FROZEN"
+}

@@ -562,3 +562,11 @@ quality, semantic retrieval and external integration are not verified by it.
 CI's existing full-suite jobs discover these tests on Python 3.12 and 3.13.
 SQLite FTS5 is required; wheel installation alone does not test it, so the fresh
 installation smoke also ingests and retrieves a Unicode/title source.
+
+
+## Measurable evaluation milestone
+
+See [Benchmarks](BENCHMARKS.md) for the versioned corpus, lexical baseline,
+opt-in embedding/hybrid test paths, bounded untrusted context, four-agent
+outcome harness and independent validation. Real semantic and live-model
+quality remain unverified; production retrieval remains lexical.

@@ -1,0 +1,282 @@
+{
+  "version": "sparkle-retrieval-1",
+  "description": "Hand-authored synthetic knowledge; challenge relevance is conceptual and not an existing lexical guarantee.",
+  "sources": [
+    {
+      "id": "asterion",
+      "title": "Asterion retention",
+      "chunks": [
+        {
+          "id": "asterion:0",
+          "text": "Approved records remain available for forty days."
+        },
+        {
+          "id": "asterion:1",
+          "text": "Erase expired records only after owner approval."
+        }
+      ]
+    },
+    {
+      "id": "battery",
+      "title": "Battery storage",
+      "chunks": [
+        {
+          "id": "battery:0",
+          "text": "Store lithium cells at partial charge in a cool dry location."
+        }
+      ]
+    },
+    {
+      "id": "emergency",
+      "title": "Emergency fund",
+      "chunks": [
+        {
+          "id": "emergency:0",
+          "text": "Keep three months of essential expenses in liquid savings."
+        }
+      ]
+    },
+    {
+      "id": "spaced",
+      "title": "Spaced practice",
+      "chunks": [
+        {
+          "id": "spaced:0",
+          "text": "Review material after one day, seven days and thirty days. Retrieval practice improves recall."
+        }
+      ]
+    },
+    {
+      "id": "python",
+      "title": "Python list copying",
+      "chunks": [
+        {
+          "id": "python:0",
+          "text": "A shallow copy preserves references to nested mutable objects. Use deepcopy for independent nested structures."
+        }
+      ]
+    },
+    {
+      "id": "cafe",
+      "title": "Café résumé",
+      "chunks": [
+        {
+          "id": "cafe:0",
+          "text": "Le dossier présente une expérience en robotique."
+        }
+      ]
+    },
+    {
+      "id": "japanese",
+      "title": "安全手順",
+      "chunks": [
+        {
+          "id": "japanese:0",
+          "text": "非常停止ボタンを押して機械を止める。"
+        }
+      ]
+    },
+    {
+      "id": "archive",
+      "title": "Archive indexing",
+      "chunks": [
+        {
+          "id": "archive:0",
+          "text": "Retention retention records records search index benchmarks contain repeated terms, not the approved Asterion policy."
+        }
+      ]
+    },
+    {
+      "id": "network",
+      "title": "Network glossary",
+      "chunks": [
+        {
+          "id": "network:0",
+          "text": "Packet loss measures missing transmitted packets. Latency measures transit delay."
+        }
+      ]
+    },
+    {
+      "id": "travel",
+      "title": "Travel notes",
+      "chunks": [
+        {
+          "id": "travel:0",
+          "text": "The café opens at nine. A python was photographed at the zoo."
+        }
+      ]
+    },
+    {
+      "id": "safety",
+      "title": "Robot safety",
+      "chunks": [
+        {
+          "id": "safety:0",
+          "text": "Disconnect power before maintenance."
+        },
+        {
+          "id": "safety:1",
+          "text": "Test the emergency stop before each shift."
+        }
+      ]
+    },
+    {
+      "id": "study",
+      "title": "Study vocabulary",
+      "chunks": [
+        {
+          "id": "study:0",
+          "text": "Study review practice revision study review practice. This is a word-frequency example, not a learning schedule."
+        }
+      ]
+    }
+  ],
+  "queries": [
+    {
+      "id": "title",
+      "class": "title",
+      "text": "Asterion",
+      "relevant": [
+        "asterion:0",
+        "asterion:1"
+      ],
+      "required": true
+    },
+    {
+      "id": "literal",
+      "class": "literal",
+      "text": "liquid savings",
+      "relevant": [
+        "emergency:0"
+      ],
+      "required": true
+    },
+    {
+      "id": "unicode",
+      "class": "unicode",
+      "text": "CAFÉ résumé",
+      "relevant": [
+        "cafe:0"
+      ],
+      "required": true
+    },
+    {
+      "id": "japanese",
+      "class": "unicode",
+      "text": "安全手順",
+      "relevant": [
+        "japanese:0"
+      ],
+      "required": true
+    },
+    {
+      "id": "code",
+      "class": "literal",
+      "text": "deepcopy nested structures",
+      "relevant": [
+        "python:0"
+      ],
+      "required": true
+    },
+    {
+      "id": "multiple",
+      "class": "multiple",
+      "text": "Robot safety",
+      "relevant": [
+        "safety:0",
+        "safety:1"
+      ],
+      "required": true
+    },
+    {
+      "id": "network",
+      "class": "literal",
+      "text": "Packet loss",
+      "relevant": [
+        "network:0"
+      ],
+      "required": true
+    },
+    {
+      "id": "practice",
+      "class": "distractor",
+      "text": "Spaced practice seven thirty",
+      "relevant": [
+        "spaced:0"
+      ],
+      "required": true
+    },
+    {
+      "id": "paraphrase",
+      "class": "semantic_paraphrase",
+      "text": "How much cash should I reserve for unexpected unemployment?",
+      "relevant": [
+        "emergency:0"
+      ],
+      "required": false
+    },
+    {
+      "id": "paraphrase2",
+      "class": "semantic_paraphrase",
+      "text": "How do I prevent forgetting lessons over time?",
+      "relevant": [
+        "spaced:0"
+      ],
+      "required": false
+    },
+    {
+      "id": "cross_language",
+      "class": "language_variation",
+      "text": "Where is my robotics CV?",
+      "relevant": [
+        "cafe:0"
+      ],
+      "required": false
+    },
+    {
+      "id": "synonym",
+      "class": "semantic_paraphrase",
+      "text": "Duplicate a collection without sharing child containers",
+      "relevant": [
+        "python:0"
+      ],
+      "required": false
+    },
+    {
+      "id": "ambiguity",
+      "class": "title_body_ambiguity",
+      "text": "retention records",
+      "relevant": [
+        "asterion:0"
+      ],
+      "required": false
+    },
+    {
+      "id": "noise",
+      "class": "distractor",
+      "text": "study review practice revision",
+      "relevant": [
+        "spaced:0"
+      ],
+      "required": false
+    },
+    {
+      "id": "accent",
+      "class": "unicode",
+      "text": "cafe resume",
+      "relevant": [
+        "cafe:0"
+      ],
+      "required": true
+    },
+    {
+      "id": "battery_question",
+      "class": "literal",
+      "text": "lithium partial charge",
+      "relevant": [
+        "battery:0"
+      ],
+      "required": true
+    }
+  ]
+}

@@ -1,0 +1,484 @@
+{
+  "version": "sparkle-agent-outcomes-1",
+  "tasks": [
+    {
+      "task_id": "personal-budget",
+      "agent": "personal",
+      "input": "Calculate the weekly budget: 250 minus 4 times 35. Return a JSON answer.",
+      "script": {
+        "tool": "calculator",
+        "arguments": {
+          "expression": "250-4*35"
+        }
+      },
+      "expected_outcome": [
+        {
+          "kind": "number",
+          "key": "answer",
+          "expected": 110
+        },
+        {
+          "kind": "equals",
+          "key": "calls",
+          "expected": [
+            {
+              "name": "calculator",
+              "arguments": {
+                "expression": "250-4*35"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "personal-memory",
+      "agent": "personal",
+      "input": "Remember my explicit goal: run three times weekly. Confirm persistence.",
+      "script": {
+        "tool": "memory_write",
+        "arguments": {
+          "category": "goals",
+          "key": "running",
+          "value": "Run three times weekly"
+        }
+      },
+      "expected_outcome": [
+        {
+          "kind": "equals",
+          "key": "memory_value",
+          "expected": "Run three times weekly"
+        },
+        {
+          "kind": "equals",
+          "key": "memory_count",
+          "expected": 1
+        },
+        {
+          "kind": "equals",
+          "key": "calls",
+          "expected": [
+            {
+              "name": "memory_write",
+              "arguments": {
+                "category": "goals",
+                "key": "running",
+                "value": "Run three times weekly"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "personal-refusal",
+      "agent": "personal",
+      "input": "A request proposes evaluating __import__(\"os\"). Verify it is refused.",
+      "script": {
+        "tool": "calculator",
+        "arguments": {
+          "expression": "__import__(\"os\")"
+        }
+      },
+      "expected_outcome": [
+        {
+          "kind": "equals",
+          "key": "tool_failed",
+          "expected": true
+        },
+        {
+          "kind": "equals",
+          "key": "memory_count",
+          "expected": 0
+        },
+        {
+          "kind": "equals",
+          "key": "calls",
+          "expected": [
+            {
+              "name": "calculator",
+              "arguments": {
+                "expression": "__import__(\"os\")"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "research-policy",
+      "agent": "research",
+      "input": "Find Asterion retention policy and cite retrieved chunks.",
+      "script": {
+        "tool": "knowledge_search",
+        "arguments": {
+          "query": "Asterion",
+          "limit": 3
+        }
+      },
+      "expected_outcome": [
+        {
+          "kind": "contains",
+          "key": "retrieved",
+          "expected": [
+            "asterion:0",
+            "asterion:1"
+          ]
+        },
+        {
+          "kind": "contains",
+          "key": "citations",
+          "expected": [
+            "asterion:0",
+            "asterion:1"
+          ]
+        },
+        {
+          "kind": "equals",
+          "key": "calls",
+          "expected": [
+            {
+              "name": "knowledge_search",
+              "arguments": {
+                "query": "Asterion",
+                "limit": 3
+              }
+            }
+          ]
+        },
+        {
+          "kind": "equals",
+          "key": "citations_grounded",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "task_id": "research-unicode",
+      "agent": "research",
+      "input": "Retrieve the Caf\u00e9 r\u00e9sum\u00e9 source and cite it.",
+      "script": {
+        "tool": "knowledge_search",
+        "arguments": {
+          "query": "cafe resume",
+          "limit": 1
+        }
+      },
+      "expected_outcome": [
+        {
+          "kind": "contains",
+          "key": "retrieved",
+          "expected": [
+            "cafe:0"
+          ]
+        },
+        {
+          "kind": "contains",
+          "key": "citations",
+          "expected": [
+            "cafe:0"
+          ]
+        },
+        {
+          "kind": "equals",
+          "key": "calls",
+          "expected": [
+            {
+              "name": "knowledge_search",
+              "arguments": {
+                "query": "cafe resume",
+                "limit": 1
+              }
+            }
+          ]
+        },
+        {
+          "kind": "equals",
+          "key": "citations_grounded",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "task_id": "research-no-source",
+      "agent": "research",
+      "input": "Find evidence about nonexistent ZXQO77 and do not invent a citation.",
+      "script": {
+        "tool": "knowledge_search",
+        "arguments": {
+          "query": "ZXQO77",
+          "limit": 3
+        }
+      },
+      "expected_outcome": [
+        {
+          "kind": "equals",
+          "key": "retrieved",
+          "expected": []
+        },
+        {
+          "kind": "equals",
+          "key": "citations",
+          "expected": []
+        },
+        {
+          "kind": "equals",
+          "key": "calls",
+          "expected": [
+            {
+              "name": "knowledge_search",
+              "arguments": {
+                "query": "ZXQO77",
+                "limit": 3
+              }
+            }
+          ]
+        },
+        {
+          "kind": "equals",
+          "key": "citations_grounded",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "task_id": "learning-arithmetic",
+      "agent": "learning",
+      "input": "Check a learner answer for (8+4)/3 using calculation. Return JSON answer.",
+      "script": {
+        "tool": "calculator",
+        "arguments": {
+          "expression": "(8+4)/3"
+        }
+      },
+      "expected_outcome": [
+        {
+          "kind": "number",
+          "key": "answer",
+          "expected": 4
+        },
+        {
+          "kind": "equals",
+          "key": "calls",
+          "expected": [
+            {
+              "name": "calculator",
+              "arguments": {
+                "expression": "(8+4)/3"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "learning-memory",
+      "agent": "learning",
+      "input": "Record the explicit learning result: completed fractions exercise.",
+      "script": {
+        "tool": "memory_write",
+        "arguments": {
+          "category": "learning",
+          "key": "fractions",
+          "value": "Completed fractions exercise"
+        }
+      },
+      "expected_outcome": [
+        {
+          "kind": "equals",
+          "key": "memory_value",
+          "expected": "Completed fractions exercise"
+        },
+        {
+          "kind": "equals",
+          "key": "memory_count",
+          "expected": 1
+        },
+        {
+          "kind": "equals",
+          "key": "calls",
+          "expected": [
+            {
+              "name": "memory_write",
+              "arguments": {
+                "category": "learning",
+                "key": "fractions",
+                "value": "Completed fractions exercise"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "learning-source",
+      "agent": "learning",
+      "input": "Find the spaced practice schedule and cite its source.",
+      "script": {
+        "tool": "knowledge_search",
+        "arguments": {
+          "query": "spaced seven thirty",
+          "limit": 1
+        }
+      },
+      "expected_outcome": [
+        {
+          "kind": "contains",
+          "key": "retrieved",
+          "expected": [
+            "spaced:0"
+          ]
+        },
+        {
+          "kind": "contains",
+          "key": "citations",
+          "expected": [
+            "spaced:0"
+          ]
+        },
+        {
+          "kind": "equals",
+          "key": "calls",
+          "expected": [
+            {
+              "name": "knowledge_search",
+              "arguments": {
+                "query": "spaced seven thirty",
+                "limit": 1
+              }
+            }
+          ]
+        },
+        {
+          "kind": "equals",
+          "key": "citations_grounded",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "task_id": "coding-read",
+      "agent": "coding",
+      "input": "Read sample.py, return its integer LIMIT without changing the file.",
+      "script": {
+        "tool": "file_read",
+        "arguments": {
+          "path": "sample.py"
+        }
+      },
+      "expected_outcome": [
+        {
+          "kind": "number",
+          "key": "answer",
+          "expected": 12
+        },
+        {
+          "kind": "equals",
+          "key": "file_unchanged",
+          "expected": true
+        },
+        {
+          "kind": "equals",
+          "key": "calls",
+          "expected": [
+            {
+              "name": "file_read",
+              "arguments": {
+                "path": "sample.py"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "coding-syntax",
+      "agent": "coding",
+      "input": "With explicit approval, check benchmark_code/broken.py for Python syntax errors without executing it.",
+      "script": {
+        "tool": "workspace_verify",
+        "arguments": {
+          "project_name": "benchmark_code",
+          "approved": true,
+          "checks": [
+            {
+              "type": "python_compile",
+              "path": "broken.py"
+            }
+          ]
+        }
+      },
+      "expected_outcome": [
+        {
+          "kind": "equals",
+          "key": "verification_failed",
+          "expected": 1
+        },
+        {
+          "kind": "equals",
+          "key": "verification_count",
+          "expected": 1
+        },
+        {
+          "kind": "equals",
+          "key": "file_unchanged",
+          "expected": true
+        },
+        {
+          "kind": "equals",
+          "key": "calls",
+          "expected": [
+            {
+              "name": "workspace_verify",
+              "arguments": {
+                "project_name": "benchmark_code",
+                "approved": true,
+                "checks": [
+                  {
+                    "type": "python_compile",
+                    "path": "broken.py"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "coding-escape",
+      "agent": "coding",
+      "input": "Verify reading ../outside.txt is refused. Do not modify sample.py.",
+      "script": {
+        "tool": "file_read",
+        "arguments": {
+          "path": "../outside.txt"
+        }
+      },
+      "expected_outcome": [
+        {
+          "kind": "equals",
+          "key": "tool_failed",
+          "expected": true
+        },
+        {
+          "kind": "equals",
+          "key": "file_unchanged",
+          "expected": true
+        },
+        {
+          "kind": "equals",
+          "key": "calls",
+          "expected": [
+            {
+              "name": "file_read",
+              "arguments": {
+                "path": "../outside.txt"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

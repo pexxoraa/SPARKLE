@@ -211,3 +211,11 @@ into Python. Context now includes source/chunk IDs; the model layer remains
 provider-neutral. This is lexical retrieval, not semantic understanding or result
 verification. See [Knowledge](KNOWLEDGE.md) and the
 [foundation audit](FOUNDATION_AUDIT.md). Level 3 remains parked and BLOCKED.
+
+
+## Measurable evaluation milestone
+
+See [Benchmarks](BENCHMARKS.md) for the versioned corpus, lexical baseline,
+opt-in embedding/hybrid test paths, bounded untrusted context, four-agent
+outcome harness and independent validation. Real semantic and live-model
+quality remain unverified; production retrieval remains lexical.

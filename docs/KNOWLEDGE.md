@@ -51,3 +51,11 @@ tool or public result shape. Representative retrieval-quality benchmarking and
 semantic/hybrid search remain unfinished. See the
 [foundation audit](FOUNDATION_AUDIT.md) for scope and evidence.
 Implementation reference: https://sqlite.org/fts5.html .
+
+
+## Measurable evaluation milestone
+
+See [Benchmarks](BENCHMARKS.md) for the versioned corpus, lexical baseline,
+opt-in embedding/hybrid test paths, bounded untrusted context, four-agent
+outcome harness and independent validation. Real semantic and live-model
+quality remain unverified; production retrieval remains lexical.

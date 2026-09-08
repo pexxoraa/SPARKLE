@@ -125,3 +125,21 @@ workflow changes belong to this milestone. User-supplied Ubuntu host evidence:
 Final acceptance still requires pinned worker identity, matching artifact/result
 digests, cleanup, and authenticated `isolation_verified=true`. Passing this
 milestone's unit/integration tests changes none of those requirements.
+
+
+## 2026-09-08 benchmark milestone update
+
+The [benchmark evidence](../benchmarks/evidence/REPORT.md) and
+[methodology](BENCHMARKS.md) now measure 16 retrieval queries and 12 scripted
+outcome tasks across four agents. A replaceable embedding contract and opt-in
+hybrid path are implemented and exercised with a labeled token-hashing double.
+Independent deterministic validation is separate from execution/trace success.
+Retrieved data no longer enters the system role; context is bounded and attributed.
+
+Knowledge, Context, Orchestrator, Testing/evaluation and the four agents remain
+PARTIALLY IMPLEMENTED: synthetic/scripted evidence is insufficient to certify
+semantic retrieval or autonomous domain competence. NVIDIA remains IMPLEMENTED
+BUT INSUFFICIENTLY VERIFIED. No category or completion percentage is increased.
+The earlier statement that a successful trace does not prove an answer true still
+applies; the explicit benchmark validator now checks specified outcomes separately.
+Level 3 remains parked/BLOCKED and deployment FROZEN.

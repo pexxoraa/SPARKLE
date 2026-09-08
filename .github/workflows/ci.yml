@@ -21,6 +21,12 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Compile and test
         run: make check
+      - name: Reproduce credential-free benchmark evidence
+        run: |
+          PYTHONPATH=src python -m benchmarks.run --output-dir "$RUNNER_TEMP/sparkle-benchmarks"
+          diff benchmarks/evidence/results.json "$RUNNER_TEMP/sparkle-benchmarks/results.json"
+          diff benchmarks/evidence/REPORT.md "$RUNNER_TEMP/sparkle-benchmarks/REPORT.md"
+          cat "$RUNNER_TEMP/sparkle-benchmarks/REPORT.md" >> "$GITHUB_STEP_SUMMARY"
 
   worker-image:
     runs-on: ubuntu-latest
