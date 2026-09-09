@@ -200,3 +200,78 @@ Current executor: credential unavailable; no live request attempted. The user's
 previous authenticated smoke test remains valid host connectivity evidence. The
 latest host 12-task run remains inconclusive because it failed before provider
 execution. Level 3 remains BLOCKED/PARKED; deployment remains FROZEN.
+
+## Live response-protocol investigation (2026-09-09)
+
+User-reported first completed real run: 12 tasks; 1 validated, 1 rejected,
+9 JSONDecodeError and 1 RuntimeError; 200.914 seconds; pass rate 1/12 = 8.33%.
+**REAL NEMOTRON AGENT EVALUATION = EXECUTED. QUALITY RESULT = 8.33% validated.
+OVERALL AGENT COMPETENCE = NOT ESTABLISHED.** This is host-reported evidence,
+not a live run performed in this executor. No capability classification is upgraded.
+
+Confirmed contract defect: every final response is decoded with json.loads and
+must be an object, yet only two of the twelve task inputs explicitly ask for JSON.
+The prior shared agent prompt did not declare this benchmark response contract.
+The adapter separately decodes HTTP response JSON and tool-call arguments; parsing
+errors there are normalized to malformed_response, not exposed as JSONDecodeError.
+The bare exception counts are consistent with final answer parsing, but do not
+identify each response shape or rule out another unnormalized exception path.
+
+The new common **SPARKLE-BENCHMARK-RESPONSE/2** instruction declares the final JSON
+object, answer and citation representation, permits explanation/uncertainty fields,
+and preserves native tool calling during actions. It contains no task plans or
+expected answers. The instruction is an ordinary user message supplied by the
+benchmark, not a replacement agent/system prompt. Tasks, expected outcomes,
+scoring and validators are unchanged. This is a disclosed request-protocol change;
+a future live result must record its contract version when compared with the old
+run. No actual model improvement is claimed.
+
+No JSON extraction/repair is performed. Fences, extra prose, empty responses and
+malformed JSON fail parsing. Valid arrays/scalars fail the object contract. A
+provider finish reason length/max_tokens or unresolved tool-call finish reason
+fails final protocol acceptance even if the text parses. Independent validation
+still checks real tool and persisted state; a response satisfying JSON syntax is
+not automatically correct. Criterion keys/status/reasons are exported without
+expected/actual private values, so a wrong answer can be distinguished from wrong
+tool arguments, missing citations or absent memory evidence.
+
+For each normalized model response the observer records finish reason, normalized
+text byte/character length and SHA-256, format category, tool-call count/presence,
+truncation and parsing coordinates. The hash identifies normalized assistant text,
+not the complete raw HTTP body. NVIDIA normalization additionally reports only the
+content field's type and whether a reasoning field was present. Reasoning content
+is never exported and is not extracted as an answer. A reasoning-markup classifier
+is a syntactic indicator, not proof about what the model was thinking. A category
+such as text_with_json_marker does not certify that an embedded JSON object is valid.
+The separate final parsing-attempt/failure fields apply only after the orchestrator
+returns; tool-call intermediate empty text is not treated as a failed final answer.
+
+Explicit orchestrator invariant failures now carry stable codes: tool_round_limit,
+evaluation_tool_forbidden, missing_response. They retain the exact RuntimeError exception type;
+limits and tool permissions are unchanged. Repeated-tool regression demonstrates
+five model responses and four executed rounds before tool_round_limit. This does
+not prove the historical RuntimeError had that cause. Other runtime exceptions
+retain their type and no message. Provider/runtime evidence remains separate.
+
+[NVIDIA NIM 1.14 structured-generation documentation](https://docs.nvidia.com/nim/large-language-models/1.14.0/structured-generation.html)
+describes guided JSON schemas. That deployment documentation does not demonstrate
+support for the exact hosted model/endpoint configuration in the reported run.
+No unverified guided_json/response_format parameter is enabled, no model is changed,
+and no extra output-only tool is added. Hosted constrained generation and its
+compatibility with reasoning/native tools require a separate capability check.
+The provider-neutral prompt contract and strict parser are usable without it.
+
+### Remaining evidence gate
+
+The original nine response shapes, specific RuntimeError source and rejected task
+are **not identifiable from the aggregate supplied counts**. The prior evidence
+schema did not retain response structure or per-criterion rejection details. The
+existing host JSONL can still identify task IDs, request status, tool events and
+usage. Attach that content-safe file first. Do not send credentials or private raw
+responses. Missing historical response metadata is unrecoverable unless independently
+retained by the operator; a new test cannot retroactively establish it.
+
+No live benchmark is rerun during debugging. The real 8.33% result is preserved,
+not relabelled as a connectivity outage or autonomous-competence score. Full
+historical diagnosis remains blocked on evidence. Level 3 stays BLOCKED/PARKED;
+deployment stays FROZEN.

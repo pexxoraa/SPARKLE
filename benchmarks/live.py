@@ -10,6 +10,7 @@ import time
 from pathlib import Path
 
 from benchmarks.agents import TASKS, run_agents
+from benchmarks.protocol import CONTRACT_VERSION
 from sparkle.config import model_config_path
 from sparkle.model import ModelError
 from sparkle.registry import ModelRegistry
@@ -35,6 +36,8 @@ def task_evidence(row, requests):
         error = failure.removeprefix('provider_')
         error = error if error in SAFE_ERRORS else 'other'
         stage = 'pre_provider' if error in {'configuration_failure', 'routing_failure'} else 'provider_runtime'
+    elif failure and failure.startswith('orchestrator_'):
+        stage, error = 'orchestrator', failure.removeprefix('orchestrator_')
     elif not row['execution_success']:
         stage, error = 'execution', 'execution_failure'
     elif not row['protocol_success']:
@@ -49,6 +52,8 @@ def task_evidence(row, requests):
         'execution_success': row['execution_success'], 'protocol_success': row['protocol_success'],
         'outcome_correct': row['outcome_correct'],
         'validation_status': row['validation_result']['validation_status'],
+        'validation_checks': row['validation_result'].get('checks', []),
+        'diagnostics': row.get('diagnostics', {}),
         'score': row['score'], 'trace_completed': row['trace_completed'],
         'tool_events': [{'name': e['name'] if e['name'] in SAFE_TOOL_NAMES else 'other', 'failed': e['failed']} for e in row['tool_events']],
         'retrieval_events': row['retrieval_events'], 'memory_count': row['memory_events']['count'],
@@ -83,7 +88,8 @@ def run_live(output: Path):
             handle.flush()
             os.fsync(handle.fileno())
 
-        write({'event': 'start', 'schema': 'SPARKLE-LIVE-AGENTS/1',
+        write({'event': 'start', 'schema': 'SPARKLE-LIVE-AGENTS/2',
+               'response_contract': CONTRACT_VERSION,
                'dataset_sha256': hashlib.sha256(TASKS.read_bytes()).hexdigest(),
                'evidence_mode': 'configured_provider_attempt',
                'agent_competence_verified': False})

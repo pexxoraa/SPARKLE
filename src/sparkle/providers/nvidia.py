@@ -187,6 +187,10 @@ class NVIDIAChatCompletionsAdapter(ModelAdapter):
             raise TypeError("response usage is invalid")
         raw_content = [{
             "type": "nvidia_chat_message",
+            "content_type": ("missing" if "content" not in message else
+                             "string" if isinstance(content, str) else
+                             "null" if content is None else "unsupported"),
+            "reasoning_field_present": bool(message.get("reasoning_content")),
             "content": text,
             "tool_calls": message.get("tool_calls", []),
         }]

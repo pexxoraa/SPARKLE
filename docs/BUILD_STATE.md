@@ -300,3 +300,35 @@ from a traceback alone. See [live evidence procedure](BENCHMARKS.md) and
 Level 3 remains BLOCKED/PARKED. Deployment remains FROZEN. Real embedding quality,
 real agent outcome rates and host acceptance are not upgraded. This milestone
 completes local diagnostic/evidence preparation, not the entire platform mission.
+
+## 2026-09-09 — response protocol and failure evidence
+
+Starting main: `64bba98b549bbd7fcc37eaca9aed09f6bcac48f1`.
+The user reports a completed real 12-task NVIDIA run: 1 validated, 1 rejected,
+9 JSONDecodeError, 1 RuntimeError; 200.914 seconds; 8.33% validated.
+This updates the prior pre-provider/inconclusive checkpoint: evaluation now
+executed, but autonomous competence remains unestablished. Individual historical
+failure causes remain unproven because the response shapes and task-level evidence
+were not supplied. No live rerun occurred in this debugging milestone.
+
+A shared versioned final JSON contract now accompanies the unchanged tasks.
+No parser extraction/repair is permitted. Safe response structure/hash, parsing
+stage, typed runtime code and individual validator checks are captured. Explicit
+orchestrator failures retain the public RuntimeError type; no tool limit is relaxed.
+An initial full regression exposed a subclass-name incompatibility, which was
+corrected without changing its existing test or evaluator. Native tool calls and
+NVIDIA reasoning/content separation have deterministic regression coverage.
+
+See [protocol investigation and missing-evidence gate](BENCHMARKS.md).
+Tasks, scoring, validators, model settings, Level 3 and deployment remain unchanged.
+The scripted baseline remains 12/12 and retrieval metrics remain unchanged.
+No new capability classification or version increment is warranted by this fix.
+Level 3 remains BLOCKED/PARKED; deployment remains FROZEN.
+
+Fresh verification: baseline 374 passed + 1 optional live skip (375 total).
+Final full suite: 387 passed + 1 optional live skip (388 total), 62.524 seconds.
+Focused suite: 64/64, 23.469 seconds. Thirteen new test methods cover the requested
+protocol/outcome cases, including an early runtime JSON error negative control.
+Wheel build, fresh offline installation, compile/JavaScript checks and tracked-tree
+secret-pattern/path/symlink/size audits passed. The deterministic benchmark outcome
+and retrieval sections remain exactly equal; implementation fingerprints changed.

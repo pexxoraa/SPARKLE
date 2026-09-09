@@ -19,6 +19,7 @@ def run_all():
             'src/sparkle/storage.py','src/sparkle/context.py','src/sparkle/orchestrator.py',
             'src/sparkle/retrieval.py','src/sparkle/result_validation.py',
             'benchmarks/retrieval.py','benchmarks/agents.py','benchmarks/run.py',
+            'benchmarks/protocol.py','benchmarks/live.py',
         ]
         hashes={p:hashlib.sha256((root_dir/p).read_bytes()).hexdigest() for p in tracked_implementations}
         return {'schema':'SPARKLE-BENCHMARK/1', 'implementation_sha256':hashes, 'retrieval':run_retrieval(root),

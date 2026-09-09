@@ -17,6 +17,8 @@ from sparkle.result_validation import validate_result
 from sparkle.system import SparkleSystem
 from sparkle.tooling import ToolRegistry, CalculatorTool, MemoryWriteTool, KnowledgeSearchTool, FileReadTool, WorkspaceVerifyTool
 from benchmarks.retrieval import load_corpus
+from benchmarks.protocol import CONTRACT_VERSION, RESPONSE_CONTRACT, RecordingModels, response_shape
+from sparkle.contracts import Message
 
 TASKS = Path(__file__).with_name('tasks.json')
 
@@ -99,16 +101,41 @@ def run_agents(root, *, adapter_factory=None, registry_factory=None, observer=No
             for tool in (CalculatorTool(),MemoryWriteTool(system.memory),KnowledgeSearchTool(system.knowledge),FileReadTool(workspace),WorkspaceVerifyTool(system.development)):
                 tools.register(tool)
             recorder=RecordingTools(tools);system.orchestrator.tools=recorder
+            models = RecordingModels(system.orchestrator.models)
+            system.orchestrator.models = models
+            diagnostics = {'contract_version': CONTRACT_VERSION, 'json_parsing_attempted': False,
+                           'json_parsing_failed': False, 'runtime_exception_type': None,
+                           'runtime_code': None}
             execution_success=False;protocol_success=False;actual={};failure=None
             try:
-                result=system.orchestrator.run(task['input'],agent_name=task['agent'])
+                result=system.orchestrator.run(task['input'],agent_name=task['agent'],
+                                               history=[Message('user', RESPONSE_CONTRACT)])
                 execution_success=True
+                diagnostics['json_parsing_attempted'] = True
+                diagnostics['final_response'] = response_shape(result.text, result.finish_reason)
                 parsed=json.loads(result.text)
-                protocol_success=isinstance(parsed,dict)
+                protocol_success=(isinstance(parsed,dict)
+                                  and result.finish_reason not in {'length', 'max_tokens', 'tool_calls', 'tool_use'})
                 actual=parsed if protocol_success else {}
+            except json.JSONDecodeError:
+                if diagnostics['json_parsing_attempted']:
+                    diagnostics['json_parsing_failed'] = True
+                    failure = 'response_protocol_failure'
+                else:
+                    diagnostics['runtime_exception_type'] = 'JSONDecodeError'
+                    failure = 'runtime_json_decode_failure'
             except ModelError as exc:
                 failure="provider_" + exc.category
+            except RuntimeError as exc:
+                diagnostics['runtime_exception_type'] = 'RuntimeError'
+                code = getattr(exc, 'orchestration_code', None)
+                if code in {'tool_round_limit', 'evaluation_tool_forbidden', 'missing_response'}:
+                    diagnostics['runtime_code'] = code
+                    failure = 'orchestrator_' + code
+                else:
+                    failure = 'RuntimeError'
             except Exception as exc:
+                diagnostics['runtime_exception_type'] = type(exc).__name__
                 failure=type(exc).__name__  # no potentially sensitive provider error text
             memory=system.memory.recent(limit=20)
             retrieved=[identities[r['chunk_id']] for e in recorder.events if e['name']=='knowledge_search'
@@ -143,7 +170,8 @@ def run_agents(root, *, adapter_factory=None, registry_factory=None, observer=No
                          'failure_reason':failure or (None if passed else validation['validation_status']),
                          'trace_completed':system.traces.recent()[0]['status']=='success'})
             if observer is not None:
-                observer(rows[-1], registry.runtime.recent(limit=100))
+                diagnostics['model_responses'] = models.responses
+                observer({**rows[-1], 'diagnostics': diagnostics}, registry.runtime.recent(limit=100))
             emit('task_end', task_number=task_number, outcome_correct=passed)
     finally:
         if previous is None: os.environ.pop('SPARKLE_DATA_DIR',None)

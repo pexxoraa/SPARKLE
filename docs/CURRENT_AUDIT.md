@@ -69,7 +69,9 @@ Lexical Recall@1 = 0.625; Recall@3/5 = 0.75; MRR = 0.71875.
 The semantic and hybrid paths use token-hashing test doubles, not trained embeddings.
 All 12 scripted workflow outcomes validate; this is not live agent-quality evidence.
 No NVIDIA credential is available in this executor. Host smoke connectivity is
-user-reported verified; the latest host benchmark never reached provider execution.
+user-reported verified. A later host benchmark executed all 12 tasks: 1 validated,
+1 rejected, 9 JSONDecodeError and 1 RuntimeError, in 200.914 seconds. Its 8.33%
+validated outcome is not autonomous competence; per-task causes require host evidence.
 No real semantic, multimodal, browser, desktop, voice or connector acceptance was
 performed here. There is no defensible aggregate percentage of engineering completion:
 these overlapping categories have neither equal size nor agreed acceptance weights.
@@ -102,3 +104,12 @@ this inventory and newly recorded test evidence for this milestone.
 
 374 passed, one optional live skip (375 total); focused suite 44/44.
 Wheel/offline install and tracked-tree audits passed. No live provider run.
+
+## Response-protocol investigation
+
+The final JSON-object requirement was implicit for ten of twelve task prompts.
+The common response contract is now explicit/versioned; strict parsing and
+independent validators remain in force. Structural metadata and criterion results
+are exported without response text. The unchanged scripted baseline still validates
+12/12. Historical response shapes and the rejected task cannot be recovered from
+aggregate counts. No capability classification, Level 3, or deployment gate changes.

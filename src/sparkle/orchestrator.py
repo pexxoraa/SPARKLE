@@ -13,6 +13,13 @@ from sparkle.tooling import ToolError, ToolRegistry, safe_tool_result
 from sparkle.trace import TraceStore
 
 
+def _runtime_failure(message, code):
+    """Preserve the public RuntimeError type and attach a content-free code."""
+    error = RuntimeError(message)
+    error.orchestration_code = code
+    return error
+
+
 class Orchestrator:
     def __init__(
         self,
@@ -155,11 +162,11 @@ class Orchestrator:
                 if not response.tool_calls:
                     break
                 if execution_profile == "evaluation":
-                    raise RuntimeError(
-                        "Model requested a tool in the isolated evaluation profile"
+                    raise _runtime_failure(
+                        "Model requested a tool in the isolated evaluation profile", "evaluation_tool_forbidden"
                     )
                 if round_number >= self.max_tool_rounds:
-                    raise RuntimeError("Model exceeded the configured tool-call round limit")
+                    raise _runtime_failure("Model exceeded the configured tool-call round limit", "tool_round_limit")
                 messages.append(Message(
                     role="assistant", content=response.text, tool_calls=response.tool_calls,
                     provider_state=response.raw_assistant_content,
@@ -172,7 +179,7 @@ class Orchestrator:
                     executed.append(call.name)
                     messages.append(Message(role="tool", content=safe_tool_result(result), tool_call_id=call.id, name=call.name))
             if response is None:
-                raise RuntimeError("Model execution produced no response")
+                raise _runtime_failure("Model execution produced no response", "missing_response")
             result = AgentResult(
                 agent=spec.name, text=response.text, model=response.model, provider=response.provider,
                 trace_id=trace_id, finish_reason=response.finish_reason, usage=response.usage,

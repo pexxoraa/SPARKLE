@@ -3,12 +3,14 @@
   "implementation_sha256": {
     "src/sparkle/storage.py": "154e434fe189fe82d93ffb00931f7bdaa4c7d3b1e0532331de51d06b36eae4ce",
     "src/sparkle/context.py": "5658a40623361173d755a3efe510e109e593de266fde4f064393fb2289168adf",
-    "src/sparkle/orchestrator.py": "e6976b6cca7603cd93797c74ac4b517b3fc66c1db4606c854202dd0cc87cf608",
+    "src/sparkle/orchestrator.py": "edd628aad0c1f6e6ae6fa91b2031d9b6b2f929ebf40b7782c64ed9218f0c2ae9",
     "src/sparkle/retrieval.py": "b4e18e89dc3454f6db3ea614fc8e32b9bb9eff197643573deded261bd81b8d87",
     "src/sparkle/result_validation.py": "d3a78c21a36e231971f24a14d5fddff041b1552e0400b8d719342038ab0552ab",
     "benchmarks/retrieval.py": "a7ba97ced5c28ce3404878826c7c760e63372e2befae792aa10ae729c089c073",
-    "benchmarks/agents.py": "c3e22a27212fb5fee3713579fa12bb579c49451cd7d00863c43522682667f659",
-    "benchmarks/run.py": "b3883aeb6d03d8b0eab734502481946a7221a5e119a60566d60a4a7374b13194"
+    "benchmarks/agents.py": "b42da065d2cefb9d323b47f7bede9868ba2753b02a99f472d6ed36aaa56b8636",
+    "benchmarks/run.py": "8368ff2998640881fe20c272a25225bba2f081ba6b8c806e41c3a0411a11d6ff",
+    "benchmarks/protocol.py": "40da6699357c090f9ec48466a3d4d8218b6237fdc0451e4e31768066dd31a825",
+    "benchmarks/live.py": "0e9850d11599de96a20ba45050d55121a8a18f5533e11e90c7d59afc5b4f818a"
   },
   "retrieval": {
     "dataset_version": "sparkle-retrieval-1",
