@@ -145,3 +145,13 @@ from the variables above or equivalent CLI flags. The lease should exceed the
 longest expected bounded model/retry cycle. Its lock and status remain beneath
 `SPARKLE_DATA_DIR/data_environment`; no secret value is written there. See
 `AUTOMATION.md` and `automation_environment/README.md`.
+
+## Orchestration resource bounds
+
+`orchestrator.max_tool_rounds` is an integer 0–16 (default 4).
+`orchestrator.max_tool_calls` is an integer 1–128 (default 16), shared across
+specialists and synthesis in one workflow. `orchestrator.max_specialists` is an
+integer 1–16 (default 4). Booleans, fractional values and out-of-range values fail
+configuration validation. Existing configurations omitting the new fields receive
+the defaults; bundled and checkout defaults match. These settings cannot authorize
+a tool otherwise denied by its agent/tool policy.

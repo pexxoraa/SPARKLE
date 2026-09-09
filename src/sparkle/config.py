@@ -125,6 +125,18 @@ class AppConfig:
     external_worker_job_timeout_seconds: int = 10
     external_worker_max_payload_bytes: int = 8_000_000
 
+    max_tool_calls: int = 16
+    max_specialists: int = 4
+
+    def __post_init__(self):
+        for name, minimum, maximum in (
+            ('max_tool_rounds', 0, 16), ('max_tool_calls', 1, 128),
+            ('max_specialists', 1, 16),
+        ):
+            value = getattr(self, name)
+            if type(value) is not int or not minimum <= value <= maximum:
+                raise ValueError(f'{name} must be an integer from {minimum} to {maximum}')
+
     @classmethod
     def load(cls, path: Path | None = None) -> "AppConfig":
         source = load_json(path or application_config_path())
@@ -156,7 +168,9 @@ class AppConfig:
         return cls(
             host=os.environ.get("SPARKLE_HOST", str(source["server"]["host"])),
             port=int(os.environ.get("SPARKLE_PORT", source["server"]["port"])),
-            max_tool_rounds=int(source["orchestrator"]["max_tool_rounds"]),
+            max_tool_rounds=source["orchestrator"]["max_tool_rounds"],
+            max_tool_calls=source["orchestrator"].get("max_tool_calls", 16),
+            max_specialists=source["orchestrator"].get("max_specialists", 4),
             memory_results=int(source["context"]["memory_results"]),
             knowledge_results=int(source["context"]["knowledge_results"]),
             allow_shell=bool(source["tools"]["allow_shell"]),

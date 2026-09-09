@@ -1,6 +1,6 @@
 {
   "server": {"host": "127.0.0.1", "port": 8765},
-  "orchestrator": {"max_tool_rounds": 4},
+  "orchestrator": {"max_tool_rounds": 4, "max_tool_calls": 16, "max_specialists": 4},
   "context": {"memory_results": 5, "knowledge_results": 5},
   "tools": {"allow_shell": false, "allow_web": false},
   "security": {

@@ -219,3 +219,26 @@ See [Benchmarks](BENCHMARKS.md) for the versioned corpus, lexical baseline,
 opt-in embedding/hybrid test paths, bounded untrusted context, four-agent
 outcome harness and independent validation. Real semantic and live-model
 quality remain unverified; production retrieval remains lexical.
+
+## Bounded specialist/tool workflows
+
+The orchestrator enforces a shared tool-attempt budget for one request, including
+all specialist runs and the final synthesis. Defaults: 16 attempted tool calls,
+4 tool rounds per agent, 4 specialists. An entire batch must fit the remaining
+budget before any tool in that batch runs. Failed attempts consume budget. A later
+rejected batch does not roll back previously completed tools; this is a resource
+boundary, not an atomic multi-tool transaction. Each new request gets fresh state.
+
+Explicit specialist lists must be nonempty, unique, and within the configured
+bound. Validation occurs before any model call. Automatic specialist selection
+uses the same count limit. With R tool rounds and S specialists, a multi-agent
+workflow makes at most (S+1)*(R+1) model-router completion calls, including synthesis.
+Provider retries/fallback can produce additional HTTP attempts under their existing
+finite policies. This is not a new aggregate wall-clock deadline and does not
+prove action idempotency or semantic correctness. Those remain separate backlog
+items. The per-request budget object is not shared between independent requests.
+
+Trace metadata reports the shared limit and number of reserved tool attempts.
+The existing RuntimeError type and failure traces are retained; budget rejection
+has content-free code tool_call_limit. No permission, approval, worker, Level 3 or
+deployment gate is relaxed. See [machine-readable backlog](capability_backlog.json).

@@ -20,6 +20,16 @@ def _runtime_failure(message, code):
     return error
 
 
+class _ToolBudget:
+    def __init__(self, limit):
+        self.limit, self.used = limit, 0
+
+    def reserve(self, count):
+        if self.used + count > self.limit:
+            raise _runtime_failure("Workflow exceeded the configured tool-call budget", "tool_call_limit")
+        self.used += count
+
+
 class Orchestrator:
     def __init__(
         self,
@@ -31,6 +41,8 @@ class Orchestrator:
         tools: ToolRegistry,
         traces: TraceStore,
         max_tool_rounds: int = 4,
+        max_tool_calls: int = 16,
+        max_specialists: int = 4,
     ):
         self.models = models
         self.agents = agents
@@ -38,7 +50,16 @@ class Orchestrator:
         self.context = context
         self.tools = tools
         self.traces = traces
-        self.max_tool_rounds = max(0, max_tool_rounds)
+        for name, value, minimum, maximum in (
+            ('max_tool_rounds', max_tool_rounds, 0, 16),
+            ('max_tool_calls', max_tool_calls, 1, 128),
+            ('max_specialists', max_specialists, 1, 16),
+        ):
+            if type(value) is not int or not minimum <= value <= maximum:
+                raise ValueError(f'{name} must be an integer from {minimum} to {maximum}')
+        self.max_tool_rounds = max_tool_rounds
+        self.max_tool_calls = max_tool_calls
+        self.max_specialists = max_specialists
 
     def run(
         self,
@@ -51,7 +72,9 @@ class Orchestrator:
         additional_context: str | None = None,
         input_source: str = "text",
         execution_profile: Literal["standard", "evaluation"] = "standard",
+        _tool_budget: _ToolBudget | None = None,
     ) -> AgentResult:
+        budget = _tool_budget if _tool_budget is not None else _ToolBudget(self.max_tool_calls)
         if not isinstance(text, str):
             raise ValueError("Request text must be a string")
         if execution_profile not in {"standard", "evaluation"}:
@@ -167,6 +190,8 @@ class Orchestrator:
                     )
                 if round_number >= self.max_tool_rounds:
                     raise _runtime_failure("Model exceeded the configured tool-call round limit", "tool_round_limit")
+                # Reserve the entire batch before any side effect; failed tools consume budget.
+                budget.reserve(len(response.tool_calls))
                 messages.append(Message(
                     role="assistant", content=response.text, tool_calls=response.tool_calls,
                     provider_state=response.raw_assistant_content,
@@ -203,6 +228,8 @@ class Orchestrator:
             final_execution_metadata = {
                 **execution_metadata,
                 "model_routing": routing_decisions,
+                "tool_calls_reserved": budget.used,
+                "tool_call_limit": budget.limit,
             }
             self.traces.finish(
                 trace_id, started, status="success", agent=spec.name, model=response.model,
@@ -222,6 +249,8 @@ class Orchestrator:
             failure_execution_metadata = {
                 **execution_metadata,
                 "model_routing": routing_decisions,
+                "tool_calls_reserved": budget.used,
+                "tool_call_limit": budget.limit,
             }
             self.traces.finish(
                 trace_id, started, status="failure", agent=spec.name,
@@ -256,21 +285,30 @@ class Orchestrator:
         input_source: str = "text",
     ) -> AgentResult:
         routing_text = content.routing_text() if content is not None else text
-        specs = [self.agents.get(name) for name in agent_names] if agent_names else self.agent_router.select_many(routing_text)
+        if agent_names is not None:
+            if (not isinstance(agent_names, list) or not 1 <= len(agent_names) <= self.max_specialists
+                    or any(not isinstance(name, str) for name in agent_names)
+                    or len(set(agent_names)) != len(agent_names)):
+                raise ValueError("Specialists must be a nonempty, bounded list of unique agent names")
+            specs = [self.agents.get(name) for name in agent_names]
+        else:
+            specs = self.agent_router.select_many(routing_text, limit=self.max_specialists)
+        budget = _ToolBudget(self.max_tool_calls)
         if len(specs) == 1:
             return self.run(
                 text, agent_name=specs[0].name, user_id=user_id,
-                input_source=input_source, content=content,
+                input_source=input_source, content=content, _tool_budget=budget,
             )
         peer_outputs: list[str] = []
         for spec in specs:
             output = self.run(
                 text, agent_name=spec.name, user_id=user_id,
-                input_source=input_source, content=content,
+                input_source=input_source, content=content, _tool_budget=budget,
             )
             peer_outputs.append(f"[{spec.name}]\n{output.text}")
         return self.run(
             "Synthesize the specialist analyses into one verified, actionable answer for the original request:\n\n" + routing_text,
             agent_name="personal", user_id=user_id,
             additional_context="\n\n".join(peer_outputs), input_source=input_source,
+            _tool_budget=budget,
         )

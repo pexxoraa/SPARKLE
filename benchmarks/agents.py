@@ -129,7 +129,7 @@ def run_agents(root, *, adapter_factory=None, registry_factory=None, observer=No
             except RuntimeError as exc:
                 diagnostics['runtime_exception_type'] = 'RuntimeError'
                 code = getattr(exc, 'orchestration_code', None)
-                if code in {'tool_round_limit', 'evaluation_tool_forbidden', 'missing_response'}:
+                if code in {'tool_round_limit', 'tool_call_limit', 'evaluation_tool_forbidden', 'missing_response'}:
                     diagnostics['runtime_code'] = code
                     failure = 'orchestrator_' + code
                 else:

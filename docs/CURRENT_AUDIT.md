@@ -113,3 +113,10 @@ independent validators remain in force. Structural metadata and criterion result
 are exported without response text. The unchanged scripted baseline still validates
 12/12. Historical response shapes and the rejected task cannot be recovered from
 aggregate counts. No capability classification, Level 3, or deployment gate changes.
+
+## Bounded workflow update
+
+Shared tool-attempt and specialist-count limits are locally verified; orchestrator
+remains PARTIALLY IMPLEMENTED. Aggregate wall-time policy, idempotent actions and
+validated staged memory remain open. See [continuous backlog](capability_backlog.json).
+Final regression: 394 passed, one optional live skip. No live or host upgrade.

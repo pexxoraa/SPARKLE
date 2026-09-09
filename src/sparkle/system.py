@@ -182,6 +182,8 @@ class SparkleSystem:
             models=self.model_router, agents=self.agents, agent_router=self.agent_router,
             context=self.context, tools=self.tools, traces=self.traces,
             max_tool_rounds=self.config.max_tool_rounds,
+            max_tool_calls=self.config.max_tool_calls,
+            max_specialists=self.config.max_specialists,
         )
         self.ai_system_drafts = AISystemDraftStore()
         self.ai_system_compiler = AISystemRequirementsCompiler(

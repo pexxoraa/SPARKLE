@@ -1,0 +1,97 @@
+"""Real orchestrator/state tests with explicitly scripted model batches."""
+from dataclasses import replace
+import json
+from unittest.mock import patch
+
+from sparkle.config import AppConfig
+from sparkle.contracts import ModelResponse, ToolCall
+from sparkle.providers.mock import DeterministicAdapter
+from tests.test_orchestrator_api import SystemCase, test_config
+
+
+class Batches(DeterministicAdapter):
+    def __init__(self, batches): self.batches, self.calls = iter(batches), 0
+    def complete(self, request):
+        self.calls += 1
+        calls = next(self.batches)
+        return ModelResponse('done' if not calls else '', self.model_id, self.provider,
+                             'stop' if not calls else 'tool_use', tool_calls=calls)
+
+
+def calculation(count):
+    return [ToolCall(str(i), 'calculator', {'expression': '1+1'}) for i in range(count)]
+
+
+class OrchestrationBoundTests(SystemCase):
+    def inject(self, batches):
+        adapter = Batches(batches)
+        self.registry.inject(self.registry.active_id, adapter)
+        return adapter
+
+    def test_oversized_batch_has_no_partial_memory_writes(self):
+        self.inject([[ToolCall(str(i), 'memory_write', {'category': 'goals', 'key': str(i), 'value': 'fixture'}) for i in range(17)]])
+        with self.assertRaises(RuntimeError) as caught:
+            self.system.orchestrator.run('Store explicit goals', agent_name='personal')
+        self.assertEqual(caught.exception.orchestration_code, 'tool_call_limit')
+        self.assertEqual(self.system.memory.recent(), [])
+        trace = self.system.traces.recent()[0]
+        self.assertEqual(trace['status'], 'failure')
+        self.assertEqual(trace['execution_metadata']['tool_calls_reserved'], 0)
+
+    def test_exact_budget_succeeds_and_is_fresh_on_next_request(self):
+        self.inject([calculation(16), [], calculation(16), []])
+        for _ in range(2):
+            result = self.system.orchestrator.run('Calculate', agent_name='personal')
+            self.assertEqual(len(result.tool_calls_executed), 16)
+            self.assertEqual(self.system.traces.recent()[0]['execution_metadata']['tool_calls_reserved'], 16)
+
+    def test_cumulative_round_budget_does_not_execute_oversized_next_batch(self):
+        self.inject([calculation(10), calculation(7)])
+        with patch.object(self.system.tools, 'execute', wraps=self.system.tools.execute) as execute:
+            with self.assertRaises(RuntimeError) as caught:
+                self.system.orchestrator.run('Calculate', agent_name='personal')
+        self.assertEqual(caught.exception.orchestration_code, 'tool_call_limit')
+        self.assertEqual(execute.call_count, 10)
+
+    def test_failed_tool_attempts_also_consume_budget(self):
+        self.system.orchestrator.max_tool_calls = 1
+        self.inject([[ToolCall('bad', 'calculator', {'expression': '__import__("os")'})], calculation(1)])
+        with patch.object(self.system.tools, 'execute', wraps=self.system.tools.execute) as execute:
+            with self.assertRaises(RuntimeError) as caught:
+                self.system.orchestrator.run('Verify refusal', agent_name='personal')
+        self.assertEqual(execute.call_count, 1)
+        self.assertEqual(caught.exception.orchestration_code, 'tool_call_limit')
+
+    def test_budget_shared_across_specialists_and_synthesis(self):
+        for batches, expected_calls in (([calculation(10), [], calculation(7)], 3),
+                                        ([calculation(8), [], calculation(8), [], calculation(1)], 5)):
+            with self.subTest(expected_calls=expected_calls):
+                adapter = self.inject(batches)
+                with patch.object(self.system.tools, 'execute', wraps=self.system.tools.execute) as execute:
+                    with self.assertRaises(RuntimeError) as caught:
+                        self.system.orchestrator.run_multi('Calculate', agent_names=['personal', 'learning'])
+                self.assertEqual(caught.exception.orchestration_code, 'tool_call_limit')
+                self.assertEqual(adapter.calls, expected_calls)
+                self.assertEqual(execute.call_count, 10 if expected_calls == 3 else 16)
+
+    def test_invalid_specialist_lists_fail_before_any_model_call(self):
+        for names in ([], ['personal']*5, ['personal', 'personal'], 'personal', [None]):
+            adapter = self.inject([])
+            with self.assertRaises(ValueError):
+                self.system.orchestrator.run_multi('Calculate', agent_names=names)
+            self.assertEqual(adapter.calls, 0)
+
+    def test_configuration_bounds_and_legacy_defaults(self):
+        for name, invalid in (('max_tool_calls', (0, 129, True, 1.5)),
+                              ('max_tool_rounds', (-1, 17, True)),
+                              ('max_specialists', (0, 17, '4'))):
+            for value in invalid:
+                with self.assertRaises(ValueError): replace(test_config(), **{name: value})
+        self.assertEqual(test_config().max_tool_calls, 16)
+        from pathlib import Path
+        path = Path(self.temp.name) / 'config.json'
+        raw = json.loads(Path('application/config.json').read_text())
+        raw['orchestrator'] = {'max_tool_rounds': 2}
+        path.write_text(json.dumps(raw))
+        loaded = AppConfig.load(path)
+        self.assertEqual((loaded.max_tool_rounds, loaded.max_tool_calls, loaded.max_specialists), (2, 16, 4))

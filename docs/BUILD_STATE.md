@@ -332,3 +332,29 @@ protocol/outcome cases, including an early runtime JSON error negative control.
 Wheel build, fresh offline installation, compile/JavaScript checks and tracked-tree
 secret-pattern/path/symlink/size audits passed. The deterministic benchmark outcome
 and retrieval sections remain exactly equal; implementation fingerprints changed.
+
+## Bounded orchestration and continuous backlog — 2026-09-09
+
+Started from published `b74be146296175d74738479af89c296905f44be5` after fetch and
+fast-forward verification. Found that round limits did not bound tools per response
+and explicit specialist lists had no count/uniqueness bound. Requests now share a
+validated tool-attempt budget across specialists and synthesis; oversized batches
+are rejected before any action in that batch. Failed attempts count. Previously
+completed actions are not rolled back. Explicit duplicate/oversized specialist
+lists fail before model invocation. Existing tool permission checks remain intact.
+
+Fresh baseline: 387 passed + 1 optional live skip (388 total), 58.040 seconds.
+Final full suite: 394 passed + 1 optional live skip (395 total), 63.926 seconds.
+Focused orchestrator/API/configuration suite: 46/46, 14.397 seconds. Seven new
+regressions test batch atomic refusal, cumulative and shared limits, failure
+accounting, fresh request state, specialist validation and configuration bounds.
+Wheel build/fresh offline installation, compile/JavaScript and current-tree audits
+passed. Scripted agent outcomes and retrieval metrics remain exactly unchanged.
+
+[Machine-readable capability backlog](capability_backlog.json) records all 46
+categories, priorities, blockers, next actions, tests and acceptance requirements.
+Next implementable work is staged independently validated memory updates. Global
+wall-time budgeting and action idempotency remain distinct unfinished concerns;
+tool-count limits alone do not solve them. No new version or competence claim.
+Live benchmark diagnosis still needs the missing host evidence; no live rerun.
+Level 3 remains BLOCKED/PARKED. Deployment remains FROZEN.
