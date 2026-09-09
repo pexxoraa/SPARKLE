@@ -68,11 +68,13 @@ class RecordingTools:
             raise
 
 
-def run_agents(root, *, adapter_factory=None):
+def run_agents(root, *, adapter_factory=None, registry_factory=None, observer=None):
     """Inject a real adapter explicitly for separate live evaluation; default is scripted.
 
     Fixtures and task state are synthetic. Never run over a user's application data.
     """
+    if adapter_factory is not None and registry_factory is not None:
+        raise ValueError('Choose adapter injection or configured registry, not both')
     fixture=json.loads(TASKS.read_text())
     rows=[]
     previous=os.environ.get('SPARKLE_DATA_DIR')
@@ -81,8 +83,11 @@ def run_agents(root, *, adapter_factory=None):
             emit('task_start', task_number=task_number)
             state=root/task['task_id']; state.mkdir(parents=True)
             os.environ['SPARKLE_DATA_DIR']=str(state)
-            adapter=adapter_factory() if adapter_factory else ScriptedOutcomeAdapter(task['script'])
-            registry=ModelRegistry(); registry.inject(registry.active_id,adapter)
+            if registry_factory is not None:
+                registry=registry_factory()
+            else:
+                adapter=adapter_factory() if adapter_factory else ScriptedOutcomeAdapter(task['script'])
+                registry=ModelRegistry(); registry.inject(registry.active_id,adapter)
             system=SparkleSystem(config=AppConfig('127.0.0.1',0,4,5,5,False,False),model_registry=registry)
             _,identities=load_corpus(system.knowledge)
             workspace=state/'fixture-workspace'; workspace.mkdir()
@@ -137,6 +142,8 @@ def run_agents(root, *, adapter_factory=None):
                          'memory_events':{'count':len(memory),'value':observations['memory_value']},
                          'failure_reason':failure or (None if passed else validation['validation_status']),
                          'trace_completed':system.traces.recent()[0]['status']=='success'})
+            if observer is not None:
+                observer(rows[-1], registry.runtime.recent(limit=100))
             emit('task_end', task_number=task_number, outcome_correct=passed)
     finally:
         if previous is None: os.environ.pop('SPARKLE_DATA_DIR',None)
@@ -149,7 +156,7 @@ def run_agents(root, *, adapter_factory=None):
         'subjective_quality':validate_result([{'kind':'semantic_quality','key':'answer','expected':True}],{'answer':'Excellent work'}),
     }
     return {'dataset_version':fixture['version'],'dataset_sha256':hashlib.sha256(TASKS.read_bytes()).hexdigest(),
-            'evidence_mode':'explicit_adapter' if adapter_factory else 'SCRIPTED TEST HARNESS; NOT AGENT INTELLIGENCE',
+            'evidence_mode':'configured_registry' if registry_factory else 'explicit_adapter' if adapter_factory else 'SCRIPTED TEST HARNESS; NOT AGENT INTELLIGENCE',
             'live_provider_verified':False,'task_count':len(rows),'pass_rate':sum(r['outcome_correct'] for r in rows)/len(rows),
             'validation_pass_rate':counts['validated']/len(rows),'validation_counts':{k:counts[k] for k in ('validated','rejected','inconclusive')},
             'failure_categories':dict(Counter(r['failure_reason'] for r in rows if r['failure_reason'])),

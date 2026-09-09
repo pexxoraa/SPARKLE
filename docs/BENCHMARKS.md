@@ -144,3 +144,59 @@ set, not general intelligence or safety. No live request was performed for this
 checkpoint; NVIDIA remains IMPLEMENTED BUT INSUFFICIENTLY VERIFIED.
 
 Level 3 remains BLOCKED and parked. Deployment remains FROZEN.
+
+## Durable live-run diagnostics (2026-09-09)
+
+The previous optional test injected a cached adapter into every temporary registry
+and deleted runtime evidence at teardown. `provider_provider_failure` could mean
+missing configuration or an unsatisfied routing policy, not necessarily an HTTP
+provider failure. Those pre-request paths now use `configuration_failure` and
+`routing_failure`. This identifies reproducible classification defects; it does
+not establish the cause of an earlier host run without its request evidence.
+
+Use a new output filename for every explicitly authorized live run:
+
+```bash
+SPARKLE_BENCHMARK_LIVE=1 PYTHONPATH=src python -m benchmarks.live --output /path/to/new-live-evidence.jsonl
+```
+
+The existing optional unittest uses this same runner. Set
+`SPARKLE_BENCHMARK_OUTPUT` to select its output; otherwise it uses
+`live-agent-evidence.jsonl`. Existing files and symlinks are rejected, never
+replaced. Output is created mode 0600 and each event is flushed/fsynced. Do not
+commit live output without reviewing it. Interrupted runs retain completed task
+records and an incomplete marker where Python can handle the interruption; power
+loss or SIGKILL can leave a valid prefix with no terminal marker. A prefix is never
+complete benchmark evidence.
+
+The runner fixes the model configuration path before creating temporary task
+state, constructs a normal registry per task, and preserves routing/health/fallback
+policy. It does not inject a mock or bypass health in live mode. Ordinary CI runs
+explicit HTTP doubles and the unchanged deterministic harness, never this real
+provider command. No model, task, scoring, validator, or retry setting changed.
+
+Each task records execution/protocol/outcome status separately, independent
+validation status/score, safe tool names and failure flags, retrieval identifiers,
+memory count, and content-free runtime rows: model/provider, route, timestamps,
+latency, attempts, reported usage, request ID and failure category. No model text,
+tool arguments/results, memory values, prompt, HTTP headers or exception text is
+exported. Configured secret values are additionally redacted from string fields.
+Null token counts mean the provider did not report usage; they are not estimated.
+Detailed tool-argument correctness remains part of the unchanged validator; the
+public evidence intentionally omits argument values.
+
+A runtime row proves adapter invocation, not delivery to NVIDIA. Provider response
+metadata supports a completed response; a timeout alone cannot show whether a
+remote server received the request. Existing opt-in transport timing diagnostics
+remain available. Authentication, HTTP provider failure, timeout, malformed provider
+response, pre-provider rejection and outcome validation are separate categories.
+
+Exit 0 means all unchanged outcomes passed; exit 1 means completed evaluation with
+failed outcomes; exit 2 means blocked/incomplete. Setup/resource failure is not
+model-quality evidence. Do not treat a successful trace or a completed HTTP request
+as outcome correctness. Small fixture success is not autonomous competence.
+
+Current executor: credential unavailable; no live request attempted. The user's
+previous authenticated smoke test remains valid host connectivity evidence. The
+latest host 12-task run remains inconclusive because it failed before provider
+execution. Level 3 remains BLOCKED/PARKED; deployment remains FROZEN.

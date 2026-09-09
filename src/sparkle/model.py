@@ -45,6 +45,15 @@ class UnsupportedModalityError(ModelError):
         )
 
 
+class ModelSelectionError(UnsupportedModalityError):
+    """No record satisfies routing policy; no provider request has occurred."""
+
+    def __init__(self, modalities, *, model_id=None, provider=None):
+        super().__init__(modalities, model_id=model_id, provider=provider)
+        self.category = "routing_failure"
+        self.args = ("No available model satisfies the request policy",)
+
+
 class ModelAdapter(ABC):
     provider: str
     model_id: str

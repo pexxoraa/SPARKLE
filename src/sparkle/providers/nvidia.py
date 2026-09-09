@@ -212,7 +212,8 @@ class NVIDIAChatCompletionsAdapter(ModelAdapter):
         try:
             headers = self._headers()
         except SecretNotFoundError as exc:
-            raise ModelError(str(exc), retryable=False) from exc
+            raise ModelError("NVIDIA credential is not configured", retryable=False,
+                             category="configuration_failure") from None
         body = json.dumps(self._payload(request), separators=(",", ":")).encode("utf-8")
         last_error: ModelError | None = None
         for attempt in range(self._attempts):
@@ -261,7 +262,8 @@ class NVIDIAChatCompletionsAdapter(ModelAdapter):
         try:
             headers = self._headers()
         except SecretNotFoundError as exc:
-            raise ModelError(str(exc), retryable=False) from exc
+            raise ModelError("NVIDIA credential is not configured", retryable=False,
+                             category="configuration_failure") from None
         headers["Accept"] = "text/event-stream"
         body = json.dumps(self._payload(request), separators=(",", ":")).encode("utf-8")
         http_request = urllib.request.Request(

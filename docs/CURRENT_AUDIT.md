@@ -1,35 +1,31 @@
-> Historical checkpoint. See [current capability inventory](CURRENT_AUDIT.md) for the latest reviewed state.
+# Current capability inventory — 2026-09-09
 
-# Foundation capability audit — 2026-09-07
+Inspected starting main: `73d2362ec9f3361bdec15f9ffbbcf402e77f4d27`;
+remote matched after fetch/fast-forward pull and worktree was clean. Repository-wide
+inventory covers 54 Python source modules, 47 Python test files and 37 documentation
+files before this milestone. Focused behavioral review followed the benchmark,
+system initialization, routing, NVIDIA adapter, HTTP transport, storage and evidence
+paths. This is an evidence inventory, not a claim of exhaustive line-by-line security
+certification. Full baseline: 364 passed, one optional live test skipped (365 total).
+Fresh wheel build and offline installation passed. Deterministic reports reproduced.
 
-Source inspected: `main` at `21c6f5797460650ce352c5e589bceab84a3443e4`,
-tree `f09e534de2bdd5fa123cbc010b7e10322caa1ca1`; remote main matched.
-The initial worktree was clean. Baseline: **297/297** tests passed freshly.
-This report includes the bounded retrieval improvement in this milestone.
-Version stays **0.30.0-alpha.1**. No new release boundary is claimed.
+Evidence classes below apply to bounded implemented contracts. No category is
+upgraded from a class name, mock response, or user-reported connectivity alone.
+A current-source/test reference is local evidence; live integration is stated
+separately. Existing agent and builder quality limitations remain open.
 
-## Method and scope
-
-Each of the requested 46 categories has exactly one classification. COMPLETE
-AND VERIFIED means the documented bounded local behavior is implemented and
-meaningfully exercised; it does not certify every future use or live provider.
-Evidence paths below are relative to `src/sparkle/` or `tests/` as appropriate.
-Prompt/routing tests do not certify an agent's domain competence. Local protocol
-tests do not certify external integration. Priority P1 precedes P2 and P3;
-parked/frozen gates are excluded from this milestone.
-
-| Capability | Current State | Evidence | Missing Work | Priority |
+| Capability | Status | Current implementation / test evidence | Missing components / dependencies | Priority |
 |---|---|---|---|---|
 | SPARKLE CORE | PARTIALLY IMPLEMENTED | system.py; test_system_e2e.py: real local HTTP, deterministic model | Verified autonomous task completion across live components | P1 |
-| Orchestrator | PARTIALLY IMPLEMENTED | orchestrator.py; test_orchestrator_api.py: bounded tool loop, sequential specialists | Independent result quality checks; robust cross-agent task outcomes | P1 |
-| Context | PARTIALLY IMPLEMENTED | context.py; test_system_e2e.py: memory/knowledge reach model prompt | Relevance budgets, retrieved-content trust separation, semantic retrieval | P1 |
-| Memory | IMPLEMENTED BUT INSUFFICIENTLY VERIFIED | storage.py; test_storage.py: upsert, search, archive; lifecycle methods exist | Broader restore/delete/backup failure and end-to-end memory quality evidence | P1 |
-| Knowledge | PARTIALLY IMPLEMENTED | storage.py, knowledge.py; test_knowledge_retrieval.py: migration, Unicode/title ranking, HTTP integration | Semantic/hybrid retrieval, representative relevance benchmark, source revision UX | P1 |
+| Orchestrator | PARTIALLY IMPLEMENTED | orchestrator.py; bounded tool loop, test_benchmarks.py independent outcome checks | Independent validator is benchmark-only; no automatic factual verification of chat or specialist synthesis | P1 |
+| Context | PARTIALLY IMPLEMENTED | context.py; test_benchmarks.py, test_system_e2e.py: bounded attributed untrusted user-role data | Live model prompt-injection resistance and context relevance on real user tasks | P1 |
+| Memory | IMPLEMENTED BUT INSUFFICIENTLY VERIFIED | storage.py; test_storage.py, test_storage_resources.py: scoped lifecycle/backup/rollback and explicit tool writes | Longitudinal quality, retention/deduplication policy; validated memory integration | P1 |
+| Knowledge | PARTIALLY IMPLEMENTED | storage.py, retrieval.py; 16-query benchmark and test_knowledge_retrieval.py | Real embedding evaluation, vector persistence, source revision workflows | P1 |
 | Model Manager | COMPLETE AND VERIFIED | model.py, registry.py; test_model_registry.py: switching and capability routing | Live provider evidence belongs to provider rows | Maintain |
 | Model Registry | COMPLETE AND VERIFIED | registry.py; test_model_registry.py: validation, persistence, switching/rollback | No identified gap in bounded registry contract | Maintain |
-| NVIDIA Nemotron provider | IMPLEMENTED BUT INSUFFICIENTLY VERIFIED | providers/nvidia.py; test_nvidia_adapter.py: normalized mocked HTTP, stream/tools/errors | Live authentication, response, stream/tool quality; credentials absent | P1/external |
+| NVIDIA Nemotron provider | IMPLEMENTED BUT INSUFFICIENTLY VERIFIED | nvidia.py; adapter/runtime/deadline tests; user-reported authenticated smoke success | 12-task live outcome evidence; real stream/tool behavior and host failure provenance | P1/external |
 | MiniMax/secondary providers | IMPLEMENTED BUT INSUFFICIENTLY VERIFIED | providers/minimax.py; test_minimax_adapter.py; retained disabled configuration | Live provider regression; do not replace primary NVIDIA | P3/external |
-| Model runtime | COMPLETE AND VERIFIED | model_runtime.py; test_model_runtime.py: health, policy, fallback, retries, missing usage | Real latency/reliability evidence remains provider-specific | Maintain |
+| Model runtime | COMPLETE AND VERIFIED | model_runtime.py; policy/fallback tests, hard HTTP lifecycle tests, pre-request error classification | Host reliability evidence; routing timeout is a per-attempt policy, not a whole-benchmark deadline | Maintain |
 | Personal Agent | PARTIALLY IMPLEMENTED | agents.py; test_agent_evaluations.py: routing/prompt/tools, shared orchestrator | Longitudinal personal task quality and verified memory writes | P1 |
 | Learning Agent | PARTIALLY IMPLEMENTED | agents.py, mastery.py; test_agent_evaluations.py, test_mastery.py | Demonstrated adaptive teaching and learning outcome evaluation | P2 |
 | Skill Agent | PARTIALLY IMPLEMENTED | agents.py, mastery.py; test_mastery.py: evidence-based local levels | Quality of skill assessment and practice recommendations | P2 |
@@ -61,87 +57,48 @@ parked/frozen gates are excluded from this milestone.
 | Dashboard | IMPLEMENTED BUT INSUFFICIENTLY VERIFIED | dashboard/*; API tests and node --check | Real browser interaction/accessibility and end-user journey testing | P2 |
 | Security | PARTIALLY IMPLEMENTED | security.py, secrets.py, worker boundaries; security/negative tests | Broader threat-model review and actual Level 3 system acceptance | P1/park host |
 | Session/rate limiting | COMPLETE AND VERIFIED | security.py; test_api_security.py: CSRF, expiry, revoke, bounded rate state | No identified gap in documented single-process contract | Maintain |
-| Testing/evaluation | PARTIALLY IMPLEMENTED | tests/*; agent_evaluation.py: deterministic regressions and negative tests | Semantic benchmarks, live providers, host acceptance, broader platform matrix | P1 |
+| Testing/evaluation | PARTIALLY IMPLEMENTED | benchmarks/*; 16 retrieval queries, 12 scripted tasks, deterministic independent validators | Real provider outcomes, real embedding quality, broader representative tasks | P1 |
 | Cross-platform architecture | PARTIALLY IMPLEMENTED | stdlib core; Linux worker; .github/workflows/ci.yml: Python 3.12/3.13 Ubuntu | Windows/macOS behavior and execution adapters unverified | P3 |
-| Documentation | PARTIALLY IMPLEMENTED | docs/*; test_documentation.py: inventory, links, version contracts | Historical checkpoint claims need interpretation; operator workflows need live evidence | P2 |
+| Documentation | PARTIALLY IMPLEMENTED | docs/* inventory; test_documentation.py; this refreshed audit and benchmark procedure | Historical reports remain historical; external operator evidence still missing | P2 |
 | Deployment | BLOCKED BY EXTERNAL INFRASTRUCTURE | docs/ACCEPTANCE.md; explicit freeze and unverified artifact deployment records | Level 3 prerequisites plus separate authorized deployment milestone | Frozen |
 | Packaging | COMPLETE AND VERIFIED | pyproject.toml; wheel/offline install and CI worker-image smoke | Cross-platform installation matrix remains separate | Maintain |
 
-## Actual completion estimate
+## Measured baseline and limits
 
-**12/46 = 26.1% fully verified category coverage.** This replaces the unsupported 93% assertion. It is a conservative scope
-coverage estimate, **not** a measurement of engineering effort completed.
-Categories overlap (for example builders and their pipeline), differ greatly
-in size, and have no agreed acceptance weights; an exact remaining-work
-percentage cannot honestly be computed from class counts or passing tests.
+Lexical Recall@1 = 0.625; Recall@3/5 = 0.75; MRR = 0.71875.
+The semantic and hybrid paths use token-hashing test doubles, not trained embeddings.
+All 12 scripted workflow outcomes validate; this is not live agent-quality evidence.
+No NVIDIA credential is available in this executor. Host smoke connectivity is
+user-reported verified; the latest host benchmark never reached provider execution.
+No real semantic, multimodal, browser, desktop, voice or connector acceptance was
+performed here. There is no defensible aggregate percentage of engineering completion:
+these overlapping categories have neither equal size nor agreed acceptance weights.
 
-- COMPLETE AND VERIFIED: 12
-- IMPLEMENTED BUT INSUFFICIENTLY VERIFIED: 4
-- PARTIALLY IMPLEMENTED: 25
-- CONTRACT/INTERFACE ONLY: 3
-- MISSING: 0
-- BLOCKED BY EXTERNAL INFRASTRUCTURE: 2
+## Dependency order and the current reliability milestone
 
-## Integrated workflow: what actually works
+P0: pre-request errors must not masquerade as HTTP provider outages. Missing NVIDIA
+credentials now have configuration_failure; no eligible model has routing_failure.
+The live runner preserves incremental content-free task/runtime evidence using
+normal registry construction, including after interrupt/setup failure. It never
+changes task definitions, validators, scoring, configured model or retry policy.
+The original host provider_provider_failure cause is not proven by this code review.
 
-HTTP request → validated content → context retrieval → orchestrator → routed
-model adapter → specialized agent/tool loop → trace → response works with the
-local deterministic model. Memory tools persist explicit writes when invoked;
-memory is not automatically updated with a verified conclusion on every turn.
-Sequential specialist synthesis exists, but is not independently fact-checked.
-A successful trace records completion of the program, not truth of its answer.
+P1: run the unchanged live benchmark on the credentialed host with the corrected
+resource lifecycle and new evidence output. Use independent outcome validation;
+retain failures and inconclusive cases. Then prioritize validated memory updates and
+specialist synthesis against explicit trusted criteria; do not auto-persist model
+claims. Real embedding evaluation requires a separately selected embedding model.
 
-Broken or simulated links: the model response in CI is a double; domain agent
-quality is not established; browser/computer/voice actions have no live runtime;
-external connector delivery is absent; independent semantic result verification
-is incomplete. Content envelope validation is not multimodal understanding.
+P2: project/task dependency workflows and representative generated-code validation
+precede broader browser/connector expansion. Browser/GUI requires a runtime and
+network/action threat model; interface doubles are insufficient. P3 voice/hardware
+and OS-specific adapters remain external/runtime-dependent.
 
-## Selected milestone and dependency order
+Level 3 remains BLOCKED/PARKED. Deployment remains FROZEN. No acceptance gate or
+worker configuration is changed. The earlier foundation audit is historical; use
+this inventory and newly recorded test evidence for this milestone.
 
-First improve the shared knowledge retrieval path used by context and the
-research tool: persisted SQLite FTS5 index, transactional legacy backfill,
-Unicode/literal queries, title-aware BM25 ranking, deterministic ties, bounded
-results/chunks, and source/chunk identifiers in context. This fixes an observed
-full-corpus ASCII/raw-overlap search gap without a model or cloud dependency.
-It is **lexical**, not semantic retrieval. No latency benchmark is claimed.
+## Fresh milestone verification
 
-Next highest-value local work is a curated retrieval/agent outcome benchmark
-and explicit result-validation integration, then project/task-to-tool workflow
-evaluation. Semantic/hybrid retrieval needs an evaluated embedding adapter and
-corpus, not a renamed keyword ranker. A browser runtime requires a separate
-network/action threat model and executable runtime evidence. Live NVIDIA testing
-can run when a real credential arrives; no NVIDIA, generic LLM, or MiniMax key
-was present in this executor's environment. No live call was fabricated.
-
-## Parked Level 3 and deployment
-
-**Level 3 = BLOCKED. Deployment = FROZEN.** No Level 3 code or acceptance
-workflow changes belong to this milestone. User-supplied Ubuntu host evidence:
-
-- Bubblewrap standalone host execution: verified on that host, not rerun here.
-- Seven Bubblewrap isolation canaries: verified on that host, not rerun here.
-- Hardened systemd worker compatibility: still requires host-level acceptance.
-- Final authenticated external-worker acceptance: not completed.
-- Approved immutable artifact acceptance: not completed.
-
-Final acceptance still requires pinned worker identity, matching artifact/result
-digests, cleanup, and authenticated `isolation_verified=true`. Passing this
-milestone's unit/integration tests changes none of those requirements.
-
-
-## 2026-09-08 benchmark milestone update
-
-The [benchmark evidence](../benchmarks/evidence/REPORT.md) and
-[methodology](BENCHMARKS.md) now measure 16 retrieval queries and 12 scripted
-outcome tasks across four agents. A replaceable embedding contract and opt-in
-hybrid path are implemented and exercised with a labeled token-hashing double.
-Independent deterministic validation is separate from execution/trace success.
-Retrieved data no longer enters the system role; context is bounded and attributed.
-
-Knowledge, Context, Orchestrator, Testing/evaluation and the four agents remain
-PARTIALLY IMPLEMENTED: synthetic/scripted evidence is insufficient to certify
-semantic retrieval or autonomous domain competence. NVIDIA remains IMPLEMENTED
-BUT INSUFFICIENTLY VERIFIED. No category or completion percentage is increased.
-The earlier statement that a successful trace does not prove an answer true still
-applies; the explicit benchmark validator now checks specified outcomes separately.
-Level 3 remains parked/BLOCKED and deployment FROZEN.
+374 passed, one optional live skip (375 total); focused suite 44/44.
+Wheel/offline install and tracked-tree audits passed. No live provider run.

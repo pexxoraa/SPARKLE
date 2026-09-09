@@ -2257,3 +2257,32 @@ deployment remains FROZEN. Exact follow-up publication/CI evidence follows.
 - Credential-free benchmark/validator milestone complete; live agent competence,
   trained semantic retrieval, NVIDIA authentication and production-scale quality
   remain unverified. Level 3 BLOCKED/PARKED; deployment FROZEN. Version unchanged.
+
+## 2026-09-09 — benchmark evidence and pre-provider classification
+
+Starting published main: `73d2362ec9f3361bdec15f9ffbbcf402e77f4d27`.
+Fresh baseline: 364 passed, 1 optional live test skipped (365 total).
+Final local suite: 374 passed, 1 optional live test skipped (375 total), 52.223s.
+Focused benchmark/provider/runtime/storage suite: 44/44 passed, 5.482s.
+Ten new regression tests cover classification, actual adapter plumbing with explicit
+HTTP doubles, usage, timeout/retry evidence, incomplete setup, interruption,
+redaction, and refusal to overwrite evidence. These are not live NVIDIA results.
+
+Missing NVIDIA configuration and routing rejection no longer share the generic
+provider-failure classification. The optional live runner preserves incremental
+content-free evidence and uses normal per-task model registries. The unchanged
+12 tasks, expected outcomes, scoring, validators and model configuration remain
+intact. Deterministic retrieval and agent results reproduce exactly; only the
+benchmark implementation fingerprint changed. No version increment is claimed.
+
+Wheel build and fresh no-index/no-dependency installation passed. Compile checks,
+dashboard JavaScript, whitespace, and tracked-file credential-pattern/path/symlink/
+5-MB size audits passed. No live call occurred; this executor has no NVIDIA key.
+The user-reported successful host smoke remains connectivity evidence. The latest
+host benchmark is inconclusive and its original generic failure is not diagnosed
+from a traceback alone. See [live evidence procedure](BENCHMARKS.md) and
+[current capability inventory](CURRENT_AUDIT.md).
+
+Level 3 remains BLOCKED/PARKED. Deployment remains FROZEN. Real embedding quality,
+real agent outcome rates and host acceptance are not upgraded. This milestone
+completes local diagnostic/evidence preparation, not the entire platform mission.

@@ -17,7 +17,7 @@ EVENTS = frozenset({'call_start','call_end','call_failure','attempt_start','atte
                    'retry_wait','transport_start','worker_phase','transport_wait',
                    'deadline_expired','cleanup_start','cleanup_end','task_start','task_end'})
 CATEGORIES = frozenset({'timeout','authentication_failure','provider_failure','connectivity_failure',
-                        'malformed_response','model_unavailable','rate_limited','interrupted','other'})
+                        'malformed_response','model_unavailable','rate_limited','configuration_failure','routing_failure','interrupted','other'})
 NUMBERS = frozenset({'attempt','attempts','timeout_seconds','delay_seconds','deadline_monotonic',
                      'elapsed_seconds','remaining_seconds','worker_pid','worker_exitcode','task_number'})
 

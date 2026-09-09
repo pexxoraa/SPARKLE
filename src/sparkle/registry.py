@@ -11,7 +11,7 @@ from typing import Any
 
 from sparkle.config import load_json, model_config_path
 from sparkle.content import SUPPORTED_CONTENT_TYPES
-from sparkle.model import ModelAdapter, ModelError, UnsupportedModalityError
+from sparkle.model import ModelAdapter, ModelError, ModelSelectionError, UnsupportedModalityError
 from sparkle.model_runtime import (
     ModelHealthMonitor, ModelRuntimeStore, RoutingDecision,
 )
@@ -430,7 +430,7 @@ class ModelRouter:
             preferred_record = self.registry._records.get(preferred)
             provider = preferred_record.provider if preferred_record else None
             model_id = preferred_record.model_id if preferred_record else None
-            raise UnsupportedModalityError(
+            raise ModelSelectionError(
                 required, model_id=model_id, provider=provider,
             )
         (
