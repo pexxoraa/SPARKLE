@@ -358,3 +358,26 @@ wall-time budgeting and action idempotency remain distinct unfinished concerns;
 tool-count limits alone do not solve them. No new version or competence claim.
 Live benchmark diagnosis still needs the missing host evidence; no live rerun.
 Level 3 remains BLOCKED/PARKED. Deployment remains FROZEN.
+
+## Literal memory-query correction — 2026-09-09
+
+Continued from `5bbe4f0d2a76fc330f1da7fc040e98910993c1a7` after its CI #89
+passed all five jobs. A deterministic probe showed that Japanese and punctuation
+queries each returned one unrelated recent record. Memory search now supports
+literal Unicode tokens, escapes underscores, limits distinct terms to 64, and
+returns no matches for nonempty unsearchable queries. Blank-query recent behavior
+is preserved. Context integration proves unrelated memory is not injected for the
+Unicode query. This is lexical correctness, not semantic quality or new authority
+to write memory.
+
+Baseline at the preceding verified checkpoint: 394 passed + 1 optional live skip
+(395 total). New focused memory/storage/retrieval tests: 25/25, 0.183 seconds.
+Final full suite: 399 passed + 1 optional live skip (400 total), 61.198 seconds.
+Five new regressions exercise Unicode, punctuation/blank distinction, wildcard
+literalness, term/result/category/archive bounds and context behavior. Wheel and
+fresh offline installation, compile/JavaScript, documentation and tracked-tree
+audits passed. Scripted agent outcomes and retrieval metrics remain unchanged.
+Memory stays IMPLEMENTED BUT INSUFFICIENTLY VERIFIED; Unicode case folding and
+semantic retrieval are not claimed. Staged validated memory updates remain next
+in the machine-readable backlog. No live benchmark was rerun, no version changed,
+and Level 3 remains BLOCKED/PARKED with deployment FROZEN.

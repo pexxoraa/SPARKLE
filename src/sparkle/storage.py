@@ -123,16 +123,26 @@ class MemoryStore(SQLiteStore):
         return int(row["id"])
 
     def search(self, query: str, *, limit: int = 5, category: str | None = None) -> list[dict[str, Any]]:
-        terms = [term for term in re.findall(r"[a-zA-Z0-9_]+", query.lower()) if len(term) > 1]
+        terms = []
+        for match in re.finditer(r"\w+", query.lower()):
+            term = match.group()
+            if (len(term) > 1 or any(ord(char) > 127 for char in term)) and term not in terms:
+                terms.append(term)
+                if len(terms) == 64:
+                    break
+        # An unmatched nonempty query is not a request to return recent memory.
+        if query.strip() and not terms:
+            return []
         where = ["archived=0"]
         params: list[Any] = []
         if category:
             where.append("category=?")
             params.append(category)
         if terms:
-            where.append("(" + " OR ".join("lower(value) LIKE ? OR lower(memory_key) LIKE ?" for _ in terms) + ")")
+            where.append("(" + " OR ".join("lower(value) LIKE ? ESCAPE '\\' OR lower(memory_key) LIKE ? ESCAPE '\\'" for _ in terms) + ")")
             for term in terms:
-                params.extend((f"%{term}%", f"%{term}%"))
+                literal = term.replace("\\", "\\\\").replace("_", "\\_").replace("%", "\\%")
+                params.extend((f"%{literal}%", f"%{literal}%"))
         params.append(max(1, min(limit, 100)))
         sql = f"SELECT * FROM memories WHERE {' AND '.join(where)} ORDER BY importance DESC, updated_at DESC LIMIT ?"
         with self.connect() as connection:

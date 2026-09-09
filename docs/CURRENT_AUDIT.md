@@ -120,3 +120,11 @@ Shared tool-attempt and specialist-count limits are locally verified; orchestrat
 remains PARTIALLY IMPLEMENTED. Aggregate wall-time policy, idempotent actions and
 validated staged memory remain open. See [continuous backlog](capability_backlog.json).
 Final regression: 394 passed, one optional live skip. No live or host upgrade.
+
+## Memory query correction
+
+An ASCII-only tokenization fallback returned unrelated recent memory for Japanese
+and punctuation-only queries. Literal Unicode tokens, a 64-term bound and an empty
+result for nonempty unsearchable queries correct that observed relevance defect.
+Underscores no longer act as wildcards. Memory remains IMPLEMENTED BUT INSUFFICIENTLY
+VERIFIED; this does not establish semantic retrieval or validated memory updates.

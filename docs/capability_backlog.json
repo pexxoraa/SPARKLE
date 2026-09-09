@@ -1,14 +1,14 @@
 {
   "schema": "SPARKLE-CAPABILITY-BACKLOG/1",
-  "source_checkpoint": "b74be146296175d74738479af89c296905f44be5",
+  "source_checkpoint": "5bbe4f0d2a76fc330f1da7fc040e98910993c1a7",
   "level_3": "BLOCKED/PARKED",
   "deployment": "FROZEN",
   "current_work": {
-    "id": "bounded-orchestration",
+    "id": "literal-memory-query-boundary",
     "priority": "P0",
     "state": "LOCAL TEST VERIFIED",
-    "acceptance": "Tool budgets shared across specialist/synthesis calls; oversized batches execute no tools; specialist fan-out validated before model use",
-    "tests": "tests/test_orchestration_bounds.py"
+    "acceptance": "Nonempty unsearchable queries do not return recent memory; literal Unicode/underscore behavior, bounded terms and context integration",
+    "tests": "tests/test_memory_queries.py"
   },
   "next_implementable_work": {
     "id": "validated-memory-workflow",
@@ -583,6 +583,15 @@
       "test": "pyproject.toml; wheel/offline install and CI worker-image smoke",
       "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
       "priority": "Maintain"
+    }
+  ],
+  "completed_work": [
+    {
+      "id": "bounded-orchestration",
+      "priority": "P0",
+      "state": "LOCAL TEST VERIFIED",
+      "acceptance": "Tool budgets shared across specialist/synthesis calls; oversized batches execute no tools; specialist fan-out validated before model use",
+      "tests": "tests/test_orchestration_bounds.py"
     }
   ]
 }
