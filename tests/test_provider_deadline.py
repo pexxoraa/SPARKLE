@@ -1,3 +1,4 @@
+from contextlib import closing
 """Credential-free transport fault injection; no real HTTP calls."""
 import json
 import multiprocessing
@@ -140,6 +141,6 @@ class ProviderDeadlineTests(unittest.TestCase):
             databases=list(root.rglob('model_runtime.sqlite3'))
             self.assertEqual(len(databases),12)
             for database in databases:
-                with sqlite3.connect(database) as db:
+                with closing(sqlite3.connect(database)) as db, db:
                     row=db.execute('SELECT status,error_type,attempts FROM model_requests').fetchone()
                     self.assertEqual(row,('failure','timeout',2))

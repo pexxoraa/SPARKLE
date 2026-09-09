@@ -24,17 +24,37 @@ class ClosingConnection(sqlite3.Connection):
             self.close()
 
 
+class StorageConnectionError(sqlite3.OperationalError):
+    """Content-free infrastructure failure, never a model/validation outcome."""
+    category = "storage_unavailable"
+
+    def __init__(self):
+        super().__init__("Storage connection initialization failed")
+
+    def to_dict(self):
+        return {"stage": "storage_initialization", "error_type": self.category}
+
+
 class SQLiteStore:
     def __init__(self, path: Path):
         self.path = path
         path.parent.mkdir(parents=True, exist_ok=True)
 
     def connect(self) -> sqlite3.Connection:
-        connection = sqlite3.connect(self.path, timeout=10, factory=ClosingConnection)
-        connection.row_factory = sqlite3.Row
-        connection.execute("PRAGMA journal_mode=WAL")
-        connection.execute("PRAGMA foreign_keys=ON")
-        return connection
+        connection = None
+        try:
+            connection = sqlite3.connect(self.path, timeout=10, factory=ClosingConnection)
+            connection.row_factory = sqlite3.Row
+            connection.execute("PRAGMA journal_mode=WAL")
+            connection.execute("PRAGMA foreign_keys=ON")
+            return connection
+        except BaseException as exc:
+            # __exit__ has not been entered yet: setup owns this handle.
+            if connection is not None:
+                connection.close()
+            if isinstance(exc, (sqlite3.Error, OSError)):
+                raise StorageConnectionError() from None
+            raise
 
     def backup(self, destination: Path) -> Path:
         target = destination.expanduser().resolve()

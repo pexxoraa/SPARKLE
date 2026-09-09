@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from contextlib import closing
+
 import json
 import sqlite3
 import tempfile
@@ -165,7 +167,7 @@ class KnowledgeTests(unittest.TestCase):
     def test_knowledge_schema_migrates_content_digest_without_rebuild(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "knowledge.sqlite3"
-            with sqlite3.connect(path) as connection:
+            with closing(sqlite3.connect(path)) as connection, connection:
                 connection.executescript("""
                     CREATE TABLE sources (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,

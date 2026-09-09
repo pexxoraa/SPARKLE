@@ -331,3 +331,82 @@ not altered. Existing loopback/partial-frame tests remain passing. Wheel build,
 fresh offline installation and current-tree audits passed (179 files). Benchmark
 outcomes and metrics are identical; only storage.py and agents.py implementation
 hashes were refreshed. No live benchmark ran; host cause remains unconfirmed.
+
+### SQLite setup failure and descriptor ownership
+
+A subsequent host run failed in system initialization before any NVIDIA request,
+with SQLite CANTOPEN and then EMFILE during directory cleanup. That run remains
+INCONCLUSIVE — never reached provider execution. The earlier authenticated smoke
+remains separate valid connectivity evidence.
+
+Source audit: the application creates SQLite connections only in SQLiteStore.connect
+and its backup destination. All store operations use scoped connections; no SQL
+pool/cache or retained connection attribute was found. SparkleSystem constructs
+many stores, including model runtime, memory, knowledge, automation, project, skill
+and AI-builder stores. These own database paths, not persistent connections. A
+system-wide close hook would not repair a handle lost before its store returns.
+Connections are closed after each operation, before system/task teardown; strong
+reference/GC-disabled tests establish that destruction is not required.
+
+Confirmed remaining defect: connect() opened a ClosingConnection and configured
+row_factory and two PRAGMAs BEFORE returning it to the caller's `with` statement.
+If setup raised, __enter__/__exit__ had never run; the prior __exit__ closure fix
+could not release the handle. The connect factory now owns that setup window and
+closes on ANY escaping exception, including interruption. SQLite/OS setup failures
+become StorageConnectionError with content-free structured metadata:
+`{"stage":"storage_initialization","error_type":"storage_unavailable"}`.
+It remains a sqlite3.OperationalError subtype for existing handlers. It is not
+an agent outcome or provider failure, and does not change benchmark scoring.
+
+Before/after local reproduction (GC disabled and connection references retained):
+normal system creation stayed at 3,3,3,3 descriptors on the previous checkpoint.
+Five injected failures during connection PRAGMA setup grew 3,4,5,6,7,8 before the
+fix; after the fix they stayed 3,3,3,3,3,3. Explicitly closing the old leaked handles
+returned the count to 3. This proves the setup-exception leak, not that it alone
+caused the host's complete exhaustion. Its initial FD state and loaded module
+provenance were not supplied. An unavailable path is not automatically EMFILE;
+the structured error intentionally does not guess which CANTOPEN cause occurred.
+
+The failure tests keep every connection object alive and check that native SQLite
+operations reject it as closed. Tests cover both PRAGMAs, interrupted setup, backup,
+later AISystemBlueprintStore initialization failure, repeated systems retained in
+memory, all twelve successful scripted tasks, all twelve synthetic provider-timeout
+tasks, setup failure, and temporary-directory removal. Earlier successful stores
+hold no open connections when later initialization fails. Four direct raw SQLite
+connections in test fixture/inspection code now explicitly close after transaction
+exit as well; warning absence alone is not the evidence.
+
+A separate subprocess LOWERS RLIMIT_NOFILE to 32, initializes ten systems, and
+checks every possible descriptor in that range: before=3, after=3. It then fills
+its own remaining slots, observes structured storage_unavailable, releases only
+its own filler handles, and verifies successful temporary-directory cleanup.
+No OS limit was increased. A process whose unrelated descriptors are already
+exhausted must release those owners before cleanup needing new descriptors can
+succeed; the application does not close arbitrary unrelated descriptors.
+
+SQLite descriptors opened in the tests are non-inheritable. The NVIDIA worker
+uses multiprocessing spawn and is passed only its explicit IPC socket and request
+configuration, never a SQLite connection. The benchmark failure occurred before
+any such worker was started. There is no provider quality result from this run.
+
+Before a future live rerun, verify the host actually imports the installed fix
+(the reported line number alone is not module provenance):
+
+```sh
+python -c 'import hashlib, pathlib, sparkle.storage as s; p=pathlib.Path(s.__file__); print(p); print(hashlib.sha256(p.read_bytes()).hexdigest()); print(hasattr(s,"StorageConnectionError"))'
+```
+
+No key or private database content is printed. Ordinary CI and this debugging
+milestone make no live NVIDIA call. Tasks, scores, validators, model configuration,
+Level 3 and deployment status remain unchanged.
+
+Resource-lifecycle verification (2026-09-09): baseline 355 ran (354 passed, one
+optional live skip); final 365 ran in 60.929 seconds (364 passed, one optional live
+skip). Focused resource/storage/lifecycle/migration/benchmark/documentation: 51/51.
+Ten new resource tests passed, retaining connection references and disabling GC.
+The initial interruption fixture also intercepted its own closure assertion; that
+assertion now calls the native SQLite method so it tests handle state rather than
+re-triggering the injected interruption. Commit/rollback tests remain passing.
+Wheel build, fresh offline installation and current-tree audits passed (180 files).
+Baseline results are identical; only storage.py's implementation hash changed.
+No credentialed benchmark ran and no live-model outcome is claimed.

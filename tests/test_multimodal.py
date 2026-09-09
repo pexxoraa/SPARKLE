@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from contextlib import closing
+
 import base64
 import json
 import os
@@ -282,7 +284,7 @@ class MultimodalSystemTests(unittest.TestCase):
 
     def test_legacy_trace_schema_is_migrated(self):
         path = Path(self.temp.name) / "legacy-traces.sqlite3"
-        with sqlite3.connect(path) as connection:
+        with closing(sqlite3.connect(path)) as connection, connection:
             connection.execute("""
                 CREATE TABLE traces (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,

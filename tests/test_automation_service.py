@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from contextlib import closing
+
 import contextlib
 import io
 import json
@@ -200,7 +202,7 @@ class AutomationServiceTests(unittest.TestCase):
 
     def test_legacy_schema_migrates_claim_columns(self):
         path = self.root / "legacy.sqlite3"
-        with sqlite3.connect(path) as connection:
+        with closing(sqlite3.connect(path)) as connection, connection:
             connection.execute("""
                 CREATE TABLE automations (
                     id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE,

@@ -1,7 +1,7 @@
 {
   "schema": "SPARKLE-BENCHMARK/1",
   "implementation_sha256": {
-    "src/sparkle/storage.py": "ff280642cd741317029abb45fcd241a65954d4c85f7f257b7cef61cff45472ad",
+    "src/sparkle/storage.py": "154e434fe189fe82d93ffb00931f7bdaa4c7d3b1e0532331de51d06b36eae4ce",
     "src/sparkle/context.py": "5658a40623361173d755a3efe510e109e593de266fde4f064393fb2289168adf",
     "src/sparkle/orchestrator.py": "e6976b6cca7603cd93797c74ac4b517b3fc66c1db4606c854202dd0cc87cf608",
     "src/sparkle/retrieval.py": "b4e18e89dc3454f6db3ea614fc8e32b9bb9eff197643573deded261bd81b8d87",
