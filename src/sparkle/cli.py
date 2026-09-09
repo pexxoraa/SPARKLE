@@ -36,6 +36,11 @@ def build_parser() -> argparse.ArgumentParser:
         "model-requests", help="List content-free model routing and usage evidence",
     )
     model_requests.add_argument("--limit", type=int, default=20)
+    sub.add_parser("memory-proposals", help="Inspect untrusted memory proposals")
+    review = sub.add_parser("memory-review", help="Independently review an exact memory proposal")
+    review.add_argument("proposal_id")
+    review.add_argument("digest")
+    review.add_argument("decision", choices=["approve", "reject"])
     memory = sub.add_parser("remember", help="Store an explicit durable memory")
     memory.add_argument("category")
     memory.add_argument("key")
@@ -418,6 +423,12 @@ def main(argv: list[str] | None = None) -> int:
             "ok": True,
             "model_requests": system.models.runtime.recent(limit=args.limit),
         })
+        return 0
+    if args.command == "memory-proposals":
+        _print({"proposals": system.memory_review.list()})
+        return 0
+    if args.command == "memory-review":
+        _print(system.memory_review.review(args.proposal_id, args.digest, args.decision, reviewer="cli"))
         return 0
     if args.command == "remember":
         memory_id = system.memory.remember(args.category, args.key, args.value, metadata={"source": "cli"})

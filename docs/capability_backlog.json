@@ -1,25 +1,24 @@
 {
   "schema": "SPARKLE-CAPABILITY-BACKLOG/1",
-  "source_checkpoint": "5bbe4f0d2a76fc330f1da7fc040e98910993c1a7",
+  "source_checkpoint": "4831615033e4aaa54cc6861da6ee6fc06561584a",
   "level_3": "BLOCKED/PARKED",
   "deployment": "FROZEN",
   "current_work": {
-    "id": "literal-memory-query-boundary",
-    "priority": "P0",
+    "id": "operator-reviewed-memory",
+    "priority": "P1",
     "state": "LOCAL TEST VERIFIED",
-    "acceptance": "Nonempty unsearchable queries do not return recent memory; literal Unicode/underscore behavior, bounded terms and context integration",
-    "tests": "tests/test_memory_queries.py"
+    "acceptance": "Default agent proposals cannot modify durable memory until independent operator approval of exact unchanged proposal and prior memory state",
+    "tests": "test_memory_review, test_orchestration_bounds, test_system_e2e, test_cli"
   },
   "next_implementable_work": {
-    "id": "validated-memory-workflow",
+    "id": "machine-validated-memory",
     "priority": "P1",
     "dependency": [
-      "trusted validation criteria",
-      "explicit write authorization",
-      "staged mutations"
+      "trusted operator-owned criteria",
+      "authoritative observation readers"
     ],
-    "next_action": "Design staged memory updates that cannot be committed merely because a model claims success; preserve explicit user-authorized memory writes",
-    "acceptance": "Rejected/inconclusive validation cannot commit staged updates; explicit approved updates persist with trace linkage"
+    "next_action": "Extend review with independently collected evidence without model-owned validation criteria",
+    "acceptance": "Rejected or inconclusive factual validation never authorizes memory"
   },
   "specific_external_blockers": [
     {
@@ -592,6 +591,21 @@
       "state": "LOCAL TEST VERIFIED",
       "acceptance": "Tool budgets shared across specialist/synthesis calls; oversized batches execute no tools; specialist fan-out validated before model use",
       "tests": "tests/test_orchestration_bounds.py"
+    },
+    {
+      "id": "literal-memory-query-boundary",
+      "priority": "P0",
+      "state": "LOCAL TEST VERIFIED",
+      "acceptance": "Nonempty unsearchable queries do not return recent memory; literal Unicode/underscore behavior, bounded terms and context integration",
+      "tests": "tests/test_memory_queries.py"
     }
-  ]
+  ],
+  "live_agent_baseline": {
+    "source": "user-supplied credential-safe host evidence; no rerun in this executor",
+    "executed": 12,
+    "validated": 3,
+    "rejected": 9,
+    "validation_pass_rate": 0.25,
+    "competence_verified": false
+  }
 }

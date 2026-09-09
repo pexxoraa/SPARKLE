@@ -400,6 +400,8 @@ class SparkleHandler(BaseHTTPRequestHandler):
                     self.system.ai_system_controlled_executor.inspect(suffix)
                 ),
             })
+        if parsed.path == "/api/memory/proposals":
+            return self._json({"proposals": self.system.memory_review.list()})
         if parsed.path == "/api/memory":
             return self._json({"memories": self.system.memory.search(query.get("q", [""])[0], limit=int(query.get("limit", [20])[0]))})
         if parsed.path == "/api/knowledge/search":
@@ -891,6 +893,12 @@ class SparkleHandler(BaseHTTPRequestHandler):
                     raise ValueError("Agent removal requires explicit approval")
                 removed = self.system.agents.remove(str(data["name"]))
                 return self._json({"ok": True, "removed": removed})
+            if self.path == "/api/memory/review":
+                if set(data) != {"proposal_id", "digest", "decision"}:
+                    raise ValueError("Invalid memory review fields")
+                return self._json(self.system.memory_review.review(
+                    data["proposal_id"], data["digest"], data["decision"],
+                    reviewer="authenticated_api" if self.system.api_access.required else "local_api"))
             if self.path == "/api/memory":
                 memory_id = self.system.memory.remember(
                     str(data["category"]), str(data["key"]), str(data["value"]),

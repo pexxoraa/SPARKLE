@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from sparkle.memory_review import MemoryReview
+
 from pathlib import Path
 from typing import Any
 
@@ -60,7 +62,7 @@ from sparkle.tooling import (
     FileReadTool,
     KnowledgeSearchTool,
     MemorySearchTool,
-    MemoryWriteTool,
+    MemoryProposalTool,
     ProjectSearchTool,
     SkillSearchTool,
     ToolRegistry,
@@ -99,6 +101,7 @@ class SparkleSystem:
         )
         self.api_audit = APIAuditStore()
         self.memory = MemoryStore()
+        self.memory_review = MemoryReview(self.memory)
         self.knowledge = KnowledgeStore()
         self.knowledge_ingestor = KnowledgeIngestor(self.knowledge)
         self.traces = TraceStore()
@@ -144,7 +147,7 @@ class SparkleSystem:
         self.tools = ToolRegistry()
         self.tools.register(CalculatorTool())
         self.tools.register(MemorySearchTool(self.memory))
-        self.tools.register(MemoryWriteTool(self.memory))
+        self.tools.register(MemoryProposalTool(self.memory_review))
         self.tools.register(KnowledgeSearchTool(self.knowledge))
         self.tools.register(ProjectSearchTool(self.projects))
         self.tools.register(SkillSearchTool(self.skills))

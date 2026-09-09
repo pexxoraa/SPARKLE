@@ -242,3 +242,13 @@ Trace metadata reports the shared limit and number of reserved tool attempts.
 The existing RuntimeError type and failure traces are retained; budget rejection
 has content-free code tool_call_limit. No permission, approval, worker, Level 3 or
 deployment gate is relaxed. See [machine-readable backlog](capability_backlog.json).
+
+### Agent memory authorization
+
+The default tool registry stages model memory proposals through `MemoryReview`.
+CLI/API operator review binds proposal digest and prior memory state; a single
+SQLite transaction commits the approved memory and review record. Proposals are
+not retrieval inputs. Model success is not write authorization. Trace metadata
+links proposal IDs, while private values stay in the memory database. Existing
+benchmark registries retain their direct-write fixture semantics for comparison.
+Automated independent factual validation remains future work.

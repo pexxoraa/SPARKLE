@@ -381,3 +381,33 @@ Memory stays IMPLEMENTED BUT INSUFFICIENTLY VERIFIED; Unicode case folding and
 semantic retrieval are not claimed. Staged validated memory updates remain next
 in the machine-readable backlog. No live benchmark was rerun, no version changed,
 and Level 3 remains BLOCKED/PARKED with deployment FROZEN.
+
+## Independent operator review for agent memory
+
+Continued from `4831615033e4aaa54cc6861da6ee6fc06561584a`. Default agent
+`memory_write` now stages bounded proposals excluded from retrieval; CLI/API
+review approves the exact digest and prior row state. Expiry, tampering, stale
+overwrite and duplicate/concurrent reviews fail closed. Approval and memory
+update commit atomically. Traces link proposal IDs without proposal values.
+Direct operator writes remain supported. Automated factual validation is not
+implemented; memory capability is not upgraded to fully verified.
+
+Fresh verification: baseline 400 tests (399 passed, 1 optional live skip),
+58.244 seconds. Focused review/orchestration/CLI/API/security: 40/40 passed,
+3.299 seconds. Full suite: 411 tests (410 passed, 1 optional live skip),
+59.607 seconds. Eleven new tests. Deterministic retrieval and agent outcomes
+unchanged; the benchmark explicitly uses its legacy direct-write fixture tool,
+so these metrics are not evidence for default staged writes. Task definitions,
+scoring, validators and NVIDIA configuration unchanged.
+
+Compile, dashboard JavaScript, whitespace, 190-file credential-pattern/path/
+symlink/oversized-file audit passed. Wheel built with no dependency downloads;
+fresh offline installation and installed CLI help passed. Wheel SHA256:
+`16df3c14192b3f61e160cd1f16b5e79ab554267853feebf72ccf54ced1c164e9`.
+Version remains 0.30.0a1.
+
+Current user-supplied real Nemotron baseline: 12 tasks executed, 3 validated,
+9 rejected (25%). This supersedes the earlier 8.33% historical run; no live
+benchmark was rerun here. Agent competence is not established. Level 3 remains
+BLOCKED/PARKED; deployment FROZEN. Next: trusted machine-observed evidence for
+memory validation, retention policy, and user-facing review workflow quality.

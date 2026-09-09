@@ -133,6 +133,7 @@ class Orchestrator:
         adapter = None
         routing_decisions: list[dict[str, object]] = []
         executed: list[str] = []
+        memory_proposals: list[str] = []
         data_accessed = (
             ["memory_environment", "knowledge_environment"]
             if execution_profile == "standard" else []
@@ -201,6 +202,8 @@ class Orchestrator:
                         result = self.tools.execute(call.name, call.arguments, allowed=set(spec.tools))
                     except (ToolError, ValueError, TypeError) as exc:
                         result = {"ok": False, "error": str(exc), "error_type": type(exc).__name__}
+                    if call.name == "memory_write" and isinstance(result, dict) and result.get("status") == "pending":
+                        memory_proposals.append(result["proposal_id"])
                     executed.append(call.name)
                     messages.append(Message(role="tool", content=safe_tool_result(result), tool_call_id=call.id, name=call.name))
             if response is None:
@@ -228,6 +231,7 @@ class Orchestrator:
             final_execution_metadata = {
                 **execution_metadata,
                 "model_routing": routing_decisions,
+                "memory_proposal_ids": memory_proposals,
                 "tool_calls_reserved": budget.used,
                 "tool_call_limit": budget.limit,
             }
@@ -249,6 +253,7 @@ class Orchestrator:
             failure_execution_metadata = {
                 **execution_metadata,
                 "model_routing": routing_decisions,
+                "memory_proposal_ids": memory_proposals,
                 "tool_calls_reserved": budget.used,
                 "tool_call_limit": budget.limit,
             }

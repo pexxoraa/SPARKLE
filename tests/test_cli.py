@@ -18,6 +18,18 @@ from sparkle.system import SparkleSystem
 
 
 class CLITests(unittest.TestCase):
+    def test_memory_review_commands_require_exact_proposal(self):
+        with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ, {"SPARKLE_DATA_DIR": directory}):
+            system = SparkleSystem()
+            proposal = system.memory_review.propose({"category":"goals", "key":"fixture", "value":"Practice daily"})
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                self.assertEqual(main(["memory-proposals"]), 0)
+            self.assertEqual(json.loads(output.getvalue())["proposals"][0]["id"], proposal["proposal_id"])
+            with contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(main(["memory-review",proposal["proposal_id"],proposal["digest"],"approve"]), 0)
+            self.assertEqual(system.memory.export()[0]["metadata"]["reviewer"], "cli")
+
     def test_model_request_evidence_command_is_content_free(self):
         with tempfile.TemporaryDirectory() as directory:
             output = io.StringIO()

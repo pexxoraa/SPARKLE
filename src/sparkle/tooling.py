@@ -223,6 +223,16 @@ class MemoryWriteTool(Tool):
         return {"stored": True, "memory_id": memory_id}
 
 
+class MemoryProposalTool(MemoryWriteTool):
+    description = "Propose a durable memory for independent operator review. Nothing is stored as memory until approved."
+
+    def __init__(self, review):
+        self.review = review
+
+    def run(self, arguments):
+        return self.review.propose(arguments)
+
+
 class KnowledgeSearchTool(Tool):
     name = "knowledge_search"
     description = "Search the user's ingested knowledge sources."

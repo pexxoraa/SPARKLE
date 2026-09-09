@@ -25,3 +25,42 @@ This is lexical substring matching. SQLite lower/LIKE does not provide complete
 Unicode case folding, accent normalization, semantic similarity or multilingual
 translation. Those limitations remain explicit. Category, archive and result-count
 filters are preserved. No memory mutation/authorization workflow is changed.
+
+## Review model-proposed writes
+
+The default `SparkleSystem` registers `MemoryProposalTool` under `memory_write`.
+It returns `stored=false`, a proposal ID/digest and `status=pending`. Pending
+content lives in the memory database's separate proposal table and is never
+returned by memory search, context assembly or durable-memory export. Treat it
+as untrusted model output. Review content against user instructions and evidence.
+
+```sh
+sparkle memory-proposals
+sparkle memory-review PROPOSAL_ID EXACT_DIGEST approve
+sparkle memory-review PROPOSAL_ID EXACT_DIGEST reject
+```
+
+API: `GET /api/memory/proposals`; `POST /api/memory/review` with exactly
+`proposal_id`, `digest`, and `decision` (`approve` or `reject`). Existing API
+authentication, session/CSRF and rate controls apply. In configured unauthenticated
+local mode the reviewer is recorded as `local_api`, never as authenticated.
+No review tool is exposed to the model. Direct operator `remember`/memory POST
+remains available and is not replaced by a model assertion of authorization.
+
+Proposals expire for approval after 24 hours, bind the current memory row, and
+require unchanged content/digest and a pending state. Reject can dispose of expired
+proposals. A transaction makes approval, memory upsert and review status atomic;
+concurrent/replayed approvals cannot apply twice. Changed/archived/deleted target
+memories require a new proposal. Limits: 1,000 pending proposals, 256-character
+keys, 8,000-character values, and 100 reviewed records per list request. Pending
+records require operator rejection to release capacity; automatic retention is
+not implemented. Review history stores content in the private database; traces
+record only proposal identifiers, not proposal content. Protect backups as memory.
+
+This provides independent operator review, not automatic truth detection or an
+LLM validator. Unknown claims must stay pending or be rejected. The legacy
+`MemoryWriteTool` remains for explicitly constructed existing integrations and the
+unchanged benchmark fixture; it is not registered by the default system. Custom
+registries must select the proposal tool to receive the new authorization boundary.
+No new secret ingestion/recognition capability is claimed. Never submit secrets
+as memory content. Level 3 stays parked and deployment frozen.

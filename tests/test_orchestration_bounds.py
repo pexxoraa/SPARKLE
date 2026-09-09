@@ -28,6 +28,16 @@ class OrchestrationBoundTests(SystemCase):
         self.registry.inject(self.registry.active_id, adapter)
         return adapter
 
+    def test_model_memory_write_is_pending_and_trace_links_proposal(self):
+        self.inject([[ToolCall('memory', 'memory_write', {'category':'goals','key':'fixture','value':'Practice daily'})], []])
+        self.system.orchestrator.run('Remember a goal', agent_name='personal')
+        self.assertEqual(self.system.memory.export(), [])
+        proposals = self.system.memory_review.list()
+        self.assertEqual(len(proposals), 1)
+        trace = self.system.traces.recent()[0]
+        self.assertEqual(trace['execution_metadata']['memory_proposal_ids'], [proposals[0]['id']])
+        self.assertNotIn('Practice daily', json.dumps(trace['execution_metadata']))
+
     def test_oversized_batch_has_no_partial_memory_writes(self):
         self.inject([[ToolCall(str(i), 'memory_write', {'category': 'goals', 'key': str(i), 'value': 'fixture'}) for i in range(17)]])
         with self.assertRaises(RuntimeError) as caught:

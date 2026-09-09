@@ -69,9 +69,10 @@ Lexical Recall@1 = 0.625; Recall@3/5 = 0.75; MRR = 0.71875.
 The semantic and hybrid paths use token-hashing test doubles, not trained embeddings.
 All 12 scripted workflow outcomes validate; this is not live agent-quality evidence.
 No NVIDIA credential is available in this executor. Host smoke connectivity is
-user-reported verified. A later host benchmark executed all 12 tasks: 1 validated,
-1 rejected, 9 JSONDecodeError and 1 RuntimeError, in 200.914 seconds. Its 8.33%
-validated outcome is not autonomous competence; per-task causes require host evidence.
+user-reported verified. The current user-supplied credential-safe live baseline is
+12 real Nemotron tasks executed, 3 validated and 9 rejected: 25% validated. This
+supersedes the historical 8.33% run. It does not verify agent competence; no new live
+run was performed here, and individual rejection diagnosis requires retained evidence.
 No real semantic, multimodal, browser, desktop, voice or connector acceptance was
 performed here. There is no defensible aggregate percentage of engineering completion:
 these overlapping categories have neither equal size nor agreed acceptance weights.
@@ -128,3 +129,14 @@ and punctuation-only queries. Literal Unicode tokens, a 64-term bound and an emp
 result for nonempty unsearchable queries correct that observed relevance defect.
 Underscores no longer act as wildcards. Memory remains IMPLEMENTED BUT INSUFFICIENTLY
 VERIFIED; this does not establish semantic retrieval or validated memory updates.
+
+## Operator-reviewed memory boundary
+
+Default system agent memory writes now stage proposals outside retrieval. An operator
+reviews exact content and digest through CLI/API; expiry, replay, content tampering
+and concurrent memory changes fail closed. Approval and memory update are atomic.
+This is independent operator authorization, not automated factual validation.
+The 46-capability inventory remains conservative: memory retention, deduplication,
+trusted machine-verifiable criteria, and longitudinal quality remain unfinished.
+The unchanged 12-task benchmark explicitly installs the legacy direct-write fixture
+tool. Its metrics remain comparable but do not exercise this new default boundary.
