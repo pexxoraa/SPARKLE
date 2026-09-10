@@ -140,3 +140,23 @@ The 46-capability inventory remains conservative: memory retention, deduplicatio
 trusted machine-verifiable criteria, and longitudinal quality remain unfinished.
 The unchanged 12-task benchmark explicitly installs the legacy direct-write fixture
 tool. Its metrics remain comparable but do not exercise this new default boundary.
+
+## 2026-09-10 memory review UI verification
+
+Continued from retention commit `9a08991d8f2f21365f3cb7ded0a4edace5d08b0d`,
+tree `de55cbf934902e6ef4b090812c2779b82b5ffbd7`; CI #94 passed all five
+jobs on that exact commit. Pending proposals now expose current exact-field
+verification, evidence, digest, expiry and conflicts to the operator dashboard.
+Approval defaults to requiring VERIFIED evidence; authoritative server checks
+remain atomic and independent of the displayed state. Review/validation audit
+and private memory version history are separate from the pending queue.
+
+Fresh full suite: **436 total, 435 passed, 1 skipped, 0 failures/errors**
+(63.238 seconds). Focused memory/UI/API/CLI integration: **49/49** (5.255s).
+The UI wrapper includes **10/10** deterministic Node DOM interaction tests.
+The baseline was 433 total, 432 passed, 1 skipped. Node syntax, whitespace,
+wheel build, offline installation and installed CLI help passed; the wheel
+contains the new dashboard asset. This is software/UI-contract evidence, not
+live-browser accessibility, generalized factual correctness or live-agent
+quality evidence. Live-agent baseline remains user-reported **3/12 (25%)**.
+Level 3 stays **BLOCKED/PARKED**; deployment stays **FROZEN**.

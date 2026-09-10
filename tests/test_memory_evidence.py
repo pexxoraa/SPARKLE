@@ -27,6 +27,27 @@ class MemoryEvidenceTests(unittest.TestCase):
         return self.review.review(self.proposal['proposal_id'],self.proposal['digest'],
                                   'approve',reviewer='cli',require_verified=strict)
 
+    def test_review_listing_exposes_current_evidence_without_writing_audit(self):
+        self.attest()
+        with self.store.connect() as db:
+            before = db.execute('SELECT COUNT(*) FROM memory_evidence_events').fetchone()[0]
+        item = self.review.list()[0]
+        self.assertEqual(item['verification']['status'], 'VERIFIED')
+        self.assertEqual(item['evidence'][0]['source_ref'], 'user:settings')
+        self.assertFalse(item['expired'])
+        self.assertFalse(item['conflict'])
+        self.assertFalse(item['target_blocked'])
+        with self.store.connect() as db:
+            self.assertEqual(db.execute('SELECT COUNT(*) FROM memory_evidence_events').fetchone()[0], before)
+        self.store.remember('preferences', 'editor', 'emacs')
+        self.assertTrue(self.review.list()[0]['conflict'])
+
+    def test_review_listing_rejects_tampered_payload(self):
+        with self.store.connect() as db:
+            db.execute("UPDATE memory_proposals SET payload=replace(payload, 'vim', 'emacs')")
+        with self.assertRaises(ValueError):
+            self.review.list()
+
     def test_unknown_stays_inconclusive_and_strict_approval_denied(self):
         self.assertEqual(self.validate()['status'],'INCONCLUSIVE')
         with self.assertRaises(ValueError): self.approve()

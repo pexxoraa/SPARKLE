@@ -66,7 +66,22 @@ class MemoryReview:
         with self.store.connect() as db:
             where, parameters = ('', (limit,)) if status == 'all' else ('WHERE status=?', (status, limit))
             rows = db.execute(f'SELECT * FROM memory_proposals {where} ORDER BY created_at,id LIMIT ?', parameters).fetchall()
-        return [dict(row) | {'payload': json.loads(row['payload'])} for row in rows]
+            results = []
+            for row in rows:
+                payload = json.loads(row['payload'])
+                if _digest(payload) != row['digest'] or payload['id'] != row['id']:
+                    raise ValueError('Memory proposal identity mismatch')
+                verification = self.evidence.evaluate(db, payload)
+                target = db.execute('SELECT revoked,expires_at FROM memories WHERE category=? AND memory_key=?',
+                                    (payload['category'],payload['key'])).fetchone()
+                blocked = bool(target and (target['revoked'] or (target['expires_at'] is not None and target['expires_at'] <= time.time())))
+                facts = [dict(db.execute('SELECT * FROM memory_facts WHERE id=?',(fact_id,)).fetchone())
+                         for fact_id in verification['fact_ids']]
+                results.append(dict(row) | {'payload':payload, 'verification':verification,
+                    'evidence':facts, 'expired':time.time() >= payload['expires_at'],
+                    'conflict':self._current(db,payload['category'],payload['key']) != payload['base_digest'],
+                    'target_blocked':blocked})
+        return results
 
     def validate(self, proposal_id, digest):
         with self.store.connect() as db:

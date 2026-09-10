@@ -129,7 +129,14 @@ async function loadPanel(panel) {
       : empty('No model request evidence recorded. Live Nemotron is not verified.');
   }
   if (panel === 'memory') {
-    const data = await api('/api/memory?limit=50');
+    const [data, proposals, evidence, history] = await Promise.all([
+      api('/api/memory?limit=50'), api('/api/memory/proposals'),
+      api('/api/memory/evidence'), api('/api/memory/history'),
+    ]);
+    SparkleMemoryReview.render({container: qs('#memoryProposalList'), proposals: proposals.proposals,
+      api, onChange: () => loadPanel('memory')});
+    SparkleMemoryReview.history(qs('#memoryEvidenceList'), evidence.events);
+    SparkleMemoryReview.history(qs('#memoryHistoryList'), history.versions);
     qs('#memoryList').innerHTML = data.memories.length
       ? data.memories.map((memory) => (
         `<div class="list-item"><strong>${escapeHtml(memory.key)}</strong><small>${escapeHtml(memory.category)} · ${escapeHtml(memory.value)}</small></div>`

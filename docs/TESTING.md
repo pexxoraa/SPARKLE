@@ -579,3 +579,12 @@ It requires no credentials and is not live truth-evaluation evidence.
 Retention tests: `tests.test_memory_lifecycle` covers expiry boundaries, archived/
 revoked exclusion, supersession, deletion history, rollback, and concurrent legacy
 migration. API/CLI tests exercise explicit policy changes and private history.
+
+Memory review UI: `node --test tests/memory_review_ui.test.cjs` runs ten
+credential-free DOM contract cases. `tests.test_memory_ui` invokes this from
+the ordinary Python suite (explicitly skipped if Node is unavailable). Tests
+exercise literal-text rendering, exact identity, operator confirmation,
+inconclusive override, rejection/expiry/conflict refusal, expiry at click time,
+duplicate submissions, safe errors, separate validation and history. This is
+not live-browser evidence. Memory evidence tests also verify read-only review
+listing and fail-closed tampered payload handling.

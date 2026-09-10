@@ -138,3 +138,25 @@ snapshots. This is auditable removal, not privacy erasure. History contains priv
 memory values and requires the same access/backup protection. There is no automatic
 history purge, storage quota, cryptographic tamper-proof log, or deleted-record
 auto-restore. Database-owner tampering is outside these application-level guards.
+
+## Dashboard review
+
+The Memory panel loads pending proposals separately from eligible records and
+completed audit history. It displays exact proposal identity/digest, expiry,
+current factual verification, target conflict/revocation state, and private
+attestation evidence. Values and audit snapshots are rendered with text nodes,
+never interpreted as HTML. These authenticated/local-operator views contain
+private data and must not be exposed publicly.
+
+Approval defaults to requiring VERIFIED evidence. An operator may explicitly
+allow an INCONCLUSIVE claim after independent review; REJECTED evidence cannot
+be overridden. Missing identity, unknown verification, expiry, target conflict,
+or blocked targets disable approval. The API always rechecks authoritative
+identity, evidence, expiry and memory state atomically; the display is not an
+authorization snapshot. Revalidation never approves a proposal. In-flight clicks
+are bounded and server errors do not become successful approvals.
+
+Deterministic Node DOM tests cover rendering and interaction contracts. They
+are not a real-browser accessibility or host acceptance claim. Factual validation
+still means agreement with active operator-attested exact fields, not general
+semantic truth. Version history is private retained data, not privacy erasure.

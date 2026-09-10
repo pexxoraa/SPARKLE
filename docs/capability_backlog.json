@@ -1,20 +1,20 @@
 {
   "schema": "SPARKLE-CAPABILITY-BACKLOG/1",
-  "source_checkpoint": "a22a1fba70a45530c5db59ab523232652c5f2713",
+  "source_checkpoint": "9a08991d8f2f21365f3cb7ded0a4edace5d08b0d",
   "level_3": "BLOCKED/PARKED",
   "deployment": "FROZEN",
   "current_work": {
-    "id": "memory-retention-and-history",
-    "priority": "P1",
-    "state": "LOCAL TEST VERIFIED",
-    "tests": "test_memory_lifecycle; API/CLI/resource/security suites",
-    "acceptance": "Policy exclusions, guarded restoration, immutable application version history, migration and rollback"
-  },
-  "next_implementable_work": {
     "id": "dashboard-memory-review",
     "priority": "P1",
-    "next_action": "Safe interactive proposal/evidence/history review",
-    "acceptance": "Exact identity actions, expired/conflicting approval refusal, safe rendering and UI tests"
+    "state": "LOCAL TEST VERIFIED",
+    "tests": "test_memory_ui; memory_review_ui.test.cjs; test_memory_evidence",
+    "acceptance": "Exact identity review, current evidence, expiry/conflicts and literal-text private history"
+  },
+  "next_implementable_work": {
+    "id": "research-source-verification-audit",
+    "priority": "P1",
+    "next_action": "Inspect source revision and citation validation paths before selecting a concrete change",
+    "acceptance": "Independent source identity checks; no assertion of semantic truth from citation presence"
   },
   "specific_external_blockers": [
     {
