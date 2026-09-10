@@ -28,6 +28,19 @@ class OrchestrationBoundTests(SystemCase):
         self.registry.inject(self.registry.active_id, adapter)
         return adapter
 
+    def test_research_citation_integrity_tool_runs_through_orchestrator(self):
+        self.system.knowledge.ingest_text('Fixture', 'Research fixture evidence.')
+        row=self.system.tools.execute('knowledge_search',{'query':'fixture'})[0]
+        citation={'source_id':row['source_id'],'chunk_id':row['chunk_id'],
+                  'digest':row['citation_digest'],'quote':'fixture evidence'}
+        self.inject([[ToolCall('citation','knowledge_verify',{'citations':[citation]})],[]])
+        with patch.object(self.system.tools, 'execute', wraps=self.system.tools.execute) as execute:
+            result=self.system.orchestrator.run('Verify this stored research citation',agent_name='research')
+        self.assertEqual(len(result.tool_calls_executed),1)
+        execute.assert_called_once()
+        self.assertEqual(execute.call_args.args[0],'knowledge_verify')
+        self.assertEqual(self.system.tools.execute('knowledge_verify',{'citations':[citation]})['claim_truth'],'INCONCLUSIVE')
+
     def test_model_memory_write_is_pending_and_trace_links_proposal(self):
         self.inject([[ToolCall('memory', 'memory_write', {'category':'goals','key':'fixture','value':'Practice daily'})], []])
         self.system.orchestrator.run('Remember a goal', agent_name='personal')

@@ -588,3 +588,9 @@ inconclusive override, rejection/expiry/conflict refusal, expiry at click time,
 duplicate submissions, safe errors, separate validation and history. This is
 not live-browser evidence. Memory evidence tests also verify read-only review
 listing and fail-closed tampered payload handling.
+
+Stored citation integrity tests: `tests.test_knowledge_evidence` exercises Unicode
+quotes, source identity, changed content/metadata, deletion, invalid/oversized
+batches and mixed results. System API and scripted Research Agent tool-loop
+tests verify integration. These are deterministic application-state checks;
+they do not demonstrate autonomous citation selection or external source truth.

@@ -2483,3 +2483,24 @@ contains the new dashboard asset. This is software/UI-contract evidence, not
 live-browser accessibility, generalized factual correctness or live-agent
 quality evidence. Live-agent baseline remains user-reported **3/12 (25%)**.
 Level 3 stays **BLOCKED/PARKED**; deployment stays **FROZEN**.
+
+## 2026-09-10 stored research citation integrity
+
+Continued from `2955238a3cda0f57973a20e40e34a748839d144d`, tree
+`d37eeb8b34b6f66a3d6ee39300d5af6e11666de1`; exact CI #95 passed.
+The re-audit found retrieved identities without independent production citation
+checking. The new bounded knowledge_verify tool/API checks stored source/chunk
+identity, a retrieved snapshot digest and exact quotation. Research Agent tool
+permissions include this read-only operation. Verification never establishes
+claim truth or external source credibility and never automatically approves an
+answer or a memory. Benchmark definitions, scoring and validators are unchanged.
+
+Fresh full suite: **444 total, 443 passed, 1 skipped, 0 failures/errors**
+(65.814s including runner overhead). Baseline: 436 total, 435 passed, 1 skipped.
+Focused citation/benchmark/agent/API/orchestration tests: **38/38** (5.725s).
+The deterministic benchmark report reproduced identically. No live request was
+made. Fresh wheel build, offline install, installed CLI help, compile and
+whitespace checks passed. General factual validation, source credibility,
+semantic entailment, source revision workflows and live research quality remain
+unfinished. Level 3 is BLOCKED/PARKED; deployment is FROZEN; live-agent baseline
+remains user-reported 3/12 validated, with competence unverified.

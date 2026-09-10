@@ -19,7 +19,7 @@ separately. Existing agent and builder quality limitations remain open.
 | SPARKLE CORE | PARTIALLY IMPLEMENTED | system.py; test_system_e2e.py: real local HTTP, deterministic model | Verified autonomous task completion across live components | P1 |
 | Orchestrator | PARTIALLY IMPLEMENTED | orchestrator.py; bounded tool loop, test_benchmarks.py independent outcome checks | Independent validator is benchmark-only; no automatic factual verification of chat or specialist synthesis | P1 |
 | Context | PARTIALLY IMPLEMENTED | context.py; test_benchmarks.py, test_system_e2e.py: bounded attributed untrusted user-role data | Live model prompt-injection resistance and context relevance on real user tasks | P1 |
-| Memory | IMPLEMENTED BUT INSUFFICIENTLY VERIFIED | storage.py; test_storage.py, test_storage_resources.py: scoped lifecycle/backup/rollback and explicit tool writes | Longitudinal quality, retention/deduplication policy; validated memory integration | P1 |
+| Memory | IMPLEMENTED BUT INSUFFICIENTLY VERIFIED | storage.py; test_storage.py, test_storage_resources.py: scoped lifecycle/backup/rollback and explicit tool writes | Longitudinal quality and general factual validation; exact attestation, retention and operator review now tested | P1 |
 | Knowledge | PARTIALLY IMPLEMENTED | storage.py, retrieval.py; 16-query benchmark and test_knowledge_retrieval.py | Real embedding evaluation, vector persistence, source revision workflows | P1 |
 | Model Manager | COMPLETE AND VERIFIED | model.py, registry.py; test_model_registry.py: switching and capability routing | Live provider evidence belongs to provider rows | Maintain |
 | Model Registry | COMPLETE AND VERIFIED | registry.py; test_model_registry.py: validation, persistence, switching/rollback | No identified gap in bounded registry contract | Maintain |
@@ -30,7 +30,7 @@ separately. Existing agent and builder quality limitations remain open.
 | Learning Agent | PARTIALLY IMPLEMENTED | agents.py, mastery.py; test_agent_evaluations.py, test_mastery.py | Demonstrated adaptive teaching and learning outcome evaluation | P2 |
 | Skill Agent | PARTIALLY IMPLEMENTED | agents.py, mastery.py; test_mastery.py: evidence-based local levels | Quality of skill assessment and practice recommendations | P2 |
 | Exam Agent | PARTIALLY IMPLEMENTED | agents.py; test_agent_evaluations.py: exam routing/instructions | Real grading, calibrated questions, exam outcome evidence | P2 |
-| Research Agent | PARTIALLY IMPLEMENTED | agents.py, knowledge.py; test_system_e2e.py: retrieved facts reach prompt | Source discovery, citation/factual verification, semantic quality | P1 |
+| Research Agent | PARTIALLY IMPLEMENTED | agents.py, knowledge.py; test_system_e2e.py: retrieved facts reach prompt | Source discovery, factual/semantic verification; stored citation identity checks now tested | P1 |
 | Coding Agent | PARTIALLY IMPLEMENTED | agents.py, tooling.py; test_agent_evaluations.py, test_development_verifier.py | Real generated patch correctness across representative tasks | P1 |
 | Software Engineering Agent | PARTIALLY IMPLEMENTED | agents.py, development.py; routing and local verifier tests | Repository-level semantic change evaluation and repair quality | P2 |
 | Application Builder | PARTIALLY IMPLEMENTED | builders.py; test_builders_agents.py: safe scaffold and artifacts | Functional requirements-to-application generation and user workflows | P2 |
@@ -160,3 +160,24 @@ contains the new dashboard asset. This is software/UI-contract evidence, not
 live-browser accessibility, generalized factual correctness or live-agent
 quality evidence. Live-agent baseline remains user-reported **3/12 (25%)**.
 Level 3 stays **BLOCKED/PARKED**; deployment stays **FROZEN**.
+
+## 2026-09-10 stored research citation integrity
+
+Continued from `2955238a3cda0f57973a20e40e34a748839d144d`, tree
+`d37eeb8b34b6f66a3d6ee39300d5af6e11666de1`; exact CI #95 passed.
+The re-audit found retrieved identities without independent production citation
+checking. The new bounded knowledge_verify tool/API checks stored source/chunk
+identity, a retrieved snapshot digest and exact quotation. Research Agent tool
+permissions include this read-only operation. Verification never establishes
+claim truth or external source credibility and never automatically approves an
+answer or a memory. Benchmark definitions, scoring and validators are unchanged.
+
+Fresh full suite: **444 total, 443 passed, 1 skipped, 0 failures/errors**
+(65.814s including runner overhead). Baseline: 436 total, 435 passed, 1 skipped.
+Focused citation/benchmark/agent/API/orchestration tests: **38/38** (5.725s).
+The deterministic benchmark report reproduced identically. No live request was
+made. Fresh wheel build, offline install, installed CLI help, compile and
+whitespace checks passed. General factual validation, source credibility,
+semantic entailment, source revision workflows and live research quality remain
+unfinished. Level 3 is BLOCKED/PARKED; deployment is FROZEN; live-agent baseline
+remains user-reported 3/12 validated, with competence unverified.

@@ -75,6 +75,19 @@ class SystemEndToEndTests(unittest.TestCase):
         except urllib.error.HTTPError as exc:
             return exc.code, json.loads(exc.read())
 
+    def test_stored_citation_verification_api(self):
+        self.system.knowledge.ingest_text('Fixture', 'A stored research statement.')
+        row=self.system.tools.execute('knowledge_search',{'query':'research'})[0]
+        citation={'source_id':row['source_id'],'chunk_id':row['chunk_id'],
+                  'digest':row['citation_digest'],'quote':'stored research statement'}
+        status,result=self.request('/api/knowledge/verify',{'citations':[citation]})
+        self.assertEqual(status,200)
+        self.assertEqual(result['citation_integrity'],'VERIFIED')
+        self.assertEqual(result['claim_truth'],'INCONCLUSIVE')
+        status,result=self.request('/api/knowledge/verify',{'citations':[citation|{'quote':'invented'}]})
+        self.assertEqual(result['citation_integrity'],'REJECTED')
+        self.assertEqual(self.request('/api/knowledge/verify',{'citations':[]})[0],400)
+
     def test_memory_retention_revocation_and_private_history_api(self):
         mid=self.system.memory.remember('goals','fixture','Practice daily')
         self.assertEqual(self.request('/api/memory/retention',{'memory_id':mid,'seconds':60,'approved':False})[0],400)

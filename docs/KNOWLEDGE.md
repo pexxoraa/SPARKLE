@@ -59,3 +59,29 @@ See [Benchmarks](BENCHMARKS.md) for the versioned corpus, lexical baseline,
 opt-in embedding/hybrid test paths, bounded untrusted context, four-agent
 outcome harness and independent validation. Real semantic and live-model
 quality remain unverified; production retrieval remains lexical.
+
+## Stored citation integrity
+
+`knowledge_search` tool results include `citation_digest`, a SHA-256 snapshot
+of source/chunk identity, position, title, URI and complete stored chunk text.
+The Research Agent can call `knowledge_verify` with up to 20 citations, each
+containing `source_id`, `chunk_id`, `digest`, and an exact `quote` (1–1800
+characters). The protected `POST /api/knowledge/verify` accepts the same tool
+arguments. No URL is fetched or followed by verification.
+
+The checker reads one SQLite snapshot. Missing chunks, wrong source identities,
+changed snapshots, and absent exact quotes are REJECTED. Invalid/ambiguous
+citations remain INCONCLUSIVE. A mixed batch never hides a failed citation.
+Results report index, status and reason without echoing private text or URIs.
+
+VERIFIED means only that the supplied quote exists in the identified stored
+snapshot. `claim_truth=INCONCLUSIVE` and `external_source_verified=false` remain
+explicit even then. This is not semantic entailment, source credibility, current
+web verification, or model-answer validation. A model that cites an irrelevant
+but genuine quotation has not proven its answer. Stored knowledge remains
+untrusted. No automatic answer approval or memory approval is introduced.
+
+The digest binds a retrieved snapshot; it is not a signature against a database
+owner who can replace both data and evidence. Revision/retention workflows and
+independent external source verification remain unfinished work. Lexical and
+experimental semantic ranking are unchanged.

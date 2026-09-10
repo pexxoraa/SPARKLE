@@ -1,20 +1,20 @@
 {
   "schema": "SPARKLE-CAPABILITY-BACKLOG/1",
-  "source_checkpoint": "9a08991d8f2f21365f3cb7ded0a4edace5d08b0d",
+  "source_checkpoint": "2955238a3cda0f57973a20e40e34a748839d144d",
   "level_3": "BLOCKED/PARKED",
   "deployment": "FROZEN",
   "current_work": {
-    "id": "dashboard-memory-review",
+    "id": "stored-citation-integrity",
     "priority": "P1",
     "state": "LOCAL TEST VERIFIED",
-    "tests": "test_memory_ui; memory_review_ui.test.cjs; test_memory_evidence",
-    "acceptance": "Exact identity review, current evidence, expiry/conflicts and literal-text private history"
+    "tests": "test_knowledge_evidence; API and Research Agent integration",
+    "acceptance": "Exact stored identity/digest/quote checks, independent of claim truth"
   },
   "next_implementable_work": {
-    "id": "research-source-verification-audit",
+    "id": "knowledge-source-lifecycle",
     "priority": "P1",
-    "next_action": "Inspect source revision and citation validation paths before selecting a concrete change",
-    "acceptance": "Independent source identity checks; no assertion of semantic truth from citation presence"
+    "next_action": "Inspect revision retention and retrieval exclusion requirements",
+    "acceptance": "Auditable source supersession and consistent exclusion across retrieval paths"
   },
   "specific_external_blockers": [
     {
@@ -618,6 +618,16 @@
       "priority": "P1",
       "tests": "test_memory_evidence; CLI/API/security/resource regressions",
       "acceptance": "Current exact attestation validation; unsupported/conflicting claims inconclusive; strict retrieval rechecks evidence"
+    },
+    {
+      "id": "dashboard-memory-review",
+      "priority": "P1",
+      "state": "LOCAL TEST VERIFIED",
+      "tests": "test_memory_ui; memory_review_ui.test.cjs; test_memory_evidence",
+      "acceptance": "Exact identity review, current evidence, expiry/conflicts and literal-text private history",
+      "commit": "2955238a3cda0f57973a20e40e34a748839d144d",
+      "ci_run": 95,
+      "ci_status": "success"
     }
   ],
   "live_agent_baseline": {

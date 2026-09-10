@@ -61,6 +61,7 @@ from sparkle.tooling import (
     CalculatorTool,
     FileReadTool,
     KnowledgeSearchTool,
+    KnowledgeVerifyTool,
     MemorySearchTool,
     MemoryProposalTool,
     ProjectSearchTool,
@@ -149,6 +150,7 @@ class SparkleSystem:
         self.tools.register(MemorySearchTool(self.memory))
         self.tools.register(MemoryProposalTool(self.memory_review))
         self.tools.register(KnowledgeSearchTool(self.knowledge))
+        self.tools.register(KnowledgeVerifyTool(self.knowledge))
         self.tools.register(ProjectSearchTool(self.projects))
         self.tools.register(SkillSearchTool(self.skills))
         self.tools.register(FileReadTool(project_root()))

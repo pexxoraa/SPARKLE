@@ -17,6 +17,7 @@ from sparkle.external_worker import ExternalWorkerClient
 from sparkle.mastery import SkillMasteryStore
 from sparkle.projects import ProjectStore
 from sparkle.storage import KnowledgeStore, MemoryStore
+from sparkle.knowledge_evidence import citation_digest, verify_citations
 
 
 class ToolError(RuntimeError):
@@ -246,7 +247,31 @@ class KnowledgeSearchTool(Tool):
         self.store = store
 
     def run(self, arguments: dict[str, Any]) -> Any:
-        return self.store.search(str(arguments.get("query", "")), limit=int(arguments.get("limit", 5)))
+        return [row | {"citation_digest": citation_digest(row)} for row in
+                self.store.search(str(arguments.get("query", "")), limit=int(arguments.get("limit", 5)))]
+
+
+class KnowledgeVerifyTool(Tool):
+    name = "knowledge_verify"
+    description = "Check exact quoted text and retrieved digest against stored source/chunk identity. This does not prove claim truth or external source validity."
+    parameters = {
+        "type": "object", "properties": {"citations": {
+            "type": "array", "minItems": 1, "maxItems": 20, "items": {
+                "type": "object", "properties": {
+                    "source_id": {"type": "integer"}, "chunk_id": {"type": "integer"},
+                    "digest": {"type": "string"}, "quote": {"type": "string", "maxLength": 1800}},
+                "required": ["source_id", "chunk_id", "digest", "quote"],
+                "additionalProperties": False}}},
+        "required": ["citations"], "additionalProperties": False,
+    }
+
+    def __init__(self, store):
+        self.store = store
+
+    def run(self, arguments):
+        if not isinstance(arguments, dict) or set(arguments) != {'citations'}:
+            raise ValueError('Only citations are accepted')
+        return verify_citations(self.store, arguments['citations'])
 
 
 class FileReadTool(Tool):

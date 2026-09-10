@@ -44,3 +44,7 @@ tools. Verification provides static syntax/parse evidence only. Packaging
 creates deterministic bytes without executing source. Agents must not describe
 either as application execution or deployment; deployment records remain an
 operator/API boundary rather than a model tool.
+
+Research can use `knowledge_verify` after `knowledge_search`. Exact stored citation
+integrity is independently checked, but factual truth and relevance remain
+inconclusive. This optional tool does not automatically validate final answers.

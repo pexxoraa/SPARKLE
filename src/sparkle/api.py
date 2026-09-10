@@ -576,6 +576,8 @@ class SparkleHandler(BaseHTTPRequestHandler):
                     if self.path == "/api/chat" else MAX_BODY_BYTES
                 )
             )
+            if self.path == "/api/knowledge/verify":
+                return self._json(self.system.tools.execute("knowledge_verify", data))
             if self.path == "/api/chat":
                 allowed_chat_fields = {
                     "message", "content", "agent", "agents", "user_id",
