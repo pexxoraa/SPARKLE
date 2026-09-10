@@ -8,6 +8,7 @@ import time
 import uuid
 
 from sparkle.storage import MemoryStore, utc_now
+from sparkle.memory_evidence import MemoryEvidence
 
 
 def _digest(value):
@@ -18,6 +19,7 @@ def _digest(value):
 class MemoryReview:
     def __init__(self, store: MemoryStore):
         self.store = store
+        self.evidence = MemoryEvidence(store)
         with store.connect() as db:
             db.execute('''CREATE TABLE IF NOT EXISTS memory_proposals (
                 id TEXT PRIMARY KEY, payload TEXT NOT NULL, digest TEXT NOT NULL,
@@ -66,11 +68,27 @@ class MemoryReview:
             rows = db.execute(f'SELECT * FROM memory_proposals {where} ORDER BY created_at,id LIMIT ?', parameters).fetchall()
         return [dict(row) | {'payload': json.loads(row['payload'])} for row in rows]
 
-    def review(self, proposal_id, digest, decision, *, reviewer):
+    def validate(self, proposal_id, digest):
+        with self.store.connect() as db:
+            db.execute('BEGIN IMMEDIATE')
+            row = db.execute('SELECT * FROM memory_proposals WHERE id=?', (proposal_id,)).fetchone()
+            if row is None or row['digest'] != digest:
+                raise ValueError('Memory proposal identity mismatch')
+            payload = json.loads(row['payload'])
+            if _digest(payload) != digest or payload['id'] != proposal_id:
+                raise ValueError('Memory proposal identity mismatch')
+            result = self.evidence.evaluate(db, payload)
+            result['proposal_digest'] = digest
+            self.evidence.event(db, 'proposal_validated', proposal_id, result)
+        return result
+
+    def review(self, proposal_id, digest, decision, *, reviewer, require_verified=False):
         # This method is an operator boundary, deliberately absent from model tools.
         if (not isinstance(proposal_id, str) or not isinstance(digest, str)
                 or decision not in ('approve', 'reject') or reviewer not in ('cli', 'authenticated_api', 'local_api')):
             raise ValueError('Invalid memory review request')
+        if type(require_verified) is not bool:
+            raise ValueError('Verification policy must be a boolean')
         with self.store.connect() as db:
             db.execute('BEGIN IMMEDIATE')
             row = db.execute('SELECT * FROM memory_proposals WHERE id=?', (proposal_id,)).fetchone()
@@ -79,16 +97,20 @@ class MemoryReview:
             payload = json.loads(row['payload'])
             if digest != row['digest'] or _digest(payload) != digest or payload['id'] != proposal_id:
                 raise ValueError('Memory proposal identity mismatch')
+            verification = self.evidence.evaluate(db, payload)
             memory_id = None
             status = 'rejected'
             if decision == 'approve':
+                if verification['status'] == 'REJECTED' or (require_verified and verification['status'] != 'VERIFIED'):
+                    raise ValueError('Memory proposal does not satisfy factual verification policy')
                 if time.time() >= payload['expires_at']:
                     raise ValueError('Memory proposal expired')
                 if self._current(db, payload['category'], payload['key']) != payload['base_digest']:
                     raise ValueError('Memory changed since proposal; new review required')
                 now = utc_now()
                 metadata = json.dumps({'source': 'operator_reviewed_agent_proposal',
-                                       'proposal_id': proposal_id, 'proposal_digest': digest, 'reviewer': reviewer})
+                                       'proposal_id': proposal_id, 'proposal_digest': digest, 'reviewer': reviewer,
+                                       'factual_verification': verification, 'require_verified': require_verified})
                 db.execute('''INSERT INTO memories(category,memory_key,value,importance,metadata,created_at,updated_at)
                     VALUES(?,?,?,?,?,?,?) ON CONFLICT(category,memory_key) DO UPDATE SET
                     value=excluded.value,importance=excluded.importance,metadata=excluded.metadata,
@@ -99,4 +121,7 @@ class MemoryReview:
                 status = 'approved'
             db.execute('UPDATE memory_proposals SET status=?,reviewed_at=?,reviewer=?,memory_id=? WHERE id=?',
                        (status, utc_now(), reviewer, memory_id, proposal_id))
-        return {'proposal_id': proposal_id, 'digest': digest, 'status': status, 'memory_id': memory_id}
+            self.evidence.event(db, 'proposal_reviewed', proposal_id, {'proposal_digest': digest,
+                'status': status, 'reviewer': reviewer, 'verification': verification, 'memory_id': memory_id})
+        return {'proposal_id': proposal_id, 'digest': digest, 'status': status, 'memory_id': memory_id,
+                'verification': verification}

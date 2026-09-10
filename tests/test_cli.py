@@ -18,6 +18,21 @@ from sparkle.system import SparkleSystem
 
 
 class CLITests(unittest.TestCase):
+    def test_fact_attestation_validation_and_revocation_commands(self):
+        with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ, {"SPARKLE_DATA_DIR": directory}):
+            system = SparkleSystem()
+            p = system.memory_review.propose({"category":"preferences","key":"editor","value":"vim"})
+            def invoke(args):
+                output = io.StringIO()
+                with contextlib.redirect_stdout(output): self.assertEqual(main(args),0)
+                return json.loads(output.getvalue())
+            fact = invoke(["memory-attest","preferences","editor","vim","user:settings"])
+            self.assertEqual(invoke(["memory-validate",p['proposal_id'],p['digest']])['status'],'VERIFIED')
+            self.assertEqual(invoke(["memory-review",p['proposal_id'],p['digest'],'approve','--require-verified'])['status'],'approved')
+            self.assertTrue(invoke(["memory-fact-revoke",str(fact['fact_id'])])['revoked'])
+            self.assertEqual(system.memory.recent(),[])
+            self.assertGreater(len(invoke(["memory-evidence"])['events']),0)
+
     def test_memory_review_commands_require_exact_proposal(self):
         with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ, {"SPARKLE_DATA_DIR": directory}):
             system = SparkleSystem()

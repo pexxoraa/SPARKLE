@@ -72,3 +72,41 @@ ties). Reviewed history cannot bury pending work in the bounded result set.
 Use `sparkle memory-proposals --status approved` (or `rejected` / `all`) for
 history; API clients use `/api/memory/proposals?status=approved`. Reviews do
 not change retention policy, expiry, exact-digest checks or authorization.
+
+## Exact factual validation against operator attestations
+
+`memory-attest CATEGORY KEY VALUE SOURCE_REF --ttl-seconds 86400` registers an
+independently checked operator fact. It is not a model tool. Source references
+are provenance labels, not fetched or authenticated websites. The operator is
+responsible for establishing the fact independently of a proposal. Values
+represent exact field assertions; paraphrase equivalence is not inferred.
+
+`memory-validate PROPOSAL_ID DIGEST` returns VERIFIED for an exact active match,
+REJECTED for a different value under the same exact-field contract, and
+INCONCLUSIVE for missing/expired/revoked evidence, conflicts, or over 64 active
+attestations for a key. Agreement is not independent source voting or proof of
+universal truth. Unstructured claims without an attested field stay inconclusive.
+Validation never authorizes a write. `memory-review ... approve --require-verified`
+requires current VERIFIED evidence. Review without that flag can independently
+approve INCONCLUSIVE content, but cannot approve a currently REJECTED claim.
+It records that distinction in memory metadata. Existing explicit operator writes
+remain supported. All fact/approval fields stay unavailable to model tools.
+
+`memory-fact-revoke ID` revokes an attestation; `memory-evidence` returns bounded
+content-free audit events. Facts have revision IDs and expiry. Approval rechecks
+facts in the same transaction as the memory update. Strict-policy retrieval
+rechecks active facts before applying result limits: revocation, expiry, conflict
+and contradiction exclude the record even if old metadata says VERIFIED.
+Archival export retains excluded records; it is not model retrieval.
+
+API equivalents: GET `/api/memory/facts`, GET `/api/memory/evidence`, POST
+`/api/memory/attest`, `/api/memory/fact-revoke`, `/api/memory/validate`; review
+accepts optional boolean `require_verified`. Existing auth/CSRF rules apply.
+Audit UPDATE/DELETE is rejected by SQLite triggers. Database-owner tamper
+resistance is not claimed; protect the database and backups. History records
+digests and revisions, not historical plaintext attestation values. The default
+operator-approved policy is distinct from strict verified-only retrieval.
+
+This is a credential-free exact-claim validator, not an LLM judge, general
+fact-checker, web verifier, or semantic entailment engine. Broader authoritative
+application-state readers and natural-language claim evaluation remain open.

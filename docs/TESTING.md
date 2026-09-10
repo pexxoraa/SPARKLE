@@ -570,3 +570,8 @@ See [Benchmarks](BENCHMARKS.md) for the versioned corpus, lexical baseline,
 opt-in embedding/hybrid test paths, bounded untrusted context, four-agent
 outcome harness and independent validation. Real semantic and live-model
 quality remain unverified; production retrieval remains lexical.
+
+Memory factual validation: `PYTHONPATH=src python -m unittest tests.test_memory_evidence`
+uses deterministic operator facts for match/contradiction/conflict/expiry/revocation,
+strict retrieval, audit mutation rejection, and model-authority rejection.
+It requires no credentials and is not live truth-evaluation evidence.

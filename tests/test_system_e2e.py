@@ -75,6 +75,22 @@ class SystemEndToEndTests(unittest.TestCase):
         except urllib.error.HTTPError as exc:
             return exc.code, json.loads(exc.read())
 
+    def test_fact_validation_and_strict_review_over_http(self):
+        claim = {"category":"preferences", "key":"editor", "value":"vim"}
+        p = self.system.memory_review.propose(claim)
+        identity = {"proposal_id":p["proposal_id"], "digest":p["digest"]}
+        self.assertEqual(self.request("/api/memory/validate",identity)[1]["status"], "INCONCLUSIVE")
+        self.assertEqual(self.request("/api/memory/review",identity | {"decision":"approve", "require_verified":True})[0],400)
+        status, fact = self.request("/api/memory/attest",claim | {"source_ref":"user:settings"})
+        self.assertEqual(status,200)
+        self.assertEqual(self.request("/api/memory/validate",identity)[1]["status"],"VERIFIED")
+        self.assertEqual(self.request("/api/memory/review",identity | {"decision":"approve", "require_verified":True})[0],200)
+        self.assertEqual(len(self.system.memory.recent()),1)
+        self.assertEqual(self.request("/api/memory/fact-revoke",{"fact_id":fact["fact_id"]})[0],200)
+        self.assertEqual(self.system.memory.recent(),[])
+        self.assertEqual(self.request("/api/memory/evidence")[0],200)
+        self.assertNotIn("memory_attest",self.system.tools.names)
+
     def test_memory_proposal_requires_operator_review_over_http(self):
         p = self.system.tools.execute("memory_write", {
             "category": "goals", "key": "fixture", "value": "Practice daily",

@@ -400,6 +400,10 @@ class SparkleHandler(BaseHTTPRequestHandler):
                     self.system.ai_system_controlled_executor.inspect(suffix)
                 ),
             })
+        if parsed.path == "/api/memory/facts":
+            return self._json({"facts": self.system.memory_review.evidence.facts()})
+        if parsed.path == "/api/memory/evidence":
+            return self._json({"events": self.system.memory_review.evidence.history()})
         if parsed.path == "/api/memory/proposals":
             return self._json({"proposals": self.system.memory_review.list(status=query.get("status", ["pending"])[0])})
         if parsed.path == "/api/memory":
@@ -893,12 +897,27 @@ class SparkleHandler(BaseHTTPRequestHandler):
                     raise ValueError("Agent removal requires explicit approval")
                 removed = self.system.agents.remove(str(data["name"]))
                 return self._json({"ok": True, "removed": removed})
+            if self.path == "/api/memory/attest":
+                if set(data) - {"category", "key", "value", "source_ref", "ttl_seconds"}:
+                    raise ValueError("Invalid fact attestation fields")
+                return self._json(self.system.memory_review.evidence.attest(**data,
+                    operator="authenticated_api" if self.system.api_access.required else "local_api"))
+            if self.path == "/api/memory/fact-revoke":
+                if set(data) != {"fact_id"}:
+                    raise ValueError("Invalid fact revocation fields")
+                return self._json(self.system.memory_review.evidence.revoke(data["fact_id"],
+                    operator="authenticated_api" if self.system.api_access.required else "local_api"))
+            if self.path == "/api/memory/validate":
+                if set(data) != {"proposal_id", "digest"}:
+                    raise ValueError("Invalid validation fields")
+                return self._json(self.system.memory_review.validate(data["proposal_id"], data["digest"]))
             if self.path == "/api/memory/review":
-                if set(data) != {"proposal_id", "digest", "decision"}:
+                if set(data) - {"proposal_id", "digest", "decision", "require_verified"} or not {"proposal_id", "digest", "decision"} <= set(data):
                     raise ValueError("Invalid memory review fields")
                 return self._json(self.system.memory_review.review(
                     data["proposal_id"], data["digest"], data["decision"],
-                    reviewer="authenticated_api" if self.system.api_access.required else "local_api"))
+                    reviewer="authenticated_api" if self.system.api_access.required else "local_api",
+                    require_verified=data.get("require_verified", False)))
             if self.path == "/api/memory":
                 memory_id = self.system.memory.remember(
                     str(data["category"]), str(data["key"]), str(data["value"]),

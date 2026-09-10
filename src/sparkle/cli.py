@@ -42,6 +42,17 @@ def build_parser() -> argparse.ArgumentParser:
     review.add_argument("proposal_id")
     review.add_argument("digest")
     review.add_argument("decision", choices=["approve", "reject"])
+    review.add_argument("--require-verified", action="store_true")
+    validate = sub.add_parser("memory-validate", help="Validate an exact proposal against operator-attested facts")
+    validate.add_argument("proposal_id")
+    validate.add_argument("digest")
+    attest = sub.add_parser("memory-attest", help="Attest an independently checked fact; never a model assertion")
+    for field in ("category", "key", "value", "source_ref"):
+        attest.add_argument(field)
+    attest.add_argument("--ttl-seconds", type=int, default=86400)
+    revoke = sub.add_parser("memory-fact-revoke", help="Revoke an operator attestation")
+    revoke.add_argument("fact_id", type=int)
+    sub.add_parser("memory-evidence", help="Inspect content-free validation and attestation history")
     memory = sub.add_parser("remember", help="Store an explicit durable memory")
     memory.add_argument("category")
     memory.add_argument("key")
@@ -425,11 +436,24 @@ def main(argv: list[str] | None = None) -> int:
             "model_requests": system.models.runtime.recent(limit=args.limit),
         })
         return 0
+    if args.command == "memory-attest":
+        _print(system.memory_review.evidence.attest(args.category, args.key, args.value, args.source_ref,
+            ttl_seconds=args.ttl_seconds, operator="cli"))
+        return 0
+    if args.command == "memory-fact-revoke":
+        _print(system.memory_review.evidence.revoke(args.fact_id, operator="cli"))
+        return 0
+    if args.command == "memory-evidence":
+        _print({"events": system.memory_review.evidence.history()})
+        return 0
+    if args.command == "memory-validate":
+        _print(system.memory_review.validate(args.proposal_id, args.digest))
+        return 0
     if args.command == "memory-proposals":
         _print({"proposals": system.memory_review.list(status=args.status)})
         return 0
     if args.command == "memory-review":
-        _print(system.memory_review.review(args.proposal_id, args.digest, args.decision, reviewer="cli"))
+        _print(system.memory_review.review(args.proposal_id, args.digest, args.decision, reviewer="cli", require_verified=args.require_verified))
         return 0
     if args.command == "remember":
         memory_id = system.memory.remember(args.category, args.key, args.value, metadata={"source": "cli"})

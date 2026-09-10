@@ -1,24 +1,20 @@
 {
   "schema": "SPARKLE-CAPABILITY-BACKLOG/1",
-  "source_checkpoint": "0c1882ebb7b98d187f273873b3bb613a34c9a009",
+  "source_checkpoint": "bcf1a4ebb002a95ef49aa9e61225aada8cc9d0cd",
   "level_3": "BLOCKED/PARKED",
   "deployment": "FROZEN",
   "current_work": {
-    "id": "pending-memory-review-visibility",
-    "priority": "P1",
+    "id": "operator-attested-exact-memory-validation",
     "state": "LOCAL TEST VERIFIED",
-    "acceptance": "Completed review history cannot hide pending proposals; oldest pending reviewed first; explicit bounded history filters",
-    "tests": "test_memory_review, test_cli, test_system_e2e"
+    "priority": "P1",
+    "tests": "test_memory_evidence; CLI/API/security/resource regressions",
+    "acceptance": "Current exact attestation validation; unsupported/conflicting claims inconclusive; strict retrieval rechecks evidence"
   },
   "next_implementable_work": {
-    "id": "machine-validated-memory",
+    "id": "memory-retention-and-review-ui",
     "priority": "P1",
-    "dependency": [
-      "trusted operator-owned criteria",
-      "authoritative observation readers"
-    ],
-    "next_action": "Extend review with independently collected evidence without model-owned validation criteria",
-    "acceptance": "Rejected or inconclusive factual validation never authorizes memory"
+    "next_action": "Explicit lifecycle policies with auditable history and safe dashboard review",
+    "acceptance": "Expired/revoked/archive exclusions, history preserved, exact reviewed UI actions"
   },
   "specific_external_blockers": [
     {
@@ -608,6 +604,13 @@
       "commit": "0c1882ebb7b98d187f273873b3bb613a34c9a009",
       "ci_run": 91,
       "ci_status": "success"
+    },
+    {
+      "id": "pending-memory-review-visibility",
+      "priority": "P1",
+      "state": "LOCAL TEST VERIFIED",
+      "acceptance": "Completed review history cannot hide pending proposals; oldest pending reviewed first; explicit bounded history filters",
+      "tests": "test_memory_review, test_cli, test_system_e2e"
     }
   ],
   "live_agent_baseline": {

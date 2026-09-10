@@ -438,3 +438,22 @@ Current user-supplied real-agent baseline remains 3/12 validated, 9 rejected
 (25%); competence unverified. Level 3 BLOCKED/PARKED; deployment FROZEN.
 Automatic factual memory validation, retention, and dashboard review remain
 unfinished. The proposal lifecycle does not establish truth of an agent claim.
+
+## Operator-attested factual memory validation
+
+Base: bcf1a4ebb002a95ef49aa9e61225aada8cc9d0cd. Exact operator-attested
+field claims now receive VERIFIED / REJECTED / INCONCLUSIVE evidence. Approval
+remains separate; strict retrieval rechecks current facts after revocation,
+expiry or conflicts. General semantic truth and external source verification
+are not claimed. See MEMORY.md for the trust contract and limitations.
+
+Baseline: 413 tests, 412 passed, one optional live skip (62.786 seconds).
+Focused memory/resource/security/API/CLI: 69/69 (6.783 seconds).
+Full suite: 424 tests, 423 passed, one optional live skip, zero failures/errors
+(77.422 seconds). Eleven added tests. Deterministic benchmark outcomes unchanged.
+Compile, dashboard syntax, whitespace and 192-file secret-pattern/path/symlink/size
+audit passed. Fresh offline wheel installation and installed CLI help passed.
+Wheel SHA256: `177c4e2baa1b289640b208257bda6c7e83f049f2fab3d206987c6bf09eb5d5c8`. Version unchanged.
+No live benchmark or host acceptance run. Current user-supplied live baseline:
+3 validated / 9 rejected (25%); agent competence unverified. Level 3 stays
+BLOCKED/PARKED; deployment FROZEN. Retention and dashboard review are next.

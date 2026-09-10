@@ -4,6 +4,7 @@ import hashlib
 import json
 import re
 import sqlite3
+import time
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -45,6 +46,7 @@ class SQLiteStore:
         try:
             connection = sqlite3.connect(self.path, timeout=10, factory=ClosingConnection)
             connection.row_factory = sqlite3.Row
+            connection.create_function("sparkle_now", 0, time.time)
             connection.execute("PRAGMA journal_mode=WAL")
             connection.execute("PRAGMA foreign_keys=ON")
             return connection
@@ -67,6 +69,19 @@ class SQLiteStore:
 
 
 class MemoryStore(SQLiteStore):
+    # A strict verified-memory policy is checked against current operator facts
+    # at retrieval time, never just against a historical metadata success flag.
+    VISIBILITY = """archived=0 AND (
+        json_extract(metadata, '$.require_verified') IS NOT 1 OR (
+            EXISTS (SELECT 1 FROM memory_facts f WHERE f.category=memories.category
+                AND f.memory_key=memories.memory_key AND f.revoked=0
+                AND f.expires_at>sparkle_now() AND f.value=memories.value)
+            AND NOT EXISTS (SELECT 1 FROM memory_facts f WHERE f.category=memories.category
+                AND f.memory_key=memories.memory_key AND f.revoked=0
+                AND f.expires_at>sparkle_now() AND f.value!=memories.value)
+            AND (SELECT count(*) FROM memory_facts f WHERE f.category=memories.category
+                AND f.memory_key=memories.memory_key AND f.revoked=0
+                AND f.expires_at>sparkle_now())<=64))"""
     VALID_CATEGORIES = {
         "user", "goals", "preferences", "skills", "learning", "exams", "projects",
         "research", "content", "tasks", "decisions", "mistakes", "conversations", "summaries",
@@ -93,6 +108,8 @@ class MemoryStore(SQLiteStore):
                 )
             """)
             connection.execute("CREATE INDEX IF NOT EXISTS idx_memories_category ON memories(category, archived)")
+        from sparkle.memory_evidence import MemoryEvidence
+        MemoryEvidence(self)
 
     def remember(
         self,
@@ -133,7 +150,7 @@ class MemoryStore(SQLiteStore):
         # An unmatched nonempty query is not a request to return recent memory.
         if query.strip() and not terms:
             return []
-        where = ["archived=0"]
+        where = [self.VISIBILITY]
         params: list[Any] = []
         if category:
             where.append("category=?")
@@ -150,7 +167,7 @@ class MemoryStore(SQLiteStore):
         return [self._public(row) for row in rows]
 
     def recent(self, *, limit: int = 20, category: str | None = None) -> list[dict[str, Any]]:
-        where, params = "archived=0", []
+        where, params = self.VISIBILITY, []
         if category:
             where += " AND category=?"
             params.append(category)
@@ -181,7 +198,7 @@ class MemoryStore(SQLiteStore):
         return cursor.rowcount == 1
 
     def export(self, *, include_archived: bool = True) -> list[dict[str, Any]]:
-        where = "" if include_archived else " WHERE archived=0"
+        where = "" if include_archived else " WHERE " + self.VISIBILITY
         with self.connect() as connection:
             rows = connection.execute(
                 f"SELECT * FROM memories{where} ORDER BY id"

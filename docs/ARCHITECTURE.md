@@ -252,3 +252,12 @@ not retrieval inputs. Model success is not write authorization. Trace metadata
 links proposal IDs, while private values stay in the memory database. Existing
 benchmark registries retain their direct-write fixture semantics for comparison.
 Automated independent factual validation remains future work.
+
+### Factual memory evidence
+
+`MemoryEvidence` maintains a separate operator-only attestation ledger and
+append-only structural event history. `MemoryReview` evaluates exact category/key
+claims against active facts; proposal identity and write authorization remain
+separate. Strict-policy retrieval revalidates current facts in SQL before ranking
+limits. No provider, model, or retrieved document can install trusted facts via
+an agent tool. This narrow contract does not establish semantic truth.
