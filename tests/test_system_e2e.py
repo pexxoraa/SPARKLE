@@ -75,6 +75,16 @@ class SystemEndToEndTests(unittest.TestCase):
         except urllib.error.HTTPError as exc:
             return exc.code, json.loads(exc.read())
 
+    def test_memory_retention_revocation_and_private_history_api(self):
+        mid=self.system.memory.remember('goals','fixture','Practice daily')
+        self.assertEqual(self.request('/api/memory/retention',{'memory_id':mid,'seconds':60,'approved':False})[0],400)
+        self.assertEqual(self.request('/api/memory/retention',{'memory_id':mid,'seconds':60,'approved':True})[0],200)
+        self.assertEqual(self.request('/api/memory/revoke',{'memory_id':mid,'approved':True})[0],200)
+        self.assertEqual(self.request('/api/memory')[1]['memories'],[])
+        versions=self.request('/api/memory/history')[1]['versions']
+        self.assertEqual(versions[0]['action'],'revoked')
+        self.assertEqual(versions[-1]['snapshot']['value'],'Practice daily')
+
     def test_fact_validation_and_strict_review_over_http(self):
         claim = {"category":"preferences", "key":"editor", "value":"vim"}
         p = self.system.memory_review.propose(claim)

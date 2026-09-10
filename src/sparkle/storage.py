@@ -71,7 +71,7 @@ class SQLiteStore:
 class MemoryStore(SQLiteStore):
     # A strict verified-memory policy is checked against current operator facts
     # at retrieval time, never just against a historical metadata success flag.
-    VISIBILITY = """archived=0 AND (
+    VISIBILITY = """archived=0 AND revoked=0 AND (expires_at IS NULL OR expires_at>sparkle_now()) AND (
         json_extract(metadata, '$.require_verified') IS NOT 1 OR (
             EXISTS (SELECT 1 FROM memory_facts f WHERE f.category=memories.category
                 AND f.memory_key=memories.memory_key AND f.revoked=0
@@ -93,6 +93,7 @@ class MemoryStore(SQLiteStore):
 
     def initialize(self) -> None:
         with self.connect() as connection:
+            connection.execute("BEGIN IMMEDIATE")
             connection.execute("""
                 CREATE TABLE IF NOT EXISTS memories (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -108,6 +109,8 @@ class MemoryStore(SQLiteStore):
                 )
             """)
             connection.execute("CREATE INDEX IF NOT EXISTS idx_memories_category ON memories(category, archived)")
+            from sparkle.memory_lifecycle import initialize
+            initialize(connection)
         from sparkle.memory_evidence import MemoryEvidence
         MemoryEvidence(self)
 
@@ -188,7 +191,7 @@ class MemoryStore(SQLiteStore):
     def restore(self, memory_id: int) -> bool:
         with self.connect() as connection:
             cursor = connection.execute(
-                "UPDATE memories SET archived=0, updated_at=? WHERE id=?", (utc_now(), memory_id)
+                "UPDATE memories SET archived=0, updated_at=? WHERE id=? AND revoked=0 AND (expires_at IS NULL OR expires_at>sparkle_now())", (utc_now(), memory_id)
             )
         return cursor.rowcount == 1
 
@@ -196,6 +199,29 @@ class MemoryStore(SQLiteStore):
         with self.connect() as connection:
             cursor = connection.execute("DELETE FROM memories WHERE id=?", (memory_id,))
         return cursor.rowcount == 1
+
+    def set_retention(self, memory_id: int, seconds: int | None) -> bool:
+        if type(memory_id) is not int or (seconds is not None and (type(seconds) is not int or not 1 <= seconds <= 31536000)):
+            raise ValueError("Retention must be null or an integer from 1 to 31536000 seconds")
+        with self.connect() as db:
+            cursor = db.execute("UPDATE memories SET expires_at=?,updated_at=? WHERE id=?",
+                (None if seconds is None else time.time()+seconds, utc_now(), memory_id))
+        return cursor.rowcount == 1
+
+    def revoke(self, memory_id: int) -> bool:
+        if type(memory_id) is not int:
+            raise ValueError("Memory ID must be an integer")
+        with self.connect() as db:
+            cursor = db.execute("UPDATE memories SET revoked=1,updated_at=? WHERE id=? AND revoked=0", (utc_now(),memory_id))
+        return cursor.rowcount == 1
+
+    def history(self, memory_id: int | None = None, *, limit=100):
+        if (memory_id is not None and type(memory_id) is not int) or type(limit) is not int or not 1 <= limit <= 100:
+            raise ValueError("Invalid memory history query")
+        where, args = ("", (limit,)) if memory_id is None else ("WHERE memory_id=?", (memory_id,limit))
+        with self.connect() as db:
+            rows = db.execute(f"SELECT * FROM memory_versions {where} ORDER BY id DESC LIMIT ?",args).fetchall()
+        return [dict(r) | {"snapshot":json.loads(r['snapshot'])} for r in rows]
 
     def export(self, *, include_archived: bool = True) -> list[dict[str, Any]]:
         where = "" if include_archived else " WHERE " + self.VISIBILITY
@@ -212,6 +238,7 @@ class MemoryStore(SQLiteStore):
             "value": row["value"], "importance": row["importance"],
             "metadata": json.loads(row["metadata"]), "created_at": row["created_at"],
             "updated_at": row["updated_at"], "archived": bool(row["archived"]),
+            "expires_at": row["expires_at"], "revoked": bool(row["revoked"]),
         }
 
 

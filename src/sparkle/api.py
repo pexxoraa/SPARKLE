@@ -400,6 +400,8 @@ class SparkleHandler(BaseHTTPRequestHandler):
                     self.system.ai_system_controlled_executor.inspect(suffix)
                 ),
             })
+        if parsed.path == "/api/memory/history":
+            return self._json({"versions": self.system.memory.history()})
         if parsed.path == "/api/memory/facts":
             return self._json({"facts": self.system.memory_review.evidence.facts()})
         if parsed.path == "/api/memory/evidence":
@@ -897,6 +899,14 @@ class SparkleHandler(BaseHTTPRequestHandler):
                     raise ValueError("Agent removal requires explicit approval")
                 removed = self.system.agents.remove(str(data["name"]))
                 return self._json({"ok": True, "removed": removed})
+            if self.path == "/api/memory/retention":
+                if set(data) != {"memory_id", "seconds", "approved"} or data["approved"] is not True:
+                    raise ValueError("Retention changes require explicit approval")
+                return self._json({"updated": self.system.memory.set_retention(data["memory_id"],data["seconds"])})
+            if self.path == "/api/memory/revoke":
+                if set(data) != {"memory_id", "approved"} or data["approved"] is not True:
+                    raise ValueError("Revocation requires explicit approval")
+                return self._json({"revoked": self.system.memory.revoke(data["memory_id"])})
             if self.path == "/api/memory/attest":
                 if set(data) - {"category", "key", "value", "source_ref", "ttl_seconds"}:
                     raise ValueError("Invalid fact attestation fields")

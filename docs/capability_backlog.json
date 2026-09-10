@@ -1,20 +1,20 @@
 {
   "schema": "SPARKLE-CAPABILITY-BACKLOG/1",
-  "source_checkpoint": "bcf1a4ebb002a95ef49aa9e61225aada8cc9d0cd",
+  "source_checkpoint": "a22a1fba70a45530c5db59ab523232652c5f2713",
   "level_3": "BLOCKED/PARKED",
   "deployment": "FROZEN",
   "current_work": {
-    "id": "operator-attested-exact-memory-validation",
-    "state": "LOCAL TEST VERIFIED",
+    "id": "memory-retention-and-history",
     "priority": "P1",
-    "tests": "test_memory_evidence; CLI/API/security/resource regressions",
-    "acceptance": "Current exact attestation validation; unsupported/conflicting claims inconclusive; strict retrieval rechecks evidence"
+    "state": "LOCAL TEST VERIFIED",
+    "tests": "test_memory_lifecycle; API/CLI/resource/security suites",
+    "acceptance": "Policy exclusions, guarded restoration, immutable application version history, migration and rollback"
   },
   "next_implementable_work": {
-    "id": "memory-retention-and-review-ui",
+    "id": "dashboard-memory-review",
     "priority": "P1",
-    "next_action": "Explicit lifecycle policies with auditable history and safe dashboard review",
-    "acceptance": "Expired/revoked/archive exclusions, history preserved, exact reviewed UI actions"
+    "next_action": "Safe interactive proposal/evidence/history review",
+    "acceptance": "Exact identity actions, expired/conflicting approval refusal, safe rendering and UI tests"
   },
   "specific_external_blockers": [
     {
@@ -611,6 +611,13 @@
       "state": "LOCAL TEST VERIFIED",
       "acceptance": "Completed review history cannot hide pending proposals; oldest pending reviewed first; explicit bounded history filters",
       "tests": "test_memory_review, test_cli, test_system_e2e"
+    },
+    {
+      "id": "operator-attested-exact-memory-validation",
+      "state": "LOCAL TEST VERIFIED",
+      "priority": "P1",
+      "tests": "test_memory_evidence; CLI/API/security/resource regressions",
+      "acceptance": "Current exact attestation validation; unsupported/conflicting claims inconclusive; strict retrieval rechecks evidence"
     }
   ],
   "live_agent_baseline": {

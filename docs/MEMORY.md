@@ -110,3 +110,31 @@ operator-approved policy is distinct from strict verified-only retrieval.
 This is a credential-free exact-claim validator, not an LLM judge, general
 fact-checker, web verifier, or semantic entailment engine. Broader authoritative
 application-state readers and natural-language claim evaluation remain open.
+
+## Retention and immutable version history
+
+`memory-retention ID --seconds N` sets expiry (1 second through 365 days);
+omitting `--seconds` explicitly clears expiry. New records default to no expiry.
+Updates preserve existing expiry, including expired records. `memory-revoke ID`
+excludes an ID from retrieval; archive restoration and later upserts cannot
+silently reverse revocation. Replacing a revoked ID requires an explicit new
+record after deletion, with old history retained. Proposal approval refuses
+revoked/expired targets until the lifecycle policy is resolved independently.
+
+Search, recent/context and active export exclude expired, revoked or archived
+records before limits. Expiry uses a fractional wall clock; no background sweeper
+is required. Expired rows remain in archival export; reading does not mutate
+state. `restore` works only for non-revoked, non-expired rows.
+
+`memory-history` and GET `/api/memory/history` expose bounded private snapshots.
+POST `/api/memory/retention` takes memory_id, seconds and approved=true; POST
+`/api/memory/revoke` takes memory_id and approved=true. Existing auth/CSRF applies.
+INSERT/UPDATE/DELETE triggers capture versions atomically with state changes.
+UPDATE/DELETE of history fails. Migration captures a baseline once; it cannot
+reconstruct earlier lost revisions. Concurrent migration is serialized.
+
+Deletion removes current memory but deliberately retains historical plaintext
+snapshots. This is auditable removal, not privacy erasure. History contains private
+memory values and requires the same access/backup protection. There is no automatic
+history purge, storage quota, cryptographic tamper-proof log, or deleted-record
+auto-restore. Database-owner tampering is outside these application-level guards.

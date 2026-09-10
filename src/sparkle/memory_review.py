@@ -107,6 +107,10 @@ class MemoryReview:
                     raise ValueError('Memory proposal expired')
                 if self._current(db, payload['category'], payload['key']) != payload['base_digest']:
                     raise ValueError('Memory changed since proposal; new review required')
+                target = db.execute('SELECT revoked,expires_at FROM memories WHERE category=? AND memory_key=?',
+                                    (payload['category'],payload['key'])).fetchone()
+                if target and (target['revoked'] or (target['expires_at'] is not None and target['expires_at'] <= time.time())):
+                    raise ValueError('Target memory is revoked or expired; resolve lifecycle policy first')
                 now = utc_now()
                 metadata = json.dumps({'source': 'operator_reviewed_agent_proposal',
                                        'proposal_id': proposal_id, 'proposal_digest': digest, 'reviewer': reviewer,

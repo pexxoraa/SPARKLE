@@ -36,6 +36,12 @@ def build_parser() -> argparse.ArgumentParser:
         "model-requests", help="List content-free model routing and usage evidence",
     )
     model_requests.add_argument("--limit", type=int, default=20)
+    retention = sub.add_parser("memory-retention", help="Set explicit retention; omit --seconds to clear expiry")
+    retention.add_argument("memory_id", type=int)
+    retention.add_argument("--seconds", type=int)
+    revoke_memory = sub.add_parser("memory-revoke", help="Revoke retrieval eligibility without deleting history")
+    revoke_memory.add_argument("memory_id", type=int)
+    sub.add_parser("memory-history", help="Inspect private immutable memory version history")
     proposals = sub.add_parser("memory-proposals", help="Inspect untrusted memory proposals")
     proposals.add_argument("--status", choices=["pending", "approved", "rejected", "all"], default="pending")
     review = sub.add_parser("memory-review", help="Independently review an exact memory proposal")
@@ -435,6 +441,15 @@ def main(argv: list[str] | None = None) -> int:
             "ok": True,
             "model_requests": system.models.runtime.recent(limit=args.limit),
         })
+        return 0
+    if args.command == "memory-retention":
+        _print({"updated": system.memory.set_retention(args.memory_id,args.seconds)})
+        return 0
+    if args.command == "memory-revoke":
+        _print({"revoked": system.memory.revoke(args.memory_id)})
+        return 0
+    if args.command == "memory-history":
+        _print({"versions": system.memory.history()})
         return 0
     if args.command == "memory-attest":
         _print(system.memory_review.evidence.attest(args.category, args.key, args.value, args.source_ref,

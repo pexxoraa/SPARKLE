@@ -18,6 +18,17 @@ from sparkle.system import SparkleSystem
 
 
 class CLITests(unittest.TestCase):
+    def test_retention_and_revocation_commands_preserve_history(self):
+        with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ, {"SPARKLE_DATA_DIR": directory}):
+            system=SparkleSystem(); mid=system.memory.remember('goals','fixture','Practice daily')
+            with contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(main(['memory-retention',str(mid),'--seconds','60']),0)
+                self.assertEqual(main(['memory-revoke',str(mid)]),0)
+            self.assertEqual(system.memory.recent(),[])
+            output=io.StringIO()
+            with contextlib.redirect_stdout(output): self.assertEqual(main(['memory-history']),0)
+            self.assertEqual(json.loads(output.getvalue())['versions'][0]['action'],'revoked')
+
     def test_fact_attestation_validation_and_revocation_commands(self):
         with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ, {"SPARKLE_DATA_DIR": directory}):
             system = SparkleSystem()

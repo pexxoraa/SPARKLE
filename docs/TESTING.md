@@ -575,3 +575,7 @@ Memory factual validation: `PYTHONPATH=src python -m unittest tests.test_memory_
 uses deterministic operator facts for match/contradiction/conflict/expiry/revocation,
 strict retrieval, audit mutation rejection, and model-authority rejection.
 It requires no credentials and is not live truth-evaluation evidence.
+
+Retention tests: `tests.test_memory_lifecycle` covers expiry boundaries, archived/
+revoked exclusion, supersession, deletion history, rollback, and concurrent legacy
+migration. API/CLI tests exercise explicit policy changes and private history.

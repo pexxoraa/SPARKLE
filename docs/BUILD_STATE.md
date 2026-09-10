@@ -457,3 +457,23 @@ Wheel SHA256: `177c4e2baa1b289640b208257bda6c7e83f049f2fab3d206987c6bf09eb5d5c8`
 No live benchmark or host acceptance run. Current user-supplied live baseline:
 3 validated / 9 rejected (25%); agent competence unverified. Level 3 stays
 BLOCKED/PARKED; deployment FROZEN. Retention and dashboard review are next.
+
+## Memory retention and version history
+
+Base: a22a1fba70a45530c5db59ab523232652c5f2713 (CI #93 passed).
+Explicit expiry/revocation policies now exclude records before retrieval limits.
+Restoration/upsert cannot bypass revoked/expired eligibility. Transactional
+version snapshots preserve supersession and deletion history; migration captures
+one baseline without inventing older revisions. See MEMORY.md for privacy and
+audit limits. This is not cryptographic tamper-proof storage or privacy erasure.
+
+Focused memory/resource/API/CLI/security suite: 78/78 passed (6.889 seconds).
+Final full suite: 433 tests, 432 passed, one optional live skip, zero failures
+or errors (85.372 seconds), recorded by the guarded file-based runner. An earlier
+ordinary runner returned an incomplete summary and was not counted as passed.
+Nine new tests; deterministic benchmark outcomes unchanged. Compile, JavaScript
+syntax, whitespace, fresh wheel/offline installation and installed CLI help passed.
+Wheel SHA256: fe604e96b264ca096a444f8c95c00884a8d476e1f9c3c690a1042fb81d28d4c3.
+No live/host run, task/scoring change or version increase. Current real-agent
+baseline remains user-supplied 3/12 validated (25%); competence unverified.
+Level 3 BLOCKED/PARKED, deployment FROZEN. Dashboard review is next.
