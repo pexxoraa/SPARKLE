@@ -2397,3 +2397,30 @@ Current user-supplied real Nemotron baseline: 12 tasks executed, 3 validated,
 benchmark was rerun here. Agent competence is not established. Level 3 remains
 BLOCKED/PARKED; deployment FROZEN. Next: trusted machine-observed evidence for
 memory validation, retention policy, and user-facing review workflow quality.
+
+## Pending memory review queue
+
+Continued from `0c1882ebb7b98d187f273873b3bb613a34c9a009` (CI #91 passed).
+Default listing now selects pending proposals oldest first; completed reviews
+cannot bury pending work. CLI `--status` and API `?status=` expose bounded
+approved/rejected/all history. Authorization and exact-digest checks unchanged.
+Two new regression tests plus CLI/API integration assertions.
+
+Focused queue/CLI/API/security: 34/34 passed (3.149 seconds). Initial full
+run: 413 tests, 411 passed, one transport deadline error, one optional live
+skip. The isolated existing deadline suite then passed 9/9 (3.274 seconds).
+An incomplete-summary run is not counted as passed. A subsequent diagnostic
+runner from stdin caused multiprocessing spawn import failures (`<stdin>`);
+that runner was replaced with a guarded file-based runner, without altering
+SPARKLE timeout code or tests. Final full run: 413 tests, 412 passed, one
+optional live skip, zero failures/errors (65.616 seconds). The initial timing
+failure is retained as observed intermittent test evidence, not explained away.
+
+Compile, JavaScript syntax, whitespace and 190-file credential-pattern/path/
+symlink/size audits passed. Fresh wheel and offline installation passed. Wheel
+SHA256: `e5792b8f706219a6734af9a5064d2a61aad6ecc6ae74d19214ae7489524c5a04`.
+No benchmark task/scoring/validator/model configuration change; no live rerun.
+Current user-supplied real-agent baseline remains 3/12 validated, 9 rejected
+(25%); competence unverified. Level 3 BLOCKED/PARKED; deployment FROZEN.
+Automatic factual memory validation, retention, and dashboard review remain
+unfinished. The proposal lifecycle does not establish truth of an agent claim.

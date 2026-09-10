@@ -64,3 +64,11 @@ unchanged benchmark fixture; it is not registered by the default system. Custom
 registries must select the proposal tool to receive the new authorization boundary.
 No new secret ingestion/recognition capability is claimed. Never submit secrets
 as memory content. Level 3 stays parked and deployment frozen.
+
+### Pending queue visibility
+
+Proposal listing defaults to pending records, oldest first (ID breaks timestamp
+ties). Reviewed history cannot bury pending work in the bounded result set.
+Use `sparkle memory-proposals --status approved` (or `rejected` / `all`) for
+history; API clients use `/api/memory/proposals?status=approved`. Reviews do
+not change retention policy, expiry, exact-digest checks or authorization.

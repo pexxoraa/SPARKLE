@@ -95,6 +95,8 @@ class SystemEndToEndTests(unittest.TestCase):
         self.assertEqual(result["status"], "approved")
         self.assertEqual(self.system.memory.export()[0]["metadata"]["reviewer"], "local_api")
         self.assertNotIn("memory_review", self.system.tools.names)
+        self.assertEqual(self.request("/api/memory/proposals")[1]["proposals"], [])
+        self.assertEqual(self.request("/api/memory/proposals?status=approved")[1]["proposals"][0]["id"], p["proposal_id"])
 
     def test_retrieved_instructions_never_enter_the_system_role(self):
         self.request("/api/knowledge", {

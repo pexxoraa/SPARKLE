@@ -29,6 +29,10 @@ class CLITests(unittest.TestCase):
             with contextlib.redirect_stdout(io.StringIO()):
                 self.assertEqual(main(["memory-review",proposal["proposal_id"],proposal["digest"],"approve"]), 0)
             self.assertEqual(system.memory.export()[0]["metadata"]["reviewer"], "cli")
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                self.assertEqual(main(["memory-proposals", "--status", "approved"]), 0)
+            self.assertEqual(json.loads(output.getvalue())["proposals"][0]["id"], proposal["proposal_id"])
 
     def test_model_request_evidence_command_is_content_free(self):
         with tempfile.TemporaryDirectory() as directory:

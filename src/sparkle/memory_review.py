@@ -56,11 +56,14 @@ class MemoryReview:
         return {'stored': False, 'proposal_id': proposal_id, 'digest': digest,
                 'status': 'pending', 'requires_operator_review': True}
 
-    def list(self, *, limit=50):
+    def list(self, *, limit=50, status="pending"):
         if type(limit) is not int or not 1 <= limit <= 100:
             raise ValueError('Proposal limit must be an integer from 1 to 100')
+        if status not in ('pending', 'approved', 'rejected', 'all'):
+            raise ValueError('Invalid memory proposal status filter')
         with self.store.connect() as db:
-            rows = db.execute('SELECT * FROM memory_proposals ORDER BY created_at DESC,id LIMIT ?', (limit,)).fetchall()
+            where, parameters = ('', (limit,)) if status == 'all' else ('WHERE status=?', (status, limit))
+            rows = db.execute(f'SELECT * FROM memory_proposals {where} ORDER BY created_at,id LIMIT ?', parameters).fetchall()
         return [dict(row) | {'payload': json.loads(row['payload'])} for row in rows]
 
     def review(self, proposal_id, digest, decision, *, reviewer):

@@ -1,14 +1,14 @@
 {
   "schema": "SPARKLE-CAPABILITY-BACKLOG/1",
-  "source_checkpoint": "4831615033e4aaa54cc6861da6ee6fc06561584a",
+  "source_checkpoint": "0c1882ebb7b98d187f273873b3bb613a34c9a009",
   "level_3": "BLOCKED/PARKED",
   "deployment": "FROZEN",
   "current_work": {
-    "id": "operator-reviewed-memory",
+    "id": "pending-memory-review-visibility",
     "priority": "P1",
     "state": "LOCAL TEST VERIFIED",
-    "acceptance": "Default agent proposals cannot modify durable memory until independent operator approval of exact unchanged proposal and prior memory state",
-    "tests": "test_memory_review, test_orchestration_bounds, test_system_e2e, test_cli"
+    "acceptance": "Completed review history cannot hide pending proposals; oldest pending reviewed first; explicit bounded history filters",
+    "tests": "test_memory_review, test_cli, test_system_e2e"
   },
   "next_implementable_work": {
     "id": "machine-validated-memory",
@@ -22,8 +22,8 @@
   },
   "specific_external_blockers": [
     {
-      "capability": "historical live benchmark diagnosis",
-      "required": "Existing host JSONL/retained structural evidence; do not rerun live while debugging"
+      "capability": "current live rejection diagnosis",
+      "required": "Retained credential-safe per-task evidence for the user-supplied 3 validated / 9 rejected result; no live rerun during debugging"
     },
     {
       "capability": "real semantic evaluation",
@@ -122,7 +122,7 @@
       "dependency": [
         "existing shared core"
       ],
-      "next_action": "12-task live outcome evidence; real stream/tool behavior and host failure provenance",
+      "next_action": "Explain nine rejected live outcomes; broader live streaming/tool evidence",
       "test": "nvidia.py; adapter/runtime/deadline tests; user-reported authenticated smoke success",
       "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
       "priority": "P1/external"
@@ -598,6 +598,16 @@
       "state": "LOCAL TEST VERIFIED",
       "acceptance": "Nonempty unsearchable queries do not return recent memory; literal Unicode/underscore behavior, bounded terms and context integration",
       "tests": "tests/test_memory_queries.py"
+    },
+    {
+      "id": "operator-reviewed-memory",
+      "priority": "P1",
+      "state": "LOCAL TEST VERIFIED",
+      "acceptance": "Default agent proposals cannot modify durable memory until independent operator approval of exact unchanged proposal and prior memory state",
+      "tests": "test_memory_review, test_orchestration_bounds, test_system_e2e, test_cli",
+      "commit": "0c1882ebb7b98d187f273873b3bb613a34c9a009",
+      "ci_run": 91,
+      "ci_status": "success"
     }
   ],
   "live_agent_baseline": {

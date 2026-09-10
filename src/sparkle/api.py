@@ -401,7 +401,7 @@ class SparkleHandler(BaseHTTPRequestHandler):
                 ),
             })
         if parsed.path == "/api/memory/proposals":
-            return self._json({"proposals": self.system.memory_review.list()})
+            return self._json({"proposals": self.system.memory_review.list(status=query.get("status", ["pending"])[0])})
         if parsed.path == "/api/memory":
             return self._json({"memories": self.system.memory.search(query.get("q", [""])[0], limit=int(query.get("limit", [20])[0]))})
         if parsed.path == "/api/knowledge/search":

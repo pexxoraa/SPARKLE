@@ -36,7 +36,8 @@ def build_parser() -> argparse.ArgumentParser:
         "model-requests", help="List content-free model routing and usage evidence",
     )
     model_requests.add_argument("--limit", type=int, default=20)
-    sub.add_parser("memory-proposals", help="Inspect untrusted memory proposals")
+    proposals = sub.add_parser("memory-proposals", help="Inspect untrusted memory proposals")
+    proposals.add_argument("--status", choices=["pending", "approved", "rejected", "all"], default="pending")
     review = sub.add_parser("memory-review", help="Independently review an exact memory proposal")
     review.add_argument("proposal_id")
     review.add_argument("digest")
@@ -425,7 +426,7 @@ def main(argv: list[str] | None = None) -> int:
         })
         return 0
     if args.command == "memory-proposals":
-        _print({"proposals": system.memory_review.list()})
+        _print({"proposals": system.memory_review.list(status=args.status)})
         return 0
     if args.command == "memory-review":
         _print(system.memory_review.review(args.proposal_id, args.digest, args.decision, reviewer="cli"))

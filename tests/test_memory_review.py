@@ -24,6 +24,24 @@ class MemoryReviewTests(unittest.TestCase):
     def resolve(self, proposal, decision='approve'):
         return self.review.review(proposal['proposal_id'], proposal['digest'], decision, reviewer='cli')
 
+    def test_pending_queue_cannot_be_hidden_by_completed_review_history(self):
+        pending = self.propose()
+        for _ in range(55):
+            self.resolve(self.propose(), 'reject')
+        self.assertEqual([p['id'] for p in self.review.list()], [pending['proposal_id']])
+        self.assertEqual(len(self.review.list(status='rejected')), 50)
+        self.assertEqual(len(self.review.list(limit=100, status='all')), 56)
+        with self.assertRaises(ValueError): self.review.list(status='unknown')
+        with self.assertRaises(ValueError): self.review.list(limit=101)
+        self.assertEqual(self.store.export(), [])
+
+    def test_pending_queue_prioritizes_oldest_before_new_proposals(self):
+        with patch('sparkle.memory_review.utc_now', return_value='2026-01-01T00:00:00Z'):
+            old = self.propose()
+        with patch('sparkle.memory_review.utc_now', return_value='2026-01-02T00:00:00Z'):
+            self.propose()
+        self.assertEqual(self.review.list(limit=1)[0]['id'], old['proposal_id'])
+
     def test_pending_not_retrieved_and_exact_operator_approval_persists(self):
         p = self.propose()
         self.assertFalse(p['stored'])
