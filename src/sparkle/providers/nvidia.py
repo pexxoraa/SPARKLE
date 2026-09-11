@@ -19,7 +19,10 @@ class NVIDIAChatCompletionsAdapter(ModelAdapter):
     """NVIDIA NIM Chat Completions adapter using only the standard library."""
 
     provider = "nvidia"
-    supported_modalities = frozenset({"text"})
+    supported_modalities = frozenset({"text", "image"})
+    supported_image_media_types = frozenset(
+        {"image/gif", "image/jpeg", "image/png"}
+    )
 
     def __init__(
         self,
@@ -48,6 +51,7 @@ class NVIDIAChatCompletionsAdapter(ModelAdapter):
             "configured": any(self._secrets.status(self._secret_refs).values()),
             "endpoint": self._base_url,
             "enabled": bool(self._config.get("enabled", True)),
+            "adapter_modalities": sorted(self.supported_modalities),
         }
 
     def _headers(self) -> dict[str, str]:
@@ -70,8 +74,50 @@ class NVIDIAChatCompletionsAdapter(ModelAdapter):
             },
         }
 
-    @staticmethod
-    def _message(message: Message) -> dict[str, Any]:
+    @classmethod
+    def _message_content(cls, message: Message) -> str | list[dict[str, Any]]:
+        if isinstance(message.content, str):
+            return message.content
+        if message.role != "user":
+            if any(modality != "text" for modality in message.modalities):
+                raise ModelError(
+                    "NVIDIA multimodal content is accepted only in user messages",
+                    retryable=False,
+                    category="unsupported_modality",
+                )
+            return message.text_content
+        parts: list[dict[str, Any]] = []
+        for part in message.content.parts:
+            if part.type == "text":
+                parts.append({"type": "text", "text": part.data})
+                continue
+            if part.type == "image":
+                if part.media_type not in cls.supported_image_media_types:
+                    raise ModelError(
+                        "NVIDIA image media type is unsupported: "
+                        + str(part.media_type),
+                        retryable=False,
+                        category="unsupported_modality",
+                    )
+                parts.append({
+                    "type": "image_url",
+                    "image_url": {
+                        "url": (
+                            f"data:{part.media_type};base64,{part.data}"
+                        )
+                    },
+                })
+                continue
+            raise ModelError(
+                "NVIDIA adapter cannot serialize content modality: "
+                + str(part.type),
+                retryable=False,
+                category="unsupported_modality",
+            )
+        return parts
+
+    @classmethod
+    def _message(cls, message: Message) -> dict[str, Any]:
         if message.role == "system":
             return {"role": "system", "content": message.text_content}
         if message.role == "tool":
@@ -98,7 +144,7 @@ class NVIDIAChatCompletionsAdapter(ModelAdapter):
                     for call in message.tool_calls
                 ],
             }
-        return {"role": message.role, "content": message.text_content}
+        return {"role": message.role, "content": cls._message_content(message)}
 
     def _payload(self, request: ModelRequest) -> dict[str, Any]:
         messages = []
