@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import tempfile
 import unittest
+from pathlib import Path
 
 from sparkle.interaction import (
     BrowserAdapter,
@@ -10,6 +12,8 @@ from sparkle.interaction import (
     ComputerAdapter,
     ComputerResult,
     InteractionService,
+    InteractionSessionError,
+    InteractionSessionStore,
     InteractionUnavailableError,
 )
 
@@ -30,18 +34,22 @@ class RedirectingBrowser(BrowserAdapter):
 
 
 class InteractionContractTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.store = InteractionSessionStore(Path(self.temp.name) / "sessions.sqlite3")
+
     def test_defaults_fail_closed_and_claim_no_live_runtime(self):
-        service = InteractionService()
+        service = InteractionService(session_store=self.store)
         status = service.status()
         self.assertEqual(status["contract"], "implemented")
-        self.assertEqual(status["browser"], "unavailable")
-        self.assertEqual(status["computer"], "unavailable")
+        self.assertEqual(status["session_lifecycle"], "implemented")
+        self.assertEqual(status["browser"], "externally_unconfigured")
+        self.assertEqual(status["computer"], "externally_unconfigured")
         self.assertFalse(status["live_browser_verified"])
         self.assertFalse(status["live_computer_verified"])
         self.assertFalse(status["agent_tool_registered"])
-        request = BrowserRequest(
-            "https://example.com/path", ("example.com",),
-        )
+        request = BrowserRequest("https://example.com/path", ("example.com",))
         with self.assertRaises(InteractionUnavailableError):
             service.browser.browse(request)
         with self.assertRaises(InteractionUnavailableError):
@@ -65,44 +73,47 @@ class InteractionContractTests(unittest.TestCase):
 
     def test_computer_actions_are_typed_and_bounded(self):
         valid = [
-            ComputerAction("screenshot"),
-            ComputerAction("click", x=10, y=20),
-            ComputerAction("type_text", text="safe text"),
-            ComputerAction("key", key="CTRL+L"),
+            ComputerAction("screenshot"), ComputerAction("click", x=10, y=20),
+            ComputerAction("type_text", text="safe text"), ComputerAction("key", key="CTRL+L"),
         ]
-        self.assertEqual([action.kind for action in valid], [
-            "screenshot", "click", "type_text", "key",
-        ])
+        self.assertEqual([action.kind for action in valid], ["screenshot", "click", "type_text", "key"])
         for value in [
-            lambda: ComputerAction("shell"),
-            lambda: ComputerAction("click", x=-1, y=2),
-            lambda: ComputerAction("type_text", text=""),
-            lambda: ComputerAction("key", key="bad key"),
+            lambda: ComputerAction("shell"), lambda: ComputerAction("click", x=-1, y=2),
+            lambda: ComputerAction("type_text", text=""), lambda: ComputerAction("key", key="bad key"),
         ]:
             with self.assertRaises(ValueError):
                 value()
 
-    def test_injected_adapters_are_test_harnesses_not_live_evidence(self):
+    def test_session_lifecycle_persists_browser_and_computer_evidence(self):
         service = InteractionService(
-            browser=DeterministicBrowser(), computer=DeterministicComputer(),
+            browser=DeterministicBrowser(), computer=DeterministicComputer(), session_store=self.store,
         )
-        self.assertEqual(service.status()["browser"], "test_harness")
-        self.assertEqual(service.status()["computer"], "test_harness")
-        self.assertFalse(service.status()["live_browser_verified"])
-        result = service.browse(BrowserRequest(
-            "https://example.com", ("example.com",),
-        ))
-        self.assertEqual(result.status_code, 200)
-        self.assertTrue(service.perform(
-            ComputerAction("click", x=1, y=2),
-        ).completed)
+        browser = service.start_session("browser", allowed_hosts=["example.com"], ttl_seconds=60)
+        result = service.browse_session(browser["id"], "https://example.com/path", expected_revision=1)
+        self.assertEqual(result["session_revision"], 2)
+        self.assertEqual(service.history(browser["id"])[0]["event"], "browse")
+        closed = service.close_session(browser["id"], expected_revision=2)
+        self.assertEqual(closed["status"], "closed")
+        with self.assertRaisesRegex(InteractionSessionError, "not active"):
+            service.browse_session(browser["id"], "https://example.com", expected_revision=3)
+
+        computer = service.start_session("computer", allowed_actions=["screenshot", "click"], ttl_seconds=60)
+        action = service.perform_session(computer["id"], {"kind": "click", "x": 3, "y": 4}, expected_revision=1)
+        self.assertTrue(action["completed"])
+        with self.assertRaisesRegex(InteractionSessionError, "not allowed"):
+            service.perform_session(computer["id"], {"kind": "type_text", "text": "blocked"}, expected_revision=2)
+
+    def test_session_revisions_fail_closed(self):
+        service = InteractionService(browser=DeterministicBrowser(), session_store=self.store)
+        session = service.start_session("browser", allowed_hosts=["example.com"], ttl_seconds=60)
+        service.browse_session(session["id"], "https://example.com", expected_revision=1)
+        with self.assertRaisesRegex(InteractionSessionError, "revision conflict"):
+            service.browse_session(session["id"], "https://example.com", expected_revision=1)
 
     def test_browser_result_cannot_escape_request_boundary(self):
-        service = InteractionService(browser=RedirectingBrowser())
+        service = InteractionService(browser=RedirectingBrowser(), session_store=self.store)
         with self.assertRaises(ValueError):
-            service.browse(BrowserRequest(
-                "https://example.com", ("example.com",),
-            ))
+            service.browse(BrowserRequest("https://example.com", ("example.com",)))
 
 
 if __name__ == "__main__":
