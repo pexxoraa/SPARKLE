@@ -74,13 +74,25 @@ class _WorkflowBudget:
             ) from exc
         return payload
 
+    @staticmethod
+    def _scoped(scope: str, value: str) -> str:
+        if not isinstance(scope, str) or not scope or len(scope) > 128:
+            raise _runtime_failure("Tool authority scope is invalid", "tool_call_invalid")
+        return scope + "\x00" + value
+
     def replay(
-        self, call_id: str, name: str, arguments: dict[str, Any]
+        self,
+        scope: str,
+        call_id: str,
+        name: str,
+        arguments: dict[str, Any],
     ) -> tuple[bool, str, Any | None]:
         if not isinstance(call_id, str) or not call_id or len(call_id) > 256:
             raise _runtime_failure("Tool call identity is invalid", "tool_call_invalid")
         signature = self.signature(name, arguments)
-        previous = self.tool_results.get(call_id)
+        call_key = self._scoped(scope, call_id)
+        signature_key = self._scoped(scope, signature)
+        previous = self.tool_results.get(call_key)
         if previous is not None:
             old_signature, result = previous
             if old_signature != signature:
@@ -90,17 +102,25 @@ class _WorkflowBudget:
                 )
             self.tool_replays += 1
             return True, signature, result
-        if signature in self.signature_results:
-            result = self.signature_results[signature]
-            self.tool_results[call_id] = (signature, result)
+        if signature_key in self.signature_results:
+            result = self.signature_results[signature_key]
+            self.tool_results[call_key] = (signature, result)
             self.tool_replays += 1
             self.signature_replays += 1
             return True, signature, result
         return False, signature, None
 
-    def remember(self, call_id: str, signature: str, result: Any) -> None:
-        self.tool_results[call_id] = (signature, result)
-        self.signature_results.setdefault(signature, result)
+    def remember(
+        self,
+        scope: str,
+        call_id: str,
+        signature: str,
+        result: Any,
+    ) -> None:
+        call_key = self._scoped(scope, call_id)
+        signature_key = self._scoped(scope, signature)
+        self.tool_results[call_key] = (signature, result)
+        self.signature_results.setdefault(signature_key, result)
 
     @property
     def elapsed_seconds(self) -> float:
@@ -162,6 +182,10 @@ class Orchestrator:
             "Do not repeat an identical tool call after it has succeeded or failed; use the returned observation, change the plan, or finish. "
             "When the user explicitly asks to verify a bounded operation or refusal, use the relevant safe tool once so the answer is grounded in execution evidence rather than assumption."
         ]
+        if "calculator" in tool_names:
+            rules.append(
+                "For requested deterministic arithmetic, use calculator once rather than relying on unaudited mental arithmetic when an exact result is expected."
+            )
         if "memory_write" in tool_names:
             rules.append(
                 "When the user explicitly asks to remember or record a durable fact, use memory_write once with the user's intended fact preserved accurately. "
@@ -371,7 +395,9 @@ class Orchestrator:
                 new_executions = 0
                 for call in response.tool_calls:
                     budget.check()
-                    replayed, signature, cached = budget.replay(call.id, call.name, call.arguments)
+                    replayed, signature, cached = budget.replay(
+                        spec.name, call.id, call.name, call.arguments
+                    )
                     if replayed:
                         result = cached
                     else:
@@ -383,7 +409,7 @@ class Orchestrator:
                                 "error": str(exc),
                                 "error_type": type(exc).__name__,
                             }
-                        budget.remember(call.id, signature, result)
+                        budget.remember(spec.name, call.id, signature, result)
                         new_executions += 1
                     if call.name == "memory_write" and isinstance(result, dict) and result.get("status") == "pending":
                         proposal_id = result.get("proposal_id")
