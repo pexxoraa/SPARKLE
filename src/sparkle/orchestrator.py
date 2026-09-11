@@ -32,7 +32,9 @@ class _WorkflowBudget:
         self.started = time.monotonic()
         self.deadline = self.started + max_seconds
         self.tool_results: dict[str, tuple[str, Any]] = {}
+        self.signature_results: dict[str, Any] = {}
         self.tool_replays = 0
+        self.signature_replays = 0
 
     def check(self) -> float:
         remaining = self.deadline - time.monotonic()
@@ -72,24 +74,33 @@ class _WorkflowBudget:
             ) from exc
         return payload
 
-    def replay(self, call_id: str, name: str, arguments: dict[str, Any]) -> tuple[bool, Any]:
+    def replay(
+        self, call_id: str, name: str, arguments: dict[str, Any]
+    ) -> tuple[bool, str, Any | None]:
         if not isinstance(call_id, str) or not call_id or len(call_id) > 256:
             raise _runtime_failure("Tool call identity is invalid", "tool_call_invalid")
         signature = self.signature(name, arguments)
         previous = self.tool_results.get(call_id)
-        if previous is None:
-            return False, signature
-        old_signature, result = previous
-        if old_signature != signature:
-            raise _runtime_failure(
-                "Tool call identity was replayed with different arguments",
-                "tool_call_replay_mismatch",
-            )
-        self.tool_replays += 1
-        return True, result
+        if previous is not None:
+            old_signature, result = previous
+            if old_signature != signature:
+                raise _runtime_failure(
+                    "Tool call identity was replayed with different arguments",
+                    "tool_call_replay_mismatch",
+                )
+            self.tool_replays += 1
+            return True, signature, result
+        if signature in self.signature_results:
+            result = self.signature_results[signature]
+            self.tool_results[call_id] = (signature, result)
+            self.tool_replays += 1
+            self.signature_replays += 1
+            return True, signature, result
+        return False, signature, None
 
     def remember(self, call_id: str, signature: str, result: Any) -> None:
         self.tool_results[call_id] = (signature, result)
+        self.signature_results.setdefault(signature, result)
 
     @property
     def elapsed_seconds(self) -> float:
@@ -139,9 +150,74 @@ class Orchestrator:
             "tool_calls_reserved": budget.tool_used,
             "tool_call_limit": budget.tool_limit,
             "tool_call_replays": budget.tool_replays,
+            "tool_signature_replays": budget.signature_replays,
             "workflow_seconds_limit": budget.max_seconds,
             "workflow_elapsed_seconds": round(budget.elapsed_seconds, 6),
         }
+
+    @staticmethod
+    def _tool_policy(tool_names: set[str]) -> str:
+        rules = [
+            "TOOL USE POLICY: Choose the narrowest sufficient tool and call it only when its result is needed. "
+            "Do not repeat an identical tool call after it has succeeded or failed; use the returned observation, change the plan, or finish. "
+            "When the user explicitly asks to verify a bounded operation or refusal, use the relevant safe tool once so the answer is grounded in execution evidence rather than assumption."
+        ]
+        if "memory_write" in tool_names:
+            rules.append(
+                "When the user explicitly asks to remember or record a durable fact, use memory_write once with the user's intended fact preserved accurately. "
+                "Do not search memory first unless a conflict must be resolved. If the tool reports a pending proposal, say it is pending review rather than already persisted."
+            )
+        if "knowledge_search" in tool_names:
+            rules.append(
+                "For a direct source lookup, use knowledge_search before heavier research/state tools and cite the returned source/chunk identifiers in the final answer. "
+                "Do not invent citations when search returns no evidence."
+            )
+        if "knowledge_verify" in tool_names:
+            rules.append(
+                "Use knowledge_verify only when exact stored quote/digest integrity is actually requested or required; it is not a prerequisite for every ordinary source lookup."
+            )
+        if "research_workspace" in tool_names:
+            rules.append(
+                "Use research_workspace for genuinely persistent multi-step research work, not as an automatic prelude to a simple retrieval request."
+            )
+        if "learning_progress" in tool_names:
+            rules.append(
+                "Use learning_progress when the request concerns a named course, curriculum, or learner progress; do not call it for a simple knowledge-source lookup or an explicit memory record."
+            )
+        if "workspace_verify" in tool_names:
+            rules.append(
+                "For an explicitly approved static, syntax, or workspace verification request, prefer workspace_verify. Use file_read only when file contents themselves must be inspected."
+            )
+        return "\n".join(rules)
+
+    def _complete(
+        self,
+        *,
+        messages: list[Message],
+        system_parts: list[str],
+        spec,
+        input_modalities: list[str],
+        user_id: str | None,
+        budget: _WorkflowBudget,
+        tools_enabled: bool,
+    ):
+        decision, response = self.models.complete(
+            ModelRequest(
+                messages=messages,
+                system="\n\n".join(system_parts),
+                tools=self.tools.definitions(set(spec.tools)) if tools_enabled else [],
+                max_output_tokens=4096,
+                temperature=1.0,
+                thinking=True,
+                metadata={"user_id": user_id} if user_id else {},
+            ),
+            spec.capability,
+            modalities=input_modalities,
+            latency_policy="deep" if spec.capability in {"reasoning", "coding"} else "fast",
+            max_timeout_seconds=budget.model_timeout(),
+        )
+        budget.check()
+        return decision, response
 
     def run(
         self,
@@ -209,6 +285,8 @@ class Orchestrator:
         routing_decisions: list[dict[str, object]] = []
         executed: list[str] = []
         memory_proposals: list[str] = []
+        no_progress_rounds = 0
+        recovery_completions = 0
         data_accessed = ["memory_environment", "knowledge_environment"] if execution_profile == "standard" else []
         try:
             budget.check()
@@ -217,6 +295,8 @@ class Orchestrator:
                 bundle = self.context.build(text) if content is None else self.context.build_content(content)
                 rendered_context = bundle.render()
             system_parts = [spec.system_prompt()]
+            if execution_profile == "standard":
+                system_parts.append(self._tool_policy(set(spec.tools)))
             messages = list(history or [])
             if rendered_context or additional_context:
                 system_parts.append(
@@ -232,22 +312,15 @@ class Orchestrator:
             response = None
             for round_number in range(self.max_tool_rounds + 1):
                 budget.check()
-                decision, response = self.models.complete(
-                    ModelRequest(
-                        messages=messages,
-                        system="\n\n".join(system_parts),
-                        tools=self.tools.definitions(set(spec.tools)) if execution_profile == "standard" else [],
-                        max_output_tokens=4096,
-                        temperature=1.0,
-                        thinking=True,
-                        metadata={"user_id": user_id} if user_id else {},
-                    ),
-                    spec.capability,
-                    modalities=input_modalities,
-                    latency_policy="deep" if spec.capability in {"reasoning", "coding"} else "fast",
-                    max_timeout_seconds=budget.model_timeout(),
+                decision, response = self._complete(
+                    messages=messages,
+                    system_parts=system_parts,
+                    spec=spec,
+                    input_modalities=input_modalities,
+                    user_id=user_id,
+                    budget=budget,
+                    tools_enabled=execution_profile == "standard",
                 )
-                budget.check()
                 routing_decisions.append(decision.to_dict())
                 adapter = self.models.registry.adapter(decision.record_id)
                 if not response.tool_calls:
@@ -258,10 +331,34 @@ class Orchestrator:
                         "evaluation_tool_forbidden",
                     )
                 if round_number >= self.max_tool_rounds:
-                    raise _runtime_failure(
-                        "Model exceeded the configured tool-call round limit",
-                        "tool_round_limit",
+                    messages.append(
+                        Message(
+                            role="user",
+                            content=(
+                                "TOOL LOOP RECOVERY: The configured tool-round limit has been reached. "
+                                "Do not request another tool. Finish from the observations already present, "
+                                "and state any unresolved limitation instead of repeating work."
+                            ),
+                        )
                     )
+                    decision, response = self._complete(
+                        messages=messages,
+                        system_parts=system_parts,
+                        spec=spec,
+                        input_modalities=input_modalities,
+                        user_id=user_id,
+                        budget=budget,
+                        tools_enabled=False,
+                    )
+                    routing_decisions.append(decision.to_dict())
+                    adapter = self.models.registry.adapter(decision.record_id)
+                    recovery_completions += 1
+                    if response.tool_calls:
+                        raise _runtime_failure(
+                            "Model continued requesting tools after tool-loop recovery",
+                            "tool_round_limit",
+                        )
+                    break
                 budget.reserve(len(response.tool_calls))
                 messages.append(
                     Message(
@@ -271,13 +368,13 @@ class Orchestrator:
                         provider_state=response.raw_assistant_content,
                     )
                 )
+                new_executions = 0
                 for call in response.tool_calls:
                     budget.check()
-                    replayed, cached_or_signature = budget.replay(call.id, call.name, call.arguments)
+                    replayed, signature, cached = budget.replay(call.id, call.name, call.arguments)
                     if replayed:
-                        result = cached_or_signature
+                        result = cached
                     else:
-                        signature = cached_or_signature
                         try:
                             result = self.tools.execute(call.name, call.arguments, allowed=set(spec.tools))
                         except (ToolError, ValueError, TypeError) as exc:
@@ -287,6 +384,7 @@ class Orchestrator:
                                 "error_type": type(exc).__name__,
                             }
                         budget.remember(call.id, signature, result)
+                        new_executions += 1
                     if call.name == "memory_write" and isinstance(result, dict) and result.get("status") == "pending":
                         proposal_id = result.get("proposal_id")
                         if isinstance(proposal_id, str) and proposal_id not in memory_proposals:
@@ -300,6 +398,39 @@ class Orchestrator:
                             name=call.name,
                         )
                     )
+                if new_executions == 0:
+                    no_progress_rounds += 1
+                    messages.append(
+                        Message(
+                            role="user",
+                            content=(
+                                "TOOL LOOP RECOVERY: Those tool calls repeated observations already available. "
+                                "Do not repeat identical calls. Either choose a materially different tool that directly advances the request, "
+                                "or finish from the existing evidence."
+                            ),
+                        )
+                    )
+                else:
+                    no_progress_rounds = 0
+                if no_progress_rounds >= 2:
+                    decision, response = self._complete(
+                        messages=messages,
+                        system_parts=system_parts,
+                        spec=spec,
+                        input_modalities=input_modalities,
+                        user_id=user_id,
+                        budget=budget,
+                        tools_enabled=False,
+                    )
+                    routing_decisions.append(decision.to_dict())
+                    adapter = self.models.registry.adapter(decision.record_id)
+                    recovery_completions += 1
+                    if response.tool_calls:
+                        raise _runtime_failure(
+                            "Model continued requesting tools after repeated no-progress rounds",
+                            "tool_round_limit",
+                        )
+                    break
             if response is None:
                 raise _runtime_failure("Model execution produced no response", "missing_response")
             budget.check()
@@ -328,6 +459,7 @@ class Orchestrator:
                 **execution_metadata,
                 "model_routing": routing_decisions,
                 "memory_proposal_ids": memory_proposals,
+                "tool_loop_recovery_completions": recovery_completions,
                 **self._budget_metadata(budget),
             }
             self.traces.finish(
@@ -352,6 +484,7 @@ class Orchestrator:
                 **execution_metadata,
                 "model_routing": routing_decisions,
                 "memory_proposal_ids": memory_proposals,
+                "tool_loop_recovery_completions": recovery_completions,
                 **self._budget_metadata(budget),
             }
             self.traces.finish(
