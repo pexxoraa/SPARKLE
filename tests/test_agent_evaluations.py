@@ -40,7 +40,7 @@ AGENT_EVALUATIONS = {
     "research": {
         "prompt": "Research the latest paper sources and compare the evidence",
         "capability": "reasoning",
-        "instruction": "Never invent sources",
+        "instruction": "Use research_workspace for persistent plans, evidence and reports; use knowledge_verify with citation_digest for exact stored quotes. Integrity never establishes claim truth or external source validity.",
         "tools": {"knowledge_search"},
     },
     "coding": {
@@ -82,7 +82,7 @@ AGENT_EVALUATIONS = {
     "data_analysis": {
         "prompt": "Analyze this CSV spreadsheet with statistics, a chart, and forecast",
         "capability": "reasoning",
-        "instruction": "suitable statistics",
+        "instruction": "Use data_analyze for deterministic transformations and statistics on imported datasets. State assumptions, preserve recipe evidence, and do not overstate causal or forecasting claims.",
         "tools": {"calculator", "file_read"},
     },
     "content": {
