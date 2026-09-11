@@ -26,7 +26,11 @@ class BenchmarkTests(unittest.TestCase):
     def test_locked_baseline_and_required_queries(self):
         baseline=json.loads(Path('benchmarks/evidence/results.json').read_text())
         self.assertEqual(check_retrieval(self.report['retrieval'],baseline['retrieval']),[])
-        self.assertEqual(self.report,baseline)
+        self.assertEqual(
+            self.report,
+            baseline,
+            self.report['implementation_sha256']['src/sparkle/orchestrator.py'],
+        )
 
     def test_metric_definitions_multi_relevance_and_misses(self):
         rows=[{'ranking':['bad','a','b'],'relevant':['a','b']},
