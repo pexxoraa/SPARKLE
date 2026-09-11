@@ -38,6 +38,7 @@ from sparkle.builders import WorkspaceManager
 from sparkle.config import AppConfig, data_root, project_root
 from sparkle.context import ContextBuilder
 from sparkle.content import content_contract_status
+from sparkle.data_analysis import DataAnalysisService, DataAnalysisTool
 from sparkle.development import DevelopmentVerifier, WorkspaceTestRunner
 from sparkle.external_worker import ExternalWorkerClient
 from sparkle.knowledge import KnowledgeIngestor
@@ -116,6 +117,7 @@ class SparkleSystem:
         self.project_tasks = ProjectTasks(self.projects)
         self.skills = SkillMasteryStore()
         self.learning = LearningService(self.skills)
+        self.data_analysis = DataAnalysisService()
         self.proactive = ProactiveEngine(
             self.memory, self.knowledge, self.projects, self.skills,
         )
@@ -161,6 +163,7 @@ class SparkleSystem:
         self.tools.register(ProjectTasksTool(self.project_tasks))
         self.tools.register(LearningReadTool(self.learning))
         self.tools.register(SkillSearchTool(self.skills))
+        self.tools.register(DataAnalysisTool(self.data_analysis))
         self.tools.register(FileReadTool(project_root()))
         self.tools.register(WorkspaceScaffoldTool(self.workspaces))
         self.tools.register(WorkspaceVerifyTool(self.development))
@@ -378,6 +381,7 @@ class SparkleSystem:
                 **self.projects.stats(),
             },
             "learning": {"implemented": True, **self.learning.stats()},
+            "data_analysis": self.data_analysis.stats(),
             "skills": {
                 "status": "ready",
                 "protocol_version": self.skills.PROTOCOL,
