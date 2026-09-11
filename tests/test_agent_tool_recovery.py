@@ -1,0 +1,96 @@
+from __future__ import annotations
+
+from unittest.mock import patch
+
+from sparkle.contracts import ModelResponse, ToolCall
+from sparkle.providers.mock import DeterministicAdapter
+from tests.test_orchestrator_api import SystemCase
+
+
+class FreshIdLoopAdapter(DeterministicAdapter):
+    def __init__(self):
+        self.calls = 0
+        self.requests = []
+
+    def complete(self, request):
+        self.calls += 1
+        self.requests.append(request)
+        if not request.tools:
+            return ModelResponse(
+                "Recovered from repeated tool observations.",
+                self.model_id,
+                self.provider,
+                "stop",
+            )
+        return ModelResponse(
+            "",
+            self.model_id,
+            self.provider,
+            "tool_use",
+            tool_calls=[
+                ToolCall(
+                    f"fresh-{self.calls}",
+                    "calculator",
+                    {"expression": "1+1"},
+                )
+            ],
+        )
+
+
+class AgentToolRecoveryTests(SystemCase):
+    def test_same_signature_with_fresh_ids_executes_once_and_recovers(self):
+        adapter = FreshIdLoopAdapter()
+        self.registry.inject(self.registry.active_id, adapter)
+        with patch.object(
+            self.system.tools,
+            "execute",
+            wraps=self.system.tools.execute,
+        ) as execute:
+            result = self.system.orchestrator.run(
+                "Calculate one plus one.",
+                agent_name="personal",
+            )
+
+        self.assertEqual(result.text, "Recovered from repeated tool observations.")
+        self.assertEqual(execute.call_count, 1)
+        self.assertEqual(
+            result.tool_calls_executed,
+            ["calculator", "calculator", "calculator"],
+        )
+        self.assertEqual(adapter.calls, 4)
+        self.assertEqual(adapter.requests[-1].tools, [])
+        trace = self.system.traces.recent()[0]
+        self.assertEqual(trace["status"], "success")
+        self.assertEqual(trace["execution_metadata"]["tool_signature_replays"], 2)
+        self.assertEqual(trace["execution_metadata"]["tool_loop_recovery_completions"], 1)
+
+    def test_tool_policy_is_minimal_evidence_oriented(self):
+        policy = self.system.orchestrator._tool_policy(
+            {
+                "memory_write",
+                "knowledge_search",
+                "knowledge_verify",
+                "research_workspace",
+                "learning_progress",
+                "file_read",
+                "workspace_verify",
+            }
+        )
+        self.assertIn("narrowest sufficient tool", policy)
+        self.assertIn("Do not repeat an identical tool call", policy)
+        self.assertIn("memory_write once", policy)
+        self.assertIn("knowledge_search before heavier research/state tools", policy)
+        self.assertIn("Do not invent citations", policy)
+        self.assertIn("knowledge_verify only", policy)
+        self.assertIn("research_workspace for genuinely persistent multi-step", policy)
+        self.assertIn("learning_progress when the request concerns a named course", policy)
+        self.assertIn("prefer workspace_verify", policy)
+
+    def test_policy_is_injected_into_standard_model_request(self):
+        adapter = FreshIdLoopAdapter()
+        self.registry.inject(self.registry.active_id, adapter)
+        self.system.orchestrator.run("Calculate one plus one.", agent_name="personal")
+        first = adapter.requests[0]
+        self.assertIn("TOOL USE POLICY", first.system)
+        self.assertIn("memory_write once", first.system)
+        self.assertIn("Do not repeat an identical tool call", first.system)
