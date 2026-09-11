@@ -1,5 +1,6 @@
 """Real orchestrator/state tests with explicitly scripted model batches."""
 from dataclasses import replace
+import itertools
 import json
 from unittest.mock import patch
 
@@ -50,6 +51,40 @@ class OrchestrationBoundTests(SystemCase):
         trace = self.system.traces.recent()[0]
         self.assertEqual(trace['execution_metadata']['memory_proposal_ids'], [proposals[0]['id']])
         self.assertNotIn('Practice daily', json.dumps(trace['execution_metadata']))
+
+    def test_exact_tool_call_replay_returns_cached_result_without_repeating_side_effect(self):
+        call = ToolCall('same-call', 'memory_write', {'category':'goals','key':'fixture','value':'Practice daily'})
+        self.inject([[call], [call], []])
+        with patch.object(self.system.tools, 'execute', wraps=self.system.tools.execute) as execute:
+            result = self.system.orchestrator.run('Remember a goal', agent_name='personal')
+        self.assertEqual(execute.call_count, 1)
+        self.assertEqual(result.tool_calls_executed, ['memory_write', 'memory_write'])
+        self.assertEqual(len(self.system.memory_review.list()), 1)
+        trace = self.system.traces.recent()[0]
+        self.assertEqual(trace['execution_metadata']['tool_call_replays'], 1)
+        self.assertEqual(trace['execution_metadata']['tool_calls_reserved'], 2)
+
+    def test_tool_call_id_reuse_with_different_arguments_fails_closed(self):
+        first = ToolCall('same-call', 'calculator', {'expression':'1+1'})
+        second = ToolCall('same-call', 'calculator', {'expression':'2+2'})
+        self.inject([[first], [second]])
+        with patch.object(self.system.tools, 'execute', wraps=self.system.tools.execute) as execute:
+            with self.assertRaises(RuntimeError) as caught:
+                self.system.orchestrator.run('Calculate', agent_name='personal')
+        self.assertEqual(caught.exception.orchestration_code, 'tool_call_replay_mismatch')
+        self.assertEqual(execute.call_count, 1)
+
+    def test_workflow_wall_clock_budget_is_shared_and_fails_closed(self):
+        self.system.orchestrator.max_workflow_seconds = 1
+        self.inject([[]])
+        ticks = itertools.count()
+        with patch('sparkle.orchestrator.time.monotonic', side_effect=lambda: next(ticks) * 0.6):
+            with self.assertRaises(RuntimeError) as caught:
+                self.system.orchestrator.run('Calculate', agent_name='personal')
+        self.assertEqual(caught.exception.orchestration_code, 'workflow_deadline')
+        trace = self.system.traces.recent()[0]
+        self.assertEqual(trace['status'], 'failure')
+        self.assertEqual(trace['execution_metadata']['workflow_seconds_limit'], 1)
 
     def test_oversized_batch_has_no_partial_memory_writes(self):
         self.inject([[ToolCall(str(i), 'memory_write', {'category': 'goals', 'key': str(i), 'value': 'fixture'}) for i in range(17)]])
