@@ -2,13 +2,13 @@
 from __future__ import annotations
 
 import hashlib
-import math
 import re
 from collections import Counter
+from pathlib import Path
 from typing import Protocol
 
 from sparkle.storage import KnowledgeStore
-from sparkle.knowledge_lifecycle import ACTIVE_SOURCE
+from sparkle.vector_index import PersistentVectorIndex
 
 
 class EmbeddingProvider(Protocol):
@@ -20,66 +20,97 @@ class EmbeddingProvider(Protocol):
 
 class HashingTestEmbeddings:
     """TEST DOUBLE: token hashing, not a semantic model or quality evidence."""
-    identity = 'token-hash-test-double-v1'
+    identity = "token-hash-test-double-v1"
     dimensions = 128
 
     def embed(self, texts):
         result = []
         for text in texts:
             vector = [0.0] * self.dimensions
-            for token, count in Counter(re.findall(r'\w+', text.casefold())).items():
-                index = int.from_bytes(hashlib.sha256(token.encode()).digest()[:4], 'big') % self.dimensions
+            for token, count in Counter(re.findall(r"\w+", text.casefold())).items():
+                index = (
+                    int.from_bytes(hashlib.sha256(token.encode()).digest()[:4], "big")
+                    % self.dimensions
+                )
                 vector[index] += count
             result.append(vector)
         return result
 
 
 class SemanticRetriever:
-    """Small-corpus, bounded, replaceable embedding path; no persistent vector cache."""
-    def __init__(self, store: KnowledgeStore, provider: EmbeddingProvider, *, max_chunks=1000):
-        if type(max_chunks) is not int or not 1 <= max_chunks <= 10000:
-            raise ValueError('Invalid semantic corpus limit')
+    """Bounded semantic retrieval backed by a persistent, lifecycle-aware vector index."""
+
+    def __init__(
+        self,
+        store: KnowledgeStore,
+        provider: EmbeddingProvider,
+        *,
+        max_chunks: int = 1000,
+        batch_size: int = 64,
+        index: PersistentVectorIndex | None = None,
+        index_path: Path | None = None,
+    ):
+        if type(max_chunks) is not int or not 1 <= max_chunks <= 10_000:
+            raise ValueError("Invalid semantic corpus limit")
+        if type(batch_size) is not int or not 1 <= batch_size <= 256:
+            raise ValueError("Invalid embedding batch size")
         if type(provider.dimensions) is not int or not 1 <= provider.dimensions <= 8192:
-            raise ValueError('Invalid embedding dimensions')
-        self.store, self.provider, self.max_chunks = store, provider, max_chunks
+            raise ValueError("Invalid embedding dimensions")
+        if index is not None and index_path is not None:
+            raise ValueError("Specify either index or index_path, not both")
+        self.store = store
+        self.provider = provider
+        self.max_chunks = max_chunks
+        self.batch_size = batch_size
+        self.index = index or PersistentVectorIndex(store, index_path)
+        self.last_evidence: dict[str, object] = {}
+
+    def synchronize(self, *, force: bool = False) -> dict[str, object]:
+        evidence = self.index.synchronize(
+            self.provider,
+            max_chunks=self.max_chunks,
+            batch_size=self.batch_size,
+            force=force,
+        )
+        self.last_evidence = {
+            "index": evidence,
+            "semantic_quality_verified": False,
+        }
+        return evidence
 
     def search(self, query, *, limit=5):
         if not isinstance(query, str):
-            raise ValueError('Query must be text')
-        with self.store.connect() as connection:
-            rows = connection.execute(f'''SELECT chunks.id AS chunk_id, chunks.source_id,
-                chunks.position, chunks.content, sources.title, sources.source_uri,
-                sources.media_type FROM chunks JOIN sources ON sources.id=chunks.source_id
-                WHERE {ACTIVE_SOURCE} ORDER BY chunks.id LIMIT ?''', (self.max_chunks + 1,)).fetchall()
-        if len(rows) > self.max_chunks:
-            raise ValueError('Semantic corpus exceeds configured bound')
-        if not rows:
+            raise ValueError("Query must be text")
+        if not query.strip():
+            self.last_evidence = {
+                "provider_identity": self.provider.identity,
+                "persistent_index": True,
+                "semantic_quality_verified": False,
+                "empty_query": True,
+            }
             return []
-        texts = [query[:16384]] + [(r['title'] + '\n' + r['content'])[:16384] for r in rows]
-        vectors = self.provider.embed(texts)
-        if len(vectors) != len(texts):
-            raise ValueError('Embedding count mismatch')
-        normalized = []
-        for vector in vectors:
-            if len(vector) != self.provider.dimensions or any(
-                isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v)
-                for v in vector
-            ):
-                raise ValueError('Invalid embedding vector')
-            norm = math.hypot(*vector)
-            if not math.isfinite(norm):
-                raise ValueError('Invalid embedding norm')
-            normalized.append([v / norm for v in vector] if norm else [0.0]*len(vector))
-        ranked = []
-        for row, vector in zip(rows, normalized[1:]):
-            score = sum(a*b for a,b in zip(normalized[0], vector))
-            if score > 0:
-                ranked.append({**dict(row), 'score': score})
-        return self.store.filter_active_results(sorted(ranked, key=lambda r: (-r['score'], r['chunk_id'])))[:max(1,min(limit,50))]
+        if len(query) > 16384:
+            raise ValueError("Query exceeds 16384 characters")
+        if type(limit) is not int or not 1 <= limit <= 50:
+            raise ValueError("Limit must be an integer from 1 to 50")
+        self.synchronize()
+        results = self.index.search(
+            self.provider,
+            query,
+            limit=limit,
+        )
+        self.last_evidence = {
+            **self.last_evidence,
+            "provider_identity": self.provider.identity,
+            "persistent_index": True,
+            "semantic_quality_verified": False,
+        }
+        return results
 
 
 class HybridRetriever:
     """Equal-weight reciprocal-rank fusion, constant 60; lexical fallback is explicit."""
+
     def __init__(self, lexical, semantic):
         self.lexical, self.semantic = lexical, semantic
         self.last_evidence = {}
@@ -89,19 +120,30 @@ class HybridRetriever:
         try:
             semantic = self.semantic.search(query, limit=50)
         except Exception:
-            self.last_evidence = {'fallback': 'lexical', 'semantic_status': 'unavailable'}
-            return self._eligible(lexical)[:max(1,min(limit,50))]
-        self.last_evidence = {'fallback': None, 'semantic_status': 'completed'}
+            self.last_evidence = {
+                "fallback": "lexical",
+                "semantic_status": "unavailable",
+                "semantic_quality_verified": False,
+            }
+            return self._eligible(lexical)[: max(1, min(limit, 50))]
+        self.last_evidence = {
+            "fallback": None,
+            "semantic_status": "completed",
+            "semantic_quality_verified": False,
+        }
         scores, records = {}, {}
         for ranking in (lexical, semantic):
             for rank, row in enumerate(ranking, 1):
-                key = row['chunk_id']
+                key = row["chunk_id"]
                 records[key] = row
                 scores[key] = scores.get(key, 0) + 1 / (60 + rank)
-        return self._eligible([{**records[key], 'score': scores[key]} for key in sorted(
-            scores, key=lambda key: (-scores[key], key)
-        )])[:max(1,min(limit,50))]
+        return self._eligible(
+            [
+                {**records[key], "score": scores[key]}
+                for key in sorted(scores, key=lambda key: (-scores[key], key))
+            ]
+        )[: max(1, min(limit, 50))]
 
     def _eligible(self, rows):
-        filter_results = getattr(self.lexical, 'filter_active_results', None)
+        filter_results = getattr(self.lexical, "filter_active_results", None)
         return filter_results(rows) if filter_results else rows
