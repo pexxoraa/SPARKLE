@@ -37,7 +37,7 @@ class PlatformSupportTests(unittest.TestCase):
                 environ={"XDG_STATE_HOME": "/state"},
                 home=home,
             ),
-            Path("/state/sparkle"),
+            Path("/state/sparkle").resolve(),
         )
         self.assertEqual(
             default_state_root(
@@ -45,19 +45,19 @@ class PlatformSupportTests(unittest.TestCase):
                 environ={"LOCALAPPDATA": "/local"},
                 home=home,
             ),
-            Path("/local/SPARKLE"),
+            Path("/local/SPARKLE").resolve(),
         )
         self.assertEqual(
             default_state_root(platform_name="macos", environ={}, home=home),
-            Path("/home/example/Library/Application Support/SPARKLE"),
+            Path("/home/example/Library/Application Support/SPARKLE").resolve(),
         )
         self.assertEqual(
             default_state_root(platform_name="ios", environ={}, home=home),
-            Path("/home/example/Library/Application Support/SPARKLE"),
+            Path("/home/example/Library/Application Support/SPARKLE").resolve(),
         )
         self.assertEqual(
             default_state_root(platform_name="grapheneos", environ={}, home=home),
-            Path("/home/example/.local/state/sparkle"),
+            Path("/home/example/.local/state/sparkle").resolve(),
         )
 
     def test_data_root_explicit_override_remains_authoritative(self):
