@@ -19,6 +19,8 @@ documents = ["pypdf>=6.0", "python-docx>=1.2"]
 sparkle = "sparkle.cli:entrypoint"
 sparkle-data = "sparkle.data_cli:entrypoint"
 sparkle-content = "sparkle.content_cli:entrypoint"
+sparkle-research = "sparkle.research_cli:entrypoint"
+sparkle-engineering = "sparkle.engineering_cli:entrypoint"
 sparkle-interaction = "sparkle.interaction_cli:entrypoint"
 sparkle-voice = "sparkle.voice_cli:entrypoint"
 sparkle-worker = "sparkle.worker_cancellation:entrypoint"
