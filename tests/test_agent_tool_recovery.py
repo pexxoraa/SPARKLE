@@ -123,9 +123,15 @@ class AgentToolRecoveryTests(SystemCase):
 
     def test_builtin_prompts_prefer_direct_evidence_tools(self):
         personal = self.system.agents.get("personal").system_prompt()
+        learning = self.system.agents.get("learning").system_prompt()
         research = self.system.agents.get("research").system_prompt()
         coding = self.system.agents.get("coding").system_prompt()
-        self.assertIn("deterministic tool directly matches", personal)
-        self.assertIn("retrieve first and cite returned source/chunk identifiers", research)
+        self.assertIn("For requested exact arithmetic use calculator", personal)
+        self.assertIn("explicit durable-memory request use memory_write once", personal)
+        self.assertIn("invoke that tool once and report its observed failure", personal)
+        self.assertIn("explicit learning-memory record use memory_write once", learning)
+        self.assertIn("direct source lookup use knowledge_search", learning)
+        self.assertIn("learning_progress only for named curriculum", learning)
+        self.assertIn("call knowledge_search once even when generic retrieved context", research)
         self.assertIn("Never invent a citation", research)
         self.assertIn("use workspace_verify directly", coding)
