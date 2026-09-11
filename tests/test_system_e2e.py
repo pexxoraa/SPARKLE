@@ -75,6 +75,17 @@ class SystemEndToEndTests(unittest.TestCase):
         except urllib.error.HTTPError as exc:
             return exc.code, json.loads(exc.read())
 
+    def test_knowledge_lifecycle_api_requires_approval_and_revision(self):
+        source=self.system.knowledge.ingest_text('Policy fixture','Policy fixture content')
+        body={'source_id':source,'action':'archive','expected_revision':0}
+        self.assertEqual(self.request('/api/knowledge/lifecycle',body)[0],400)
+        self.assertEqual(self.request('/api/knowledge/lifecycle',body|{'approved':True})[0],200)
+        self.assertEqual(self.request('/api/knowledge/lifecycle',body|{'approved':True})[0],400)
+        state=self.request('/api/knowledge/lifecycle?source_id='+str(source))[1]
+        self.assertEqual(state['policy']['state'],'archived')
+        self.assertFalse(state['policy']['eligible'])
+        self.assertEqual(self.request('/api/knowledge/search?q=fixture')[1]['results'],[])
+
     def test_stored_citation_verification_api(self):
         self.system.knowledge.ingest_text('Fixture', 'A stored research statement.')
         row=self.system.tools.execute('knowledge_search',{'query':'research'})[0]

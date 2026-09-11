@@ -63,6 +63,13 @@ def build_parser() -> argparse.ArgumentParser:
     memory.add_argument("category")
     memory.add_argument("key")
     memory.add_argument("value")
+    policy = sub.add_parser("knowledge-policy", help="Inspect/change operator-owned source policy")
+    policy.add_argument("source_id", type=int)
+    policy.add_argument("--action", choices=["archive","restore","revoke","retention","supersede"])
+    policy.add_argument("--revision", type=int)
+    policy.add_argument("--seconds", type=int)
+    policy.add_argument("--replacement-id", type=int)
+    policy.add_argument("--approve", action="store_true")
     knowledge = sub.add_parser("ingest", help="Ingest a UTF-8 text or Markdown file")
     knowledge.add_argument("path")
     knowledge.add_argument("--title")
@@ -473,6 +480,16 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "remember":
         memory_id = system.memory.remember(args.category, args.key, args.value, metadata={"source": "cli"})
         _print({"ok": True, "memory_id": memory_id})
+        return 0
+    if args.command == "knowledge-policy":
+        if args.action:
+            if not args.approve:
+                raise ValueError("Explicit operator approval required")
+            _print(system.knowledge.lifecycle.transition(args.source_id,args.action,args.revision,operator="cli",
+                retention_seconds=args.seconds,replacement_id=args.replacement_id))
+        else:
+            _print({"policy":system.knowledge.lifecycle.inspect(args.source_id),
+                    "history":system.knowledge.lifecycle.history(args.source_id)})
         return 0
     if args.command == "ingest":
         path = Path(args.path).resolve()

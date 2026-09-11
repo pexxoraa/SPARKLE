@@ -181,3 +181,21 @@ whitespace checks passed. General factual validation, source credibility,
 semantic entailment, source revision workflows and live research quality remain
 unfinished. Level 3 is BLOCKED/PARKED; deployment is FROZEN; live-agent baseline
 remains user-reported 3/12 validated, with competence unverified.
+
+## 2026-09-11 implementation-first knowledge lifecycle
+
+Starting published main: `3de56ac8435c3e9e876c200d75cd5620ed80dbb4`,
+clean worktree and matching remote. The operator's latest master directive
+prioritizes software implementation, bounded engineering checks, and later
+comprehensive human/live acceptance. No real-world verification is inferred.
+
+Implemented source archive/restore/revoke/expiry/supersession, optimistic revision
+checks, atomic content-free event history, API and CLI operator controls. Lexical,
+semantic, hybrid fallback/fusion and citation verification exclude ineligible
+sources. Embedding calls are followed by another eligibility check. Retained
+historical records and external embedding data retention remain distinct.
+
+No live provider, benchmark or host acceptance run was attempted. Level 3 stays
+BLOCKED/PARKED; deployment stays FROZEN. Existing benchmark metrics/outcomes are
+unchanged, with only implementation fingerprints refreshed. Human knowledge
+workflow validation and real semantic quality remain externally unverified.

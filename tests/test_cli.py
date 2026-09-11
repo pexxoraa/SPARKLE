@@ -18,6 +18,16 @@ from sparkle.system import SparkleSystem
 
 
 class CLITests(unittest.TestCase):
+    def test_knowledge_policy_commands(self):
+        with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ, {'SPARKLE_DATA_DIR':directory}):
+            system=SparkleSystem();source=system.knowledge.ingest_text('Fixture','Fixture evidence')
+            with contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(main(['knowledge-policy',str(source),'--action','archive','--revision','0','--approve']),0)
+            output=io.StringIO()
+            with contextlib.redirect_stdout(output):self.assertEqual(main(['knowledge-policy',str(source)]),0)
+            self.assertEqual(json.loads(output.getvalue())['policy']['state'],'archived')
+            self.assertEqual(system.knowledge.search('fixture'),[])
+
     def test_retention_and_revocation_commands_preserve_history(self):
         with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ, {"SPARKLE_DATA_DIR": directory}):
             system=SparkleSystem(); mid=system.memory.remember('goals','fixture','Practice daily')

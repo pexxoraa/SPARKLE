@@ -1,20 +1,19 @@
 {
   "schema": "SPARKLE-CAPABILITY-BACKLOG/1",
-  "source_checkpoint": "2955238a3cda0f57973a20e40e34a748839d144d",
+  "source_checkpoint": "3de56ac8435c3e9e876c200d75cd5620ed80dbb4",
   "level_3": "BLOCKED/PARKED",
   "deployment": "FROZEN",
   "current_work": {
-    "id": "stored-citation-integrity",
-    "priority": "P1",
-    "state": "LOCAL TEST VERIFIED",
-    "tests": "test_knowledge_evidence; API and Research Agent integration",
-    "acceptance": "Exact stored identity/digest/quote checks, independent of claim truth"
-  },
-  "next_implementable_work": {
     "id": "knowledge-source-lifecycle",
     "priority": "P1",
-    "next_action": "Inspect revision retention and retrieval exclusion requirements",
-    "acceptance": "Auditable source supersession and consistent exclusion across retrieval paths"
+    "state": "IMPLEMENTED; bounded engineering checks",
+    "acceptance": "Revision-bound operator policy and retrieval/citation exclusion; human acceptance pending"
+  },
+  "next_implementable_work": {
+    "id": "project-task-dependencies",
+    "priority": "P1",
+    "next_action": "Inspect task decomposition and dependency-aware execution readiness",
+    "acceptance": "Persisted dependency graph, cycle rejection, bounded readiness, operator-controlled transitions"
   },
   "specific_external_blockers": [
     {
@@ -627,6 +626,16 @@
       "acceptance": "Exact identity review, current evidence, expiry/conflicts and literal-text private history",
       "commit": "2955238a3cda0f57973a20e40e34a748839d144d",
       "ci_run": 95,
+      "ci_status": "success"
+    },
+    {
+      "id": "stored-citation-integrity",
+      "priority": "P1",
+      "state": "LOCAL TEST VERIFIED",
+      "tests": "test_knowledge_evidence; API and Research Agent integration",
+      "acceptance": "Exact stored identity/digest/quote checks, independent of claim truth",
+      "commit": "3de56ac8435c3e9e876c200d75cd5620ed80dbb4",
+      "ci_run": 96,
       "ci_status": "success"
     }
   ],

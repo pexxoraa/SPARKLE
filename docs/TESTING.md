@@ -594,3 +594,11 @@ quotes, source identity, changed content/metadata, deletion, invalid/oversized
 batches and mixed results. System API and scripted Research Agent tool-loop
 tests verify integration. These are deterministic application-state checks;
 they do not demonstrate autonomous citation selection or external source truth.
+
+Knowledge lifecycle engineering checks cover lexical/semantic/hybrid exclusion,
+citation rejection, revision conflicts, terminal states, expiry/extension,
+revocation during an embedding callback, retained deletion audit, and invalid
+mutations. API/CLI integration is exercised without live credentials. The
+existing benchmark metrics and outcomes remain unchanged; implementation
+fingerprints are refreshed when retrieval source changes. Comprehensive human
+source-management and live embedding acceptance remain pending.

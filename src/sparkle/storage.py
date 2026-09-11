@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from sparkle.config import data_root
+from sparkle.knowledge_lifecycle import ACTIVE_SOURCE, KnowledgeLifecycle, initialize as initialize_knowledge_lifecycle
 
 
 def utc_now() -> str:
@@ -249,6 +250,7 @@ class KnowledgeStore(SQLiteStore):
     def __init__(self, path: Path | None = None):
         super().__init__(path or data_root() / "knowledge_environment" / "knowledge.sqlite3")
         self.initialize()
+        self.lifecycle = KnowledgeLifecycle(self)
 
     def initialize(self) -> None:
         with self.connect() as connection:
@@ -286,6 +288,7 @@ class KnowledgeStore(SQLiteStore):
             # backfill and maintenance triggers commit together or roll back together.
             connection.commit()
             connection.execute("BEGIN IMMEDIATE")
+            initialize_knowledge_lifecycle(connection)
             indexed = connection.execute(
                 "SELECT 1 FROM sqlite_master WHERE name='knowledge_search'"
             ).fetchone()
@@ -399,14 +402,14 @@ class KnowledgeStore(SQLiteStore):
         # Only literal Unicode tokens enter MATCH; caller FTS operators are data.
         match = " OR ".join('"' + term + '"' for term in query_terms)
         with self.connect() as connection:
-            rows = connection.execute("""
+            rows = connection.execute(f"""
                 SELECT chunks.id, chunks.source_id, chunks.position, chunks.content,
                        sources.title, sources.source_uri, sources.media_type,
                        bm25(knowledge_search, 3.0, 1.0) AS relevance
                 FROM knowledge_search
                 JOIN chunks ON chunks.id=knowledge_search.rowid
                 JOIN sources ON sources.id=chunks.source_id
-                WHERE knowledge_search MATCH ?
+                WHERE knowledge_search MATCH ? AND {ACTIVE_SOURCE}
                 ORDER BY relevance, chunks.id LIMIT ?
             """, (match, max(1, min(limit, 50)))).fetchall()
         return [
@@ -464,3 +467,17 @@ class KnowledgeStore(SQLiteStore):
         with self.connect() as connection:
             cursor = connection.execute("DELETE FROM sources WHERE id=?", (source_id,))
         return cursor.rowcount == 1
+
+    def filter_active_results(self, rows):
+        if len(rows)>10000:
+            raise ValueError('Knowledge result set exceeds bound')
+        with self.connect() as db:
+            db.execute('BEGIN')
+            active=set()
+            ids=list({row['source_id'] for row in rows})
+            for offset in range(0,len(ids),200):
+                batch=ids[offset:offset+200]
+                marks=','.join('?' for _ in batch)
+                active.update(row[0] for row in db.execute(
+                    f'SELECT sources.id FROM sources WHERE sources.id IN ({marks}) AND {ACTIVE_SOURCE}',batch))
+        return [row for row in rows if row['source_id'] in active]

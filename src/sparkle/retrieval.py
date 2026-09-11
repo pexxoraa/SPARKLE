@@ -8,6 +8,7 @@ from collections import Counter
 from typing import Protocol
 
 from sparkle.storage import KnowledgeStore
+from sparkle.knowledge_lifecycle import ACTIVE_SOURCE
 
 
 class EmbeddingProvider(Protocol):
@@ -46,10 +47,10 @@ class SemanticRetriever:
         if not isinstance(query, str):
             raise ValueError('Query must be text')
         with self.store.connect() as connection:
-            rows = connection.execute('''SELECT chunks.id AS chunk_id, chunks.source_id,
+            rows = connection.execute(f'''SELECT chunks.id AS chunk_id, chunks.source_id,
                 chunks.position, chunks.content, sources.title, sources.source_uri,
                 sources.media_type FROM chunks JOIN sources ON sources.id=chunks.source_id
-                ORDER BY chunks.id LIMIT ?''', (self.max_chunks + 1,)).fetchall()
+                WHERE {ACTIVE_SOURCE} ORDER BY chunks.id LIMIT ?''', (self.max_chunks + 1,)).fetchall()
         if len(rows) > self.max_chunks:
             raise ValueError('Semantic corpus exceeds configured bound')
         if not rows:
@@ -74,7 +75,7 @@ class SemanticRetriever:
             score = sum(a*b for a,b in zip(normalized[0], vector))
             if score > 0:
                 ranked.append({**dict(row), 'score': score})
-        return sorted(ranked, key=lambda r: (-r['score'], r['chunk_id']))[:max(1,min(limit,50))]
+        return self.store.filter_active_results(sorted(ranked, key=lambda r: (-r['score'], r['chunk_id'])))[:max(1,min(limit,50))]
 
 
 class HybridRetriever:
@@ -89,7 +90,7 @@ class HybridRetriever:
             semantic = self.semantic.search(query, limit=50)
         except Exception:
             self.last_evidence = {'fallback': 'lexical', 'semantic_status': 'unavailable'}
-            return lexical[:max(1,min(limit,50))]
+            return self._eligible(lexical)[:max(1,min(limit,50))]
         self.last_evidence = {'fallback': None, 'semantic_status': 'completed'}
         scores, records = {}, {}
         for ranking in (lexical, semantic):
@@ -97,6 +98,10 @@ class HybridRetriever:
                 key = row['chunk_id']
                 records[key] = row
                 scores[key] = scores.get(key, 0) + 1 / (60 + rank)
-        return [{**records[key], 'score': scores[key]} for key in sorted(
+        return self._eligible([{**records[key], 'score': scores[key]} for key in sorted(
             scores, key=lambda key: (-scores[key], key)
-        )[:max(1,min(limit,50))]]
+        )])[:max(1,min(limit,50))]
+
+    def _eligible(self, rows):
+        filter_results = getattr(self.lexical, 'filter_active_results', None)
+        return filter_results(rows) if filter_results else rows

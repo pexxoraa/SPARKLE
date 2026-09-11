@@ -410,6 +410,10 @@ class SparkleHandler(BaseHTTPRequestHandler):
             return self._json({"proposals": self.system.memory_review.list(status=query.get("status", ["pending"])[0])})
         if parsed.path == "/api/memory":
             return self._json({"memories": self.system.memory.search(query.get("q", [""])[0], limit=int(query.get("limit", [20])[0]))})
+        if parsed.path == "/api/knowledge/lifecycle":
+            source_id=int(query.get("source_id", [0])[0])
+            return self._json({"policy":self.system.knowledge.lifecycle.inspect(source_id),
+                               "history":self.system.knowledge.lifecycle.history(source_id)})
         if parsed.path == "/api/knowledge/search":
             return self._json({"results": self.system.knowledge.search(query.get("q", [""])[0], limit=int(query.get("limit", [10])[0]))})
         if parsed.path == "/api/knowledge/sources":
@@ -576,6 +580,15 @@ class SparkleHandler(BaseHTTPRequestHandler):
                     if self.path == "/api/chat" else MAX_BODY_BYTES
                 )
             )
+            if self.path == "/api/knowledge/lifecycle":
+                if data.get("approved") is not True:
+                    raise ValueError("Explicit operator approval required")
+                allowed={"source_id","action","expected_revision","approved","retention_seconds","replacement_id"}
+                if set(data)-allowed:
+                    raise ValueError("Unsupported knowledge policy fields")
+                return self._json(self.system.knowledge.lifecycle.transition(
+                    data.get("source_id"),data.get("action"),data.get("expected_revision"),operator="authenticated_api" if self.system.api_access.required else "local_api",
+                    retention_seconds=data.get("retention_seconds"),replacement_id=data.get("replacement_id")))
             if self.path == "/api/knowledge/verify":
                 return self._json(self.system.tools.execute("knowledge_verify", data))
             if self.path == "/api/chat":

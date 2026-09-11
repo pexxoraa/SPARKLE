@@ -5,6 +5,8 @@ import hashlib
 import json
 import re
 
+from sparkle.knowledge_lifecycle import ACTIVE_SOURCE
+
 
 def citation_digest(row):
     snapshot = {key: row[key] for key in (
@@ -39,6 +41,8 @@ def verify_citations(store, citations):
                     WHERE chunks.id=?''', (citation['chunk_id'],)).fetchone()
                 if row is None:
                     status, reason = 'REJECTED', 'missing_stored_chunk'
+                elif db.execute(f'SELECT 1 FROM sources WHERE id=? AND {ACTIVE_SOURCE}', (row['source_id'],)).fetchone() is None:
+                    status, reason = 'REJECTED', 'source_ineligible'
                 elif row['source_id'] != citation['source_id']:
                     status, reason = 'REJECTED', 'source_identity_mismatch'
                 elif citation_digest(row) != citation['digest']:
