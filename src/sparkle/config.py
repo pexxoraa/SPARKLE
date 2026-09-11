@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from sparkle.platform_support import default_state_root
+
 
 def project_root() -> Path:
     return Path(__file__).resolve().parents[2]
@@ -18,9 +20,7 @@ def data_root() -> Path:
     checkout = project_root()
     if (checkout / "application" / "config.json").is_file():
         return checkout / "var"
-    state_home = os.environ.get("XDG_STATE_HOME")
-    base = Path(state_home).expanduser() if state_home else Path.home() / ".local" / "state"
-    return (base / "sparkle").resolve()
+    return default_state_root()
 
 
 def _materialize_default(target: Path, bundled: Path) -> Path:
@@ -130,12 +130,15 @@ class AppConfig:
 
     def __post_init__(self):
         for name, minimum, maximum in (
-            ('max_tool_rounds', 0, 16), ('max_tool_calls', 1, 128),
-            ('max_specialists', 1, 16),
+            ("max_tool_rounds", 0, 16),
+            ("max_tool_calls", 1, 128),
+            ("max_specialists", 1, 16),
         ):
             value = getattr(self, name)
             if type(value) is not int or not minimum <= value <= maximum:
-                raise ValueError(f'{name} must be an integer from {minimum} to {maximum}')
+                raise ValueError(
+                    f"{name} must be an integer from {minimum} to {maximum}"
+                )
 
     @classmethod
     def load(cls, path: Path | None = None) -> "AppConfig":
@@ -154,7 +157,9 @@ class AppConfig:
         if not isinstance(token_refs, list) or not token_refs or not all(
             isinstance(item, str) and item for item in token_refs
         ):
-            raise ValueError("security.api_token_refs must contain secret reference names")
+            raise ValueError(
+                "security.api_token_refs must contain secret reference names"
+            )
         if not isinstance(allowed_origins, list) or not all(
             isinstance(item, str) and item for item in allowed_origins
         ):
