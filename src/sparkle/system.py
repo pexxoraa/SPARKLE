@@ -31,7 +31,8 @@ from sparkle.ai_system_build import (
     ControlledBuildService,
     ControlledBuildStore,
 )
-from sparkle.ai_system_execution import ControlledExecutionService, ControlledExecutionStore
+from sparkle.ai_system_execution import ControlledExecutionStore
+from sparkle.controlled_execution_cancel import CancellableControlledExecutionService
 from sparkle.artifacts import ArtifactManager
 from sparkle.automation import AutomationRunner, AutomationStore, ProactiveEngine
 from sparkle.builders import WorkspaceManager
@@ -98,10 +99,7 @@ class SparkleSystem:
             self.config.api_rate_limit_window_seconds,
         )
         self.api_sessions = APISessionManager(
-            enabled=(
-                self.config.api_auth_required
-                and self.config.session_auth_enabled
-            ),
+            enabled=(self.config.api_auth_required and self.config.session_auth_enabled),
             ttl_seconds=self.config.session_ttl_seconds,
             max_active=self.config.session_max_active,
             cookie_secure=self.config.session_cookie_secure,
@@ -120,9 +118,7 @@ class SparkleSystem:
         self.learning = LearningService(self.skills)
         self.data_analysis = DataAnalysisService()
         self.content_workflows = ContentWorkflowService()
-        self.proactive = ProactiveEngine(
-            self.memory, self.knowledge, self.projects, self.skills,
-        )
+        self.proactive = ProactiveEngine(self.memory, self.knowledge, self.projects, self.skills)
         self.presence = PresenceEngine()
         self.voice = VoiceService()
         self.interactions = InteractionService()
@@ -152,8 +148,6 @@ class SparkleSystem:
             max_payload_bytes=self.config.external_worker_max_payload_bytes,
             secret_resolver=self.secret_resolver,
         )
-        # This operator-only facade is deliberately excluded from ToolRegistry so a
-        # model cannot manufacture the approval needed to transfer workspace source.
         self.external_worker_tool = ExternalWorkspaceTestTool(self.external_worker)
         self.tools = ToolRegistry()
         self.tools.register(CalculatorTool())
@@ -178,37 +172,33 @@ class SparkleSystem:
             allowed_tools=self.tools.names | {"agent_install"},
         )
         self.agent_blueprints = AgentBlueprintStore()
-        self.agent_builder = AgentBlueprintBuilder(
-            self.agents, self.agent_blueprints,
-        )
+        self.agent_builder = AgentBlueprintBuilder(self.agents, self.agent_blueprints)
         self.ai_system_blueprints = AISystemBlueprintStore()
         self.ai_system_builder = AISystemBlueprintBuilder(
-            self.models,
-            self.agents,
-            self.tools,
-            self.workspaces,
+            self.models, self.agents, self.tools, self.workspaces,
             self.ai_system_blueprints,
         )
         self.ai_system_implementation_plans = AISystemImplementationPlanStore()
         self.ai_system_planner = AISystemImplementationPlanner(
-            self.ai_system_builder,
-            self.workspaces,
+            self.ai_system_builder, self.workspaces,
             self.ai_system_implementation_plans,
         )
         self.tools.register(AgentInstallTool(self.agents))
         self.agent_router = AgentRouter(self.agents)
         self.orchestrator = Orchestrator(
-            models=self.model_router, agents=self.agents, agent_router=self.agent_router,
-            context=self.context, tools=self.tools, traces=self.traces,
+            models=self.model_router,
+            agents=self.agents,
+            agent_router=self.agent_router,
+            context=self.context,
+            tools=self.tools,
+            traces=self.traces,
             max_tool_rounds=self.config.max_tool_rounds,
             max_tool_calls=self.config.max_tool_calls,
             max_specialists=self.config.max_specialists,
         )
         self.ai_system_drafts = AISystemDraftStore()
         self.ai_system_compiler = AISystemRequirementsCompiler(
-            self.ai_system_builder,
-            self.orchestrator,
-            self.ai_system_drafts,
+            self.ai_system_builder, self.orchestrator, self.ai_system_drafts,
         )
         self.source_provider_disclosures = ProviderDisclosureStore()
         self.source_candidates = SourceCandidateStore()
@@ -253,11 +243,16 @@ class SparkleSystem:
             self.controlled_build_workspace,
         )
         self.controlled_executions = ControlledExecutionStore()
-        self.ai_system_controlled_executor = ControlledExecutionService(
-            self.controlled_builds, self.controlled_build_workspace,
-            self.source_promotions, self.source_candidates,
-            self.ai_system_implementation_plans, self.runtime_evaluations,
-            self.traces, self.controlled_executions, self.external_worker,
+        self.ai_system_controlled_executor = CancellableControlledExecutionService(
+            self.controlled_builds,
+            self.controlled_build_workspace,
+            self.source_promotions,
+            self.source_candidates,
+            self.ai_system_implementation_plans,
+            self.runtime_evaluations,
+            self.traces,
+            self.controlled_executions,
+            self.external_worker,
         )
         self.agent_evaluations = AgentEvaluationStore()
         self.agent_evaluator = AgentResponseEvaluator(
@@ -289,9 +284,7 @@ class SparkleSystem:
             "model_runtime": {
                 "health_states": ["HEALTHY", "DEGRADED", "UNAVAILABLE"],
                 "recent_requests": recent_model_requests,
-                "last_routing": (
-                    recent_model_requests[0] if recent_model_requests else None
-                ),
+                "last_routing": recent_model_requests[0] if recent_model_requests else None,
                 "live_nemotron_verified": any(
                     item["provider"] == "nvidia"
                     and item["status"] == "success"
@@ -315,46 +308,23 @@ class SparkleSystem:
                 "protocol_version": self.ai_system_builder.PROTOCOL,
                 "drafts": len(self.ai_system_drafts.list(limit=100)),
                 "draft_protocol_version": self.ai_system_compiler.PROTOCOL,
-                "implementation_plans": len(
-                    self.ai_system_implementation_plans.list(limit=100)
-                ),
-                "implementation_plan_protocol_version": (
-                    self.ai_system_planner.PROTOCOL
-                ),
-                "provider_disclosures": len(
-                    self.source_provider_disclosures.list(limit=100)
-                ),
-                "source_candidates": len(
-                    self.source_candidates.list(limit=100)
-                ),
-                "source_candidate_protocol_version": (
-                    self.ai_system_source_candidates.PROTOCOL
-                ),
+                "implementation_plans": len(self.ai_system_implementation_plans.list(limit=100)),
+                "implementation_plan_protocol_version": self.ai_system_planner.PROTOCOL,
+                "provider_disclosures": len(self.source_provider_disclosures.list(limit=100)),
+                "source_candidates": len(self.source_candidates.list(limit=100)),
+                "source_candidate_protocol_version": self.ai_system_source_candidates.PROTOCOL,
                 "runtime_evaluations": len(self.runtime_evaluations.list(limit=100)),
-                "runtime_evaluation_protocol_version": (
-                    self.ai_system_runtime_evaluator.PROTOCOL
-                ),
+                "runtime_evaluation_protocol_version": self.ai_system_runtime_evaluator.PROTOCOL,
                 "source_promotions": len(self.source_promotions.list(limit=100)),
-                "source_promotion_approvals": len(
-                    self.source_promotions.list_approvals(limit=100)
-                ),
-                "source_promotion_protocol_version": (
-                    self.ai_system_source_promoter.PROTOCOL
-                ),
+                "source_promotion_approvals": len(self.source_promotions.list_approvals(limit=100)),
+                "source_promotion_protocol_version": self.ai_system_source_promoter.PROTOCOL,
                 "controlled_builds": len(self.controlled_builds.list(limit=100)),
-                "controlled_build_approvals": len(
-                    self.controlled_builds.list_approvals(limit=100)
-                ),
-                "controlled_build_protocol_version": (
-                    self.ai_system_controlled_builder.PROTOCOL
-                ),
+                "controlled_build_approvals": len(self.controlled_builds.list_approvals(limit=100)),
+                "controlled_build_protocol_version": self.ai_system_controlled_builder.PROTOCOL,
                 "controlled_executions": len(self.controlled_executions.list(limit=100)),
-                "controlled_execution_authorizations": len(
-                    self.controlled_executions.list_authorizations(limit=100)
-                ),
-                "controlled_execution_protocol_version": (
-                    self.ai_system_controlled_executor.PROTOCOL
-                ),
+                "controlled_execution_authorizations": len(self.controlled_executions.list_authorizations(limit=100)),
+                "controlled_execution_protocol_version": self.ai_system_controlled_executor.PROTOCOL,
+                "running_cancellation": True,
                 "execution_is_deployment": False,
             },
             "tools": self.tools.status(),
@@ -369,7 +339,8 @@ class SparkleSystem:
             "multimodal": content_contract_status(),
             "content_workflows": self.content_workflows.stats(),
             "automation": {
-                "status": "ready", "count": len(self.automations.list()),
+                "status": "ready",
+                "count": len(self.automations.list()),
                 "recent_runs": len(self.automations.list_runs(limit=100)),
                 "service": self.automations.service_status(),
             },
@@ -392,7 +363,8 @@ class SparkleSystem:
                 **self.skills.stats(),
             },
             "builders": {
-                "status": "ready", "workspaces": len(self.workspaces.list(limit=100)),
+                "status": "ready",
+                "workspaces": len(self.workspaces.list(limit=100)),
                 "verifications": len(self.development.list(limit=100)),
                 "static_verification": True,
                 "test_runs": len(self.workspace_tests.list(limit=100)),
@@ -400,9 +372,7 @@ class SparkleSystem:
                 "external_worker_runs": len(self.external_worker.list(limit=100)),
                 "external_worker": self.external_worker.status(),
                 "artifacts": len(self.artifacts.list(limit=100)),
-                "deployment_records": len(
-                    self.artifacts.list_deployments(limit=100)
-                ),
+                "deployment_records": len(self.artifacts.list_deployments(limit=100)),
                 "arbitrary_command_execution": False,
             },
             "proactive_alerts": self.proactive.inspect(),
