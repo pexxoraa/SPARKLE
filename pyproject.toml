@@ -23,7 +23,7 @@ sparkle-research = "sparkle.research_cli:entrypoint"
 sparkle-engineering = "sparkle.engineering_cli:entrypoint"
 sparkle-interaction = "sparkle.interaction_cli:entrypoint"
 sparkle-voice = "sparkle.voice_cli:entrypoint"
-sparkle-worker = "sparkle.worker_cancellation:entrypoint"
+sparkle-worker = "sparkle.worker_service:entrypoint"
 sparkle-automations = "sparkle.automation_service:entrypoint"
 
 [tool.setuptools]
