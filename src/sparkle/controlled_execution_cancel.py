@@ -33,6 +33,7 @@ class CancellableControlledExecutionService(Level3ExecutionMixin, ControlledExec
                         (request_id,),
                     ).fetchone()
                 if row is not None and row["status"] == "cancelled":
+                    self._initialize_level3()
                     self._level3_force_terminal(
                         row["execution_id"], "cancelled", "cancellation",
                     )
@@ -44,11 +45,14 @@ class CancellableControlledExecutionService(Level3ExecutionMixin, ControlledExec
     def cancel(self, execution_id: str, *, approved: bool) -> dict[str, Any]:
         if approved is not True:
             raise ValueError("Controlled execution cancellation requires explicit approval")
+        # Legacy tests and migrations may construct the cancellable service around an
+        # already-existing ControlledExecutionStore. Materialize the additive Level-3
+        # ledger before attempting to mirror cancellation state.
+        self._initialize_level3()
         current = self.store.by_execution_id(execution_id)
         if current["status"] in {"requested", "authorized", "queued"}:
             result = ControlledExecutionService.cancel(self, execution_id, approved=True)
             self._level3_force_terminal(execution_id, "cancelled", "cancellation")
-            self._trace(result)
             return self._enrich_level3(result)
         if current["status"] != "running":
             raise ExecutionRejected("execution_not_cancellable")
