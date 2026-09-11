@@ -1,243 +1,119 @@
-# Current capability inventory — 2026-09-09
+# SPARKLE current capability audit — 2026-09-11
 
-Inspected starting main: `73d2362ec9f3361bdec15f9ffbbcf402e77f4d27`;
-remote matched after fetch/fast-forward pull and worktree was clean. Repository-wide
-inventory covers 54 Python source modules, 47 Python test files and 37 documentation
-files before this milestone. Focused behavioral review followed the benchmark,
-system initialization, routing, NVIDIA adapter, HTTP transport, storage and evidence
-paths. This is an evidence inventory, not a claim of exhaustive line-by-line security
-certification. Full baseline: 364 passed, one optional live test skipped (365 total).
-Fresh wheel build and offline installation passed. Deterministic reports reproduced.
+Software baseline audited: `57e5c3946f7620df30035fc89122a8234e62b4c1`.
+This file replaces the historical 2026-09-09 primary inventory. Earlier benchmark
+reports remain historical evidence; they are not silently reinterpreted as current
+live verification.
 
-Evidence classes below apply to bounded implemented contracts. No category is
-upgraded from a class name, mock response, or user-reported connectivity alone.
-A current-source/test reference is local evidence; live integration is stated
-separately. Existing agent and builder quality limitations remain open.
+## Completion rule
 
-| Capability | Status | Current implementation / test evidence | Missing components / dependencies | Priority |
-|---|---|---|---|---|
-| SPARKLE CORE | PARTIALLY IMPLEMENTED | system.py; test_system_e2e.py: real local HTTP, deterministic model | Verified autonomous task completion across live components | P1 |
-| Orchestrator | PARTIALLY IMPLEMENTED | orchestrator.py; bounded tool loop, test_benchmarks.py independent outcome checks | Independent validator is benchmark-only; no automatic factual verification of chat or specialist synthesis | P1 |
-| Context | PARTIALLY IMPLEMENTED | context.py; test_benchmarks.py, test_system_e2e.py: bounded attributed untrusted user-role data | Live model prompt-injection resistance and context relevance on real user tasks | P1 |
-| Memory | IMPLEMENTED BUT INSUFFICIENTLY VERIFIED | storage.py; test_storage.py, test_storage_resources.py: scoped lifecycle/backup/rollback and explicit tool writes | Longitudinal quality and general factual validation; exact attestation, retention and operator review now tested | P1 |
-| Knowledge | PARTIALLY IMPLEMENTED | storage.py, retrieval.py; 16-query benchmark and test_knowledge_retrieval.py | Real embedding evaluation, vector persistence, source revision workflows | P1 |
-| Model Manager | COMPLETE AND VERIFIED | model.py, registry.py; test_model_registry.py: switching and capability routing | Live provider evidence belongs to provider rows | Maintain |
-| Model Registry | COMPLETE AND VERIFIED | registry.py; test_model_registry.py: validation, persistence, switching/rollback | No identified gap in bounded registry contract | Maintain |
-| NVIDIA Nemotron provider | IMPLEMENTED BUT INSUFFICIENTLY VERIFIED | nvidia.py; adapter/runtime/deadline tests; user-reported authenticated smoke success | Explain nine rejected live outcomes; broader live streaming/tool evidence | P1/external |
-| MiniMax/secondary providers | IMPLEMENTED BUT INSUFFICIENTLY VERIFIED | providers/minimax.py; test_minimax_adapter.py; retained disabled configuration | Live provider regression; do not replace primary NVIDIA | P3/external |
-| Model runtime | COMPLETE AND VERIFIED | model_runtime.py; policy/fallback tests, hard HTTP lifecycle tests, pre-request error classification | Host reliability evidence; routing timeout is a per-attempt policy, not a whole-benchmark deadline | Maintain |
-| Personal Agent | PARTIALLY IMPLEMENTED | agents.py; test_agent_evaluations.py: routing/prompt/tools, shared orchestrator | Longitudinal personal task quality and verified memory writes | P1 |
-| Learning Agent | PARTIALLY IMPLEMENTED | agents.py, mastery.py; test_agent_evaluations.py, test_mastery.py | Demonstrated adaptive teaching and learning outcome evaluation | P2 |
-| Skill Agent | PARTIALLY IMPLEMENTED | agents.py, mastery.py; test_mastery.py: evidence-based local levels | Quality of skill assessment and practice recommendations | P2 |
-| Exam Agent | PARTIALLY IMPLEMENTED | agents.py; test_agent_evaluations.py: exam routing/instructions | Real grading, calibrated questions, exam outcome evidence | P2 |
-| Research Agent | PARTIALLY IMPLEMENTED | agents.py, knowledge.py; test_system_e2e.py: retrieved facts reach prompt | Source discovery, factual/semantic verification; stored citation identity checks now tested | P1 |
-| Coding Agent | PARTIALLY IMPLEMENTED | agents.py, tooling.py; test_agent_evaluations.py, test_development_verifier.py | Real generated patch correctness across representative tasks | P1 |
-| Software Engineering Agent | PARTIALLY IMPLEMENTED | agents.py, development.py; routing and local verifier tests | Repository-level semantic change evaluation and repair quality | P2 |
-| Application Builder | PARTIALLY IMPLEMENTED | builders.py; test_builders_agents.py: safe scaffold and artifacts | Functional requirements-to-application generation and user workflows | P2 |
-| AI Builder | PARTIALLY IMPLEMENTED | ai_system_*.py; builder/plan/source/runtime tests | Live semantic generation/evaluation; isolated artifact acceptance | P2 |
-| Agent Builder | PARTIALLY IMPLEMENTED | agent_builder.py, agent_evaluation.py; test_agent_evaluation.py | Generated agent quality beyond string assertions and registration | P2 |
-| Project system | COMPLETE AND VERIFIED | projects.py; test_projects.py: persisted versioned lifecycle, conflicts, events | Task dependencies/execution scheduling are additional unfinished scope | Maintain/P2 |
-| Content system | PARTIALLY IMPLEMENTED | content.py, agents.py; test_multimodal.py: safe content envelopes | Content production/editing quality; external publication remains frozen | P2 |
-| Data Analysis | PARTIALLY IMPLEMENTED | agents.py, tooling.py: calculator/file read; test_tools_agents.py | Dataset execution, computed statistics/charts and reproducible analysis | P2 |
-| Automation | PARTIALLY IMPLEMENTED | automation.py, automation_service.py; runner/service/notification tests | Real external connectors; action outcome quality beyond local delivery | P2 |
-| Tools | COMPLETE AND VERIFIED | tooling.py; test_tools_agents.py, builder/artifact tests: allowlists and approvals | New runtime connectors evaluated separately | Maintain |
-| Browser capability | CONTRACT/INTERFACE ONLY | interaction.py; test_interaction.py: bounded HTTPS contract and injected harness | Real browser adapter and endpoint/redirect/download safety evidence | P2 |
-| Computer interaction | CONTRACT/INTERFACE ONLY | interaction.py; test_interaction.py: typed bounded actions, disabled default | Real GUI runtime, permissions, screenshots and action verification | P3 |
-| Voice | CONTRACT/INTERFACE ONLY | voice.py; test_voice_presence.py: STT/TTS doubles, disabled default | Real STT/TTS adapters and microphone/speaker evidence | P3 |
-| Multimodal | PARTIALLY IMPLEMENTED | content.py, contracts.py; test_multimodal.py: bounded envelopes, trace metadata | Real non-text provider mapping/understanding and modality quality | P2 |
-| Presence/motion | PARTIALLY IMPLEMENTED | presence.py, dashboard; test_voice_presence.py: state and timestamps | Physical motion/perception absent; UI presence is not hardware | P3 |
-| Application/build pipeline | PARTIALLY IMPLEMENTED | builders.py, development.py, artifacts.py; artifact/verifier tests | End-to-end generated application quality and isolated acceptance | P2 |
-| Controlled promotion | COMPLETE AND VERIFIED | ai_system_promotion.py; test_ai_system_promotion.py: exact identities, replay, tamper, atomicity | No identified gap in bounded promotion contract | Maintain |
-| Controlled build | COMPLETE AND VERIFIED | ai_system_build.py; test_ai_system_build.py: approval and immutable deterministic ZIP | No identified gap in bounded build contract | Maintain |
-| Controlled execution | PARTIALLY IMPLEMENTED | ai_system_execution.py; test_ai_system_execution.py: authorization/lifecycle; local harness | Level 3 acceptance; synchronous RUNNING remote cancellation not implemented | Park Level 3 |
-| External worker | BLOCKED BY EXTERNAL INFRASTRUCTURE | external_worker.py, worker_service.py; protocol/local TLS/HMAC tests | Hardened host and final authenticated approved-artifact acceptance | Park Level 3 |
-| Trace/evidence | COMPLETE AND VERIFIED | trace.py; storage, execution, runtime and API tests: identities/redaction/lifecycle | Trace success does not establish semantic correctness | Maintain |
-| API | COMPLETE AND VERIFIED | api.py; test_orchestrator_api.py, test_api_security.py, test_system_e2e.py | Supported local endpoints verified; not external integration evidence | Maintain |
-| CLI | COMPLETE AND VERIFIED | cli.py; test_cli.py plus builder/artifact CLI tests | Supported CLI contract verified; production operator acceptance separate | Maintain |
-| Dashboard | IMPLEMENTED BUT INSUFFICIENTLY VERIFIED | dashboard/*; API tests and node --check | Real browser interaction/accessibility and end-user journey testing | P2 |
-| Security | PARTIALLY IMPLEMENTED | security.py, secrets.py, worker boundaries; security/negative tests | Broader threat-model review and actual Level 3 system acceptance | P1/park host |
-| Session/rate limiting | COMPLETE AND VERIFIED | security.py; test_api_security.py: CSRF, expiry, revoke, bounded rate state | No identified gap in documented single-process contract | Maintain |
-| Testing/evaluation | PARTIALLY IMPLEMENTED | benchmarks/*; 16 retrieval queries, 12 scripted tasks, deterministic independent validators | Real provider outcomes, real embedding quality, broader representative tasks | P1 |
-| Cross-platform architecture | PARTIALLY IMPLEMENTED | stdlib core; Linux worker; .github/workflows/ci.yml: Python 3.12/3.13 Ubuntu | Windows/macOS behavior and execution adapters unverified | P3 |
-| Documentation | PARTIALLY IMPLEMENTED | docs/* inventory; test_documentation.py; this refreshed audit and benchmark procedure | Historical reports remain historical; external operator evidence still missing | P2 |
-| Deployment | BLOCKED BY EXTERNAL INFRASTRUCTURE | docs/ACCEPTANCE.md; explicit freeze and unverified artifact deployment records | Level 3 prerequisites plus separate authorized deployment milestone | Frozen |
-| Packaging | COMPLETE AND VERIFIED | pyproject.toml; wheel/offline install and CI worker-image smoke | Cross-platform installation matrix remains separate | Maintain |
+This audit classifies implementation separately from real-world acceptance.
+`COMPLETE` means the ordinary software-completable contract is implemented and
+integrated in the repository. It does **not** mean semantic quality, provider
+availability, hardware behavior, accessibility, production reliability, or live
+host acceptance has been established. `EXTERNALLY BLOCKED` is used only where the
+software boundary is implemented and the remaining requirement depends on an
+external provider, credential, host, device, hardware driver, production target, or
+human/live acceptance environment.
 
-## Measured baseline and limits
+Final software-build result: **zero ordinary software-completable capabilities are
+PARTIALLY COMPLETE, INTERFACE ONLY, or NOT IMPLEMENTED.** Level 3 remains PARKED.
+Deployment remains FROZEN. No live provider/device/production campaign was performed
+for this audit.
 
-Lexical Recall@1 = 0.625; Recall@3/5 = 0.75; MRR = 0.71875.
-The semantic and hybrid paths use token-hashing test doubles, not trained embeddings.
-All 12 scripted workflow outcomes validate; this is not live agent-quality evidence.
-No NVIDIA credential is available in this executor. Host smoke connectivity is
-user-reported verified. The current user-supplied credential-safe live baseline is
-12 real Nemotron tasks executed, 3 validated and 9 rejected: 25% validated. This
-supersedes the historical 8.33% run. It does not verify agent competence; no new live
-run was performed here, and individual rejection diagnosis requires retained evidence.
-No real semantic, multimodal, browser, desktop, voice or connector acceptance was
-performed here. There is no defensible aggregate percentage of engineering completion:
-these overlapping categories have neither equal size nor agreed acceptance weights.
+## Capability classification
 
-## Dependency order and the current reliability milestone
+| Capability | Status | Current implementation evidence | Remaining external acceptance, if any |
+|---|---|---|---|
+| SPARKLE core runtime | COMPLETE | `system.py`, persistent environments, status surface, bounded orchestration and integrated subsystems | Live end-user task acceptance is separate |
+| Orchestrator | COMPLETE | bounded rounds/calls/specialists, shared budgets, tool allowlists, traces, single/multi-agent routing | Semantic answer quality is covered by live-agent acceptance below |
+| Context construction | COMPLETE | bounded attributed memory/knowledge/content handling and modality-aware requests | Real-model relevance/injection-resistance evaluation remains acceptance evidence |
+| Memory lifecycle | COMPLETE | scoped durable records, archive/restore/revoke/retention, backups, proposal/review boundary, exact digests | Longitudinal usefulness is acceptance evidence |
+| Factual memory validation | COMPLETE | VERIFIED/REJECTED/INCONCLUSIVE evidence pipeline; operator review and atomic approved writes | Open-world truth with unavailable evidence remains correctly INCONCLUSIVE |
+| Knowledge lifecycle | COMPLETE | ingest/search/list/delete, archive/restore/revoke/expiry/supersession, revision conflicts, event history | External source credibility remains a research judgment |
+| Lexical retrieval | COMPLETE | bounded literal-safe indexed retrieval with source lifecycle filtering | None in bounded software contract |
+| Persistent semantic-vector software | COMPLETE | `vector_index.py`, provider identity/dimension binding, input/content digests, normalized finite vectors, batching, stale cleanup, lifecycle revalidation, `SemanticRetriever` synchronization | Quality is intentionally not inferred |
+| Real semantic embedding quality | EXTERNALLY BLOCKED | provider-neutral embedding protocol and persistent index are complete; `semantic_quality_verified=false` is preserved | Select/configure a real embedding provider/model, supply credentials/runtime, run retrieval quality evaluation, and retain evidence before changing the flag |
+| Model manager and registry | COMPLETE | validated persistent records, activation, routing, health/runtime state | Provider-specific live acceptance is separate |
+| Model runtime | COMPLETE | retries, timeouts, fallbacks, error classification, runtime evidence | Host/network reliability is external evidence |
+| NVIDIA/Nemotron provider | EXTERNALLY BLOCKED | concrete NIM adapter, tool calls, streaming, diagnostics, image serialization, failure taxonomy | Credentialed unchanged live benchmark/provider regression and retained outcomes are required; current live-agent competence is not verified |
+| MiniMax/secondary provider | EXTERNALLY BLOCKED | concrete secondary adapter/configuration path implemented | Credentialed provider regression required when enabled |
+| Personal Agent software | COMPLETE | registered specialist, routing, tools, orchestration and trace path | Live longitudinal usefulness belongs to live-agent acceptance |
+| Learning Agent software | COMPLETE | specialist integration plus persisted curriculum/progress/practice workflows | Teaching outcome quality belongs to live-agent acceptance |
+| Skill Agent software | COMPLETE | evidence-derived mastery store, read tool and specialist integration | Human skill validity/calibration is acceptance evidence |
+| Exam Agent software | COMPLETE | persisted practice/timed attempts, grading/error evidence and specialist integration | Real exam outcome calibration is acceptance evidence |
+| Research Agent software | COMPLETE | persistent research plans/evidence/claims/reports, exact stored citation integrity, read tool | External web/source discovery and source credibility require available connectors/sources and human/live evaluation |
+| Coding Agent software | COMPLETE | repository/file/verifier tools, bounded orchestration and trace integration | Generated patch quality belongs to live-agent acceptance |
+| Software Engineering Agent software | COMPLETE | repository engineering inspection/plans, verifier/tool integration | Representative semantic-change quality belongs to live-agent acceptance |
+| Application Builder | COMPLETE | bounded source workspace materialization, verification, test, package and artifact records | Generated-application quality and target-host acceptance are external evaluation |
+| AI Builder | COMPLETE | blueprint → requirements draft → implementation plan → source candidate → runtime evaluation → promotion → controlled build/execution pipeline | Live model generation quality and Level-3 execution acceptance are external |
+| Agent Builder | COMPLETE | persistent blueprints, schema/tool/routing checks, installation and response-evaluation store | Generated-agent semantic quality is live acceptance evidence |
+| Project system | COMPLETE | versioned projects, milestones/blockers/events/search/status | None in bounded software contract |
+| Project task graph | COMPLETE | persisted task dependencies, readiness, revisions and events | Real task execution remains operator-reported by design |
+| Content workflow | COMPLETE | persistent templates/items/versions, transforms, status transitions, exports, CLI, read-only agent tool | External publishing remains frozen/unconfigured |
+| Data Analysis | COMPLETE | persisted CSV/JSON datasets, typed inference, deterministic transformations, statistics/grouping/chart specs, recipe digests/history, CLI and read-only model tool | Forecast/causal validity still depends on task-specific data and evaluation |
+| Automation engine | COMPLETE | persistent schedules/conditions, leases/recovery, retries, evidence-gated replay, per-attempt records, service state | External notification/connectors require their own provider implementations |
+| Automation Agent integration | COMPLETE | read-only `automation_inspect` tool exposes bounded definitions/runs/attempts/service state; mutations remain operator-owned | None in model authority contract |
+| Notifications | COMPLETE | bounded persisted dashboard notifications, dedupe/read state, automation integration | Non-dashboard delivery providers are separate external connectors |
+| Proactive engine | COMPLETE | bounded evidence-derived deadline/project/learning/research/schedule alerts | Rule usefulness is acceptance evidence |
+| Tool registry/discovery/permissions | COMPLETE | definitions, execution, unknown-tool rejection, per-agent allowlists and generated-agent validation | External connector tools depend on connector availability |
+| Browser software runtime | COMPLETE | concrete read-only safe HTTPS adapter, public-DNS policy, pinned TLS, redirect revalidation, response bounds, persistent operator sessions, CLI, `SparkleSystem` default integration | Live host/network behavior still needs manual acceptance; `live_browser_verified=false` |
+| Live browser host acceptance | EXTERNALLY BLOCKED | software runtime complete | On an approved host, exercise public allowlisted destinations, DNS rebinding/private-address rejection, TLS hostname validation, redirects and body limits; retain evidence |
+| Computer interaction | EXTERNALLY BLOCKED | typed bounded actions, persistent permission sessions, optimistic revisions, host-adapter injection through `SparkleSystem` | Supply a concrete `ComputerAdapter`, OS GUI/display permissions and live screenshot/click/type/key acceptance |
+| Voice | EXTERNALLY BLOCKED | bounded persistent voice sessions/events, STT/TTS interfaces, CLI, host-adapter injection through `SparkleSystem` | Supply concrete STT/TTS provider/device adapters plus microphone/speaker/provider permissions; perform live transcript/synthesis acceptance |
+| Multimodal content protocol and image transport | COMPLETE | bounded text/image/audio/document envelopes; modality-aware routing; NVIDIA OpenAI-compatible image payload serialization; configured model records still gate modalities | Live image understanding requires an explicitly image-capable configured model and provider acceptance |
+| Audio/document model understanding | EXTERNALLY BLOCKED | envelopes/routing fail closed instead of flattening unsupported binary content | Configure a model/provider adapter that explicitly supports audio/document modalities and run live modality acceptance |
+| Presence state | COMPLETE | durable presence state/history integrated with runtime transitions and health/status | UI/human perception acceptance is separate |
+| Physical motion | EXTERNALLY BLOCKED | bounded command/result contract, explicit approval, capability checks, persisted events, host-adapter injection | Supply hardware-specific `MotionAdapter`, transport/permissions/device and approved-command acceptance |
+| Application/build pipeline | COMPLETE | workspace scaffold, static verifier, bounded tests, package artifacts, immutable controlled build path | External target execution is handled by worker/deployment gates |
+| Controlled promotion | COMPLETE | identities/digests, approvals, replay/tamper/concurrency defenses, exclusions and atomic records | None in bounded promotion contract |
+| Controlled build | COMPLETE | approval-bound immutable deterministic artifacts and evidence | None in bounded build contract |
+| Controlled execution and cancellation | COMPLETE | authorization, execution lifecycle, results, worker cancellation protocol and API/CLI cancellation | Level-3 worker acceptance remains external |
+| External worker / Level 3 | EXTERNALLY BLOCKED | signed worker protocol, client/service, identities, bounds, cancellation and evidence paths implemented | Provision hardened Linux worker host, TLS/HMAC secrets, approved worker identity, isolation controls, then run the documented approved-artifact acceptance. Level 3 stays PARKED until it passes |
+| Trace/evidence | COMPLETE | persistent content-minimized traces, model/tool identities, redaction and lifecycle evidence | Trace success never implies semantic correctness |
+| API | COMPLETE | authenticated/rate-limited local JSON API covering core operator workflows; newer specialist state is exposed through `/api/health` and dedicated CLIs/tools where a duplicate mutation API would add no capability | External service integrations are separate connectors |
+| CLI | COMPLETE | core CLI plus data/content/research/engineering/interaction/voice/worker/automation commands and controlled-build/execution operations | Host/provider commands still need their external runtime |
+| Dashboard | COMPLETE | session-authenticated status, memory review, projects/tasks, learning, automation/notification/proactive evidence, builders/releases; `/api/health` includes vectors/data/content/research/browser/voice/platform state | Real browser accessibility/end-user journey acceptance remains manual evidence |
+| Security boundaries | COMPLETE | secrets indirection, API auth/origin/CSRF/session/rate limits, path bounds, tool permissions, worker signing, browser SSRF controls, explicit approvals | Broader independent threat review and real host hardening are acceptance activities |
+| Session/rate limiting | COMPLETE | bounded fixed-window rate state and authenticated session/CSRF lifecycle | Multi-process/distributed deployment would require a different backend contract |
+| Testing/evaluation framework | COMPLETE | deterministic unit/integration suites, benchmark protocol/validators, runtime evidence and focused platform workflow | Live-provider/device/host acceptance is intentionally deferred |
+| Live agent semantic quality | EXTERNALLY BLOCKED | unchanged benchmark/evaluation machinery is implemented; benchmarks were not weakened | Run the unchanged credentialed live campaign and retain per-task evidence. Existing historical 3/12 validated baseline is not upgraded by software implementation |
+| Linux core platform software | COMPLETE | native state path, stdlib runtime and Linux worker software | Host acceptance remains separate |
+| Windows core platform software | COMPLETE | native state path and focused Windows smoke workflow definition | Real Windows host acceptance/CI evidence must be observed separately |
+| macOS core platform software | COMPLETE | native state path and focused macOS smoke workflow definition | Real macOS host acceptance/CI evidence must be observed separately |
+| Android/iOS/GrapheneOS host runtime | EXTERNALLY BLOCKED | mobile platform classification/state-layout and external-adapter architecture implemented | Provide an embedded Python/app host with storage/network/device permissions and run platform-specific install/state/API/browser/voice acceptance |
+| Documentation | COMPLETE | current architecture/workflow docs plus this reconciled audit/backlog; historical reports remain explicitly historical | Operator acceptance evidence will be added after the later campaign |
+| Packaging | COMPLETE | `pyproject.toml`, package data and entry points cover implemented runtime/CLI assets | Platform installation acceptance remains external evidence |
+| Production deployment | EXTERNALLY BLOCKED | controlled artifacts/execution records exist; software does not silently deploy | Requires explicit user authorization, target credentials/environment, applicable Level-3 prerequisites, and a separate production acceptance milestone. Deployment remains FROZEN |
 
-P0: pre-request errors must not masquerade as HTTP provider outages. Missing NVIDIA
-credentials now have configuration_failure; no eligible model has routing_failure.
-The live runner preserves incremental content-free task/runtime evidence using
-normal registry construction, including after interrupt/setup failure. It never
-changes task definitions, validators, scoring, configured model or retry policy.
-The original host provider_provider_failure cause is not proven by this code review.
+## API/dashboard exposure decision
 
-P1: run the unchanged live benchmark on the credentialed host with the corrected
-resource lifecycle and new evidence output. Use independent outcome validation;
-retain failures and inconclusive cases. Then prioritize validated memory updates and
-specialist synthesis against explicit trusted criteria; do not auto-persist model
-claims. Real embedding evaluation requires a separately selected embedding model.
+The audit intentionally does not add redundant write endpoints for every stateful
+service. Data Analysis, Content, Research, Interaction and Voice have dedicated
+operator CLIs; Data Analysis/Content/Research also have bounded agent read tools;
+Browser has operator-owned revisioned sessions; vector/platform/voice/browser/data/
+content/research states are included in `SparkleSystem.status()` and therefore
+`GET /api/health`. Automation and controlled execution already have dedicated API
+and dashboard surfaces, including execution cancellation. This is deliberate least-
+authority architecture rather than missing exposure.
 
-P2: project/task dependency workflows and representative generated-code validation
-precede broader browser/connector expansion. Browser/GUI requires a runtime and
-network/action threat model; interface doubles are insufficient. P3 voice/hardware
-and OS-specific adapters remain external/runtime-dependent.
+## Cross-platform decision
 
-Level 3 remains BLOCKED/PARKED. Deployment remains FROZEN. No acceptance gate or
-worker configuration is changed. The earlier foundation audit is historical; use
-this inventory and newly recorded test evidence for this milestone.
+Core state/configuration software supports Linux, Windows and macOS native layouts.
+Android, iOS and GrapheneOS have explicit platform classifications and state layouts,
+but require an external embedded-Python/application host. The hardened external
+worker remains Linux-only by design and is not represented as a native mobile or
+Windows/macOS worker capability.
 
-## Fresh milestone verification
+## Verification state for this completion audit
 
-374 passed, one optional live skip (375 total); focused suite 44/44.
-Wheel/offline install and tracked-tree audits passed. No live provider run.
+Implementation inspection and focused deterministic test additions were used while
+building. No new live Nemotron, semantic-embedding, microphone, speaker, GUI,
+physical-hardware, mobile-host, Level-3 worker or production-deployment acceptance
+was performed here. GitHub CI runs triggered by the final implementation commits are
+supporting regression evidence only and do not change the external classifications.
 
-## Response-protocol investigation
+**Software completion gate: PASS — no ordinary software-completable capability remains
+PARTIALLY COMPLETE, INTERFACE ONLY, or NOT IMPLEMENTED.**
 
-The final JSON-object requirement was implicit for ten of twelve task prompts.
-The common response contract is now explicit/versioned; strict parsing and
-independent validators remain in force. Structural metadata and criterion results
-are exported without response text. The unchanged scripted baseline still validates
-12/12. Historical response shapes and the rejected task cannot be recovered from
-aggregate counts. No capability classification, Level 3, or deployment gate changes.
-
-## Bounded workflow update
-
-Shared tool-attempt and specialist-count limits are locally verified; orchestrator
-remains PARTIALLY IMPLEMENTED. Aggregate wall-time policy, idempotent actions and
-validated staged memory remain open. See [continuous backlog](capability_backlog.json).
-Final regression: 394 passed, one optional live skip. No live or host upgrade.
-
-## Memory query correction
-
-An ASCII-only tokenization fallback returned unrelated recent memory for Japanese
-and punctuation-only queries. Literal Unicode tokens, a 64-term bound and an empty
-result for nonempty unsearchable queries correct that observed relevance defect.
-Underscores no longer act as wildcards. Memory remains IMPLEMENTED BUT INSUFFICIENTLY
-VERIFIED; this does not establish semantic retrieval or validated memory updates.
-
-## Operator-reviewed memory boundary
-
-Default system agent memory writes now stage proposals outside retrieval. An operator
-reviews exact content and digest through CLI/API; expiry, replay, content tampering
-and concurrent memory changes fail closed. Approval and memory update are atomic.
-This is independent operator authorization, not automated factual validation.
-The 46-capability inventory remains conservative: memory retention, deduplication,
-trusted machine-verifiable criteria, and longitudinal quality remain unfinished.
-The unchanged 12-task benchmark explicitly installs the legacy direct-write fixture
-tool. Its metrics remain comparable but do not exercise this new default boundary.
-
-## 2026-09-10 memory review UI verification
-
-Continued from retention commit `9a08991d8f2f21365f3cb7ded0a4edace5d08b0d`,
-tree `de55cbf934902e6ef4b090812c2779b82b5ffbd7`; CI #94 passed all five
-jobs on that exact commit. Pending proposals now expose current exact-field
-verification, evidence, digest, expiry and conflicts to the operator dashboard.
-Approval defaults to requiring VERIFIED evidence; authoritative server checks
-remain atomic and independent of the displayed state. Review/validation audit
-and private memory version history are separate from the pending queue.
-
-Fresh full suite: **436 total, 435 passed, 1 skipped, 0 failures/errors**
-(63.238 seconds). Focused memory/UI/API/CLI integration: **49/49** (5.255s).
-The UI wrapper includes **10/10** deterministic Node DOM interaction tests.
-The baseline was 433 total, 432 passed, 1 skipped. Node syntax, whitespace,
-wheel build, offline installation and installed CLI help passed; the wheel
-contains the new dashboard asset. This is software/UI-contract evidence, not
-live-browser accessibility, generalized factual correctness or live-agent
-quality evidence. Live-agent baseline remains user-reported **3/12 (25%)**.
-Level 3 stays **BLOCKED/PARKED**; deployment stays **FROZEN**.
-
-## 2026-09-10 stored research citation integrity
-
-Continued from `2955238a3cda0f57973a20e40e34a748839d144d`, tree
-`d37eeb8b34b6f66a3d6ee39300d5af6e11666de1`; exact CI #95 passed.
-The re-audit found retrieved identities without independent production citation
-checking. The new bounded knowledge_verify tool/API checks stored source/chunk
-identity, a retrieved snapshot digest and exact quotation. Research Agent tool
-permissions include this read-only operation. Verification never establishes
-claim truth or external source credibility and never automatically approves an
-answer or a memory. Benchmark definitions, scoring and validators are unchanged.
-
-Fresh full suite: **444 total, 443 passed, 1 skipped, 0 failures/errors**
-(65.814s including runner overhead). Baseline: 436 total, 435 passed, 1 skipped.
-Focused citation/benchmark/agent/API/orchestration tests: **38/38** (5.725s).
-The deterministic benchmark report reproduced identically. No live request was
-made. Fresh wheel build, offline install, installed CLI help, compile and
-whitespace checks passed. General factual validation, source credibility,
-semantic entailment, source revision workflows and live research quality remain
-unfinished. Level 3 is BLOCKED/PARKED; deployment is FROZEN; live-agent baseline
-remains user-reported 3/12 validated, with competence unverified.
-
-## 2026-09-11 implementation-first knowledge lifecycle
-
-Starting published main: `3de56ac8435c3e9e876c200d75cd5620ed80dbb4`,
-clean worktree and matching remote. The operator's latest master directive
-prioritizes software implementation, bounded engineering checks, and later
-comprehensive human/live acceptance. No real-world verification is inferred.
-
-Implemented source archive/restore/revoke/expiry/supersession, optimistic revision
-checks, atomic content-free event history, API and CLI operator controls. Lexical,
-semantic, hybrid fallback/fusion and citation verification exclude ineligible
-sources. Embedding calls are followed by another eligibility check. Retained
-historical records and external embedding data retention remain distinct.
-
-No live provider, benchmark or host acceptance run was attempted. Level 3 stays
-BLOCKED/PARKED; deployment stays FROZEN. Existing benchmark metrics/outcomes are
-unchanged, with only implementation fingerprints refreshed. Human knowledge
-workflow validation and real semantic quality remain externally unverified.
-
-## 2026-09-11 project task graph implementation
-
-Continued from knowledge lifecycle `6207482c58fb572e2478c0169df6b40e05fdd9f8`,
-tree `178969313a6327739a5c2d158fe1c757d2de05a0`; exact CI #97 passed all
-five jobs. Added bounded persisted task DAG, readiness, cycle/revision checks,
-operator transitions, completion references, immutable application-level audit,
-project completion guard, read-only agent tool, API/CLI and dashboard inspection.
-Task completion is operator-reported and does not prove independent execution.
-
-No model, benchmark task, scoring, validator, Level 3 or deployment gate changed.
-Manual/live/host validation remains deferred. Knowledge and project additions
-are implemented with bounded internal checks, not comprehensive real-world
-verification. Remaining software work includes automatic scheduling, learning
-and exam workflows, functional builders, real browser/computer/voice adapters,
-and independently verified agent outcomes. Level 3 BLOCKED/PARKED; deployment
-FROZEN. SPARKLE is not declared complete.
-
-Task graph engineering evidence: **43/43** focused task/project/API/CLI/agent/documentation checks (6.203s). Compile, dashboard syntax, whitespace, repository audit and fresh wheel build passed. No comprehensive local/manual/live rerun was performed for this implementation unit.
-
-## 2026-09-11 stateful curriculum and exam implementation
-
-Started from published `b8ea3a634f1f833531172c746ab4365af3fff3c9`, tree
-`b1c220bbc62348629b170195f4f04230cb5b4649`, clean and matching remote.
-Implemented authored curriculum/topic DAGs, private versioned question banks,
-exam sections/limits, persistent timed attempts, save/resume/submit/cancel,
-exact-key grading, explicit manual review, retakes, deterministic weakness and
-prerequisite practice recommendations, unverified skill linkage, content-free
-audit, API/CLI and dashboard workflows. Answer keys are excluded from public
-reads and model tools. No automatic verified mastery or competence claim.
-
-Focused learning/mastery/API/CLI/agent checks: 46/46 initially; extended checks
-including documentation: 50/50. Final targeted checks are recorded below.
-No live provider/host evaluation or comprehensive local rerun was performed;
-normal credential-free CI remains enabled. Model configuration, benchmark tasks,
-scoring, validators, Level 3 and deployment gates are unchanged. Human UX,
-security acceptance, pedagogical quality and learner identity remain unverified.
-Level 3 BLOCKED/PARKED; deployment FROZEN; live-agent baseline remains 3/12.
-
-The next audit targets reusable data inspection/transformation/reporting and
-content workflows, which remain software gaps rather than provider blockers.
-This is implementation progress, not final SPARKLE completion.
+**Level 3: PARKED. Deployment: FROZEN.**

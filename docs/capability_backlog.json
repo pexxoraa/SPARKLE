@@ -1,668 +1,213 @@
 {
-  "schema": "SPARKLE-CAPABILITY-BACKLOG/1",
-  "source_checkpoint": "b8ea3a634f1f833531172c746ab4365af3fff3c9",
-  "level_3": "BLOCKED/PARKED",
-  "deployment": "FROZEN",
-  "current_work": {
-    "id": "stateful-curriculum-exam-attempts",
-    "priority": "P1",
-    "state": "IMPLEMENTED; bounded engineering checks",
-    "acceptance": "Persisted authored assessments, private keys, timed attempts, explicit grading, API/CLI/UI and unverified mastery linkage"
+  "protocol": "SPARKLE-CAPABILITY-BACKLOG/2",
+  "audit_date": "2026-09-11",
+  "software_baseline": "57e5c3946f7620df30035fc89122a8234e62b4c1",
+  "software_completion": {
+    "status": "COMPLETE",
+    "ordinary_software_backlog": [],
+    "partial_complete": 0,
+    "interface_only": 0,
+    "not_implemented": 0,
+    "level_3": "PARKED",
+    "deployment": "FROZEN"
   },
-  "next_implementable_work": {
-    "id": "data-analysis-workflow",
-    "priority": "P1",
-    "next_action": "Inspect current data tools and implement bounded reusable ingestion/transformation/reporting",
-    "acceptance": "Actual data artifacts and reproducible operations; no claims from prompt-only agents"
+  "classification_policy": {
+    "allowed": [
+      "COMPLETE",
+      "EXTERNALLY BLOCKED",
+      "PARTIALLY COMPLETE",
+      "INTERFACE ONLY",
+      "NOT IMPLEMENTED"
+    ],
+    "complete_meaning": "Ordinary software-completable implementation and repository integration are present; live semantic/provider/hardware/production acceptance is not implied.",
+    "external_blocked_meaning": "The repository-side contract/integration is implemented and the remaining gate requires a provider, credential, host, device, hardware driver, target environment, or human/live acceptance evidence."
   },
-  "specific_external_blockers": [
+  "externally_blocked": [
     {
-      "capability": "current live rejection diagnosis",
-      "required": "Retained credential-safe per-task evidence for the user-supplied 3 validated / 9 rejected result; no live rerun during debugging"
+      "capability": "real_semantic_embedding_quality",
+      "status": "EXTERNALLY BLOCKED",
+      "software_ready": true,
+      "evidence": ["src/sparkle/vector_index.py", "src/sparkle/retrieval.py"],
+      "required_acceptance": [
+        "select and configure a real embedding provider/model with stable identity and dimensions",
+        "provide required provider credentials/runtime",
+        "run retrieval-quality evaluation against retained corpus evidence",
+        "leave semantic_quality_verified false until acceptance passes"
+      ]
     },
     {
-      "capability": "real semantic evaluation",
-      "required": "Selected real embedding model/runtime and any needed credentials"
+      "capability": "nvidia_nemotron_live_acceptance",
+      "status": "EXTERNALLY BLOCKED",
+      "software_ready": true,
+      "evidence": ["src/sparkle/providers/nvidia.py", "benchmarks/live.py"],
+      "required_acceptance": [
+        "use the credentialed approved host without changing benchmark prompts or validators",
+        "run provider/tool/stream regression and the unchanged live-agent benchmark",
+        "retain per-task responses and independent validator evidence",
+        "do not upgrade competence from the historical 3/12 validated baseline without new evidence"
+      ]
+    },
+    {
+      "capability": "secondary_provider_live_acceptance",
+      "status": "EXTERNALLY BLOCKED",
+      "software_ready": true,
+      "evidence": ["src/sparkle/providers/minimax.py"],
+      "required_acceptance": [
+        "provide credentials for an explicitly enabled secondary provider",
+        "run provider regression and retain runtime evidence"
+      ]
+    },
+    {
+      "capability": "browser_live_host_acceptance",
+      "status": "EXTERNALLY BLOCKED",
+      "software_ready": true,
+      "evidence": ["src/sparkle/browser_runtime.py", "src/sparkle/interaction.py", "src/sparkle/interaction_cli.py"],
+      "required_acceptance": [
+        "run on an approved networked host against allowlisted public HTTPS destinations",
+        "verify private/reserved-address and DNS-rebinding rejection",
+        "verify TLS hostname validation, redirect revalidation and output/body limits",
+        "retain evidence before changing live_browser_verified"
+      ]
+    },
+    {
+      "capability": "computer_gui_runtime",
+      "status": "EXTERNALLY BLOCKED",
+      "software_ready": true,
+      "evidence": ["src/sparkle/interaction.py", "src/sparkle/system.py"],
+      "required_acceptance": [
+        "provide a concrete ComputerAdapter through SparkleSystem",
+        "grant only required OS display/accessibility/input permissions",
+        "verify screenshots, click, type and key operations inside an approved session",
+        "retain action evidence and keep unapproved actions fail-closed"
+      ]
+    },
+    {
+      "capability": "voice_stt_tts_runtime",
+      "status": "EXTERNALLY BLOCKED",
+      "software_ready": true,
+      "evidence": ["src/sparkle/voice.py", "src/sparkle/voice_cli.py", "src/sparkle/system.py"],
+      "required_acceptance": [
+        "provide concrete SpeechToText and TextToSpeech adapters through SparkleSystem",
+        "configure provider/device credentials and microphone/speaker permissions as applicable",
+        "run bounded transcription and synthesis acceptance with retained evidence",
+        "do not change live_stt_verified or live_tts_verified from adapter existence alone"
+      ]
+    },
+    {
+      "capability": "audio_document_model_understanding",
+      "status": "EXTERNALLY BLOCKED",
+      "software_ready": true,
+      "evidence": ["src/sparkle/content.py", "src/sparkle/contracts.py", "src/sparkle/model.py"],
+      "required_acceptance": [
+        "select/configure a provider model that explicitly supports the requested audio/document modality",
+        "supply a provider adapter mapping that modality without text flattening",
+        "run live modality acceptance and retain provider evidence"
+      ]
+    },
+    {
+      "capability": "physical_motion_runtime",
+      "status": "EXTERNALLY BLOCKED",
+      "software_ready": true,
+      "evidence": ["src/sparkle/presence.py", "src/sparkle/system.py"],
+      "required_acceptance": [
+        "provide a hardware-specific MotionAdapter through SparkleSystem",
+        "configure device transport and permissions",
+        "run only explicitly approved capabilities/commands",
+        "retain physical-device evidence before changing live_motion_verified"
+      ]
+    },
+    {
+      "capability": "level_3_external_worker_acceptance",
+      "status": "EXTERNALLY BLOCKED",
+      "software_ready": true,
+      "evidence": [
+        "src/sparkle/external_worker.py",
+        "src/sparkle/worker_service.py",
+        "src/sparkle/worker_cancellation.py",
+        ".github/workflows/level3-worker-acceptance.yml"
+      ],
+      "required_acceptance": [
+        "provision the approved hardened Linux worker host",
+        "configure TLS/HMAC secret material and the expected worker identity",
+        "verify isolation and signed request/response behavior",
+        "execute an approved immutable artifact through the documented Level-3 acceptance workflow",
+        "keep Level 3 PARKED until all host evidence passes"
+      ]
+    },
+    {
+      "capability": "live_agent_semantic_quality",
+      "status": "EXTERNALLY BLOCKED",
+      "software_ready": true,
+      "evidence": ["benchmarks/tasks.json", "benchmarks/live.py", "benchmarks/gates.py"],
+      "required_acceptance": [
+        "run the unchanged scripted/live task definitions on the credentialed host",
+        "do not weaken validators, hard-code answers or special-case prompts",
+        "retain failure/inconclusive cases and per-task evidence",
+        "evaluate generated application/agent/research/learning quality separately from software existence"
+      ]
+    },
+    {
+      "capability": "mobile_host_runtime_android_ios_grapheneos",
+      "status": "EXTERNALLY BLOCKED",
+      "software_ready": true,
+      "evidence": ["src/sparkle/platform_support.py", "src/sparkle/config.py"],
+      "required_acceptance": [
+        "provide an embedded Python/application host on each target mobile platform",
+        "grant required storage/network/device permissions",
+        "verify native state layout, startup, API/dashboard client and supported browser/voice adapter paths",
+        "do not represent the Linux external worker as a native mobile worker"
+      ]
+    },
+    {
+      "capability": "production_deployment",
+      "status": "EXTERNALLY BLOCKED",
+      "software_ready": true,
+      "evidence": ["src/sparkle/artifacts.py", "docs/ACCEPTANCE.md"],
+      "required_acceptance": [
+        "obtain explicit user deployment authorization",
+        "configure the target environment and credentials",
+        "satisfy applicable Level-3 prerequisites",
+        "run a separate production deployment acceptance milestone",
+        "keep deployment FROZEN until explicitly authorized"
+      ]
     }
   ],
-  "capabilities": [
-    {
-      "capability": "SPARKLE CORE",
-      "current_state": "PARTIALLY IMPLEMENTED",
-      "blocker": null,
-      "dependency": [
-        "existing shared core"
-      ],
-      "next_action": "Verified autonomous task completion across live components",
-      "test": "system.py; test_system_e2e.py: real local HTTP, deterministic model",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "P1"
-    },
-    {
-      "capability": "Orchestrator",
-      "current_state": "PARTIALLY IMPLEMENTED",
-      "blocker": null,
-      "dependency": [
-        "existing shared core"
-      ],
-      "next_action": "Independent validator is benchmark-only; no automatic factual verification of chat or specialist synthesis",
-      "test": "orchestrator.py; bounded tool loop, test_benchmarks.py independent outcome checks",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "P1"
-    },
-    {
-      "capability": "Context",
-      "current_state": "PARTIALLY IMPLEMENTED",
-      "blocker": null,
-      "dependency": [
-        "existing shared core"
-      ],
-      "next_action": "Live model prompt-injection resistance and context relevance on real user tasks",
-      "test": "context.py; test_benchmarks.py, test_system_e2e.py: bounded attributed untrusted user-role data",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "P1"
-    },
-    {
-      "capability": "Memory",
-      "current_state": "IMPLEMENTED BUT INSUFFICIENTLY VERIFIED",
-      "blocker": null,
-      "dependency": [
-        "existing shared core"
-      ],
-      "next_action": "Longitudinal quality, retention/deduplication policy; validated memory integration",
-      "test": "storage.py; test_storage.py, test_storage_resources.py: scoped lifecycle/backup/rollback and explicit tool writes",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "P1"
-    },
-    {
-      "capability": "Knowledge",
-      "current_state": "PARTIALLY IMPLEMENTED",
-      "blocker": null,
-      "dependency": [
-        "existing shared core"
-      ],
-      "next_action": "Real embedding evaluation, vector persistence, source revision workflows",
-      "test": "storage.py, retrieval.py; 16-query benchmark and test_knowledge_retrieval.py",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "P1"
-    },
-    {
-      "capability": "Model Manager",
-      "current_state": "COMPLETE AND VERIFIED",
-      "blocker": null,
-      "dependency": [
-        "existing shared core"
-      ],
-      "next_action": "Live provider evidence belongs to provider rows",
-      "test": "model.py, registry.py; test_model_registry.py: switching and capability routing",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "Maintain"
-    },
-    {
-      "capability": "Model Registry",
-      "current_state": "COMPLETE AND VERIFIED",
-      "blocker": null,
-      "dependency": [
-        "existing shared core"
-      ],
-      "next_action": "No identified gap in bounded registry contract",
-      "test": "registry.py; test_model_registry.py: validation, persistence, switching/rollback",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "Maintain"
-    },
-    {
-      "capability": "NVIDIA Nemotron provider",
-      "current_state": "IMPLEMENTED BUT INSUFFICIENTLY VERIFIED",
-      "blocker": "External acceptance required",
-      "dependency": [
-        "existing shared core"
-      ],
-      "next_action": "Explain nine rejected live outcomes; broader live streaming/tool evidence",
-      "test": "nvidia.py; adapter/runtime/deadline tests; user-reported authenticated smoke success",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "P1/external"
-    },
-    {
-      "capability": "MiniMax/secondary providers",
-      "current_state": "IMPLEMENTED BUT INSUFFICIENTLY VERIFIED",
-      "blocker": "External acceptance required",
-      "dependency": [
-        "existing shared core"
-      ],
-      "next_action": "Live provider regression; do not replace primary NVIDIA",
-      "test": "providers/minimax.py; test_minimax_adapter.py; retained disabled configuration",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "P3/external"
-    },
-    {
-      "capability": "Model runtime",
-      "current_state": "COMPLETE AND VERIFIED",
-      "blocker": null,
-      "dependency": [
-        "existing shared core"
-      ],
-      "next_action": "Host reliability evidence; routing timeout is a per-attempt policy, not a whole-benchmark deadline",
-      "test": "model_runtime.py; policy/fallback tests, hard HTTP lifecycle tests, pre-request error classification",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "Maintain"
-    },
-    {
-      "capability": "Personal Agent",
-      "current_state": "PARTIALLY IMPLEMENTED",
-      "blocker": null,
-      "dependency": [
-        "existing shared core"
-      ],
-      "next_action": "Longitudinal personal task quality and verified memory writes",
-      "test": "agents.py; test_agent_evaluations.py: routing/prompt/tools, shared orchestrator",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "P1"
-    },
-    {
-      "capability": "Learning Agent",
-      "current_state": "PARTIALLY IMPLEMENTED",
-      "blocker": null,
-      "dependency": [
-        "existing shared core"
-      ],
-      "next_action": "Demonstrated adaptive teaching and learning outcome evaluation",
-      "test": "agents.py, mastery.py; test_agent_evaluations.py, test_mastery.py",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "P2"
-    },
-    {
-      "capability": "Skill Agent",
-      "current_state": "PARTIALLY IMPLEMENTED",
-      "blocker": null,
-      "dependency": [
-        "existing shared core"
-      ],
-      "next_action": "Quality of skill assessment and practice recommendations",
-      "test": "agents.py, mastery.py; test_mastery.py: evidence-based local levels",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "P2"
-    },
-    {
-      "capability": "Exam Agent",
-      "current_state": "PARTIALLY IMPLEMENTED",
-      "blocker": null,
-      "dependency": [
-        "existing shared core"
-      ],
-      "next_action": "Real grading, calibrated questions, exam outcome evidence",
-      "test": "agents.py; test_agent_evaluations.py: exam routing/instructions",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "P2"
-    },
-    {
-      "capability": "Research Agent",
-      "current_state": "PARTIALLY IMPLEMENTED",
-      "blocker": null,
-      "dependency": [
-        "existing shared core"
-      ],
-      "next_action": "Source discovery, citation/factual verification, semantic quality",
-      "test": "agents.py, knowledge.py; test_system_e2e.py: retrieved facts reach prompt",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "P1"
-    },
-    {
-      "capability": "Coding Agent",
-      "current_state": "PARTIALLY IMPLEMENTED",
-      "blocker": null,
-      "dependency": [
-        "existing shared core"
-      ],
-      "next_action": "Real generated patch correctness across representative tasks",
-      "test": "agents.py, tooling.py; test_agent_evaluations.py, test_development_verifier.py",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "P1"
-    },
-    {
-      "capability": "Software Engineering Agent",
-      "current_state": "PARTIALLY IMPLEMENTED",
-      "blocker": null,
-      "dependency": [
-        "existing shared core"
-      ],
-      "next_action": "Repository-level semantic change evaluation and repair quality",
-      "test": "agents.py, development.py; routing and local verifier tests",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "P2"
-    },
-    {
-      "capability": "Application Builder",
-      "current_state": "PARTIALLY IMPLEMENTED",
-      "blocker": null,
-      "dependency": [
-        "existing shared core"
-      ],
-      "next_action": "Functional requirements-to-application generation and user workflows",
-      "test": "builders.py; test_builders_agents.py: safe scaffold and artifacts",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "P2"
-    },
-    {
-      "capability": "AI Builder",
-      "current_state": "PARTIALLY IMPLEMENTED",
-      "blocker": null,
-      "dependency": [
-        "existing shared core"
-      ],
-      "next_action": "Live semantic generation/evaluation; isolated artifact acceptance",
-      "test": "ai_system_*.py; builder/plan/source/runtime tests",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "P2"
-    },
-    {
-      "capability": "Agent Builder",
-      "current_state": "PARTIALLY IMPLEMENTED",
-      "blocker": null,
-      "dependency": [
-        "existing shared core"
-      ],
-      "next_action": "Generated agent quality beyond string assertions and registration",
-      "test": "agent_builder.py, agent_evaluation.py; test_agent_evaluation.py",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "P2"
-    },
-    {
-      "capability": "Project system",
-      "current_state": "COMPLETE AND VERIFIED",
-      "blocker": null,
-      "dependency": [
-        "existing shared core"
-      ],
-      "next_action": "Task dependencies/execution scheduling are additional unfinished scope",
-      "test": "projects.py; test_projects.py: persisted versioned lifecycle, conflicts, events",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "Maintain/P2"
-    },
-    {
-      "capability": "Content system",
-      "current_state": "PARTIALLY IMPLEMENTED",
-      "blocker": null,
-      "dependency": [
-        "existing shared core"
-      ],
-      "next_action": "Content production/editing quality; external publication remains frozen",
-      "test": "content.py, agents.py; test_multimodal.py: safe content envelopes",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "P2"
-    },
-    {
-      "capability": "Data Analysis",
-      "current_state": "PARTIALLY IMPLEMENTED",
-      "blocker": null,
-      "dependency": [
-        "existing shared core"
-      ],
-      "next_action": "Dataset execution, computed statistics/charts and reproducible analysis",
-      "test": "agents.py, tooling.py: calculator/file read; test_tools_agents.py",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "P2"
-    },
-    {
-      "capability": "Automation",
-      "current_state": "PARTIALLY IMPLEMENTED",
-      "blocker": null,
-      "dependency": [
-        "existing shared core"
-      ],
-      "next_action": "Real external connectors; action outcome quality beyond local delivery",
-      "test": "automation.py, automation_service.py; runner/service/notification tests",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "P2"
-    },
-    {
-      "capability": "Tools",
-      "current_state": "COMPLETE AND VERIFIED",
-      "blocker": null,
-      "dependency": [
-        "existing shared core"
-      ],
-      "next_action": "New runtime connectors evaluated separately",
-      "test": "tooling.py; test_tools_agents.py, builder/artifact tests: allowlists and approvals",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "Maintain"
-    },
-    {
-      "capability": "Browser capability",
-      "current_state": "CONTRACT/INTERFACE ONLY",
-      "blocker": null,
-      "dependency": [
-        "existing shared core"
-      ],
-      "next_action": "Real browser adapter and endpoint/redirect/download safety evidence",
-      "test": "interaction.py; test_interaction.py: bounded HTTPS contract and injected harness",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "P2"
-    },
-    {
-      "capability": "Computer interaction",
-      "current_state": "CONTRACT/INTERFACE ONLY",
-      "blocker": null,
-      "dependency": [
-        "existing shared core"
-      ],
-      "next_action": "Real GUI runtime, permissions, screenshots and action verification",
-      "test": "interaction.py; test_interaction.py: typed bounded actions, disabled default",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "P3"
-    },
-    {
-      "capability": "Voice",
-      "current_state": "CONTRACT/INTERFACE ONLY",
-      "blocker": null,
-      "dependency": [
-        "existing shared core"
-      ],
-      "next_action": "Real STT/TTS adapters and microphone/speaker evidence",
-      "test": "voice.py; test_voice_presence.py: STT/TTS doubles, disabled default",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "P3"
-    },
-    {
-      "capability": "Multimodal",
-      "current_state": "PARTIALLY IMPLEMENTED",
-      "blocker": null,
-      "dependency": [
-        "existing shared core"
-      ],
-      "next_action": "Real non-text provider mapping/understanding and modality quality",
-      "test": "content.py, contracts.py; test_multimodal.py: bounded envelopes, trace metadata",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "P2"
-    },
-    {
-      "capability": "Presence/motion",
-      "current_state": "PARTIALLY IMPLEMENTED",
-      "blocker": null,
-      "dependency": [
-        "existing shared core"
-      ],
-      "next_action": "Physical motion/perception absent; UI presence is not hardware",
-      "test": "presence.py, dashboard; test_voice_presence.py: state and timestamps",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "P3"
-    },
-    {
-      "capability": "Application/build pipeline",
-      "current_state": "PARTIALLY IMPLEMENTED",
-      "blocker": null,
-      "dependency": [
-        "existing shared core"
-      ],
-      "next_action": "End-to-end generated application quality and isolated acceptance",
-      "test": "builders.py, development.py, artifacts.py; artifact/verifier tests",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "P2"
-    },
-    {
-      "capability": "Controlled promotion",
-      "current_state": "COMPLETE AND VERIFIED",
-      "blocker": null,
-      "dependency": [
-        "existing shared core"
-      ],
-      "next_action": "No identified gap in bounded promotion contract",
-      "test": "ai_system_promotion.py; test_ai_system_promotion.py: exact identities, replay, tamper, atomicity",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "Maintain"
-    },
-    {
-      "capability": "Controlled build",
-      "current_state": "COMPLETE AND VERIFIED",
-      "blocker": null,
-      "dependency": [
-        "existing shared core"
-      ],
-      "next_action": "No identified gap in bounded build contract",
-      "test": "ai_system_build.py; test_ai_system_build.py: approval and immutable deterministic ZIP",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "Maintain"
-    },
-    {
-      "capability": "Controlled execution",
-      "current_state": "PARTIALLY IMPLEMENTED",
-      "blocker": null,
-      "dependency": [
-        "existing shared core"
-      ],
-      "next_action": "Level 3 acceptance; synchronous RUNNING remote cancellation not implemented",
-      "test": "ai_system_execution.py; test_ai_system_execution.py: authorization/lifecycle; local harness",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "Park Level 3"
-    },
-    {
-      "capability": "External worker",
-      "current_state": "BLOCKED BY EXTERNAL INFRASTRUCTURE",
-      "blocker": "External acceptance required",
-      "dependency": [
-        "host acceptance"
-      ],
-      "next_action": "Hardened host and final authenticated approved-artifact acceptance",
-      "test": "external_worker.py, worker_service.py; protocol/local TLS/HMAC tests",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "Park Level 3"
-    },
-    {
-      "capability": "Trace/evidence",
-      "current_state": "COMPLETE AND VERIFIED",
-      "blocker": null,
-      "dependency": [
-        "existing shared core"
-      ],
-      "next_action": "Trace success does not establish semantic correctness",
-      "test": "trace.py; storage, execution, runtime and API tests: identities/redaction/lifecycle",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "Maintain"
-    },
-    {
-      "capability": "API",
-      "current_state": "COMPLETE AND VERIFIED",
-      "blocker": null,
-      "dependency": [
-        "existing shared core"
-      ],
-      "next_action": "Supported local endpoints verified; not external integration evidence",
-      "test": "api.py; test_orchestrator_api.py, test_api_security.py, test_system_e2e.py",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "Maintain"
-    },
-    {
-      "capability": "CLI",
-      "current_state": "COMPLETE AND VERIFIED",
-      "blocker": null,
-      "dependency": [
-        "existing shared core"
-      ],
-      "next_action": "Supported CLI contract verified; production operator acceptance separate",
-      "test": "cli.py; test_cli.py plus builder/artifact CLI tests",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "Maintain"
-    },
-    {
-      "capability": "Dashboard",
-      "current_state": "IMPLEMENTED BUT INSUFFICIENTLY VERIFIED",
-      "blocker": null,
-      "dependency": [
-        "existing shared core"
-      ],
-      "next_action": "Real browser interaction/accessibility and end-user journey testing",
-      "test": "dashboard/*; API tests and node --check",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "P2"
-    },
-    {
-      "capability": "Security",
-      "current_state": "PARTIALLY IMPLEMENTED",
-      "blocker": null,
-      "dependency": [
-        "existing shared core"
-      ],
-      "next_action": "Broader threat-model review and actual Level 3 system acceptance",
-      "test": "security.py, secrets.py, worker boundaries; security/negative tests",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "P1/park host"
-    },
-    {
-      "capability": "Session/rate limiting",
-      "current_state": "COMPLETE AND VERIFIED",
-      "blocker": null,
-      "dependency": [
-        "existing shared core"
-      ],
-      "next_action": "No identified gap in documented single-process contract",
-      "test": "security.py; test_api_security.py: CSRF, expiry, revoke, bounded rate state",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "Maintain"
-    },
-    {
-      "capability": "Testing/evaluation",
-      "current_state": "PARTIALLY IMPLEMENTED",
-      "blocker": null,
-      "dependency": [
-        "existing shared core"
-      ],
-      "next_action": "Real provider outcomes, real embedding quality, broader representative tasks",
-      "test": "benchmarks/*; 16 retrieval queries, 12 scripted tasks, deterministic independent validators",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "P1"
-    },
-    {
-      "capability": "Cross-platform architecture",
-      "current_state": "PARTIALLY IMPLEMENTED",
-      "blocker": null,
-      "dependency": [
-        "existing shared core"
-      ],
-      "next_action": "Windows/macOS behavior and execution adapters unverified",
-      "test": "stdlib core; Linux worker; .github/workflows/ci.yml: Python 3.12/3.13 Ubuntu",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "P3"
-    },
-    {
-      "capability": "Documentation",
-      "current_state": "PARTIALLY IMPLEMENTED",
-      "blocker": null,
-      "dependency": [
-        "existing shared core"
-      ],
-      "next_action": "Historical reports remain historical; external operator evidence still missing",
-      "test": "docs/* inventory; test_documentation.py; this refreshed audit and benchmark procedure",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "P2"
-    },
-    {
-      "capability": "Deployment",
-      "current_state": "BLOCKED BY EXTERNAL INFRASTRUCTURE",
-      "blocker": "External acceptance required",
-      "dependency": [
-        "host acceptance"
-      ],
-      "next_action": "Level 3 prerequisites plus separate authorized deployment milestone",
-      "test": "docs/ACCEPTANCE.md; explicit freeze and unverified artifact deployment records",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "Frozen"
-    },
-    {
-      "capability": "Packaging",
-      "current_state": "COMPLETE AND VERIFIED",
-      "blocker": null,
-      "dependency": [
-        "existing shared core"
-      ],
-      "next_action": "Cross-platform installation matrix remains separate",
-      "test": "pyproject.toml; wheel/offline install and CI worker-image smoke",
-      "acceptance": "Demonstrate the stated missing behavior with independent evidence; no automatic category upgrade",
-      "priority": "Maintain"
-    }
+  "completed_software_families": [
+    "core_runtime",
+    "orchestrator",
+    "context",
+    "memory_lifecycle_and_validation",
+    "knowledge_lifecycle",
+    "lexical_retrieval",
+    "persistent_semantic_vector_index",
+    "model_manager_registry_runtime",
+    "agent_registry_and_specialists",
+    "learning_exam_mastery",
+    "research_workflow",
+    "application_builder",
+    "ai_builder_pipeline",
+    "agent_builder_pipeline",
+    "project_and_task_graph",
+    "content_workflow",
+    "data_analysis",
+    "automation_reliability_and_agent_inspection",
+    "notifications_and_proactive_alerts",
+    "tool_discovery_permissions",
+    "safe_https_browser",
+    "multimodal_content_and_nvidia_image_transport",
+    "presence_state",
+    "build_package_controlled_promotion_execution_cancellation",
+    "trace_evidence",
+    "api_cli_dashboard",
+    "security_session_rate_limiting",
+    "cross_platform_state_and_adapter_architecture",
+    "testing_evaluation_framework",
+    "packaging_documentation"
   ],
-  "completed_work": [
-    {
-      "id": "bounded-orchestration",
-      "priority": "P0",
-      "state": "LOCAL TEST VERIFIED",
-      "acceptance": "Tool budgets shared across specialist/synthesis calls; oversized batches execute no tools; specialist fan-out validated before model use",
-      "tests": "tests/test_orchestration_bounds.py"
-    },
-    {
-      "id": "literal-memory-query-boundary",
-      "priority": "P0",
-      "state": "LOCAL TEST VERIFIED",
-      "acceptance": "Nonempty unsearchable queries do not return recent memory; literal Unicode/underscore behavior, bounded terms and context integration",
-      "tests": "tests/test_memory_queries.py"
-    },
-    {
-      "id": "operator-reviewed-memory",
-      "priority": "P1",
-      "state": "LOCAL TEST VERIFIED",
-      "acceptance": "Default agent proposals cannot modify durable memory until independent operator approval of exact unchanged proposal and prior memory state",
-      "tests": "test_memory_review, test_orchestration_bounds, test_system_e2e, test_cli",
-      "commit": "0c1882ebb7b98d187f273873b3bb613a34c9a009",
-      "ci_run": 91,
-      "ci_status": "success"
-    },
-    {
-      "id": "pending-memory-review-visibility",
-      "priority": "P1",
-      "state": "LOCAL TEST VERIFIED",
-      "acceptance": "Completed review history cannot hide pending proposals; oldest pending reviewed first; explicit bounded history filters",
-      "tests": "test_memory_review, test_cli, test_system_e2e"
-    },
-    {
-      "id": "operator-attested-exact-memory-validation",
-      "state": "LOCAL TEST VERIFIED",
-      "priority": "P1",
-      "tests": "test_memory_evidence; CLI/API/security/resource regressions",
-      "acceptance": "Current exact attestation validation; unsupported/conflicting claims inconclusive; strict retrieval rechecks evidence"
-    },
-    {
-      "id": "dashboard-memory-review",
-      "priority": "P1",
-      "state": "LOCAL TEST VERIFIED",
-      "tests": "test_memory_ui; memory_review_ui.test.cjs; test_memory_evidence",
-      "acceptance": "Exact identity review, current evidence, expiry/conflicts and literal-text private history",
-      "commit": "2955238a3cda0f57973a20e40e34a748839d144d",
-      "ci_run": 95,
-      "ci_status": "success"
-    },
-    {
-      "id": "stored-citation-integrity",
-      "priority": "P1",
-      "state": "LOCAL TEST VERIFIED",
-      "tests": "test_knowledge_evidence; API and Research Agent integration",
-      "acceptance": "Exact stored identity/digest/quote checks, independent of claim truth",
-      "commit": "3de56ac8435c3e9e876c200d75cd5620ed80dbb4",
-      "ci_run": 96,
-      "ci_status": "success"
-    },
-    {
-      "id": "knowledge-source-lifecycle",
-      "priority": "P1",
-      "state": "IMPLEMENTED; bounded engineering checks",
-      "acceptance": "Revision-bound operator policy and retrieval/citation exclusion; human acceptance pending",
-      "commit": "6207482c58fb572e2478c0169df6b40e05fdd9f8",
-      "ci_run": 97,
-      "ci_status": "success"
-    },
-    {
-      "id": "project-task-dependencies",
-      "priority": "P1",
-      "state": "IMPLEMENTED; bounded engineering checks",
-      "acceptance": "Persistent DAG, deterministic readiness, operator transitions and integrated project guard",
-      "commit": "b8ea3a634f1f833531172c746ab4365af3fff3c9",
-      "ci_run": 98,
-      "ci_status": "success"
-    }
-  ],
-  "live_agent_baseline": {
-    "source": "user-supplied credential-safe host evidence; no rerun in this executor",
-    "executed": 12,
-    "validated": 3,
-    "rejected": 9,
-    "validation_pass_rate": 0.25,
-    "competence_verified": false
-  }
+  "notes": [
+    "Dedicated data/content/research/interaction/voice CLIs and bounded agent tools are retained instead of adding redundant mutation APIs.",
+    "GET /api/health exposes vector, platform, voice, interaction, data-analysis, content, research, automation and other subsystem status through SparkleSystem.status().",
+    "Browser network authority and computer actions remain operator-owned session boundaries rather than unrestricted agent tools.",
+    "Level 3 is PARKED and deployment is FROZEN."
+  ]
 }
