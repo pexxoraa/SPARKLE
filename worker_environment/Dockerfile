@@ -22,4 +22,4 @@ COPY src/sparkle ./sparkle
 
 USER 10001:10001
 EXPOSE 8770
-ENTRYPOINT ["python3", "-m", "sparkle.worker_service"]
+ENTRYPOINT ["python3", "-m", "sparkle.level3_worker"]
