@@ -20,6 +20,7 @@ sparkle = "sparkle.cli:entrypoint"
 sparkle-data = "sparkle.data_cli:entrypoint"
 sparkle-content = "sparkle.content_cli:entrypoint"
 sparkle-interaction = "sparkle.interaction_cli:entrypoint"
+sparkle-voice = "sparkle.voice_cli:entrypoint"
 sparkle-worker = "sparkle.worker_service:entrypoint"
 sparkle-automations = "sparkle.automation_service:entrypoint"
 
