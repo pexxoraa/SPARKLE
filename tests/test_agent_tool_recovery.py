@@ -3,6 +3,7 @@ from __future__ import annotations
 from unittest.mock import patch
 
 from sparkle.contracts import ModelResponse, ToolCall
+from sparkle.orchestrator import _WorkflowBudget
 from sparkle.providers.mock import DeterministicAdapter
 from tests.test_orchestrator_api import SystemCase
 
@@ -64,9 +65,32 @@ class AgentToolRecoveryTests(SystemCase):
         self.assertEqual(trace["execution_metadata"]["tool_signature_replays"], 2)
         self.assertEqual(trace["execution_metadata"]["tool_loop_recovery_completions"], 1)
 
+    def test_replay_cache_is_scoped_to_agent_authority(self):
+        budget = _WorkflowBudget(tool_limit=8, max_seconds=30)
+        arguments = {"expression": "1+1"}
+        replayed, signature, cached = budget.replay(
+            "personal", "call-1", "calculator", arguments
+        )
+        self.assertFalse(replayed)
+        self.assertIsNone(cached)
+        budget.remember("personal", "call-1", signature, 2)
+
+        replayed, _, cached = budget.replay(
+            "personal", "call-2", "calculator", arguments
+        )
+        self.assertTrue(replayed)
+        self.assertEqual(cached, 2)
+
+        replayed, _, cached = budget.replay(
+            "learning", "call-1", "calculator", arguments
+        )
+        self.assertFalse(replayed)
+        self.assertIsNone(cached)
+
     def test_tool_policy_is_minimal_evidence_oriented(self):
         policy = self.system.orchestrator._tool_policy(
             {
+                "calculator",
                 "memory_write",
                 "knowledge_search",
                 "knowledge_verify",
@@ -78,6 +102,7 @@ class AgentToolRecoveryTests(SystemCase):
         )
         self.assertIn("narrowest sufficient tool", policy)
         self.assertIn("Do not repeat an identical tool call", policy)
+        self.assertIn("deterministic arithmetic", policy)
         self.assertIn("memory_write once", policy)
         self.assertIn("knowledge_search before heavier research/state tools", policy)
         self.assertIn("Do not invent citations", policy)
@@ -92,5 +117,15 @@ class AgentToolRecoveryTests(SystemCase):
         self.system.orchestrator.run("Calculate one plus one.", agent_name="personal")
         first = adapter.requests[0]
         self.assertIn("TOOL USE POLICY", first.system)
+        self.assertIn("deterministic arithmetic", first.system)
         self.assertIn("memory_write once", first.system)
         self.assertIn("Do not repeat an identical tool call", first.system)
+
+    def test_builtin_prompts_prefer_direct_evidence_tools(self):
+        personal = self.system.agents.get("personal").system_prompt()
+        research = self.system.agents.get("research").system_prompt()
+        coding = self.system.agents.get("coding").system_prompt()
+        self.assertIn("deterministic tool directly matches", personal)
+        self.assertIn("retrieve first and cite returned source/chunk identifiers", research)
+        self.assertIn("Never invent a citation", research)
+        self.assertIn("use workspace_verify directly", coding)
