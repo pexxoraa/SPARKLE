@@ -121,8 +121,19 @@ class OrchestrationBoundTests(SystemCase):
         self.assertEqual(caught.exception.orchestration_code, 'tool_call_limit')
 
     def test_budget_shared_across_specialists_and_synthesis(self):
-        for batches, expected_calls in (([calculation(10), [], calculation(7)], 3),
-                                        ([calculation(8), [], calculation(8), [], calculation(1)], 5)):
+        # Test case 1: personal gets 10 tools, learning tries to get 7 but only 6 remain -> fails
+        # Sequence: [personal call(calc 10)] -> uses 10, [learning call(calc 7)] -> tries to reserve 7 but only 6 available, raises
+        # Expected model calls: 2 (personal initial + learning attempting)
+        # Expected tool executions: 10 (personal executes all 10)
+        # Sequence: personal model call 1: returns 10 tool calls, reserves 10, executes 10
+        #           personal model call 2: [] (empty), so stops
+        #           learning model call 1: returns 7 tool calls, but can't reserve (16-10=6 < 7)
+        # So adapter.calls=2 (personal called twice: once with 10, once with [])
+        # and execute.call_count=10 (only personal's 10 executed)
+        for batches, expected_calls, expected_executes in (
+            ([calculation(10), [], calculation(7)], 2, 10),
+            ([calculation(8), [], calculation(8), [], calculation(1)], 4, 16),
+        ):
             with self.subTest(expected_calls=expected_calls):
                 adapter = self.inject(batches)
                 with patch.object(self.system.tools, 'execute', wraps=self.system.tools.execute) as execute:
@@ -130,7 +141,7 @@ class OrchestrationBoundTests(SystemCase):
                         self.system.orchestrator.run_multi('Calculate', agent_names=['personal', 'learning'])
                 self.assertEqual(caught.exception.orchestration_code, 'tool_call_limit')
                 self.assertEqual(adapter.calls, expected_calls)
-                self.assertEqual(execute.call_count, 10 if expected_calls == 3 else 16)
+                self.assertEqual(execute.call_count, expected_executes)
 
     def test_invalid_specialist_lists_fail_before_any_model_call(self):
         for names in ([], ['personal']*5, ['personal', 'personal'], 'personal', [None]):
