@@ -38,6 +38,7 @@ from sparkle.builders import WorkspaceManager
 from sparkle.config import AppConfig, data_root, project_root
 from sparkle.context import ContextBuilder
 from sparkle.content import content_contract_status
+from sparkle.content_workflow import ContentReadTool, ContentWorkflowService
 from sparkle.data_analysis import DataAnalysisService, DataAnalysisTool
 from sparkle.development import DevelopmentVerifier, WorkspaceTestRunner
 from sparkle.external_worker import ExternalWorkerClient
@@ -118,6 +119,7 @@ class SparkleSystem:
         self.skills = SkillMasteryStore()
         self.learning = LearningService(self.skills)
         self.data_analysis = DataAnalysisService()
+        self.content_workflows = ContentWorkflowService()
         self.proactive = ProactiveEngine(
             self.memory, self.knowledge, self.projects, self.skills,
         )
@@ -164,6 +166,7 @@ class SparkleSystem:
         self.tools.register(LearningReadTool(self.learning))
         self.tools.register(SkillSearchTool(self.skills))
         self.tools.register(DataAnalysisTool(self.data_analysis))
+        self.tools.register(ContentReadTool(self.content_workflows))
         self.tools.register(FileReadTool(project_root()))
         self.tools.register(WorkspaceScaffoldTool(self.workspaces))
         self.tools.register(WorkspaceVerifyTool(self.development))
@@ -364,6 +367,7 @@ class SparkleSystem:
             "voice": self.voice.status(),
             "interaction": self.interactions.status(),
             "multimodal": content_contract_status(),
+            "content_workflows": self.content_workflows.stats(),
             "automation": {
                 "status": "ready", "count": len(self.automations.list()),
                 "recent_runs": len(self.automations.list_runs(limit=100)),
