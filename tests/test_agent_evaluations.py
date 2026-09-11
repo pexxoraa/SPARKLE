@@ -100,8 +100,8 @@ AGENT_EVALUATIONS = {
     "automation": {
         "prompt": "Automate a recurring schedule to monitor and remind me",
         "capability": "tool_use",
-        "instruction": "trigger, action, failure policy",
-        "tools": {"memory_search", "memory_write"},
+        "instruction": "Use automation_inspect to ground plans in current definitions, run history, retry evidence, and scheduler state.",
+        "tools": {"memory_search", "memory_write", "automation_inspect"},
     },
     "system": {
         "prompt": "Diagnose system status, config, environment, trace, health, and failure",
