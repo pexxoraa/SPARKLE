@@ -121,18 +121,16 @@ class OrchestrationBoundTests(SystemCase):
         self.assertEqual(caught.exception.orchestration_code, 'tool_call_limit')
 
     def test_budget_shared_across_specialists_and_synthesis(self):
-        # Test case 1: personal gets 10 tools, learning tries to get 7 but only 6 remain -> fails
-        # Sequence: [personal call(calc 10)] -> uses 10, [learning call(calc 7)] -> tries to reserve 7 but only 6 available, raises
-        # Expected model calls: 2 (personal initial + learning attempting)
-        # Expected tool executions: 10 (personal executes all 10)
-        # Sequence: personal model call 1: returns 10 tool calls, reserves 10, executes 10
-        #           personal model call 2: [] (empty), so stops
-        #           learning model call 1: returns 7 tool calls, but can't reserve (16-10=6 < 7)
-        # So adapter.calls=2 (personal called twice: once with 10, once with [])
-        # and execute.call_count=10 (only personal's 10 executed)
+        # An over-budget tool batch is still a model response, so it increments
+        # adapter.calls. Budget reservation happens after that response and before
+        # any tool in the batch executes, preserving the no-partial-execution guard.
+        # Case 1: personal returns 10 tools then completes; learning returns 7 tools,
+        # which cannot fit in the 6 remaining slots => 3 model calls, 10 tool runs.
+        # Case 2: personal and learning each return/execute 8 tools then complete;
+        # synthesis returns one more tool with no budget left => 5 calls, 16 runs.
         for batches, expected_calls, expected_executes in (
-            ([calculation(10), [], calculation(7)], 2, 10),
-            ([calculation(8), [], calculation(8), [], calculation(1)], 4, 16),
+            ([calculation(10), [], calculation(7)], 3, 10),
+            ([calculation(8), [], calculation(8), [], calculation(1)], 5, 16),
         ):
             with self.subTest(expected_calls=expected_calls):
                 adapter = self.inject(batches)
