@@ -131,6 +131,20 @@ class MemorySearchTool(Tool):
         )
 
 
+class ProjectTasksTool(Tool):
+    name = 'project_tasks'
+    description = 'Inspect bounded project task dependencies and readiness. Completion is operator-reported, not independently verified execution.'
+    parameters = {'type':'object','properties':{'project':{'type':'string'}},'required':['project'],'additionalProperties':False}
+
+    def __init__(self, tasks):
+        self.tasks=tasks
+
+    def run(self, arguments):
+        if not isinstance(arguments,dict) or set(arguments)!={'project'}:
+            raise ValueError('Only a project identity is accepted')
+        return self.tasks.list(arguments['project'])
+
+
 class ProjectSearchTool(Tool):
     name = "project_search"
     description = (

@@ -353,6 +353,12 @@ class ProjectStore(SQLiteStore):
         project = self.validate(candidate)
         now = utc_now()
         with self.connect() as connection:
+            connection.execute('BEGIN IMMEDIATE')
+            has_tasks = connection.execute("SELECT 1 FROM sqlite_master WHERE name='project_tasks'").fetchone()
+            if project['status']=='complete' and has_tasks and connection.execute(
+                "SELECT 1 FROM project_tasks WHERE project_name=? AND status NOT IN ('completed','cancelled') LIMIT 1",(name,)
+            ).fetchone():
+                raise ValueError('Project has unfinished tasks')
             cursor = connection.execute("""
                 UPDATE projects SET
                     title=?, description=?, status=?, priority=?, deadline=?,

@@ -75,6 +75,17 @@ class SystemEndToEndTests(unittest.TestCase):
         except urllib.error.HTTPError as exc:
             return exc.code, json.loads(exc.read())
 
+    def test_project_task_api_readiness_and_operator_controls(self):
+        from tests.test_projects import project_manifest
+        self.system.projects.create(project_manifest())
+        body={'project':'sparkle_core','task_id':'first','action':'create','expected_revision':0,'title':'First'}
+        self.assertEqual(self.request('/api/project-tasks',body)[0],400)
+        self.assertEqual(self.request('/api/project-tasks',body|{'approved':True})[0],200)
+        self.assertEqual(self.request('/api/project-tasks',body|{'approved':True})[0],400)
+        rows=self.request('/api/project-tasks?project=sparkle_core')[1]['tasks']
+        self.assertTrue(rows[0]['ready'])
+        self.assertEqual(self.system.tools.execute('project_tasks',{'project':'sparkle_core'})[0]['task_id'],'first')
+
     def test_knowledge_lifecycle_api_requires_approval_and_revision(self):
         source=self.system.knowledge.ingest_text('Policy fixture','Policy fixture content')
         body={'source_id':source,'action':'archive','expected_revision':0}

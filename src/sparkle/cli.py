@@ -63,6 +63,10 @@ def build_parser() -> argparse.ArgumentParser:
     memory.add_argument("category")
     memory.add_argument("key")
     memory.add_argument("value")
+    tasks = sub.add_parser("project-tasks", help="Inspect project task readiness or apply approved task operation")
+    tasks.add_argument("project")
+    tasks.add_argument("--manifest", help="JSON task operation: task_id, action, expected_revision and operation fields")
+    tasks.add_argument("--approve", action="store_true")
     policy = sub.add_parser("knowledge-policy", help="Inspect/change operator-owned source policy")
     policy.add_argument("source_id", type=int)
     policy.add_argument("--action", choices=["archive","restore","revoke","retention","supersede"])
@@ -480,6 +484,14 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "remember":
         memory_id = system.memory.remember(args.category, args.key, args.value, metadata={"source": "cli"})
         _print({"ok": True, "memory_id": memory_id})
+        return 0
+    if args.command == "project-tasks":
+        if args.manifest:
+            if not args.approve:raise ValueError("Explicit operator approval required")
+            operation=_load_manifest(args.manifest)
+            _print(system.project_tasks.change(args.project,operator="cli",**operation))
+        else:
+            _print({"tasks":system.project_tasks.list(args.project),"events":system.project_tasks.history(args.project)})
         return 0
     if args.command == "knowledge-policy":
         if args.action:

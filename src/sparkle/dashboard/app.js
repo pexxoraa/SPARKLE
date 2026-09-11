@@ -180,6 +180,25 @@ async function loadPanel(panel) {
         `<div class="list-item"><strong>${escapeHtml(project.title)} · ${escapeHtml(project.status)} · ${escapeHtml(project.priority)}</strong><small>${escapeHtml(project.progress)}% · ${escapeHtml(project.deadline || 'no deadline')} · ${escapeHtml(project.blockers.length)} blocker(s) · next: ${escapeHtml(project.next_action)}</small></div>`
       )).join('')
       : empty('No active structured projects.');
+    for (const [index, project] of data.projects.entries()) {
+      const card = qs('#projectList').children[index];
+      const button = document.createElement('button'); button.textContent = 'Inspect tasks';
+      const details = document.createElement('div'); card.append(button, details);
+      button.addEventListener('click', async () => {
+        button.disabled = true;
+        try {
+          const result = await api('/api/project-tasks?project=' + encodeURIComponent(project.name));
+          details.replaceChildren();
+          if (!result.tasks.length) details.textContent = 'No tasks recorded.';
+          for (const task of result.tasks) {
+            const line = document.createElement('p');
+            line.textContent = `${task.title}: ${task.status}; ${task.ready ? 'ready' : 'not ready'}; blocked by: ${task.blocked_by.join(', ') || 'none'}. Completion is operator-reported.`;
+            details.appendChild(line);
+          }
+        } catch (_) { details.textContent = 'Task inspection failed. Reload current project state.'; }
+        finally { button.disabled = false; }
+      });
+    }
   }
   if (panel === 'builds') {
     const data = await api('/api/builds?limit=50');

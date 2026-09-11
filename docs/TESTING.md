@@ -602,3 +602,9 @@ mutations. API/CLI integration is exercised without live credentials. The
 existing benchmark metrics and outcomes remain unchanged; implementation
 fingerprints are refreshed when retrieval source changes. Comprehensive human
 source-management and live embedding acceptance remain pending.
+
+Project task engineering checks cover DAG validation, readiness, optimistic
+conflicts, evidence-reference requirements, parent project completion guard,
+archived/terminal states, persistence, limits and append-only audit. API/CLI and
+read-only agent-tool integration run without model credentials. Dashboard syntax
+is checked; real browser and scheduling acceptance are not claimed.

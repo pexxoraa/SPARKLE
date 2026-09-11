@@ -410,6 +410,9 @@ class SparkleHandler(BaseHTTPRequestHandler):
             return self._json({"proposals": self.system.memory_review.list(status=query.get("status", ["pending"])[0])})
         if parsed.path == "/api/memory":
             return self._json({"memories": self.system.memory.search(query.get("q", [""])[0], limit=int(query.get("limit", [20])[0]))})
+        if parsed.path == "/api/project-tasks":
+            name=query.get("project",[""])[0]
+            return self._json({"tasks":self.system.project_tasks.list(name),"events":self.system.project_tasks.history(name)})
         if parsed.path == "/api/knowledge/lifecycle":
             source_id=int(query.get("source_id", [0])[0])
             return self._json({"policy":self.system.knowledge.lifecycle.inspect(source_id),
@@ -580,6 +583,13 @@ class SparkleHandler(BaseHTTPRequestHandler):
                     if self.path == "/api/chat" else MAX_BODY_BYTES
                 )
             )
+            if self.path == "/api/project-tasks":
+                if data.get("approved") is not True:
+                    raise ValueError("Explicit operator approval required")
+                fields={k:v for k,v in data.items() if k not in {"project","task_id","action","expected_revision","approved"}}
+                return self._json(self.system.project_tasks.change(data.get("project"),data.get("task_id"),
+                    data.get("action"),data.get("expected_revision"),
+                    operator="authenticated_api" if self.system.api_access.required else "local_api",**fields))
             if self.path == "/api/knowledge/lifecycle":
                 if data.get("approved") is not True:
                     raise ValueError("Explicit operator approval required")

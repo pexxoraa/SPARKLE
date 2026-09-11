@@ -82,3 +82,41 @@ metadata; raw project text is not copied into proactive alerts.
 
 This increment does not claim semantic project decisions, third-party project
 connectors, calendar synchronization, or live-model response quality.
+
+## Dependency-aware task graph
+
+Each project can own up to 200 named tasks with up to 20 same-project
+prerequisites each. Tasks persist in the project database. Creation and
+changes reject missing dependencies, cycles, duplicate identities, stale
+revisions and changes to archived/complete projects. Readiness requires a
+pending task, an active non-blocked project and completed prerequisites.
+Cancelled prerequisites remain blockers. Ordering uses priority (0–10), then
+explicit timezone-aware due date, then stable task identity; this is readiness
+ordering, not automatic calendar scheduling or execution.
+
+States: pending → running/blocked/cancelled; running → completed/blocked/pending/
+cancelled; blocked → pending/cancelled. Completed and cancelled are terminal.
+Only pending/blocked tasks can change dependencies. Completion requires an
+operator evidence reference, which is provenance, not independently checked
+proof. A project cannot be marked complete with unfinished tasks. Finishing
+tasks never automatically promotes, builds, executes or deploys anything.
+
+`project-tasks PROJECT` inspects readiness/history. `--manifest PATH --approve`
+applies an explicit JSON operation with task_id, action and expected_revision.
+Create uses revision 0, title and optional dependencies/priority/due_at.
+`update` changes title, priority or due_at for nonterminal tasks with an exact
+revision; it does not change readiness or dependency edges.
+`dependencies` replaces prerequisite IDs; `transition` supplies status and,
+for completion, evidence_ref. The protected `/api/project-tasks` GET uses
+`?project=NAME`; POST adds project and approved=true to the operation fields.
+Personal, Project and Productivity agents have read-only `project_tasks` access.
+The dashboard's Inspect tasks button displays state and blockers as text.
+
+Events record identities, action, revision and timestamp without task text.
+SQLite rejects event updates/deletion; this is not protection against a database
+administrator. Capacity is bounded to 10,000 events per project and exhausted
+capacity rejects mutations. No event history is silently discarded.
+
+Implemented and internally checked. Real scheduling quality, autonomous task
+execution, independently validated task completion, and human dashboard acceptance remain
+unfinished.

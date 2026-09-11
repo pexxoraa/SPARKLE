@@ -18,6 +18,18 @@ from sparkle.system import SparkleSystem
 
 
 class CLITests(unittest.TestCase):
+    def test_project_task_manifest_cli(self):
+        from tests.test_projects import project_manifest
+        with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ, {'SPARKLE_DATA_DIR':directory}):
+            system=SparkleSystem();system.projects.create(project_manifest())
+            manifest=Path(directory)/'operation.json'
+            manifest.write_text(json.dumps({'task_id':'first','action':'create','expected_revision':0,'title':'First'}))
+            with contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(main(['project-tasks','sparkle_core','--manifest',str(manifest),'--approve']),0)
+            output=io.StringIO()
+            with contextlib.redirect_stdout(output):self.assertEqual(main(['project-tasks','sparkle_core']),0)
+            self.assertTrue(json.loads(output.getvalue())['tasks'][0]['ready'])
+
     def test_knowledge_policy_commands(self):
         with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ, {'SPARKLE_DATA_DIR':directory}):
             system=SparkleSystem();source=system.knowledge.ingest_text('Fixture','Fixture evidence')

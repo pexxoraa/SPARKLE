@@ -2524,3 +2524,22 @@ unchanged, with only implementation fingerprints refreshed. Human knowledge
 workflow validation and real semantic quality remain externally unverified.
 
 Engineering evidence: focused retrieval/lifecycle/API/CLI checks **54/54**; final policy/API/CLI/documentation checks **33/33**. Compile, whitespace and wheel build passed. Comprehensive local/live tests were not rerun for this unit; normal CI remains enabled.
+
+## 2026-09-11 project task graph implementation
+
+Continued from knowledge lifecycle `6207482c58fb572e2478c0169df6b40e05fdd9f8`,
+tree `178969313a6327739a5c2d158fe1c757d2de05a0`; exact CI #97 passed all
+five jobs. Added bounded persisted task DAG, readiness, cycle/revision checks,
+operator transitions, completion references, immutable application-level audit,
+project completion guard, read-only agent tool, API/CLI and dashboard inspection.
+Task completion is operator-reported and does not prove independent execution.
+
+No model, benchmark task, scoring, validator, Level 3 or deployment gate changed.
+Manual/live/host validation remains deferred. Knowledge and project additions
+are implemented with bounded internal checks, not comprehensive real-world
+verification. Remaining software work includes automatic scheduling, learning
+and exam workflows, functional builders, real browser/computer/voice adapters,
+and independently verified agent outcomes. Level 3 BLOCKED/PARKED; deployment
+FROZEN. SPARKLE is not declared complete.
+
+Task graph engineering evidence: **43/43** focused task/project/API/CLI/agent/documentation checks (6.203s). Compile, dashboard syntax, whitespace, repository audit and fresh wheel build passed. No comprehensive local/manual/live rerun was performed for this implementation unit.

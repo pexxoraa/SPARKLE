@@ -30,7 +30,7 @@ class AgentSpec:
 
 def _specs() -> list[AgentSpec]:
     shared = frozenset({"calculator", "memory_search", "knowledge_search"})
-    project_read = frozenset({"project_search"})
+    project_read = frozenset({"project_search", "project_tasks"})
     skill_read = frozenset({"skill_search"})
     return [
         AgentSpec("personal", "reasoning", "Coordinate personal goals, priorities, context, and specialist work.", "Give realistic priorities and explicitly identify missing constraints.", shared | project_read | skill_read | {"memory_write"}, ("goal", "priority", "today", "tomorrow", "personal", "focus", "week")),

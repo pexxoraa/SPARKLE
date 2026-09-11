@@ -1,19 +1,19 @@
 {
   "schema": "SPARKLE-CAPABILITY-BACKLOG/1",
-  "source_checkpoint": "3de56ac8435c3e9e876c200d75cd5620ed80dbb4",
+  "source_checkpoint": "6207482c58fb572e2478c0169df6b40e05fdd9f8",
   "level_3": "BLOCKED/PARKED",
   "deployment": "FROZEN",
   "current_work": {
-    "id": "knowledge-source-lifecycle",
-    "priority": "P1",
-    "state": "IMPLEMENTED; bounded engineering checks",
-    "acceptance": "Revision-bound operator policy and retrieval/citation exclusion; human acceptance pending"
-  },
-  "next_implementable_work": {
     "id": "project-task-dependencies",
     "priority": "P1",
-    "next_action": "Inspect task decomposition and dependency-aware execution readiness",
-    "acceptance": "Persisted dependency graph, cycle rejection, bounded readiness, operator-controlled transitions"
+    "state": "IMPLEMENTED; bounded engineering checks",
+    "acceptance": "Persistent DAG, deterministic readiness, operator transitions and integrated project guard"
+  },
+  "next_implementable_work": {
+    "id": "task-planning-and-learning-workflows",
+    "priority": "P1",
+    "next_action": "Extend operator planning metadata and inspect curriculum/assessment workflow integration",
+    "acceptance": "Useful stateful workflows; completion remains distinct from learning quality or execution proof"
   },
   "specific_external_blockers": [
     {
@@ -636,6 +636,15 @@
       "acceptance": "Exact stored identity/digest/quote checks, independent of claim truth",
       "commit": "3de56ac8435c3e9e876c200d75cd5620ed80dbb4",
       "ci_run": 96,
+      "ci_status": "success"
+    },
+    {
+      "id": "knowledge-source-lifecycle",
+      "priority": "P1",
+      "state": "IMPLEMENTED; bounded engineering checks",
+      "acceptance": "Revision-bound operator policy and retrieval/citation exclusion; human acceptance pending",
+      "commit": "6207482c58fb572e2478c0169df6b40e05fdd9f8",
+      "ci_run": 97,
       "ci_status": "success"
     }
   ],
