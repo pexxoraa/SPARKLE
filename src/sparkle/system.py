@@ -34,6 +34,7 @@ from sparkle.automation_reliability import (
     ReliableAutomationRunner,
     ReliableAutomationStore,
 )
+from sparkle.automation_tools import AutomationInspectTool
 from sparkle.browser_runtime import DefaultInteractionService
 from sparkle.builders import WorkspaceManager
 from sparkle.config import AppConfig, data_root, project_root
@@ -180,6 +181,7 @@ class SparkleSystem:
         self.tools.register(ContentReadTool(self.content_workflows))
         self.tools.register(ResearchReadTool(self.research))
         self.tools.register(EngineeringReadTool(self.engineering))
+        self.tools.register(AutomationInspectTool(self.automations))
         self.tools.register(FileReadTool(project_root()))
         self.tools.register(WorkspaceScaffoldTool(self.workspaces))
         self.tools.register(WorkspaceVerifyTool(self.development))
