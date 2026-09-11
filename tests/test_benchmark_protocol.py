@@ -1,31 +1,91 @@
-from __future__ import annotations
-
+"""Output protocol regressions with explicit synthetic responses, never live evidence."""
 import json
 import tempfile
 import unittest
 from pathlib import Path
 
-from benchmarks.agents import run_agents
+from benchmarks.agents import run_agents, ScriptedOutcomeAdapter, TASKS
 from benchmarks.live import task_evidence
-from benchmarks.protocol import response_shape
+from benchmarks.protocol import response_shape, RESPONSE_CONTRACT
 from sparkle.contracts import ModelResponse, ToolCall
-from sparkle.providers.mock import DeterministicAdapter as TextAdapter
+from sparkle.providers.mock import DeterministicAdapter
 from sparkle.providers.nvidia import NVIDIAChatCompletionsAdapter
-from sparkle.config import config
+from tests.test_nvidia_adapter import config
+
+
+class TextAdapter(DeterministicAdapter):
+    text = '{}'
+    finish = 'stop'
+    def complete(self, request):
+        assert any(RESPONSE_CONTRACT == m.text_content for m in request.messages)
+        return ModelResponse(self.text, self.model_id, self.provider, self.finish)
 
 
 class BenchmarkProtocolTests(unittest.TestCase):
-    def assert_protocol_failure(self, text, category, finish='stop'):
-        class Adapter(TextAdapter):
-            def complete(self, request):
-                return ModelResponse(text, self.model_id, self.provider, finish)
-        events=[]
+    def evaluate(self, text, finish='stop'):
+        events = []
+        class Adapter(TextAdapter): pass
+        Adapter.text, Adapter.finish = text, finish
         with tempfile.TemporaryDirectory() as directory:
-            report=run_agents(Path(directory), adapter_factory=Adapter,
-                              observer=lambda r,q:events.append(task_evidence(r,q)))
-        self.assertEqual(report['validation_counts']['REJECTED'],12)
-        self.assertTrue(all(e['diagnostics']['final_response']['format_category']==category for e in events))
+            report = run_agents(Path(directory), adapter_factory=Adapter,
+                                observer=lambda r, q: events.append(task_evidence(r, q)))
+        return report, events
+
+    def assert_protocol_failure(self, text, category, finish='stop'):
+        report, events = self.evaluate(text, finish)
+        self.assertEqual(report['pass_rate'], 0)
+        self.assertTrue(all(e['stage'] == 'protocol' for e in events))
+        for event in events:
+            diagnostic = event['diagnostics']
+            self.assertTrue(event['execution_success'])
+            self.assertFalse(event['protocol_success'])
+            self.assertTrue(diagnostic['json_parsing_attempted'])
+            self.assertEqual(diagnostic['final_response']['format_category'], category)
         return events
+
+    def test_valid_structured_answer_keeps_independent_rejection(self):
+        report, events = self.evaluate('{"answer":999}')
+        self.assertEqual(report['pass_rate'], 0)
+        self.assertTrue(all(e['protocol_success'] and e['stage'] == 'validation' for e in events))
+        self.assertTrue(all(e['validation_checks'] for e in events))
+        budget = events[0]
+        self.assertEqual(next(c for c in budget['validation_checks'] if c['key'] == 'answer')['status'], 'rejected')
+
+    def test_native_tool_call_followed_by_structured_answer(self):
+        fixture = json.loads(TASKS.read_text())
+        scripts = iter(fixture['tasks'])
+        events = []
+        with tempfile.TemporaryDirectory() as directory:
+            report = run_agents(Path(directory), adapter_factory=lambda: ScriptedOutcomeAdapter(next(scripts)['script']),
+                                observer=lambda r, q: events.append(task_evidence(r, q)))
+        self.assertEqual(report['pass_rate'], 1)
+        for event in events:
+            responses = event['diagnostics']['model_responses']
+            self.assertEqual(len(responses), 2)
+            self.assertTrue(responses[0]['tool_calls_present'])
+            self.assertFalse(responses[1]['tool_calls_present'])
+            self.assertEqual(responses[1]['format_category'], 'json_object')
+
+    def test_markdown_json_is_not_automatically_extracted(self):
+        self.assert_protocol_failure('```json\n{"answer":110}\n```', 'markdown_fence')
+
+    def test_malformed_json(self):
+        events = self.assert_protocol_failure('{"answer":', 'malformed_or_extra_json')
+        self.assertTrue(events[0]['diagnostics']['json_parsing_failed'])
+        self.assertIsInstance(events[0]['diagnostics']['final_response']['json_parse_error']['position'], int)
+
+        class EarlyFailure(TextAdapter):
+            def complete(self, request):
+                raise json.JSONDecodeError('synthetic private error', '', 0)
+        early = []
+        with tempfile.TemporaryDirectory() as directory:
+            run_agents(Path(directory), adapter_factory=EarlyFailure,
+                       observer=lambda r, q: early.append(task_evidence(r, q)))
+        self.assertTrue(all(e['stage'] == 'execution' for e in early))
+        self.assertTrue(all(not e['diagnostics']['json_parsing_attempted'] for e in early))
+        self.assertTrue(all(not e['diagnostics']['json_parsing_failed'] for e in early))
+        self.assertTrue(all(e['diagnostics']['runtime_exception_type'] == 'JSONDecodeError' for e in early))
+        self.assertNotIn('synthetic private error', json.dumps(early))
 
     def test_empty_response(self):
         self.assert_protocol_failure('', 'empty')
@@ -63,9 +123,9 @@ class BenchmarkProtocolTests(unittest.TestCase):
         for event in events:
             self.assertEqual(event['stage'], 'orchestrator')
             self.assertEqual(event['diagnostics']['runtime_code'], 'tool_round_limit')
-            # Duplicate-call no-progress detection recovers before exhausting all
-            # ordinary tool rounds, then fails closed because this synthetic adapter
-            # ignores the final tools-disabled request and asks for a tool again.
+            # Duplicate-call no-progress detection forces a tools-disabled recovery
+            # before exhausting every ordinary round. This adapter ignores that
+            # contract, so the orchestrator still fails closed with the same code.
             self.assertEqual(len(event['diagnostics']['model_responses']), 4)
             self.assertFalse(event['diagnostics']['json_parsing_attempted'])
 
@@ -86,29 +146,3 @@ class BenchmarkProtocolTests(unittest.TestCase):
         self.assertEqual(len(shape['response_sha256']), 64)
         self.assertEqual(shape['finish_reason'], 'other')
         self.assertNotIn('synthetic secret', json.dumps(shape))
-
-    def test_markdown_json_is_not_automatically_extracted(self):
-        self.assert_protocol_failure('```json\n{"answer":110}\n```', 'markdown_fence')
-
-    def test_malformed_json(self):
-        events=self.assert_protocol_failure('{"answer":110', 'malformed_or_extra_json')
-        self.assertTrue(events[0]['diagnostics']['json_parsing_failed'])
-
-    def test_native_tool_call_followed_by_structured_answer(self):
-        class Adapter(TextAdapter):
-            def __init__(self): self.calls=0
-            def complete(self, request):
-                self.calls += 1
-                if self.calls % 2:
-                    return ModelResponse('', self.model_id, self.provider, 'tool_use',
-                        tool_calls=[ToolCall(f'call-{self.calls}', 'calculator', {'expression':'55+55'})])
-                return ModelResponse('{"answer":110}', self.model_id, self.provider, 'stop')
-        events=[]
-        with tempfile.TemporaryDirectory() as directory:
-            run_agents(Path(directory), adapter_factory=Adapter,
-                       observer=lambda r,q:events.append(task_evidence(r,q)))
-        self.assertTrue(any(e['diagnostics']['tool_call_count'] for e in events))
-
-    def test_valid_structured_answer_keeps_independent_rejection(self):
-        events=self.assert_protocol_failure('{"answer":110}', 'json_object')
-        self.assertTrue(all(e['validation_status']=='REJECTED' for e in events))
