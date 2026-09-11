@@ -63,6 +63,12 @@ def build_parser() -> argparse.ArgumentParser:
     memory.add_argument("category")
     memory.add_argument("key")
     memory.add_argument("value")
+    learning = sub.add_parser("learning", help="Inspect curricula/progress or apply an approved learning operation")
+    learning.add_argument("--course")
+    learning.add_argument("--learner")
+    learning.add_argument("--attempt")
+    learning.add_argument("--manifest")
+    learning.add_argument("--approve", action="store_true")
     tasks = sub.add_parser("project-tasks", help="Inspect project task readiness or apply approved task operation")
     tasks.add_argument("project")
     tasks.add_argument("--manifest", help="JSON task operation: task_id, action, expected_revision and operation fields")
@@ -485,6 +491,19 @@ def main(argv: list[str] | None = None) -> int:
         memory_id = system.memory.remember(args.category, args.key, args.value, metadata={"source": "cli"})
         _print({"ok": True, "memory_id": memory_id})
         return 0
+    if args.command == "learning":
+        if args.manifest:
+            if not args.approve:raise ValueError("Explicit operator approval required")
+            operation=_load_manifest(args.manifest);name=operation.pop("operation",None)
+            methods={"install":system.learning.install,"archive":system.learning.archive,
+                     "start":system.learning.start,"act":system.learning.act,"link_skill":system.learning.link_skill,"grade_manual":system.learning.grade_manual}
+            if not isinstance(name,str) or name not in methods:raise ValueError("Unknown learning operation")
+            result=methods[name](operator="cli",**operation)
+        elif args.attempt:result=system.learning.inspect(args.attempt)
+        elif args.course and args.learner:result=system.learning.progress(args.course,args.learner)
+        elif args.course:result=system.learning.curriculum(args.course)
+        else:result={"courses":system.learning.courses()}
+        _print(result);return 0
     if args.command == "project-tasks":
         if args.manifest:
             if not args.approve:raise ValueError("Explicit operator approval required")

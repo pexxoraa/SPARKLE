@@ -48,6 +48,7 @@ from sparkle.orchestrator import Orchestrator
 from sparkle.presence import PresenceEngine
 from sparkle.projects import ProjectStore
 from sparkle.project_tasks import ProjectTasks
+from sparkle.learning import LearningService
 from sparkle.registry import ModelRegistry, ModelRouter
 from sparkle.secrets import SecretResolver
 from sparkle.security import (
@@ -67,6 +68,7 @@ from sparkle.tooling import (
     MemoryProposalTool,
     ProjectSearchTool,
     ProjectTasksTool,
+    LearningReadTool,
     SkillSearchTool,
     ToolRegistry,
     WorkspaceScaffoldTool,
@@ -113,6 +115,7 @@ class SparkleSystem:
         self.projects = ProjectStore()
         self.project_tasks = ProjectTasks(self.projects)
         self.skills = SkillMasteryStore()
+        self.learning = LearningService(self.skills)
         self.proactive = ProactiveEngine(
             self.memory, self.knowledge, self.projects, self.skills,
         )
@@ -156,6 +159,7 @@ class SparkleSystem:
         self.tools.register(KnowledgeVerifyTool(self.knowledge))
         self.tools.register(ProjectSearchTool(self.projects))
         self.tools.register(ProjectTasksTool(self.project_tasks))
+        self.tools.register(LearningReadTool(self.learning))
         self.tools.register(SkillSearchTool(self.skills))
         self.tools.register(FileReadTool(project_root()))
         self.tools.register(WorkspaceScaffoldTool(self.workspaces))
@@ -373,6 +377,7 @@ class SparkleSystem:
                 "protocol_version": self.projects.PROTOCOL,
                 **self.projects.stats(),
             },
+            "learning": {"implemented": True, **self.learning.stats()},
             "skills": {
                 "status": "ready",
                 "protocol_version": self.skills.PROTOCOL,

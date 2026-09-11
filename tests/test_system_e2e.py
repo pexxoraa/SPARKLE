@@ -75,6 +75,20 @@ class SystemEndToEndTests(unittest.TestCase):
         except urllib.error.HTTPError as exc:
             return exc.code, json.loads(exc.read())
 
+    def test_learning_api_keeps_keys_private_and_persists_attempt(self):
+        from tests.test_learning import curriculum
+        self.system.skills.create({'name':'arithmetic','title':'Arithmetic','description':'Practice','target_level':2})
+        operation={'operation':'install','definition':curriculum(),'expected_revision':0}
+        self.assertEqual(self.request('/api/learning',operation)[0],400)
+        self.assertEqual(self.request('/api/learning',operation|{'approved':True})[0],200)
+        public=self.request('/api/learning?course=math_course')[1]
+        self.assertNotIn('answer',public['questions'][0])
+        attempt=self.request('/api/learning',{'operation':'start','course':'math_course','exam':'practice','learner':'learner_one','expected_revision':1,'approved':True})[1]
+        graded=self.request('/api/learning',{'operation':'act','attempt_id':attempt['id'],'action':'submit','expected_revision':1,'answers':{'addition':4},'approved':True})[1]
+        self.assertTrue(graded['result']['passed'])
+        progress=self.system.tools.execute('learning_progress',{'course':'math_course','learner':'learner_one'})
+        self.assertFalse(progress['topics'][0]['competence_verified'])
+
     def test_project_task_api_readiness_and_operator_controls(self):
         from tests.test_projects import project_manifest
         self.system.projects.create(project_manifest())

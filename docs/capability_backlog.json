@@ -1,19 +1,19 @@
 {
   "schema": "SPARKLE-CAPABILITY-BACKLOG/1",
-  "source_checkpoint": "6207482c58fb572e2478c0169df6b40e05fdd9f8",
+  "source_checkpoint": "b8ea3a634f1f833531172c746ab4365af3fff3c9",
   "level_3": "BLOCKED/PARKED",
   "deployment": "FROZEN",
   "current_work": {
-    "id": "project-task-dependencies",
+    "id": "stateful-curriculum-exam-attempts",
     "priority": "P1",
     "state": "IMPLEMENTED; bounded engineering checks",
-    "acceptance": "Persistent DAG, deterministic readiness, operator transitions and integrated project guard"
+    "acceptance": "Persisted authored assessments, private keys, timed attempts, explicit grading, API/CLI/UI and unverified mastery linkage"
   },
   "next_implementable_work": {
-    "id": "task-planning-and-learning-workflows",
+    "id": "data-analysis-workflow",
     "priority": "P1",
-    "next_action": "Extend operator planning metadata and inspect curriculum/assessment workflow integration",
-    "acceptance": "Useful stateful workflows; completion remains distinct from learning quality or execution proof"
+    "next_action": "Inspect current data tools and implement bounded reusable ingestion/transformation/reporting",
+    "acceptance": "Actual data artifacts and reproducible operations; no claims from prompt-only agents"
   },
   "specific_external_blockers": [
     {
@@ -645,6 +645,15 @@
       "acceptance": "Revision-bound operator policy and retrieval/citation exclusion; human acceptance pending",
       "commit": "6207482c58fb572e2478c0169df6b40e05fdd9f8",
       "ci_run": 97,
+      "ci_status": "success"
+    },
+    {
+      "id": "project-task-dependencies",
+      "priority": "P1",
+      "state": "IMPLEMENTED; bounded engineering checks",
+      "acceptance": "Persistent DAG, deterministic readiness, operator transitions and integrated project guard",
+      "commit": "b8ea3a634f1f833531172c746ab4365af3fff3c9",
+      "ci_run": 98,
       "ci_status": "success"
     }
   ],

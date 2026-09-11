@@ -173,6 +173,9 @@ async function loadPanel(panel) {
       )).join('')
       : empty('No automations executed yet.');
   }
+  if (panel === 'learning') {
+    await SparkleLearning.load(qs('#learningWorkspace'), api);
+  }
   if (panel === 'projects') {
     const data = await api('/api/projects?limit=50');
     qs('#projectList').innerHTML = data.projects.length

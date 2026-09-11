@@ -1,0 +1,48 @@
+{
+  "operation": "install",
+  "expected_revision": 0,
+  "definition": {
+    "name": "arithmetic_course",
+    "title": "Arithmetic practice example",
+    "goal": "Practice exact arithmetic with authored keys",
+    "topics": [
+      {
+        "id": "addition",
+        "title": "Addition",
+        "lesson": "Combine quantities using addition.",
+        "prerequisites": [],
+        "skill": null
+      }
+    ],
+    "questions": [
+      {
+        "id": "sum_one",
+        "topic": "addition",
+        "prompt": "What is 2 + 3?",
+        "kind": "number",
+        "options": [],
+        "answer": 5,
+        "tolerance": 0,
+        "points": 1,
+        "difficulty": 1
+      }
+    ],
+    "exams": [
+      {
+        "id": "practice",
+        "title": "Practice",
+        "sections": [
+          {
+            "title": "Addition",
+            "questions": [
+              "sum_one"
+            ]
+          }
+        ],
+        "duration_seconds": 300,
+        "pass_percent": 80,
+        "max_attempts": 5
+      }
+    ]
+  }
+}

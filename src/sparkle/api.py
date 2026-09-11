@@ -410,6 +410,12 @@ class SparkleHandler(BaseHTTPRequestHandler):
             return self._json({"proposals": self.system.memory_review.list(status=query.get("status", ["pending"])[0])})
         if parsed.path == "/api/memory":
             return self._json({"memories": self.system.memory.search(query.get("q", [""])[0], limit=int(query.get("limit", [20])[0]))})
+        if parsed.path == "/api/learning":
+            if "attempt" in query:return self._json(self.system.learning.inspect(query["attempt"][0]))
+            if "course" in query:
+                if "learner" in query:return self._json(self.system.learning.progress(query["course"][0],query["learner"][0]))
+                return self._json(self.system.learning.curriculum(query["course"][0]))
+            return self._json({"courses":self.system.learning.courses()})
         if parsed.path == "/api/project-tasks":
             name=query.get("project",[""])[0]
             return self._json({"tasks":self.system.project_tasks.list(name),"events":self.system.project_tasks.history(name)})
@@ -583,6 +589,14 @@ class SparkleHandler(BaseHTTPRequestHandler):
                     if self.path == "/api/chat" else MAX_BODY_BYTES
                 )
             )
+            if self.path == "/api/learning":
+                if data.get("approved") is not True:raise ValueError("Explicit operator approval required")
+                operation=data.get("operation")
+                methods={"install":self.system.learning.install,"archive":self.system.learning.archive,
+                         "start":self.system.learning.start,"act":self.system.learning.act,"link_skill":self.system.learning.link_skill,"grade_manual":self.system.learning.grade_manual}
+                if not isinstance(operation,str) or operation not in methods:raise ValueError("Unknown learning operation")
+                args={k:v for k,v in data.items() if k not in {"approved","operation"}}
+                return self._json(methods[operation](operator="authenticated_api" if self.system.api_access.required else "local_api",**args))
             if self.path == "/api/project-tasks":
                 if data.get("approved") is not True:
                     raise ValueError("Explicit operator approval required")

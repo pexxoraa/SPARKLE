@@ -261,3 +261,15 @@ claims against active facts; proposal identity and write authorization remain
 separate. Strict-policy retrieval revalidates current facts in SQL before ranking
 limits. No provider, model, or retrieved document can install trusted facts via
 an agent tool. This narrow contract does not establish semantic truth.
+
+## Stateful learning and exam service
+
+LearningService shares the scoped SQLite ownership used by SkillMasteryStore,
+with separate curriculum/version/attempt/audit tables. Curriculum authoring and
+attempt mutations are operator API/CLI boundaries. Models get read-only
+curriculum/progress data with keys removed. Attempt snapshots bind the authored
+course revision and digest; optimistic revisions serialize saves, submission,
+expiry and explicit manual review. UI actions use the existing API auth/CSRF
+helper. No model calls are needed for deterministic grading or practice
+recommendations. Linked results remain unverified skill evidence. Learning data
+is distinct from personal memory and retrieved knowledge. See LEARNING.md.

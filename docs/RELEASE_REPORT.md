@@ -2543,3 +2543,28 @@ and independently verified agent outcomes. Level 3 BLOCKED/PARKED; deployment
 FROZEN. SPARKLE is not declared complete.
 
 Task graph engineering evidence: **43/43** focused task/project/API/CLI/agent/documentation checks (6.203s). Compile, dashboard syntax, whitespace, repository audit and fresh wheel build passed. No comprehensive local/manual/live rerun was performed for this implementation unit.
+
+## 2026-09-11 stateful curriculum and exam implementation
+
+Started from published `b8ea3a634f1f833531172c746ab4365af3fff3c9`, tree
+`b1c220bbc62348629b170195f4f04230cb5b4649`, clean and matching remote.
+Implemented authored curriculum/topic DAGs, private versioned question banks,
+exam sections/limits, persistent timed attempts, save/resume/submit/cancel,
+exact-key grading, explicit manual review, retakes, deterministic weakness and
+prerequisite practice recommendations, unverified skill linkage, content-free
+audit, API/CLI and dashboard workflows. Answer keys are excluded from public
+reads and model tools. No automatic verified mastery or competence claim.
+
+Focused learning/mastery/API/CLI/agent checks: 46/46 initially; extended checks
+including documentation: 50/50. Final targeted checks are recorded below.
+No live provider/host evaluation or comprehensive local rerun was performed;
+normal credential-free CI remains enabled. Model configuration, benchmark tasks,
+scoring, validators, Level 3 and deployment gates are unchanged. Human UX,
+security acceptance, pedagogical quality and learner identity remain unverified.
+Level 3 BLOCKED/PARKED; deployment FROZEN; live-agent baseline remains 3/12.
+
+The next audit targets reusable data inspection/transformation/reporting and
+content workflows, which remain software gaps rather than provider blockers.
+This is implementation progress, not final SPARKLE completion.
+
+Final targeted learning/API/CLI/documentation checks: **38/38** (6.721s). Compile, dashboard syntax, whitespace and wheel build passed.

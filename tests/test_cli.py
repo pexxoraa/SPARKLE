@@ -18,6 +18,16 @@ from sparkle.system import SparkleSystem
 
 
 class CLITests(unittest.TestCase):
+    def test_learning_install_and_public_curriculum_cli(self):
+        from tests.test_learning import curriculum
+        with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ, {'SPARKLE_DATA_DIR':directory}):
+            system=SparkleSystem();system.skills.create({'name':'arithmetic','title':'Arithmetic','description':'Practice','target_level':2})
+            path=Path(directory)/'learning.json';path.write_text(json.dumps({'operation':'install','definition':curriculum(),'expected_revision':0}))
+            with contextlib.redirect_stdout(io.StringIO()):self.assertEqual(main(['learning','--manifest',str(path),'--approve']),0)
+            output=io.StringIO()
+            with contextlib.redirect_stdout(output):self.assertEqual(main(['learning','--course','math_course']),0)
+            self.assertNotIn('answer',json.loads(output.getvalue())['questions'][0])
+
     def test_project_task_manifest_cli(self):
         from tests.test_projects import project_manifest
         with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ, {'SPARKLE_DATA_DIR':directory}):

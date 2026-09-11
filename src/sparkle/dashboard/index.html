@@ -26,6 +26,7 @@
         <button data-panel="system">System map</button>
         <button data-panel="models">Models & routing</button>
         <button data-panel="memory">Memory</button>
+        <button data-panel="learning">Learning & exams</button>
         <button data-panel="skills">Skills & mastery</button>
         <button data-panel="automations">Automations</button>
         <button data-panel="projects">Projects</button>
@@ -60,6 +61,7 @@
         <div class="card"><h3>Memory review and validation audit</h3><div id="memoryEvidenceList" class="list"></div></div>
         <div class="card"><h3>Private version history</h3><p>Deletion retains this history. It is not privacy erasure.</p><div id="memoryHistoryList" class="list"></div></div>
       </section>
+      <section id="learning" class="panel"><div id="learningWorkspace"></div></section>
       <section id="skills" class="panel"><div class="card"><h3>Evidence-based skill mastery</h3><p>Levels 0–6 are derived only from verified questions, exercises, tests, projects, implementations, and independent problem solving.</p><div id="skillList" class="list"></div></div></section>
       <section id="automations" class="panel"><div class="card"><h3>Dashboard notifications</h3><p>Bounded local delivery from manual or automation actions.</p><div id="notificationList" class="list"></div></div><div class="card"><h3>Evidence-backed proactive alerts</h3><p>Generated only from validated memory, knowledge, project, and skill evidence.</p><div id="proactiveList" class="list"></div></div><div class="card"><h3>Automation execution history</h3><div id="automationList" class="list"></div></div></section>
       <section id="projects" class="panel"><div class="card"><h3>Structured project portfolio</h3><p>Read-only dashboard view of status, priority, progress, deadlines, blockers, and next actions.</p><div id="projectList" class="list"></div></div></section>
@@ -73,6 +75,7 @@
     </main>
   </div>
   <script src="/assets/memory-review.js"></script>
+  <script src="/assets/learning.js"></script>
   <script src="/assets/app.js"></script>
 </body>
 </html>

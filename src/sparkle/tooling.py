@@ -131,6 +131,21 @@ class MemorySearchTool(Tool):
         )
 
 
+class LearningReadTool(Tool):
+    name = 'learning_progress'
+    description = 'Read authored curriculum or learner practice progress. No answer keys, attempt mutation or independently verified competence.'
+    parameters = {'type':'object','properties':{'course':{'type':'string'},'learner':{'type':'string'}},'required':['course'],'additionalProperties':False}
+
+    def __init__(self, learning):
+        self.learning=learning
+
+    def run(self, arguments):
+        if not isinstance(arguments,dict) or set(arguments)-{'course','learner'} or 'course' not in arguments:
+            raise ValueError('Course identity and optional learner required')
+        if 'learner' in arguments:return self.learning.progress(arguments['course'],arguments['learner'])
+        return self.learning.curriculum(arguments['course'])
+
+
 class ProjectTasksTool(Tool):
     name = 'project_tasks'
     description = 'Inspect bounded project task dependencies and readiness. Completion is operator-reported, not independently verified execution.'

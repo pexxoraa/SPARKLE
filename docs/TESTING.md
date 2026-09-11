@@ -608,3 +608,10 @@ conflicts, evidence-reference requirements, parent project completion guard,
 archived/terminal states, persistence, limits and append-only audit. API/CLI and
 read-only agent-tool integration run without model credentials. Dashboard syntax
 is checked; real browser and scheduling acceptance are not claimed.
+
+Learning engineering checks cover persistent attempts, snapshots across course
+revisions, key omission, exact numeric grading, save/replay/timeout behavior,
+explicit manual review, prerequisites, archive, invalid answers and unverified
+skill linkage. API/CLI and read-only model-tool integration are credential-free.
+Dashboard JavaScript receives syntax checks; human browser/proctoring/pedagogical
+acceptance remains pending. The existing agent benchmark is not changed.
