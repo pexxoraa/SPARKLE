@@ -67,14 +67,18 @@ class PlatformSupportTests(unittest.TestCase):
             ):
                 self.assertEqual(config.data_root(), Path(directory).resolve())
 
-    def test_platform_status_does_not_claim_mobile_or_worker_host_verification(self):
+    def test_platform_status_matches_software_and_external_boundaries(self):
         linux = platform_status(platform_name="linux", environ={})
+        self.assertEqual(linux["browser"], "stdlib_safe_https")
+        self.assertEqual(linux["computer"], "adapter_dependent")
+        self.assertEqual(linux["voice"], "adapter_dependent")
         self.assertEqual(linux["external_worker"], "software_supported_linux_only")
         self.assertFalse(linux["platform_verified_on_current_host"])
         mobile = platform_status(platform_name="grapheneos", environ={})
         self.assertEqual(
             mobile["core_runtime"], "external_embedded_python_host_required"
         )
+        self.assertEqual(mobile["browser"], "stdlib_safe_https")
         self.assertEqual(
             mobile["external_worker"], "external_linux_worker_required"
         )

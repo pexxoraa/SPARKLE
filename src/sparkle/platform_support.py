@@ -80,7 +80,7 @@ def platform_status(
         "core_runtime": "supported" if desktop else "external_embedded_python_host_required",
         "dashboard_client": "supported",
         "filesystem_state_layout": "implemented",
-        "browser": "adapter_dependent",
+        "browser": "stdlib_safe_https",
         "computer": "adapter_dependent",
         "voice": "adapter_dependent",
         "external_worker": (
