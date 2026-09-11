@@ -20,7 +20,7 @@ class Batches(DeterministicAdapter):
 
 
 def calculation(count, prefix=""):
-    return [ToolCall(f'{prefix}{i}', 'calculator', {'expression': '1+1'}) for i in range(count)]
+    return [ToolCall(f'{prefix}{i}', 'calculator', {'expression': f'{i}+1'}) for i in range(count)]
 
 
 class OrchestrationBoundTests(SystemCase):
@@ -104,7 +104,7 @@ class OrchestrationBoundTests(SystemCase):
             self.assertEqual(self.system.traces.recent()[0]['execution_metadata']['tool_calls_reserved'], 16)
 
     def test_cumulative_round_budget_does_not_execute_oversized_next_batch(self):
-        self.inject([calculation(10), calculation(7)])
+        self.inject([calculation(10), calculation(7, 'second-')])
         with patch.object(self.system.tools, 'execute', wraps=self.system.tools.execute) as execute:
             with self.assertRaises(RuntimeError) as caught:
                 self.system.orchestrator.run('Calculate', agent_name='personal')
@@ -124,15 +124,11 @@ class OrchestrationBoundTests(SystemCase):
         # An over-budget tool batch is still a model response, so it increments
         # adapter.calls. Budget reservation happens after that response and before
         # any tool in the batch executes, preserving the no-partial-execution guard.
-        # Use specialist-scoped tool-call IDs so this test measures shared budget
-        # accounting rather than the separate exact-call replay cache contract.
-        # Case 1: personal returns 10 tools then completes; learning returns 7 tools,
-        # which cannot fit in the 6 remaining slots => 3 model calls, 10 tool runs.
-        # Case 2: personal and learning each return/execute 8 tools then complete;
-        # synthesis returns one more tool with no budget left => 5 calls, 16 runs.
+        # Calls use distinct arguments so this test measures the shared budget,
+        # while duplicate-signature replay is covered by dedicated regressions.
         for batches, expected_calls, expected_executes in (
             ([calculation(10, 'personal-'), [], calculation(7, 'learning-')], 3, 10),
-            ([calculation(8, 'personal-'), [], calculation(8, 'learning-'), [], calculation(1, 'synthesis-')], 5, 16),
+            ([calculation(8, 'personal-'), [], [ToolCall(f'learning-{i}', 'calculator', {'expression': f'{i}+101'}) for i in range(8)], [], [ToolCall('synthesis-0', 'calculator', {'expression': '1000+1'})]], 5, 16),
         ):
             with self.subTest(expected_calls=expected_calls):
                 adapter = self.inject(batches)
