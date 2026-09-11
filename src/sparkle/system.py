@@ -94,6 +94,11 @@ class SparkleSystem:
         *,
         config: AppConfig | None = None,
         model_registry: ModelRegistry | None = None,
+        browser_adapter: Any | None = None,
+        computer_adapter: Any | None = None,
+        speech_to_text: Any | None = None,
+        text_to_speech: Any | None = None,
+        motion_adapter: Any | None = None,
     ):
         self.config = config or AppConfig.load()
         self.secret_resolver = SecretResolver()
@@ -136,9 +141,11 @@ class SparkleSystem:
         self.proactive = ProactiveEngine(
             self.memory, self.knowledge, self.projects, self.skills,
         )
-        self.presence = PresenceEngine()
-        self.voice = VoiceService()
-        self.interactions = DefaultInteractionService()
+        self.presence = PresenceEngine(motion=motion_adapter)
+        self.voice = VoiceService(stt=speech_to_text, tts=text_to_speech)
+        self.interactions = DefaultInteractionService(
+            browser=browser_adapter, computer=computer_adapter,
+        )
         self.models = model_registry or ModelRegistry()
         self.model_router = ModelRouter(self.models)
         self.context = ContextBuilder(
