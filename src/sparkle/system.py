@@ -34,6 +34,7 @@ from sparkle.automation_reliability import (
     ReliableAutomationRunner,
     ReliableAutomationStore,
 )
+from sparkle.browser_runtime import DefaultInteractionService
 from sparkle.builders import WorkspaceManager
 from sparkle.config import AppConfig, data_root, project_root
 from sparkle.context import ContextBuilder
@@ -44,7 +45,6 @@ from sparkle.development import DevelopmentVerifier, WorkspaceTestRunner
 from sparkle.engineering import EngineeringReadTool, RepositoryEngineeringService
 from sparkle.external_worker import ExternalWorkerClient
 from sparkle.knowledge import KnowledgeIngestor
-from sparkle.interaction import InteractionService
 from sparkle.mastery import SkillMasteryStore
 from sparkle.notifications import NotificationStore
 from sparkle.orchestrator import Orchestrator
@@ -137,7 +137,7 @@ class SparkleSystem:
         )
         self.presence = PresenceEngine()
         self.voice = VoiceService()
-        self.interactions = InteractionService()
+        self.interactions = DefaultInteractionService()
         self.models = model_registry or ModelRegistry()
         self.model_router = ModelRouter(self.models)
         self.context = ContextBuilder(
