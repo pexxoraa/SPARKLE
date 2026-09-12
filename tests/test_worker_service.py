@@ -233,7 +233,7 @@ class WorkerServiceTests(unittest.TestCase):
         project = Path(__file__).resolve().parents[1]
         secret = "diagnostic-must-not-print-this-secret"
         completed = subprocess.run(
-            [sys.executable, "-m", "sparkle.worker_service", "--diagnose"],
+            [sys.executable, "-m", "sparkle.level3_worker", "--diagnose"],
             cwd=project,
             env={
                 "PYTHONPATH": str(project / "src"),
@@ -246,6 +246,7 @@ class WorkerServiceTests(unittest.TestCase):
         )
         self.assertEqual(completed.returncode, 0)
         observed = json.loads(completed.stdout)
+        self.assertEqual(observed["level_3_contract"], "SPARKLE-LEVEL3-WORKER/1")
         self.assertFalse(observed["level_3_verified"])
         self.assertNotIn(secret, completed.stdout + completed.stderr)
 
@@ -762,9 +763,11 @@ class WorkerServiceTests(unittest.TestCase):
         ).read_text()
         pyproject = (project / "pyproject.toml").read_text()
         combined = dockerfile + compose + unit + installer + local_bootstrap + worker_config
-        self.assertIn('sparkle-worker = "sparkle.worker_service:entrypoint"', pyproject)
+        self.assertIn('sparkle-worker = "sparkle.level3_worker:entrypoint"', pyproject)
+        self.assertNotIn('sparkle-worker = "sparkle.worker_service:entrypoint"', pyproject)
         self.assertIn("USER 10001:10001", dockerfile)
-        self.assertIn('ENTRYPOINT ["python3", "-m", "sparkle.worker_service"]', dockerfile)
+        self.assertIn('ENTRYPOINT ["python3", "-m", "sparkle.level3_worker"]', dockerfile)
+        self.assertNotIn('ENTRYPOINT ["python3", "-m", "sparkle.worker_service"]', dockerfile)
         self.assertIn("SPARKLE_WORKER_EXECUTOR=bubblewrap", dockerfile)
         self.assertIn("read_only: true", compose)
         self.assertIn('cap_drop: ["ALL"]', compose)
@@ -781,6 +784,7 @@ class WorkerServiceTests(unittest.TestCase):
             "SPARKLE_WORKER_SIGNING_KEY_FILE=%d/sparkle-worker-signing-key",
             unit,
         )
+        self.assertIn("ExecStart=/opt/sparkle/.venv/bin/sparkle-worker", unit)
         self.assertNotIn("SPARKLE_WORKER_SIGNING_KEY=", unit)
         self.assertIn("pip install --no-deps", installer)
         self.assertIn("installed but not started", installer)
@@ -802,11 +806,20 @@ class WorkerServiceTests(unittest.TestCase):
             project / "worker_environment/level3_acceptance.py"
         ).read_text(encoding="utf-8")
         self.assertIn("controlled-execution-software", ci)
+        self.assertIn("sparkle.level3_worker --diagnose", ci)
+        self.assertNotIn("sparkle.worker_service --diagnose", ci)
         self.assertIn("workflow_dispatch", acceptance_workflow)
         self.assertNotIn("push:", acceptance_workflow)
+        self.assertIn("vars.SPARKLE_EXTERNAL_WORKER_URL", acceptance_workflow)
+        self.assertIn("vars.SPARKLE_EXTERNAL_WORKER_ID", acceptance_workflow)
         self.assertIn("secrets.SPARKLE_WORKER_SIGNING_KEY", acceptance_workflow)
-        self.assertIn('"level_3_complete": False', acceptance_probe)
-        self.assertIn('"requires_approved_artifact_followup": True', acceptance_probe)
+        self.assertIn('SCHEMA = "SPARKLE-LEVEL3-ACCEPTANCE/2"', acceptance_probe)
+        self.assertIn("CandidateRuntimeEvaluator", acceptance_probe)
+        self.assertIn("CancellableControlledExecutionService", acceptance_probe)
+        self.assertIn('"level_3_full_chain_verified": True', acceptance_probe)
+        self.assertIn('"deployment_started": False', acceptance_probe)
+        self.assertIn('"deployment_authorized": False', acceptance_probe)
+        self.assertNotIn("requires_approved_artifact_followup", acceptance_probe)
         self.assertNotIn(SIGNING_KEY.decode(), acceptance_workflow + acceptance_probe)
         blocked = subprocess.run(
             [sys.executable, str(project / "worker_environment/level3_acceptance.py")],
@@ -819,7 +832,10 @@ class WorkerServiceTests(unittest.TestCase):
         )
         self.assertEqual(blocked.returncode, 1)
         self.assertNotIn("Traceback", blocked.stderr + blocked.stdout)
-        self.assertFalse(json.loads(blocked.stdout)["isolation_verified"])
+        blocked_evidence = json.loads(blocked.stdout)
+        self.assertFalse(blocked_evidence["level_3_full_chain_verified"])
+        self.assertFalse(blocked_evidence["deployment_started"])
+        self.assertFalse(blocked_evidence["deployment_authorized"])
 
     def test_systemd_profile_preserves_nested_bubblewrap_boundary(self):
         project = Path(__file__).resolve().parents[1]
