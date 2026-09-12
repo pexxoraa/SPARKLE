@@ -50,8 +50,10 @@ jobs:
             tests.test_ai_system_execution \
             tests.test_external_worker \
             tests.test_worker_service \
+            tests.test_level3 \
+            tests.test_controlled_cancellation \
             tests.test_orchestrator_api
-          PYTHONPATH=src python -m sparkle.worker_service --diagnose
+          PYTHONPATH=src python -m sparkle.level3_worker --diagnose
           sh -n worker_environment/bootstrap-local-worker.sh
           sh -n worker_environment/install-systemd-worker.sh
           node --check src/sparkle/dashboard/app.js
