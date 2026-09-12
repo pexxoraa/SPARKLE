@@ -54,6 +54,11 @@ jobs:
             tests.test_level3_deployment_assets \
             tests.test_controlled_cancellation \
             tests.test_orchestrator_api
+          PYTHONPATH=src python -m py_compile \
+            worker_environment/level3_acceptance.py \
+            worker_environment/level3_remote_probe.py \
+            worker_environment/level3_lifecycle_probe.py \
+            worker_environment/level3_full_acceptance.py
           PYTHONPATH=src python -m sparkle.level3_worker --diagnose
           sh -n worker_environment/bootstrap-local-worker.sh
           sh -n worker_environment/install-systemd-worker.sh
