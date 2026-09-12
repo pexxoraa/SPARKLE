@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from sparkle.ai_system_execution import ControlledExecutionService, ExecutionRejected
+from sparkle.level3_authority import agent_authorized
 from sparkle.level3_execution import Level3ExecutionMixin
 from sparkle.storage import utc_now
 from sparkle.worker_cancellation import WorkerCancellationClient
@@ -18,6 +19,12 @@ class CancellableControlledExecutionService(Level3ExecutionMixin, ControlledExec
         approved: bool,
         requesting_agent: str = "system",
     ) -> dict[str, Any]:
+        if not isinstance(requesting_agent, str) or not agent_authorized(
+            requesting_agent, "python_unittest",
+        ):
+            raise ValueError(
+                "Level 3 requesting agent is not authorized for python_unittest"
+            )
         try:
             return super().request(
                 contract,
