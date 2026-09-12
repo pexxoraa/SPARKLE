@@ -52,6 +52,7 @@ jobs:
             tests.test_worker_service \
             tests.test_level3 \
             tests.test_level3_deployment_assets \
+            tests.test_level3_acceptance_probes \
             tests.test_controlled_cancellation \
             tests.test_orchestrator_api
           PYTHONPATH=src python -m py_compile \
