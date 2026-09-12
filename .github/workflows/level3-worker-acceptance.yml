@@ -7,9 +7,10 @@ permissions:
   contents: read
 
 jobs:
-  dedicated-worker-boundary:
+  full-level3-acceptance:
     runs-on: ubuntu-latest
     environment: sparkle-level3-worker
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
@@ -17,9 +18,39 @@ jobs:
           python-version: "3.12"
       - name: Install SPARKLE without external dependencies
         run: python -m pip install . --no-deps
-      - name: Verify authenticated dedicated-worker boundary
+      - name: Verify remote TLS identity authority and isolation boundary
         env:
           SPARKLE_EXTERNAL_WORKER_URL: ${{ vars.SPARKLE_EXTERNAL_WORKER_URL }}
           SPARKLE_EXTERNAL_WORKER_ID: ${{ vars.SPARKLE_EXTERNAL_WORKER_ID }}
           SPARKLE_WORKER_SIGNING_KEY: ${{ secrets.SPARKLE_WORKER_SIGNING_KEY }}
-        run: python worker_environment/level3_acceptance.py
+        run: |
+          mkdir -p "$RUNNER_TEMP/level3-evidence"
+          python worker_environment/level3_remote_probe.py \
+            --output "$RUNNER_TEMP/level3-evidence/remote-probe.json" \
+            | tee "$RUNNER_TEMP/level3-evidence/remote-probe.log"
+      - name: Execute approved artifact through full Level 3 chain
+        env:
+          SPARKLE_EXTERNAL_WORKER_URL: ${{ vars.SPARKLE_EXTERNAL_WORKER_URL }}
+          SPARKLE_EXTERNAL_WORKER_ID: ${{ vars.SPARKLE_EXTERNAL_WORKER_ID }}
+          SPARKLE_WORKER_SIGNING_KEY: ${{ secrets.SPARKLE_WORKER_SIGNING_KEY }}
+        run: |
+          python worker_environment/level3_acceptance.py \
+            --output "$RUNNER_TEMP/level3-evidence/full-chain.json" \
+            | tee "$RUNNER_TEMP/level3-evidence/full-chain.log"
+      - name: Publish acceptance summary
+        if: always()
+        run: |
+          for file in "$RUNNER_TEMP"/level3-evidence/*.json; do
+            if [ -f "$file" ]; then
+              echo "### $(basename "$file")" >> "$GITHUB_STEP_SUMMARY"
+              cat "$file" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          done
+      - name: Retain Level 3 acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sparkle-level3-acceptance-${{ github.run_id }}
+          path: ${{ runner.temp }}/level3-evidence
+          if-no-files-found: error
+          retention-days: 30
