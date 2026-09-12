@@ -43,7 +43,7 @@ jobs:
           SPARKLE_EXTERNAL_WORKER_ID: ${{ vars.SPARKLE_EXTERNAL_WORKER_ID }}
           SPARKLE_WORKER_SIGNING_KEY: ${{ secrets.SPARKLE_WORKER_SIGNING_KEY }}
         run: |
-          python worker_environment/level3_acceptance.py \
+          python -m worker_environment.level3_full_acceptance \
             --output "$RUNNER_TEMP/level3-evidence/full-chain.json" \
             | tee "$RUNNER_TEMP/level3-evidence/full-chain.log"
       - name: Publish acceptance summary
