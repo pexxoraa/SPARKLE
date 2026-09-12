@@ -19,20 +19,50 @@ class CancellableControlledExecutionService(Level3ExecutionMixin, ControlledExec
         approved: bool,
         requesting_agent: str = "system",
     ) -> dict[str, Any]:
+        normalized = contract
+        embedded_agent = contract.get("requesting_agent") if isinstance(contract, dict) else None
+        if embedded_agent is not None:
+            if requesting_agent != "system" and requesting_agent != embedded_agent:
+                raise ValueError("Level 3 requesting-agent attribution conflicts")
+            requesting_agent = embedded_agent
+            normalized = dict(contract)
+            normalized.pop("requesting_agent", None)
         if not isinstance(requesting_agent, str) or not agent_authorized(
             requesting_agent, "python_unittest",
         ):
             raise ValueError(
                 "Level 3 requesting agent is not authorized for python_unittest"
             )
+
+        request_id = (
+            normalized.get("execution_request_id")
+            if isinstance(normalized, dict)
+            else None
+        )
+        if isinstance(request_id, str):
+            self._initialize_level3()
+            with self.store.connect() as connection:
+                replay = connection.execute("""
+                    SELECT level3.requesting_agent AS requesting_agent
+                    FROM controlled_executions AS executions
+                    LEFT JOIN level3_execution_contracts AS level3
+                      ON level3.execution_id=executions.execution_id
+                    WHERE executions.execution_request_id=?
+                """, (request_id,)).fetchone()
+            if (
+                replay is not None
+                and replay["requesting_agent"] is not None
+                and replay["requesting_agent"] != requesting_agent
+            ):
+                raise ExecutionRejected("execution_request_agent_replay_conflict")
+
         try:
             return super().request(
-                contract,
+                normalized,
                 approved=approved,
                 requesting_agent=requesting_agent,
             )
         except ValueError:
-            request_id = contract.get("execution_request_id") if isinstance(contract, dict) else None
             if isinstance(request_id, str):
                 with self.store.connect() as connection:
                     row = connection.execute(
