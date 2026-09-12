@@ -26,6 +26,7 @@ class DevelopmentVerifier(SQLiteStore):
     MAX_CHECKS = 50
     MAX_FILE_BYTES = 500_000
     MAX_OUTPUT_CHARS = 8_000
+    JAVASCRIPT_TIMEOUT_SECONDS = 15
 
     def __init__(
         self,
@@ -124,11 +125,14 @@ class DevelopmentVerifier(SQLiteStore):
                 env=environment,
                 capture_output=True,
                 text=True,
-                timeout=5,
+                timeout=self.JAVASCRIPT_TIMEOUT_SECONDS,
                 check=False,
             )
         except subprocess.TimeoutExpired:
-            return False, "JavaScript syntax check timed out after 5 seconds"
+            return False, (
+                "JavaScript syntax check timed out after "
+                f"{self.JAVASCRIPT_TIMEOUT_SECONDS} seconds"
+            )
         except OSError as exc:
             return False, f"Node.js syntax check could not start: {type(exc).__name__}"
         output = (completed.stderr or completed.stdout or "").replace(str(project), "<workspace>")
