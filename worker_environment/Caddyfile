@@ -1,5 +1,5 @@
 {$SPARKLE_WORKER_HOSTNAME} {
-    @jobs path /health /v1/jobs
+    @jobs path /health /v1/jobs /v1/jobs/cancel
     reverse_proxy @jobs worker:8770
     respond 404
 
