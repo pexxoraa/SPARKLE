@@ -11,6 +11,7 @@ from typing import Any, Mapping
 
 from sparkle.ai_system_execution import ControlledExecutionService
 from sparkle.external_worker import ExternalWorkerClient
+from sparkle.level3_authority import PYTHON_UNITTEST_AGENTS, agent_authorized
 from sparkle.secrets import SecretNotFoundError
 from sparkle.storage import SQLiteStore, utc_now
 from sparkle.worker_cancellation import (
@@ -100,6 +101,7 @@ class Level3WorkerRequestValidator(WorkerRequestValidator):
         if (
             not isinstance(requesting_agent, str)
             or not _AGENT.fullmatch(requesting_agent)
+            or not agent_authorized(requesting_agent, "python_unittest")
             or capabilities != ["python_unittest"]
             or not isinstance(policy_sha, str)
             or not _DIGEST.fullmatch(policy_sha)
@@ -287,12 +289,20 @@ class Level3ExternalWorkerService(CancellableExternalWorkerService):
         try:
             response = super().handle_job(headers, body)
             value = json.loads(response.body.decode("utf-8"))
-            status = value.get("status")
-            if status == "cancelled":
-                self.level3_audit.transition(
-                    job.job_id, "cancelled", "cancellation", response_body=response.body,
+            if value.get("status") == "cancelled":
+                # Cancellation is a distinct durable lifecycle state, but the signed
+                # worker response protocol intentionally has only passed|failed.
+                value["status"] = "failed"
+                digest_value = dict(value)
+                digest_value.pop("result_digest", None)
+                value["result_digest"] = hashlib.sha256(
+                    ExternalWorkerClient._canonical_json(digest_value)
+                ).hexdigest()
+                response = self._signed_response(
+                    ExternalWorkerClient._canonical_json(value)
                 )
-            elif status == "passed" and value.get("returncode") == 0:
+            status = value.get("status")
+            if status == "passed" and value.get("returncode") == 0:
                 self.level3_audit.transition(
                     job.job_id, "completed", "completion", response_body=response.body,
                 )
@@ -328,6 +338,7 @@ class Level3ExternalWorkerService(CancellableExternalWorkerService):
         return super().status() | {
             "level3_contract": LEVEL3_SERVICE_SCHEMA,
             "authorized_capabilities": ["python_unittest"],
+            "authorized_requesting_agents": sorted(PYTHON_UNITTEST_AGENTS),
             "requesting_agent_required": True,
             "execution_policy_digest_required": True,
             "output_contract_required": True,
