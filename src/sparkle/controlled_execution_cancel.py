@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from sparkle.ai_system_execution import ControlledExecutionService, ExecutionRejected
-from sparkle.level3_authority import agent_authorized
+from sparkle.level3_authority import PYTHON_UNITTEST_AGENTS, agent_authorized
 from sparkle.level3_execution import Level3ExecutionMixin
 from sparkle.storage import utc_now
 from sparkle.worker_cancellation import WorkerCancellationClient
@@ -94,3 +94,8 @@ class CancellableControlledExecutionService(Level3ExecutionMixin, ControlledExec
         result = self.store.by_execution_id(execution_id)
         self._trace(result)
         return self._enrich_level3(result)
+
+    def level3_status(self) -> dict[str, Any]:
+        value = super().level3_status()
+        value["authorized_requesting_agents"] = sorted(PYTHON_UNITTEST_AGENTS)
+        return value
