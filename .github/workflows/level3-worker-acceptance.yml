@@ -10,7 +10,7 @@ jobs:
   full-level3-acceptance:
     runs-on: ubuntu-latest
     environment: sparkle-level3-worker
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
@@ -28,6 +28,15 @@ jobs:
           python worker_environment/level3_remote_probe.py \
             --output "$RUNNER_TEMP/level3-evidence/remote-probe.json" \
             | tee "$RUNNER_TEMP/level3-evidence/remote-probe.log"
+      - name: Verify timeout failure cancellation replay and recovery
+        env:
+          SPARKLE_EXTERNAL_WORKER_URL: ${{ vars.SPARKLE_EXTERNAL_WORKER_URL }}
+          SPARKLE_EXTERNAL_WORKER_ID: ${{ vars.SPARKLE_EXTERNAL_WORKER_ID }}
+          SPARKLE_WORKER_SIGNING_KEY: ${{ secrets.SPARKLE_WORKER_SIGNING_KEY }}
+        run: |
+          python -m worker_environment.level3_lifecycle_probe \
+            --output "$RUNNER_TEMP/level3-evidence/lifecycle-probe.json" \
+            | tee "$RUNNER_TEMP/level3-evidence/lifecycle-probe.log"
       - name: Execute approved artifact through full Level 3 chain
         env:
           SPARKLE_EXTERNAL_WORKER_URL: ${{ vars.SPARKLE_EXTERNAL_WORKER_URL }}
