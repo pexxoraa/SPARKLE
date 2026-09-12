@@ -19,7 +19,7 @@ services:
         mode: 0400
     expose: ["8770"]
     healthcheck:
-      test: ["CMD", "python3", "-m", "sparkle.worker_service", "--check"]
+      test: ["CMD", "python3", "-m", "sparkle.level3_worker", "--check"]
       interval: 30s
       timeout: 10s
       retries: 3
