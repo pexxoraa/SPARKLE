@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -10,8 +11,9 @@ from sparkle.ai_system_execution import ControlledExecutionStore
 from sparkle.controlled_execution_cancel import CancellableControlledExecutionService
 from sparkle.external_worker import ExternalWorkerClient, ExternalWorkerError
 from sparkle.level3_execution import Level3ExecutionMixin
-from sparkle.level3_worker import Level3WorkerRequestValidator
-from sparkle.worker_service import WorkerServiceError
+from sparkle.level3_worker import Level3ExternalWorkerService, Level3WorkerRequestValidator
+from sparkle.worker_executor import ExecutorResult
+from sparkle.worker_service import WorkerAuthenticationError, WorkerConfig, WorkerServiceError
 from tests import test_ai_system_build as build_tests
 
 
@@ -78,6 +80,14 @@ class Level3ExecutionTests(unittest.TestCase):
         self.assertEqual(result["level3"]["authorized_capabilities"], ["python_unittest"])
         self.assertEqual(result["level3"]["output_contract"]["schema"], "SPARKLE-LEVEL3-OUTPUT/1")
         self.assertFalse(result["level3"]["deployment_authorized"]); self.assertEqual(worker.calls, 1)
+
+    def test_valid_format_wrong_agent_is_rejected_before_authorization_or_worker(self):
+        worker = IsolatedDeterministicWorker(); service, store, auth = self.service(worker, "wrong-agent")
+        contract = self.contract(service, auth, "F")
+        with self.assertRaisesRegex(ValueError, "not authorized for python_unittest"):
+            service.request(contract, approved=True, requesting_agent="personal")
+        self.assertEqual(worker.calls, 0)
+        self.assertEqual(store.list(limit=10), [])
 
     def test_success_exit_without_isolation_is_policy_violation(self):
         service, _store, auth = self.service(IsolatedDeterministicWorker("isolation_failure"), "isolation")
@@ -160,12 +170,66 @@ class Level3WorkerContractTests(unittest.TestCase):
     def test_unauthorized_capability_agent_policy_output_and_trace_fail_closed(self):
         mutations = [lambda p: p["execution_context"].update(authorized_capabilities=["host_shell"]),
                      lambda p: p["execution_context"].update(requesting_agent="Coding Agent"),
+                     lambda p: p["execution_context"].update(requesting_agent="personal"),
                      lambda p: p["execution_context"].update(execution_policy_sha256="f" * 64),
                      lambda p: p["execution_context"].update(output_contract={"schema": "forged"}),
                      lambda p: p["execution_context"].update(trace_id="")]
         for mutate in mutations:
             payload = self.payload(); mutate(payload); body, headers = self.signed(payload)
             with self.assertRaises(WorkerServiceError): self.validator().validate(headers, body)
+
+    def test_forged_signature_is_rejected_before_level3_authority(self):
+        payload = self.payload(); body, headers = self.signed(payload)
+        headers["X-SPARKLE-Worker-Signature"] = "sha256=" + "0" * 64
+        with self.assertRaises(WorkerAuthenticationError):
+            self.validator().validate(headers, body)
+
+    def test_cancelled_internal_result_is_protocol_valid_failed_wire_result(self):
+        class CancelledExecutor:
+            def status(inner_self):
+                return {
+                    "mode": "test", "available": True, "preflight_passed": True,
+                    "hostile_canaries_passed": True,
+                    "canaries": {name: True for name in ExternalWorkerClient.ISOLATION_CANARIES},
+                    "isolation_profile": ExternalWorkerClient.ISOLATION_PROFILE,
+                    "filesystem_isolation": True, "network_isolation": True,
+                    "ephemeral_workspace": True, "resource_limits": True,
+                    "unsafe_process_mode": False, "failure_type": None,
+                }
+            def execute_cancellable(inner_self, job, *, worker_id, cancel_event):
+                return ExecutorResult(
+                    status="cancelled", returncode=-9, timed_out=False, output="cancelled",
+                    duration_ms=1.0, sandbox={"worker_id": worker_id,
+                    "filesystem_isolation": True, "network_isolation": True,
+                    "ephemeral": True, "resource_limits": True}, output_limited=False,
+                )
+
+        payload = self.payload(); body, headers = self.signed(payload)
+        with tempfile.TemporaryDirectory() as directory:
+            service = Level3ExternalWorkerService(
+                WorkerConfig(state_dir=Path(directory) / "worker", executor_mode="process",
+                             allow_unsafe_process_executor=True, worker_id="level3-test-worker"),
+                signing_key=self.KEY, executor=CancelledExecutor(), clock=lambda: 1000,
+            )
+            response = service.handle_job(headers, body)
+            value = json.loads(response.body)
+            self.assertEqual(value["status"], "failed")
+            self.assertEqual(value["returncode"], -9)
+
+            class Response:
+                def __init__(inner_self): inner_self.headers = response.headers
+                def getcode(inner_self): return response.status
+
+            client = ExternalWorkerClient(
+                root=Path(directory) / "applications", path=Path(directory) / "client.sqlite3",
+                expected_worker_id="level3-test-worker", clock=lambda: 1000,
+            )
+            validated = client._validate_response(
+                Response(), response.body, key=self.KEY,
+                expected_job_id=payload["job_id"],
+                expected_context=payload["execution_context"],
+            )
+            self.assertEqual(validated["status"], "failed")
 
 
 if __name__ == "__main__": unittest.main()
