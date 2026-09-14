@@ -1,6 +1,6 @@
-# SPARKLE current capability audit — 2026-09-11
+# SPARKLE current capability audit — 2026-09-14
 
-Software baseline audited: `57e5c3946f7620df30035fc89122a8234e62b4c1`.
+Authoritative baseline audited before current fixes: `6d59b45b0a91f56b8932c2a1822f0781a926701a`.
 This file replaces the historical 2026-09-09 primary inventory. Earlier benchmark
 reports remain historical evidence; they are not silently reinterpreted as current
 live verification.
@@ -58,7 +58,7 @@ for this audit.
 | Proactive engine | COMPLETE | bounded evidence-derived deadline/project/learning/research/schedule alerts | Rule usefulness is acceptance evidence |
 | Tool registry/discovery/permissions | COMPLETE | definitions, execution, unknown-tool rejection, per-agent allowlists and generated-agent validation | External connector tools depend on connector availability |
 | Browser software runtime | COMPLETE | concrete read-only safe HTTPS adapter, public-DNS policy, pinned TLS, redirect revalidation, response bounds, persistent operator sessions, CLI, `SparkleSystem` default integration | Live host/network behavior still needs manual acceptance; `live_browser_verified=false` |
-| Live browser host acceptance | EXTERNALLY BLOCKED | software runtime complete | On an approved host, exercise public allowlisted destinations, DNS rebinding/private-address rejection, TLS hostname validation, redirects and body limits; retain evidence |
+| Live browser host acceptance | PARTIALLY ACCEPTED / RECORDING DEFECT | real host checks passed public HTTPS, bounded output, private-address rejection, TLS hostname failure, redirect revalidation, and persistent session lifecycle | Add a durable operator acceptance record before `live_browser_verified` may become true; do not infer verification from an ad hoc run |
 | Computer interaction | EXTERNALLY BLOCKED | typed bounded actions, persistent permission sessions, optimistic revisions, host-adapter injection through `SparkleSystem` | Supply a concrete `ComputerAdapter`, OS GUI/display permissions and live screenshot/click/type/key acceptance |
 | Voice | EXTERNALLY BLOCKED | bounded persistent voice sessions/events, STT/TTS interfaces, CLI, host-adapter injection through `SparkleSystem` | Supply concrete STT/TTS provider/device adapters plus microphone/speaker/provider permissions; perform live transcript/synthesis acceptance |
 | Multimodal content protocol and image transport | COMPLETE | bounded text/image/audio/document envelopes; modality-aware routing; NVIDIA OpenAI-compatible image payload serialization; configured model records still gate modalities | Live image understanding requires an explicitly image-capable configured model and provider acceptance |
@@ -69,7 +69,7 @@ for this audit.
 | Controlled promotion | COMPLETE | identities/digests, approvals, replay/tamper/concurrency defenses, exclusions and atomic records | None in bounded promotion contract |
 | Controlled build | COMPLETE | approval-bound immutable deterministic artifacts and evidence | None in bounded build contract |
 | Controlled execution and cancellation | COMPLETE | authorization, execution lifecycle, results, worker cancellation protocol and API/CLI cancellation | Level-3 worker acceptance remains external |
-| External worker / Level 3 | EXTERNALLY BLOCKED | signed worker protocol, client/service, identities, bounds, cancellation and evidence paths implemented | Provision hardened Linux worker host, TLS/HMAC secrets, approved worker identity, isolation controls, then run the documented approved-artifact acceptance. Level 3 stays PARKED until it passes |
+| External worker / Level 3 | EXTERNALLY BLOCKED | signed worker protocol plus a real hardened loopback worker on `prem-macharla` with ready executor/preflight, filesystem/network isolation and seven passing canaries | Add trusted HTTPS ingress and protected GitHub Environment, execute remote/lifecycle/full-chain acceptance, genuinely restart the worker service, rerun acceptance, and retain artifacts. Level 3 remains NOT COMPLETE until all pass |
 | Trace/evidence | COMPLETE | persistent content-minimized traces, model/tool identities, redaction and lifecycle evidence | Trace success never implies semantic correctness |
 | API | COMPLETE | authenticated/rate-limited local JSON API covering core operator workflows; newer specialist state is exposed through `/api/health` and dedicated CLIs/tools where a duplicate mutation API would add no capability | External service integrations are separate connectors |
 | CLI | COMPLETE | core CLI plus data/content/research/engineering/interaction/voice/worker/automation commands and controlled-build/execution operations | Host/provider commands still need their external runtime |
@@ -109,11 +109,11 @@ Windows/macOS worker capability.
 
 Implementation inspection and focused deterministic test additions were used while
 building. No new live Nemotron, semantic-embedding, microphone, speaker, GUI,
-physical-hardware, mobile-host, Level-3 worker or production-deployment acceptance
-was performed here. GitHub CI runs triggered by the final implementation commits are
+physical-hardware, mobile-host, trusted-remote Level-3 or production-deployment acceptance
+was performed here. The connected Level-3 worker host has local readiness evidence only. GitHub CI runs triggered by the final implementation commits are
 supporting regression evidence only and do not change the external classifications.
 
 **Software completion gate: PASS — no ordinary software-completable capability remains
 PARTIALLY COMPLETE, INTERFACE ONLY, or NOT IMPLEMENTED.**
 
-**Level 3: PARKED. Deployment: FROZEN.**
+**Level 3: NOT COMPLETE — local real worker ready; trusted remote/restart acceptance blocked. Deployment: FROZEN.**
