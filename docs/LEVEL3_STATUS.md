@@ -1,14 +1,14 @@
-# SPARKLE Level 3 gate status — 2026-09-12
+# SPARKLE Level 3 gate status — 2026-09-14
 
 This document records the current Level-3 acceptance split. It is an acceptance-gate addendum to `CURRENT_AUDIT.md`; it does not reinterpret deterministic software checks as real-host evidence.
 
 ## Current authoritative state
 
-- Repository head before this status-only update: `4d48a4ec6fd282cf35eca7c6470d458ba446e5e0`.
-- Exact-head SPARKLE CI: run `34667812450` / run number 177 — **PASS**.
+- Authoritative repository baseline before these deployment-surface fixes: `6d59b45b0a91f56b8932c2a1822f0781a926701a`.
+- Exact-head SPARKLE CI: run `34858788189` / run number 182 — **PASS**.
 - Python 3.12: **PASS**.
-- Python 3.13: **PASS**; 534 tests run, 1 skipped, 0 failures.
-- Controlled-execution / Level-3 deterministic software gate: **PASS**; 82 tests run, 0 failures.
+- Python 3.13: **PASS**; 537 tests run, 1 skipped, 0 failures.
+- Controlled-execution / Level-3 deterministic software gate: **PASS**; 85 tests run, 0 failures.
 - Worker image: **PASS**.
 - Automation service: **PASS**.
 - Credential-free benchmark reproduction: **PASS**.
@@ -19,15 +19,16 @@ The deterministic host diagnostic on the GitHub-hosted runner reports Bubblewrap
 
 - **Level-3 software: COMPLETE**
 - **Level-3 deterministic acceptance: COMPLETE**
-- **Level-3 real-host acceptance: EXTERNALLY BLOCKED**
+- **Level-3 real worker local host readiness: VERIFIED on `prem-macharla`**
+- **Level-3 trusted remote acceptance: EXTERNALLY BLOCKED**
 - **Level 3 overall: NOT COMPLETE**
 - **Deployment: FROZEN**
 
-No real external-worker result, isolation result, service/container restart result, or production result is inferred from repository CI.
+The real host worker is locally ready: the hardened systemd service is active on loopback, its `/health` reports `ready=true`, executor/preflight/filesystem/network isolation true, all seven hostile canaries true, credentials not exposed, and deployment unauthorized. This is local host readiness evidence only. No trusted-HTTPS remote acceptance, GitHub Environment acceptance, post-restart workflow evidence, or production result is inferred from it.
 
-## Real-host acceptance not yet observed
+## Trusted remote acceptance not yet observed
 
-No `SPARKLE Level 3 Worker Acceptance` workflow run exists in the repository Actions history inspected on 2026-09-12. The connected GitHub automation surface can inspect and rerun existing runs/jobs but does not expose `workflow_dispatch`; therefore there is no existing real-host run that can be legitimately rerun from this session.
+No `SPARKLE Level 3 Worker Acceptance` workflow run exists in the repository Actions history inspected on 2026-09-14. The connected GitHub automation surface can inspect and rerun existing runs/jobs but does not expose `workflow_dispatch`; therefore there is no existing real-host run that can be legitimately rerun from this session.
 
 The exact required external action is:
 
