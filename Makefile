@@ -17,10 +17,10 @@ smoke:
 	PYTHONPATH=src python3 -m sparkle smoke-test --live
 
 worker-check:
-	PYTHONPATH=src python3 -m sparkle.worker_service --check
+	PYTHONPATH=src python3 -m sparkle.level3_worker --check
 
 worker-diagnose:
-	PYTHONPATH=src python3 -m sparkle.worker_service --diagnose
+	PYTHONPATH=src python3 -m sparkle.level3_worker --diagnose
 
 worker-dev:
 	PYTHONPATH=src SPARKLE_WORKER_EXECUTOR=process SPARKLE_WORKER_ALLOW_UNSAFE_PROCESS_EXECUTOR=true python3 -m sparkle.worker_service
