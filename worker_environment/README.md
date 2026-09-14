@@ -24,7 +24,7 @@ Do not use `--privileged` or publish worker port 8770.
    cp worker.env.example .env.worker
    docker compose --env-file .env.worker build --pull
    docker compose --env-file .env.worker up -d
-   docker compose --env-file .env.worker exec worker python3 -m sparkle.worker_service --check
+   docker compose --env-file .env.worker exec worker python3 -m sparkle.level3_worker --check
    ```
 
 3. Continue only if `ready` and both isolation fields are `true`. A check exit
