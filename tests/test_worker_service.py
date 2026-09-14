@@ -850,7 +850,6 @@ class WorkerServiceTests(unittest.TestCase):
             "PrivateDevices=yes",
             "PrivateTmp=yes",
             "ProtectHome=yes",
-            "ProtectKernelLogs=yes",
             "ProtectKernelModules=yes",
             "ProtectSystem=strict",
             "ReadWritePaths=/var/lib/sparkle-worker",
@@ -859,7 +858,14 @@ class WorkerServiceTests(unittest.TestCase):
             "AmbientCapabilities=",
         ):
             self.assertIn(required, unit)
-        self.assertIn("ProtectKernelTunables=no", unit)
+        for procfs_compatibility_setting in (
+            "ProtectHostname=no",
+            "ProtectKernelLogs=no",
+            "ProtectKernelTunables=no",
+        ):
+            self.assertIn(procfs_compatibility_setting, unit)
+        self.assertNotIn("ProtectHostname=yes", unit)
+        self.assertNotIn("ProtectKernelLogs=yes", unit)
         self.assertNotIn("ProtectKernelTunables=yes", unit)
         self.assertNotIn("SPARKLE_WORKER_ALLOW_UNSAFE_PROCESS_EXECUTOR", unit)
 

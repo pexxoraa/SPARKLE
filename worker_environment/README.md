@@ -69,16 +69,17 @@ does not create a signing key or start the service. Inject the key separately
 before the preflight and service start.
 
 The systemd unit deliberately does not restrict namespace syscalls because the
-nested sandbox requires them. It also sets `ProtectKernelTunables=no`
-explicitly: `ProtectKernelTunables=yes` changes the unit's kernel API filesystem
-view, implies `MountAPIVFS=yes`, and on the supported Ubuntu host prevents
-Bubblewrap from mounting the private `/proc` required inside its per-job user
-and mount namespaces. This is a narrow compatibility exception, not permission
-to change host tunables. The worker remains unprivileged with empty capability
-and ambient-capability sets plus `NoNewPrivileges=yes`; it therefore has no
-host capability with which to modify protected kernel settings. The unit keeps
-`ProtectKernelModules=yes`, `ProtectKernelLogs=yes`, `ProtectSystem=strict`,
-`ProtectHome=yes`, private devices/tmp, and the narrow address-family set.
+nested sandbox requires them. It explicitly sets `ProtectHostname=no`,
+`ProtectKernelLogs=no`, and `ProtectKernelTunables=no`: on the supported Ubuntu
+host, enabling any of these directives alters the service's procfs view and
+prevents Bubblewrap from mounting the private `/proc` required inside its
+per-job user and mount namespaces. These are narrow compatibility exceptions,
+not permission to change the host hostname, read kernel logs, or change kernel
+tunables. The worker remains unprivileged with empty capability and
+ambient-capability sets, `NoNewPrivileges=yes`, and private devices; it therefore
+has no effective host capability or device path for those operations. The unit
+keeps `ProtectKernelModules=yes`, `ProtectSystem=strict`, `ProtectHome=yes`,
+private tmp, and the narrow address-family set.
 Bubblewrap still unshares all namespaces, creates its private `/proc`, clears
 the environment, mounts the artifact read-only, and must pass all seven
 canaries before any job runs.
