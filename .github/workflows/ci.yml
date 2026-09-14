@@ -50,6 +50,7 @@ jobs:
             tests.test_ai_system_execution \
             tests.test_external_worker \
             tests.test_worker_service \
+            tests.test_worker_preflight_diagnostics \
             tests.test_level3 \
             tests.test_level3_deployment_assets \
             tests.test_level3_acceptance_probes \
