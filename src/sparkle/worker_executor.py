@@ -218,6 +218,10 @@ class BubblewrapExecutor(FixedUnittestExecutor):
         self.preflight_runner = preflight_runner or subprocess.run
         self._preflight_result: bool | None = None
         self._failure_type: str | None = None
+        self._preflight_failure_stage: str | None = None
+        self._preflight_failure_reason: str | None = None
+        self._preflight_returncode: int | None = None
+        self._preflight_canary_evidence_complete = False
         self._canary_results = {name: False for name in self.CANARY_NAMES}
 
     def _runtime_mounts(self) -> list[Path]:
@@ -286,6 +290,8 @@ class BubblewrapExecutor(FixedUnittestExecutor):
             or not self.python_binary.startswith(("/usr/", "/bin/"))
         ):
             self._failure_type = "ExecutorDependencyUnavailable"
+            self._preflight_failure_stage = "dependency_validation"
+            self._preflight_failure_reason = "dependency_unavailable"
             return False
         probe = """
 import json, os, socket, sys
@@ -372,22 +378,49 @@ raise SystemExit(0 if all(results.values()) and sandbox_writable_area else 4)
                 )
             except (OSError, subprocess.SubprocessError) as exc:
                 self._failure_type = type(exc).__name__
+                self._preflight_failure_stage = "subprocess_execution"
+                self._preflight_failure_reason = "subprocess_exception"
                 return False
+            self._preflight_returncode = max(-255, min(int(completed.returncode), 255))
             artifact_unchanged = artifact_canary.read_bytes() == b"immutable"
         try:
             reported = json.loads(completed.stdout.strip())
         except (AttributeError, json.JSONDecodeError):
             reported = {}
-        if (
-            completed.returncode != 0
-            or set(reported) != set(self.CANARY_NAMES)
-            or not all(reported.get(name) is True for name in self.CANARY_NAMES)
-            or not artifact_unchanged
-        ):
+        valid_canary_schema = (
+            isinstance(reported, dict)
+            and set(reported) == set(self.CANARY_NAMES)
+            and all(isinstance(reported.get(name), bool) for name in self.CANARY_NAMES)
+        )
+        self._preflight_canary_evidence_complete = valid_canary_schema
+        if valid_canary_schema:
+            self._canary_results = {
+                name: bool(reported[name]) for name in self.CANARY_NAMES
+            }
+        if completed.returncode != 0:
             self._failure_type = "IsolationPreflightFailed"
+            self._preflight_failure_stage = "sandbox_probe"
+            self._preflight_failure_reason = "subprocess_nonzero"
+            return False
+        if not valid_canary_schema:
+            self._failure_type = "IsolationPreflightFailed"
+            self._preflight_failure_stage = "evidence_validation"
+            self._preflight_failure_reason = "canary_evidence_invalid"
+            return False
+        if not all(self._canary_results.values()):
+            self._failure_type = "IsolationPreflightFailed"
+            self._preflight_failure_stage = "canary_validation"
+            self._preflight_failure_reason = "canary_failed"
+            return False
+        if not artifact_unchanged:
+            self._failure_type = "IsolationPreflightFailed"
+            self._preflight_failure_stage = "artifact_validation"
+            self._preflight_failure_reason = "artifact_modified"
             return False
         self._canary_results = {name: True for name in self.CANARY_NAMES}
         self._failure_type = None
+        self._preflight_failure_stage = None
+        self._preflight_failure_reason = None
         return True
 
     def status(self) -> dict[str, Any]:
@@ -404,6 +437,10 @@ raise SystemExit(0 if all(results.values()) and sandbox_writable_area else 4)
             "resource_limits": os.name == "posix",
             "unsafe_process_mode": False,
             "failure_type": self._failure_type,
+            "preflight_failure_stage": self._preflight_failure_stage,
+            "preflight_failure_reason": self._preflight_failure_reason,
+            "preflight_returncode": self._preflight_returncode,
+            "preflight_canary_evidence_complete": self._preflight_canary_evidence_complete,
             "hostile_canaries_passed": available,
             "isolation_profile": self.ISOLATION_PROFILE,
             "canaries": dict(self._canary_results),
