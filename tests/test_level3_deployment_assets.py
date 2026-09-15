@@ -38,6 +38,11 @@ class Level3DeploymentAssetTests(unittest.TestCase):
         self.assertIn("worker-diagnose:\n\tPYTHONPATH=src python3 -m sparkle.level3_worker --diagnose", makefile)
         self.assertIn("worker-dev:\n\tPYTHONPATH=src SPARKLE_WORKER_EXECUTOR=process SPARKLE_WORKER_ALLOW_UNSAFE_PROCESS_EXECUTOR=true python3 -m sparkle.worker_service", makefile)
         self.assertIn("--upgrade --force-reinstall", installer)
+        self.assertNotIn("sudo -u sparkle-worker /opt/sparkle/.venv/bin/sparkle-worker --check", installer)
+        self.assertNotIn("sudo -u sparkle-worker /opt/sparkle/.venv/bin/sparkle-worker --check", readme)
+        self.assertIn("sudo systemctl start sparkle-worker", installer)
+        self.assertIn("http://127.0.0.1:8770/health", installer)
+        self.assertIn("http://127.0.0.1:8770/health", readme)
 
         self.assertIn("workflow_dispatch", workflow)
         self.assertIn("vars.SPARKLE_EXTERNAL_WORKER_URL", workflow)

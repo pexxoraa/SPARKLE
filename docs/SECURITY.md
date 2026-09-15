@@ -71,16 +71,20 @@
   because its API-filesystem namespace setup blocks Bubblewrap's required
   private `/proc` mount on the supported Ubuntu host. The dedicated
   unprivileged identity, empty capability and ambient-capability sets,
-  `NoNewPrivileges=yes`, strict read-only host filesystem, module/log
-  protections, and per-job Bubblewrap boundary remain enforced. The exception
+  `NoNewPrivileges=yes`, strict read-only host filesystem, kernel-module
+  protection, and the per-job Bubblewrap boundary remain enforced.
+  `ProtectKernelLogs=no` is an explicit procfs-compatibility exception; the
+  service remains unprivileged with empty capability sets, so this does not
+  grant privileged kernel-log access. The exception
   is accepted only when the real service-scoped preflight passes all canaries.
 - Process-mode execution is Level 2 functional evidence, not hostile-code
   isolation. Level 3 requires the real Bubblewrap preflight and harmless
   host filesystem read/write, workspace escape, environment-secret, prohibited
   network, host-process, and artifact-modification canaries to pass on the
   deployed worker. The artifact is mounted read-only. They fail closed in the
-  build executor because namespace creation is denied; that result is not used
-  to override evidence from, or substitute for, the dedicated Linux host.
+  deployed worker. The dedicated `prem-macharla` service-context preflight now
+  passes all seven canaries; that local result still does not substitute for
+  trusted-remote Level-3 acceptance.
 - Application scaffolding requires explicit approval, confines every path to a
   dedicated application root, rejects traversal and symlinks, enforces file and
   manifest size limits, and protects existing files by default.

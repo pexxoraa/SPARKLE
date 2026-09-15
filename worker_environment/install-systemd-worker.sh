@@ -60,5 +60,6 @@ systemctl daemon-reload
 
 echo "Worker software installed but not started."
 echo "Create /etc/sparkle/worker.conf and inject /etc/sparkle/worker-signing-key."
-echo "Then run: sudo -u sparkle-worker /opt/sparkle/.venv/bin/sparkle-worker --check"
-echo "Enable the service only after the isolation preflight passes."
+echo "Then start the hardened service: sudo systemctl start sparkle-worker"
+echo "Verify the service-context preflight with: curl --fail --silent --show-error http://127.0.0.1:8770/health"
+echo "Enable the service only after /health reports ready=true and all isolation canaries pass."

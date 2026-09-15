@@ -1,7 +1,7 @@
 {
   "protocol": "SPARKLE-CAPABILITY-BACKLOG/2",
-  "audit_date": "2026-09-11",
-  "software_baseline": "57e5c3946f7620df30035fc89122a8234e62b4c1",
+  "audit_date": "2026-09-15",
+  "software_baseline": "b013d768ddd0a7161a394b4c78afef9a50384eb1",
   "software_completion": {
     "status": "COMPLETE",
     "ordinary_software_backlog": [],
@@ -27,7 +27,10 @@
       "capability": "real_semantic_embedding_quality",
       "status": "EXTERNALLY BLOCKED",
       "software_ready": true,
-      "evidence": ["src/sparkle/vector_index.py", "src/sparkle/retrieval.py"],
+      "evidence": [
+        "src/sparkle/vector_index.py",
+        "src/sparkle/retrieval.py"
+      ],
       "required_acceptance": [
         "select and configure a real embedding provider/model with stable identity and dimensions",
         "provide required provider credentials/runtime",
@@ -39,7 +42,10 @@
       "capability": "nvidia_nemotron_live_acceptance",
       "status": "EXTERNALLY BLOCKED",
       "software_ready": true,
-      "evidence": ["src/sparkle/providers/nvidia.py", "benchmarks/live.py"],
+      "evidence": [
+        "src/sparkle/providers/nvidia.py",
+        "benchmarks/live.py"
+      ],
       "required_acceptance": [
         "use the credentialed approved host without changing benchmark prompts or validators",
         "run provider/tool/stream regression and the unchanged live-agent benchmark",
@@ -51,29 +57,22 @@
       "capability": "secondary_provider_live_acceptance",
       "status": "EXTERNALLY BLOCKED",
       "software_ready": true,
-      "evidence": ["src/sparkle/providers/minimax.py"],
+      "evidence": [
+        "src/sparkle/providers/minimax.py"
+      ],
       "required_acceptance": [
         "provide credentials for an explicitly enabled secondary provider",
         "run provider regression and retain runtime evidence"
       ]
     },
     {
-      "capability": "browser_live_host_acceptance",
-      "status": "EXTERNALLY BLOCKED",
-      "software_ready": true,
-      "evidence": ["src/sparkle/browser_runtime.py", "src/sparkle/interaction.py", "src/sparkle/interaction_cli.py"],
-      "required_acceptance": [
-        "run on an approved networked host against allowlisted public HTTPS destinations",
-        "verify private/reserved-address and DNS-rebinding rejection",
-        "verify TLS hostname validation, redirect revalidation and output/body limits",
-        "retain evidence before changing live_browser_verified"
-      ]
-    },
-    {
       "capability": "computer_gui_runtime",
       "status": "EXTERNALLY BLOCKED",
       "software_ready": true,
-      "evidence": ["src/sparkle/interaction.py", "src/sparkle/system.py"],
+      "evidence": [
+        "src/sparkle/interaction.py",
+        "src/sparkle/system.py"
+      ],
       "required_acceptance": [
         "provide a concrete ComputerAdapter through SparkleSystem",
         "grant only required OS display/accessibility/input permissions",
@@ -85,7 +84,11 @@
       "capability": "voice_stt_tts_runtime",
       "status": "EXTERNALLY BLOCKED",
       "software_ready": true,
-      "evidence": ["src/sparkle/voice.py", "src/sparkle/voice_cli.py", "src/sparkle/system.py"],
+      "evidence": [
+        "src/sparkle/voice.py",
+        "src/sparkle/voice_cli.py",
+        "src/sparkle/system.py"
+      ],
       "required_acceptance": [
         "provide concrete SpeechToText and TextToSpeech adapters through SparkleSystem",
         "configure provider/device credentials and microphone/speaker permissions as applicable",
@@ -97,7 +100,11 @@
       "capability": "audio_document_model_understanding",
       "status": "EXTERNALLY BLOCKED",
       "software_ready": true,
-      "evidence": ["src/sparkle/content.py", "src/sparkle/contracts.py", "src/sparkle/model.py"],
+      "evidence": [
+        "src/sparkle/content.py",
+        "src/sparkle/contracts.py",
+        "src/sparkle/model.py"
+      ],
       "required_acceptance": [
         "select/configure a provider model that explicitly supports the requested audio/document modality",
         "supply a provider adapter mapping that modality without text flattening",
@@ -108,7 +115,10 @@
       "capability": "physical_motion_runtime",
       "status": "EXTERNALLY BLOCKED",
       "software_ready": true,
-      "evidence": ["src/sparkle/presence.py", "src/sparkle/system.py"],
+      "evidence": [
+        "src/sparkle/presence.py",
+        "src/sparkle/system.py"
+      ],
       "required_acceptance": [
         "provide a hardware-specific MotionAdapter through SparkleSystem",
         "configure device transport and permissions",
@@ -124,21 +134,28 @@
         "src/sparkle/external_worker.py",
         "src/sparkle/worker_service.py",
         "src/sparkle/worker_cancellation.py",
+        "src/sparkle/level3_worker.py",
+        "worker_environment/level3_remote_probe.py",
         ".github/workflows/level3-worker-acceptance.yml"
       ],
       "required_acceptance": [
-        "provision the approved hardened Linux worker host",
-        "configure TLS/HMAC secret material and the expected worker identity",
-        "verify isolation and signed request/response behavior",
-        "execute an approved immutable artifact through the documented Level-3 acceptance workflow",
-        "keep Level 3 PARKED until all host evidence passes"
+        "retain the already-proven hardened Linux worker local readiness and genuine local service restart evidence",
+        "provision trusted public HTTPS ingress to the loopback worker without weakening TLS verification",
+        "create and securely configure the protected sparkle-level3-worker GitHub Environment",
+        "run and retain remote, lifecycle and full-chain acceptance evidence",
+        "pair a genuine worker service/container restart with retained pre- and post-restart remote acceptance evidence",
+        "keep Level 3 NOT COMPLETE until all trusted-remote evidence passes"
       ]
     },
     {
       "capability": "live_agent_semantic_quality",
       "status": "EXTERNALLY BLOCKED",
       "software_ready": true,
-      "evidence": ["benchmarks/tasks.json", "benchmarks/live.py", "benchmarks/gates.py"],
+      "evidence": [
+        "benchmarks/tasks.json",
+        "benchmarks/live.py",
+        "benchmarks/gates.py"
+      ],
       "required_acceptance": [
         "run the unchanged scripted/live task definitions on the credentialed host",
         "do not weaken validators, hard-code answers or special-case prompts",
@@ -150,7 +167,10 @@
       "capability": "mobile_host_runtime_android_ios_grapheneos",
       "status": "EXTERNALLY BLOCKED",
       "software_ready": true,
-      "evidence": ["src/sparkle/platform_support.py", "src/sparkle/config.py"],
+      "evidence": [
+        "src/sparkle/platform_support.py",
+        "src/sparkle/config.py"
+      ],
       "required_acceptance": [
         "provide an embedded Python/application host on each target mobile platform",
         "grant required storage/network/device permissions",
@@ -162,7 +182,10 @@
       "capability": "production_deployment",
       "status": "EXTERNALLY BLOCKED",
       "software_ready": true,
-      "evidence": ["src/sparkle/artifacts.py", "docs/ACCEPTANCE.md"],
+      "evidence": [
+        "src/sparkle/artifacts.py",
+        "docs/ACCEPTANCE.md"
+      ],
       "required_acceptance": [
         "obtain explicit user deployment authorization",
         "configure the target environment and credentials",
@@ -208,6 +231,7 @@
     "Dedicated data/content/research/interaction/voice CLIs and bounded agent tools are retained instead of adding redundant mutation APIs.",
     "GET /api/health exposes vector, platform, voice, interaction, data-analysis, content, research, automation and other subsystem status through SparkleSystem.status().",
     "Browser network authority and computer actions remain operator-owned session boundaries rather than unrestricted agent tools.",
-    "Level 3 is PARKED and deployment is FROZEN."
+    "Live browser host acceptance is VERIFIED on prem-macharla for the recorded exact browser build/checkset; it is no longer an externally blocked backlog item.",
+    "Level 3 has verified local worker readiness and local systemd restart/recovery on prem-macharla, but trusted-remote acceptance and remote pre/post-restart evidence remain blocked; deployment is FROZEN."
   ]
 }

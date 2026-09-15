@@ -21,8 +21,8 @@ status. It shares no memory, knowledge, trace, provider, or application store.
 | Job-ID reuse | SQLite job ID + request digest claim; exact replay only | Replay/conflict tests pass |
 | Traversal/symlink/secret source | Strict POSIX paths, sensitive-name/suffix rejection, decoded digest/key scan, exclusive materialization | Adversarial tests pass |
 | Secret disclosure | Separate resolver, no-follow private file open, cleared child env, exact-key and pattern redaction, safe logs/status | Permission/symlink/redaction tests pass |
-| Host filesystem access | Bubblewrap read-only runtime and read-only artifact mount; only sandbox-private temporary state is writable | Command/preflight tests pass; live host preflight blocked |
-| Network access | All namespaces unshared; preflight attempts external and host-local connections and requires both to fail | Command/preflight tests pass; live host preflight blocked |
+| Host filesystem access | Bubblewrap read-only runtime and read-only artifact mount; only sandbox-private temporary state is writable | Command/preflight tests pass; `prem-macharla` service-context preflight passes the host read/write, workspace-escape and artifact canaries |
+| Network access | All namespaces unshared; preflight attempts external and host-local connections and requires both to fail | Command/preflight tests pass; `prem-macharla` service-context prohibited-network canary passes |
 | Wrong worker | Application configuration pins the expected public worker ID and rejects a valid signed result from another identity | Identity-mismatch tests pass |
 | Resource exhaustion | Body/file/output bounds, semaphore, wall timeout, process-group kill, POSIX CPU/memory/file/FD/process/core limits | Bound/capacity/timeout tests pass |
 | Container misconfiguration | Unprivileged UID, read-only root, no capabilities, no-new-privileges, internal worker port, TLS gateway | Deployment-policy regression and repeated CI image build/entrypoint jobs pass |
@@ -115,9 +115,11 @@ prevents unprivileged Bubblewrap from mounting its private `/proc`. SPARKLE
 cannot retain the directive and still establish the required per-job PID/process
 boundary. This does not grant host-tunable access: the service runs as the
 dedicated unprivileged account with `CapabilityBoundingSet=` and
-`AmbientCapabilities=` empty and `NoNewPrivileges=yes`. Kernel module and log
-protection, strict read-only host paths, protected home directories, private
-devices/tmp, and all Bubblewrap controls remain active. Bubblewrap still uses
+`AmbientCapabilities=` empty and `NoNewPrivileges=yes`. Kernel-module protection, strict read-only host paths, protected home directories, private
+devices/tmp, and all Bubblewrap controls remain active. `ProtectKernelLogs=no` is
+an explicit procfs-compatibility exception alongside `ProtectHostname=no` and
+`ProtectKernelTunables=no`; the dedicated unprivileged identity, empty capability
+sets and `NoNewPrivileges=yes` still prevent privileged kernel-log access. Bubblewrap still uses
 `--unshare-all`, `--clearenv`, a private `/proc`, read-only artifact binding,
 network isolation, and the seven mandatory fail-closed canaries.
 
@@ -139,25 +141,16 @@ The workflow is manual-only and is not evidence until a named worker run passes.
 
 ## Verified local result
 
-On 2026-08-29, the real signed client → service → process executor → signed
-response path ran a submitted unittest that imported submitted application
-code. Response authentication passed and the process executor correctly
-reported no filesystem/network isolation. The real Bubblewrap preflight ran
-and safely refused readiness because this build executor does not allow the
-required namespace setup. Therefore protocol integration is tested, but live
-hostile-code isolation and remote deployment remain blocked rather than passed.
-On the v0.30 build host Bubblewrap 0.9.0 exists, but the executable preflight
-returns `IsolationPreflightFailed` because namespace setup is denied. Therefore
-Level 3 is blocked and `isolation_verified` remains false; this is not reported
-as a missing binary or as a pass.
+On 2026-09-15, the dedicated `prem-macharla` systemd worker running the certified
+installation reported `ready=true` on loopback. The Bubblewrap executor, preflight,
+filesystem isolation, network isolation and hostile-canary aggregate were all true;
+all seven individual canaries passed, the safe preflight diagnostics reported no
+failure and return code 0, credentials remained unexposed, and deployment remained
+unauthorized.
 
-The corrected preflight semantics are software-tested. The build executor still
-cannot start Bubblewrap because required `/proc` namespace mapping files and
-kernel settings are unavailable. On the dedicated Ubuntu development host,
-unprivileged Bubblewrap and a minimal systemd profile can create the private
-`/proc`; adding only `ProtectKernelTunables=yes` reproduces the mount denial.
-The repository unit now carries the explicit compatibility exception, but that
-host must still rerun the complete hardened service preflight. Level 3 remains
-blocked until all seven executable canaries, authenticated worker acceptance,
-an approved immutable artifact execution, result verification, and cleanup
-succeed.
+A genuine `systemctl restart sparkle-worker.service` changed the worker PID from
+`236382` to `239329`. The post-restart process loaded the same certified installed
+source hashes and returned the same complete ready contract. This proves local
+service restart/readiness only. Level 3 remains incomplete until trusted HTTPS, the
+protected GitHub Environment, remote/lifecycle/full-chain acceptance, and retained
+pre/post-restart remote evidence all pass.

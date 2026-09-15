@@ -65,9 +65,11 @@ storage may be writable and is not host-escape evidence.
   read/write refusal, cross-workspace refusal, secret environment absence,
   network denial, host-process refusal, and artifact-modification refusal.
 
-On the current build host, Bubblewrap 0.9.0 is installed but namespace setup is
-denied, producing `IsolationPreflightFailed`. Level 3 is therefore blocked and
-`isolation_verified` remains false.
+On the dedicated `prem-macharla` worker, the actual systemd service-context
+Bubblewrap preflight now passes: executor availability, filesystem isolation,
+network isolation, the hostile-canary aggregate and all seven individual canaries
+are true. This establishes local worker isolation readiness only; trusted-remote
+Level-3 acceptance remains a separate gate.
 
 ## Interfaces
 
@@ -94,8 +96,9 @@ simulate timeout, output overflow, execution failure, identity mismatch,
 result tampering, and transport failure, but never produces Level 3 evidence.
 
 Cancellation is deterministic before worker submission (`REQUESTED`,
-`AUTHORIZED`, or `QUEUED`) and always cleans the controller workspace. The v1
-synchronous worker protocol intentionally has no remote cancellation command;
-after `RUNNING`, its signed wall timeout and process-group termination are the
-fail-closed termination mechanism. Remote operator cancellation is therefore
-infrastructure/protocol-dependent and is not claimed as implemented.
+`AUTHORIZED`, or `QUEUED`) and always cleans the controller workspace. For a
+controlled execution that is already `RUNNING`, the Level-3 worker implements
+signed cancellation through `POST /v1/jobs/cancel`; the worker registers the
+execution, signals the running fixed executor, persists the cancellation lifecycle
+state, and returns an authenticated protocol-valid result. Wall timeout and
+process-group termination remain independent fail-closed termination mechanisms.

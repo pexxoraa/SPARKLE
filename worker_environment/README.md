@@ -58,8 +58,9 @@ sudo worker_environment/install-systemd-worker.sh "$PWD/dist/<wheel-name>.whl"
 sudo install -o root -g root -m 0600 \
   worker_environment/worker.conf.example /etc/sparkle/worker.conf
 sudo systemctl daemon-reload
-sudo -u sparkle-worker /opt/sparkle/.venv/bin/sparkle-worker --check
-sudo systemctl enable --now sparkle-worker
+sudo systemctl start sparkle-worker
+curl --fail --silent --show-error http://127.0.0.1:8770/health
+sudo systemctl enable sparkle-worker
 ```
 
 The installer accepts only an absolute regular non-symlink wheel, force-reinstalls

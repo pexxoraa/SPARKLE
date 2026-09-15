@@ -4,10 +4,10 @@ This document records the current Level-3 acceptance split. It is an acceptance-
 
 ## Current authoritative state
 
-- Authoritative repository baseline before these deployment-surface fixes: `6d59b45b0a91f56b8932c2a1822f0781a926701a`.
-- Exact-head SPARKLE CI: run `34858788189` / run number 182 — **PASS**.
+- Published certified repository revision: `b013d768ddd0a7161a394b4c78afef9a50384eb1` (tree `ac0c9ee9e4972fbda116971577b923aab445e18b`).
+- Exact-head SPARKLE CI: run `34973509546` / run number 192 — **PASS** across all five jobs.
 - Python 3.12: **PASS**.
-- Python 3.13: **PASS**; 537 tests run, 1 skipped, 0 failures.
+- Python 3.13: **PASS**.
 - Current audit candidate local suite: **PASS**; 546 tests run, 1 skipped, 0 failures.
 - Controlled-execution / Level-3 deterministic software gate: **PASS**; 85 tests run, 0 failures.
 - Worker image: **PASS**.
@@ -21,11 +21,13 @@ The deterministic host diagnostic on the GitHub-hosted runner reports Bubblewrap
 - **Level-3 software: COMPLETE**
 - **Level-3 deterministic acceptance: COMPLETE**
 - **Level-3 real worker local host readiness: VERIFIED on `prem-macharla`**
+- **Level-3 local worker restart/recovery: VERIFIED on `prem-macharla`**
 - **Level-3 trusted remote acceptance: EXTERNALLY BLOCKED**
+- **Level-3 remote restart/post-restart acceptance: EXTERNALLY BLOCKED**
 - **Level 3 overall: NOT COMPLETE**
 - **Deployment: FROZEN**
 
-The real host worker is locally ready: the hardened systemd service is active on loopback, its `/health` reports `ready=true`, executor/preflight/filesystem/network isolation true, all seven hostile canaries true, credentials not exposed, and deployment unauthorized. This is local host readiness evidence only. No trusted-HTTPS remote acceptance, GitHub Environment acceptance, post-restart workflow evidence, or production result is inferred from it.
+The real host worker is locally ready: the hardened systemd service is active on loopback, its `/health` reports `ready=true`, executor/preflight/filesystem/network isolation true, all seven hostile canaries true, credentials not exposed, and deployment unauthorized. A genuine `systemctl restart sparkle-worker.service` changed the worker PID from `236382` to `239329`; the new process retained the certified installed source hashes and returned the same complete ready contract. This is local service restart/recovery evidence only. No trusted-HTTPS remote acceptance, GitHub Environment acceptance, remote post-restart workflow evidence, or production result is inferred from it.
 
 ## Trusted remote acceptance not yet observed
 
@@ -62,7 +64,7 @@ These workflow artifacts do not by themselves prove a worker-service interruptio
 
 ## Mandatory worker interruption/restart gate
 
-A host operator must record the real service/container state and worker revision, interrupt or restart the worker service/container itself, verify recovery with the same worker identity and persistent state, and rerun the manual acceptance workflow. Retain the service-manager/container restart evidence together with both pre- and post-restart acceptance artifacts.
+The local systemd restart/recovery has been demonstrated on `prem-macharla`, but the acceptance gate still requires the same genuine service/container interruption to be paired with retained trusted-remote acceptance evidence before and after the restart. Retain the service-manager/container restart evidence together with both pre- and post-restart workflow artifacts.
 
 Killing a sandbox child or unittest process is not accepted as worker-interruption evidence.
 

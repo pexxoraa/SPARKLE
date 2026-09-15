@@ -141,6 +141,29 @@ class DocumentationContractTests(unittest.TestCase):
         self.assertIn("0700", security)
         self.assertIn("0600", security)
 
+    def test_current_ledgers_match_verified_level3_and_browser_state(self):
+        audit = (ROOT / "docs" / "CURRENT_AUDIT.md").read_text(encoding="utf-8")
+        acceptance = (ROOT / "docs" / "ACCEPTANCE.md").read_text(encoding="utf-8")
+        build_state = (ROOT / "docs" / "BUILD_STATE.md").read_text(encoding="utf-8")
+        level3 = (ROOT / "docs" / "LEVEL3_STATUS.md").read_text(encoding="utf-8")
+        execution = (ROOT / "docs" / "EXECUTION.md").read_text(encoding="utf-8")
+        worker = (ROOT / "docs" / "WORKER.md").read_text(encoding="utf-8")
+        security = (ROOT / "docs" / "SECURITY.md").read_text(encoding="utf-8")
+        backlog = (ROOT / "docs" / "capability_backlog.json").read_text(encoding="utf-8")
+
+        for current in (audit, acceptance, build_state, level3):
+            self.assertIn("b013d768ddd0a7161a394b4c78afef9a50384eb1", current)
+            self.assertNotIn("CI #182", current)
+            self.assertNotIn("exact-head publication/CI is still pending", current)
+        self.assertIn("local worker restart/recovery: VERIFIED", level3)
+        self.assertIn("signed cancellation through `POST /v1/jobs/cancel`", execution)
+        self.assertNotIn("not claimed as implemented", execution)
+        self.assertIn("`ProtectKernelLogs=no`", worker)
+        self.assertIn("`ProtectKernelLogs=no`", security)
+        self.assertNotIn("module/log\n  protections", security)
+        self.assertNotIn('"capability": "browser_live_host_acceptance"', backlog)
+        self.assertIn("Live browser host acceptance is VERIFIED", backlog)
+
 
 if __name__ == "__main__":
     unittest.main()

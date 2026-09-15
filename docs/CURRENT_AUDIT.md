@@ -1,6 +1,6 @@
 # SPARKLE current capability audit — 2026-09-15
 
-Authoritative baseline audited before current fixes: `6d59b45b0a91f56b8932c2a1822f0781a926701a`.
+Published certified software baseline before this documentation reconciliation: `b013d768ddd0a7161a394b4c78afef9a50384eb1` (tree `ac0c9ee9e4972fbda116971577b923aab445e18b`), with SPARKLE CI #192 passing all five jobs.
 This file replaces the historical 2026-09-09 primary inventory. Earlier benchmark
 reports remain historical evidence; they are not silently reinterpreted as current
 live verification.
@@ -116,4 +116,4 @@ supporting regression evidence only and do not change the external classificatio
 **Software completion gate: PASS — no ordinary software-completable capability remains
 PARTIALLY COMPLETE, INTERFACE ONLY, or NOT IMPLEMENTED.**
 
-**Level 3: NOT COMPLETE — local real worker ready; trusted remote/restart acceptance blocked. Deployment: FROZEN.**
+**Level 3: NOT COMPLETE — local real worker ready and a genuine local systemd restart/recovery has been verified; trusted HTTPS, protected GitHub Environment, remote acceptance, and post-restart remote acceptance remain blocked. Deployment: FROZEN.**
