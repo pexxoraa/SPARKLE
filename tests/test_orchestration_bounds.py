@@ -58,9 +58,14 @@ class OrchestrationBoundTests(SystemCase):
         with patch.object(self.system.tools, 'execute', wraps=self.system.tools.execute) as execute:
             result = self.system.orchestrator.run('Remember a goal', agent_name='personal')
         self.assertEqual(execute.call_count, 1)
-        self.assertEqual(result.tool_calls_executed, ['memory_write', 'memory_write'])
+        self.assertEqual(result.tool_calls_executed, ['memory_write'])
         self.assertEqual(len(self.system.memory_review.list()), 1)
         trace = self.system.traces.recent()[0]
+        self.assertEqual(trace['tools'], ['memory_write'])
+        self.assertEqual(
+            trace['execution_metadata']['tool_calls_requested'],
+            ['memory_write', 'memory_write'],
+        )
         self.assertEqual(trace['execution_metadata']['tool_call_replays'], 1)
         self.assertEqual(trace['execution_metadata']['tool_calls_reserved'], 2)
 
@@ -73,6 +78,12 @@ class OrchestrationBoundTests(SystemCase):
                 self.system.orchestrator.run('Calculate', agent_name='personal')
         self.assertEqual(caught.exception.orchestration_code, 'tool_call_replay_mismatch')
         self.assertEqual(execute.call_count, 1)
+        trace = self.system.traces.recent()[0]
+        self.assertEqual(trace['tools'], ['calculator'])
+        self.assertEqual(
+            trace['execution_metadata']['tool_calls_requested'],
+            ['calculator', 'calculator'],
+        )
 
     def test_workflow_wall_clock_budget_is_shared_and_fails_closed(self):
         self.system.orchestrator.max_workflow_seconds = 1

@@ -21,7 +21,11 @@ and out-of-policy redirects fail closed.
 Browser sessions persist allowed hosts, TTL, optimistic revision and bounded
 event history. Browser output is read-only extracted text; page scripts are not
 executed and requests carry no cookies, authorization headers or request body.
-`live_browser_verified` remains false until real host/network acceptance is run.
+Real host acceptance is recorded only through the fixed
+`sparkle-interaction accept-browser` checkset and a separate operator import.
+The append-only record is code-hash/checkset/adapter bound, expiring, revocable,
+and content-free; configuration or ordinary session history cannot set
+`live_browser_verified`.
 
 ## Computer contract
 
@@ -48,7 +52,7 @@ create its own network or GUI authorization through the normal tool registry.
 | Provider-neutral contracts | IMPLEMENTED | bounded validation and fail-closed tests |
 | Safe HTTPS browser runtime | IMPLEMENTED | concrete stdlib adapter and deterministic transport-policy tests |
 | Browser session integration | IMPLEMENTED | main runtime + operator CLI + persisted revisioned sessions |
-| Live browser host/network acceptance | EXTERNAL ACCEPTANCE | no live acceptance campaign in this milestone |
+| Live browser host/network acceptance | OPERATOR GATE IMPLEMENTED | fixed real-host checkset, owner-only evidence artifact, reviewed import, exact-build and one-way host-identity binding, expiry and revocation; current results belong in `CURRENT_AUDIT.md` |
 | Computer contract/session lifecycle | IMPLEMENTED | typed actions, persistence, permissions and test adapters |
 | Live computer execution | EXTERNAL ADAPTER/HOST | concrete GUI adapter, permissions and live evidence required |
 | Agent tool exposure | DEFERRED BY DESIGN | operator-owned authorization remains outside general model tools |

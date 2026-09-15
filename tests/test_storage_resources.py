@@ -13,6 +13,7 @@ from unittest.mock import patch
 
 from benchmarks.agents import run_agents
 from sparkle.ai_system_builder import AISystemBlueprintStore
+from sparkle.config import data_root
 from sparkle.storage import ClosingConnection, SQLiteStore, StorageConnectionError
 from sparkle.system import SparkleSystem
 
@@ -55,6 +56,86 @@ def assert_closed(test,connections):
 
 
 class StorageResourceTests(unittest.TestCase):
+    @unittest.skipUnless(os.name=='posix','Private mode checks require POSIX permissions')
+    def test_state_and_backup_files_stay_private_under_common_umask(self):
+        previous_umask=os.umask(0o022)
+        try:
+            with tempfile.TemporaryDirectory() as directory:
+                state=Path(directory)/'sparkle-state'
+                with patch.dict(os.environ,{'SPARKLE_DATA_DIR':str(state)}):
+                    store=SQLiteStore(state/'data_environment'/'private.db')
+                    with store.connect() as connection:
+                        connection.execute('CREATE TABLE private(value TEXT)')
+                        connection.execute("INSERT INTO private VALUES('sensitive')")
+                    backup=store.backup(state/'backups'/'private-copy.db')
+                self.assertEqual(state.stat().st_mode&0o777,0o700)
+                self.assertEqual(store.path.parent.stat().st_mode&0o777,0o700)
+                self.assertEqual(store.path.stat().st_mode&0o777,0o600)
+                self.assertEqual(backup.parent.stat().st_mode&0o777,0o700)
+                self.assertEqual(backup.stat().st_mode&0o777,0o600)
+        finally:
+            os.umask(previous_umask)
+
+    @unittest.skipUnless(os.name=='posix','Private mode checks require POSIX permissions')
+    def test_existing_managed_state_modes_are_repaired(self):
+        with tempfile.TemporaryDirectory() as directory:
+            state=Path(directory)/'sparkle-state'
+            data=state/'data_environment'
+            data.mkdir(parents=True,mode=0o755)
+            state.chmod(0o755);data.chmod(0o755)
+            database=data/'existing.db'
+            sqlite3.connect(database).close()
+            database.chmod(0o644)
+            with patch.dict(os.environ,{'SPARKLE_DATA_DIR':str(state)}):
+                with SQLiteStore(database).connect() as connection:
+                    connection.execute('SELECT 1')
+            self.assertEqual(state.stat().st_mode&0o777,0o700)
+            self.assertEqual(data.stat().st_mode&0o777,0o700)
+            self.assertEqual(database.stat().st_mode&0o777,0o600)
+
+    @unittest.skipUnless(os.name=='posix','Symlink checks require POSIX semantics')
+    def test_database_and_state_directory_symlinks_fail_closed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            state=root/'sparkle-state'
+            data=state/'data_environment'
+            data.mkdir(parents=True)
+            outside=root/'outside.db'
+            outside.write_text('must remain unchanged',encoding='utf-8')
+            linked_database=data/'linked.db'
+            linked_database.symlink_to(outside)
+            with patch.dict(os.environ,{'SPARKLE_DATA_DIR':str(state)}):
+                with self.assertRaises(StorageConnectionError):
+                    SQLiteStore(linked_database).connect()
+            self.assertEqual(outside.read_text(encoding='utf-8'),'must remain unchanged')
+
+            real_parent=root/'real-parent'
+            real_parent.mkdir()
+            linked_parent=state/'linked_environment'
+            linked_parent.symlink_to(real_parent,target_is_directory=True)
+            with patch.dict(os.environ,{'SPARKLE_DATA_DIR':str(state)}):
+                with self.assertRaises(StorageConnectionError):
+                    SQLiteStore(linked_parent/'state.db')
+
+            real_state=root/'real-state'
+            real_state.mkdir()
+            linked_state=root/'linked-state'
+            linked_state.symlink_to(real_state,target_is_directory=True)
+            with patch.dict(os.environ,{'SPARKLE_DATA_DIR':str(linked_state)}):
+                with self.assertRaisesRegex(ValueError, 'cannot be a symlink'):
+                    data_root()
+                with self.assertRaises(StorageConnectionError):
+                    SQLiteStore(linked_state/'data_environment'/'state.db')
+
+            regular=data/'regular.db'
+            regular.write_bytes(b'unchanged')
+            hardlink=data/'hardlink.db'
+            os.link(regular,hardlink)
+            with patch.dict(os.environ,{'SPARKLE_DATA_DIR':str(state)}):
+                with self.assertRaises(StorageConnectionError):
+                    SQLiteStore(hardlink).connect()
+            self.assertEqual(regular.read_bytes(),b'unchanged')
+
     def test_store_scopes_close_and_backup_closes_both_handles(self):
         with tempfile.TemporaryDirectory() as directory,tracked_connections() as connections:
             store=SQLiteStore(Path(directory)/'store.db')

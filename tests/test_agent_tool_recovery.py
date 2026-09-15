@@ -56,12 +56,20 @@ class AgentToolRecoveryTests(SystemCase):
         self.assertEqual(execute.call_count, 1)
         self.assertEqual(
             result.tool_calls_executed,
-            ["calculator", "calculator", "calculator"],
+            ["calculator"],
         )
         self.assertEqual(adapter.calls, 4)
         self.assertEqual(adapter.requests[-1].tools, [])
         trace = self.system.traces.recent()[0]
         self.assertEqual(trace["status"], "success")
+        self.assertEqual(trace["tools"], ["calculator"])
+        self.assertIn("tool_loop", trace["transformations"])
+        self.assertEqual(
+            trace["execution_metadata"]["tool_calls_requested"],
+            ["calculator", "calculator", "calculator"],
+        )
+        self.assertEqual(trace["execution_metadata"]["tool_calls_reserved"], 3)
+        self.assertEqual(trace["execution_metadata"]["tool_call_replays"], 2)
         self.assertEqual(trace["execution_metadata"]["tool_signature_replays"], 2)
         self.assertEqual(trace["execution_metadata"]["tool_loop_recovery_completions"], 1)
 

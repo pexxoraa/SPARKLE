@@ -307,6 +307,7 @@ class Orchestrator:
         )
         adapter = None
         routing_decisions: list[dict[str, object]] = []
+        requested: list[str] = []
         executed: list[str] = []
         memory_proposals: list[str] = []
         no_progress_rounds = 0
@@ -395,6 +396,7 @@ class Orchestrator:
                 new_executions = 0
                 for call in response.tool_calls:
                     budget.check()
+                    requested.append(call.name)
                     replayed, signature, cached = budget.replay(
                         spec.name, call.id, call.name, call.arguments
                     )
@@ -411,11 +413,11 @@ class Orchestrator:
                             }
                         budget.remember(spec.name, call.id, signature, result)
                         new_executions += 1
+                        executed.append(call.name)
                     if call.name == "memory_write" and isinstance(result, dict) and result.get("status") == "pending":
                         proposal_id = result.get("proposal_id")
                         if isinstance(proposal_id, str) and proposal_id not in memory_proposals:
                             memory_proposals.append(proposal_id)
-                    executed.append(call.name)
                     messages.append(
                         Message(
                             role="tool",
@@ -477,14 +479,15 @@ class Orchestrator:
                 transformations = ["isolated_evaluation", "agent_reasoning", "direct_completion"]
             else:
                 transformations = (
-                    ["content_validation", "context_retrieval", "agent_reasoning", "tool_loop" if executed else "direct_completion"]
+                    ["content_validation", "context_retrieval", "agent_reasoning", "tool_loop" if requested else "direct_completion"]
                     if content is not None
-                    else ["context_retrieval", "agent_reasoning", "tool_loop" if executed else "direct_completion"]
+                    else ["context_retrieval", "agent_reasoning", "tool_loop" if requested else "direct_completion"]
                 )
             final_execution_metadata = {
                 **execution_metadata,
                 "model_routing": routing_decisions,
                 "memory_proposal_ids": memory_proposals,
+                "tool_calls_requested": requested,
                 "tool_loop_recovery_completions": recovery_completions,
                 **self._budget_metadata(budget),
             }
@@ -510,6 +513,7 @@ class Orchestrator:
                 **execution_metadata,
                 "model_routing": routing_decisions,
                 "memory_proposal_ids": memory_proposals,
+                "tool_calls_requested": requested,
                 "tool_loop_recovery_completions": recovery_completions,
                 **self._budget_metadata(budget),
             }

@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import tempfile
 import unittest
 from pathlib import Path
 
-from benchmarks.run import run_all
+from benchmarks.run import BENCHMARK_IMPLEMENTATION_FILES, run_all
 from benchmarks.gates import check_retrieval
 from benchmarks.retrieval import metrics
 from sparkle.context import ContextBundle
@@ -31,6 +32,22 @@ class BenchmarkTests(unittest.TestCase):
             baseline,
             self.report['implementation_sha256']['src/sparkle/orchestrator.py'],
         )
+
+    def test_agent_tool_and_nvidia_implementations_are_provenanced(self):
+        required = {
+            'src/sparkle/agents.py',
+            'src/sparkle/tooling.py',
+            'src/sparkle/providers/nvidia.py',
+            'src/sparkle/provider_http.py',
+        }
+        self.assertTrue(required <= set(BENCHMARK_IMPLEMENTATION_FILES))
+        hashes = self.report['implementation_sha256']
+        self.assertTrue(required <= set(hashes))
+        for path in required:
+            self.assertEqual(
+                hashes[path],
+                hashlib.sha256(Path(path).read_bytes()).hexdigest(),
+            )
 
     def test_metric_definitions_multi_relevance_and_misses(self):
         rows=[{'ranking':['bad','a','b'],'relevant':['a','b']},

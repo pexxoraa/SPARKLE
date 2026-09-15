@@ -1,14 +1,17 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import secrets
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlsplit
 
+from sparkle import __version__
 from sparkle.config import data_root
 from sparkle.storage import SQLiteStore, utc_now
 
@@ -139,6 +142,30 @@ class InteractionSessionStore(SQLiteStore):
                 request_json TEXT NOT NULL,result_json TEXT NOT NULL,created_at TEXT NOT NULL,
                 FOREIGN KEY(session_id) REFERENCES interaction_sessions(id))""")
             db.execute("CREATE INDEX IF NOT EXISTS idx_interaction_events ON interaction_events(session_id,id DESC)")
+            db.execute("""CREATE TABLE IF NOT EXISTS capability_acceptance(
+                id TEXT PRIMARY KEY,capability TEXT NOT NULL,schema TEXT NOT NULL,
+                checkset_version TEXT NOT NULL,sparkle_version TEXT NOT NULL,
+                build_sha256 TEXT NOT NULL,adapter TEXT NOT NULL,approved_scope_sha256 TEXT NOT NULL,
+                host_identity_sha256 TEXT NOT NULL,
+                checks_json TEXT NOT NULL,started_at TEXT NOT NULL,completed_at TEXT NOT NULL,
+                artifact_sha256 TEXT NOT NULL UNIQUE,artifact_ref TEXT NOT NULL,operator TEXT NOT NULL,
+                expires_at REAL NOT NULL,created_at TEXT NOT NULL)""")
+            acceptance_columns = {
+                row["name"]
+                for row in db.execute("PRAGMA table_info(capability_acceptance)")
+            }
+            if "host_identity_sha256" not in acceptance_columns:
+                db.execute(
+                    "ALTER TABLE capability_acceptance "
+                    "ADD COLUMN host_identity_sha256 TEXT"
+                )
+            db.execute("""CREATE TABLE IF NOT EXISTS capability_acceptance_revocations(
+                record_id TEXT PRIMARY KEY,operator TEXT NOT NULL,reason TEXT NOT NULL,
+                revoked_at TEXT NOT NULL,FOREIGN KEY(record_id) REFERENCES capability_acceptance(id))""")
+            db.execute(
+                "CREATE INDEX IF NOT EXISTS idx_capability_acceptance "
+                "ON capability_acceptance(capability,created_at DESC)"
+            )
 
 
 class InteractionService:
@@ -147,6 +174,29 @@ class InteractionService:
     COMPUTER_KINDS = {"screenshot", "click", "type_text", "key"}
     MAX_ACTIVE_SESSIONS = 500
     MAX_EVENTS_PER_SESSION = 5_000
+    BROWSER_ACCEPTANCE_SCHEMA = "SPARKLE-BROWSER-ACCEPTANCE/1"
+    BROWSER_ACCEPTANCE_CHECKSET = "safe-https-host-v1"
+    BROWSER_ACCEPTANCE_ADAPTER = "sparkle.browser_runtime.SafeHTTPSBrowserAdapter"
+    BROWSER_ACCEPTANCE_CHECKS = frozenset(
+        {
+            "public_https_success",
+            "nonpublic_addresses_rejected",
+            "tls_hostname_rejected",
+            "redirect_revalidated",
+            "output_bound_enforced",
+            "persistent_session_lifecycle",
+        }
+    )
+    BROWSER_ACCEPTANCE_HOSTS = (
+        "127.0.0.1",
+        "10.0.0.1",
+        "192.0.2.1",
+        "example.com",
+        "httpbin.org",
+        "wrong.host.badssl.com",
+    )
+    MAX_ACCEPTANCE_IMPORT_AGE_SECONDS = 86_400
+    MAX_ACCEPTANCE_TTL_SECONDS = 90 * 86_400
 
     def __init__(
         self,
@@ -303,6 +353,277 @@ class InteractionService:
         return [{"id": row["id"], "event": row["event"], "request": json.loads(row["request_json"]),
                  "result": json.loads(row["result_json"]), "created_at": row["created_at"]} for row in rows]
 
+    @classmethod
+    def browser_build_sha256(cls) -> str:
+        digest = hashlib.sha256()
+        root = Path(__file__).resolve().parent
+        for name in ("interaction.py", "browser_runtime.py", "interaction_cli.py"):
+            digest.update(name.encode("utf-8"))
+            digest.update(b"\0")
+            digest.update((root / name).read_bytes())
+            digest.update(b"\0")
+        return digest.hexdigest()
+
+    @classmethod
+    def browser_scope_sha256(cls) -> str:
+        encoded = cls._json(list(cls.BROWSER_ACCEPTANCE_HOSTS)).encode("utf-8")
+        return hashlib.sha256(encoded).hexdigest()
+
+    @staticmethod
+    def browser_host_identity_sha256() -> str:
+        for location in ("/etc/machine-id", "/var/lib/dbus/machine-id"):
+            try:
+                raw = Path(location).read_text(encoding="ascii").strip().lower()
+            except (OSError, UnicodeError):
+                continue
+            if re.fullmatch(r"[0-9a-f]{32}", raw):
+                return hashlib.sha256(
+                    b"SPARKLE-BROWSER-HOST/1\0" + bytes.fromhex(raw)
+                ).hexdigest()
+        raise InteractionSessionError(
+            "Browser acceptance requires a stable host identity"
+        )
+
+    def _browser_adapter_identity(self) -> str:
+        kind = type(self.browser)
+        return f"{kind.__module__}.{kind.__qualname__}"
+
+    @staticmethod
+    def _acceptance_timestamp(raw: object, field: str) -> float:
+        if not isinstance(raw, str) or not 10 <= len(raw) <= 64:
+            raise InteractionSessionError(f"Browser acceptance {field} is invalid")
+        try:
+            parsed = datetime.fromisoformat(raw)
+        except ValueError as exc:
+            raise InteractionSessionError(
+                f"Browser acceptance {field} is invalid"
+            ) from exc
+        if parsed.tzinfo is None:
+            raise InteractionSessionError(
+                f"Browser acceptance {field} must include a timezone"
+            )
+        return parsed.timestamp()
+
+    @staticmethod
+    def _acceptance_operator(operator: object) -> str:
+        if not isinstance(operator, str) or not re.fullmatch(
+            r"[A-Za-z0-9][A-Za-z0-9._:@/-]{0,127}", operator
+        ):
+            raise InteractionSessionError("Browser acceptance operator is invalid")
+        return operator
+
+    def record_browser_acceptance(
+        self,
+        evidence: dict[str, object],
+        *,
+        artifact_sha256: str,
+        artifact_ref: str,
+        operator: str,
+        expires_at: float,
+    ) -> dict[str, object]:
+        required = {
+            "schema",
+            "capability",
+            "checkset_version",
+            "sparkle_version",
+            "build_sha256",
+            "adapter",
+            "approved_hosts_sha256",
+            "host_identity_sha256",
+            "checks",
+            "started_at",
+            "completed_at",
+            "passed",
+        }
+        allowed = required | {"failure_stage", "failure_reason"}
+        if not isinstance(evidence, dict) or not required <= set(evidence) or set(evidence) - allowed:
+            raise InteractionSessionError("Browser acceptance artifact fields are invalid")
+        checks = evidence["checks"]
+        if (
+            evidence["schema"] != self.BROWSER_ACCEPTANCE_SCHEMA
+            or evidence["capability"] != "browser"
+            or evidence["checkset_version"] != self.BROWSER_ACCEPTANCE_CHECKSET
+            or evidence["sparkle_version"] != __version__
+            or evidence["build_sha256"] != self.browser_build_sha256()
+            or evidence["adapter"] != self.BROWSER_ACCEPTANCE_ADAPTER
+            or evidence["approved_hosts_sha256"] != self.browser_scope_sha256()
+            or evidence["host_identity_sha256"] != self.browser_host_identity_sha256()
+            or evidence["passed"] is not True
+            or not isinstance(checks, dict)
+            or set(checks) != self.BROWSER_ACCEPTANCE_CHECKS
+            or any(value is not True for value in checks.values())
+            or evidence.get("failure_stage") is not None
+            or evidence.get("failure_reason") is not None
+        ):
+            raise InteractionSessionError(
+                "Browser acceptance artifact does not match the current passing contract"
+            )
+        started = self._acceptance_timestamp(evidence["started_at"], "start time")
+        completed = self._acceptance_timestamp(evidence["completed_at"], "completion time")
+        now = time.time()
+        if (
+            completed < started
+            or completed > now + 300
+            or completed < now - self.MAX_ACCEPTANCE_IMPORT_AGE_SECONDS
+        ):
+            raise InteractionSessionError("Browser acceptance artifact is not current")
+        if (
+            isinstance(expires_at, bool)
+            or not isinstance(expires_at, (int, float))
+            or not now < float(expires_at) <= now + self.MAX_ACCEPTANCE_TTL_SECONDS
+        ):
+            raise InteractionSessionError("Browser acceptance expiry is invalid")
+        if not re.fullmatch(r"[0-9a-f]{64}", artifact_sha256):
+            raise InteractionSessionError("Browser acceptance artifact hash is invalid")
+        if (
+            not isinstance(artifact_ref, str)
+            or not 1 <= len(artifact_ref) <= 2_048
+            or any(char in artifact_ref for char in ("\0", "\n", "\r"))
+        ):
+            raise InteractionSessionError("Browser acceptance artifact reference is invalid")
+        accepted_by = self._acceptance_operator(operator)
+        record_id = secrets.token_urlsafe(18)
+        created_at = utc_now()
+        with self.sessions.connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            if db.execute(
+                "SELECT 1 FROM capability_acceptance WHERE artifact_sha256=?",
+                (artifact_sha256,),
+            ).fetchone() is not None:
+                raise InteractionSessionError(
+                    "Browser acceptance artifact was already recorded"
+                )
+            db.execute(
+                """INSERT INTO capability_acceptance(
+                    id,capability,schema,checkset_version,sparkle_version,build_sha256,
+                    adapter,approved_scope_sha256,host_identity_sha256,checks_json,
+                    started_at,completed_at,
+                    artifact_sha256,artifact_ref,operator,expires_at,created_at
+                ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (
+                    record_id,
+                    "browser",
+                    self.BROWSER_ACCEPTANCE_SCHEMA,
+                    self.BROWSER_ACCEPTANCE_CHECKSET,
+                    __version__,
+                    self.browser_build_sha256(),
+                    self.BROWSER_ACCEPTANCE_ADAPTER,
+                    self.browser_scope_sha256(),
+                    self.browser_host_identity_sha256(),
+                    self._json(checks),
+                    evidence["started_at"],
+                    evidence["completed_at"],
+                    artifact_sha256,
+                    artifact_ref,
+                    accepted_by,
+                    float(expires_at),
+                    created_at,
+                ),
+            )
+        return self.browser_acceptance()
+
+    def revoke_browser_acceptance(
+        self, record_id: str, *, operator: str, reason: str
+    ) -> dict[str, object]:
+        if not isinstance(record_id, str) or not re.fullmatch(
+            r"[A-Za-z0-9_-]{16,128}", record_id
+        ):
+            raise InteractionSessionError("Browser acceptance record id is invalid")
+        revoked_by = self._acceptance_operator(operator)
+        if (
+            not isinstance(reason, str)
+            or not 1 <= len(reason.strip()) <= 512
+            or any(char in reason for char in ("\0", "\n", "\r"))
+        ):
+            raise InteractionSessionError("Browser acceptance revocation reason is invalid")
+        with self.sessions.connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            row = db.execute(
+                "SELECT capability FROM capability_acceptance WHERE id=?", (record_id,)
+            ).fetchone()
+            if row is None or row["capability"] != "browser":
+                raise InteractionSessionError("Unknown browser acceptance record")
+            if db.execute(
+                "SELECT 1 FROM capability_acceptance_revocations WHERE record_id=?",
+                (record_id,),
+            ).fetchone() is not None:
+                raise InteractionSessionError(
+                    "Browser acceptance record is already revoked"
+                )
+            db.execute(
+                """INSERT INTO capability_acceptance_revocations(
+                    record_id,operator,reason,revoked_at
+                ) VALUES(?,?,?,?)""",
+                (record_id, revoked_by, reason.strip(), utc_now()),
+            )
+        return self.browser_acceptance()
+
+    def browser_acceptance(self) -> dict[str, object]:
+        current_build = self.browser_build_sha256()
+        current_adapter = self._browser_adapter_identity()
+        with self.sessions.connect() as db:
+            row = db.execute(
+                """SELECT a.*,r.revoked_at
+                FROM capability_acceptance a
+                LEFT JOIN capability_acceptance_revocations r ON r.record_id=a.id
+                WHERE a.capability='browser'
+                ORDER BY a.created_at DESC,a.rowid DESC LIMIT 1"""
+            ).fetchone()
+        if row is None:
+            return {
+                "recorded": False,
+                "verified": False,
+                "reason": "no_acceptance_record",
+                "record_id": None,
+                "last_verified_at": None,
+                "expires_at": None,
+                "artifact_sha256": None,
+                "build_sha256": current_build,
+                "checkset_version": self.BROWSER_ACCEPTANCE_CHECKSET,
+            }
+        try:
+            checks = json.loads(row["checks_json"])
+        except (TypeError, json.JSONDecodeError):
+            checks = {}
+        revoked = row["revoked_at"] is not None
+        expired = float(row["expires_at"]) <= time.time()
+        valid_checks = (
+            isinstance(checks, dict)
+            and set(checks) == self.BROWSER_ACCEPTANCE_CHECKS
+            and all(value is True for value in checks.values())
+        )
+        matches = (
+            row["schema"] == self.BROWSER_ACCEPTANCE_SCHEMA
+            and row["checkset_version"] == self.BROWSER_ACCEPTANCE_CHECKSET
+            and row["sparkle_version"] == __version__
+            and row["build_sha256"] == current_build
+            and row["adapter"] == self.BROWSER_ACCEPTANCE_ADAPTER
+            and row["approved_scope_sha256"] == self.browser_scope_sha256()
+            and row["host_identity_sha256"] == self.browser_host_identity_sha256()
+            and current_adapter == self.BROWSER_ACCEPTANCE_ADAPTER
+            and valid_checks
+        )
+        verified = not revoked and not expired and matches
+        if revoked:
+            reason = "revoked"
+        elif expired:
+            reason = "expired"
+        elif not matches:
+            reason = "current_build_or_contract_mismatch"
+        else:
+            reason = "accepted"
+        return {
+            "recorded": True,
+            "verified": verified,
+            "reason": reason,
+            "record_id": row["id"],
+            "last_verified_at": row["completed_at"],
+            "expires_at": row["expires_at"],
+            "artifact_sha256": row["artifact_sha256"],
+            "build_sha256": current_build,
+            "checkset_version": self.BROWSER_ACCEPTANCE_CHECKSET,
+        }
+
     def status(self) -> dict[str, object]:
         browser_ready = not isinstance(self.browser, DisabledBrowserAdapter)
         computer_ready = not isinstance(self.computer, DisabledComputerAdapter)
@@ -310,15 +631,19 @@ class InteractionService:
             active = db.execute("SELECT count(*) FROM interaction_sessions WHERE status='active' AND expires_at>sparkle_now()").fetchone()[0]
             total = db.execute("SELECT count(*) FROM interaction_sessions").fetchone()[0]
             events = db.execute("SELECT count(*) FROM interaction_events").fetchone()[0]
+        browser_acceptance = self.browser_acceptance()
         return {
             "contract": "implemented",
             "session_lifecycle": "implemented",
             "browser": "configured" if browser_ready else "externally_unconfigured",
+            "browser_current_health": "not_probed",
+            "browser_accepted": bool(browser_acceptance["verified"]),
+            "browser_acceptance": browser_acceptance,
             "computer": "configured" if computer_ready else "externally_unconfigured",
             "active_sessions": active,
             "sessions": total,
             "events": events,
-            "live_browser_verified": False,
+            "live_browser_verified": bool(browser_acceptance["verified"]),
             "live_computer_verified": False,
             "agent_tool_registered": False,
         }

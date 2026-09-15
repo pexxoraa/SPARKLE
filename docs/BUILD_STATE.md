@@ -1,23 +1,23 @@
 # Build state
 
-Updated: 2026-09-14 UTC
+Updated: 2026-09-15 UTC
 
 | Field | State |
 |---|---|
 | SPARKLE version | 0.30.0-alpha.1 |
-| Current phase | Software implementation closed; real-world validation is pending human acceptance |
+| Current phase | Proven software/evidence defects are fixed locally; exact-head CI and remaining external acceptance are pending |
 | Current task | Deployment-surface reconciliation and independent runtime audit. Proven repository defects may be fixed; production deployment remains frozen. |
 | Completed | All ordinary software-completable capability families in `docs/CURRENT_AUDIT.md`: stateful memory/knowledge/projects/learning/content/data/research; persistent semantic-vector indexing; model/orchestrator/agent/tool integration; builders and controlled promotion/build/execution/cancellation; automation reliability and agent inspection; safe HTTPS browser; multimodal image transport; API/CLI/dashboard/status; cross-platform state architecture; host-adapter injection; security/evidence/packaging/documentation |
-| Final software verification | Implementation/test baseline `34b74d36feb706c15fe00cc407716fa9742d6381`; SPARKLE CI run #134 passed on that baseline, including Python 3.12/3.13 compile-and-test and credential-free benchmark reproduction, worker image, controlled-execution software boundary and automation-service lifecycle. Focused platform smoke run #3 also passed on the same baseline for Windows and macOS with Python 3.12. |
+| Final software verification | Last published certified baseline `6d59b45b0a91f56b8932c2a1822f0781a926701a`; SPARKLE CI run #182 passed all five jobs. The current audit candidate passes compileall, 546 full tests (1 explicit skip), the 85-test Level-3 gate, benchmark reproduction, and live browser acceptance locally; exact-head publication/CI is still pending. |
 | In progress | Level-3 real worker is locally ready on the connected host. Trusted HTTPS ingress, GitHub Environment configuration, remote/lifecycle/full-chain acceptance, and genuine worker restart acceptance remain external. |
-| Blocked | External acceptance only: real semantic embedding quality; credentialed NVIDIA/secondary-provider and live-agent quality; browser acceptance recording/reconciliation; GUI computer adapter/permissions; STT/TTS provider/device; audio/document-capable provider; physical motion hardware; Android/iOS/GrapheneOS embedded host acceptance; Level-3 trusted HTTPS/GitHub Environment/remote probes/restart acceptance; production deployment authorization/target. Deployment is FROZEN. |
+| Blocked | External acceptance only: real semantic embedding quality; live NVIDIA/secondary-provider agent quality beyond the preserved 3/12 result; GUI computer adapter/permissions; STT/TTS provider/device; audio/document-capable provider; physical motion hardware; Android/iOS/GrapheneOS embedded host acceptance; Level-3 trusted HTTPS/GitHub Environment/remote probes/restart acceptance; production deployment authorization/target. Deployment is FROZEN. |
 | Failed tests | No current software regression failure remains. Earlier CI/platform failures are retained as historical evidence and were resolved without weakening tests, benchmarks, validators, security or capability definitions. |
 | Next action | Complete all independent repository/runtime audits. For Level 3, do not mark complete until trusted HTTPS, GitHub Environment configuration, remote/lifecycle/full-chain probes, genuine service restart, rerun, and retained artifacts have all passed. |
 | Estimated directive completion | 100% of ordinary software implementation; external/live/manual acceptance intentionally excluded from this percentage. See `CURRENT_AUDIT.md` and `capability_backlog.json`. |
 
 **SOFTWARE IMPLEMENTATION: 100% COMPLETE**
 
-**REAL-WORLD VALIDATION: PENDING HUMAN ACCEPTANCE**
+**REAL-WORLD VALIDATION: PARTIAL — browser host accepted; other listed gates remain external**
 
 ## Completion boundary
 
@@ -29,9 +29,14 @@ acceptance requirements.
 
 The software completion gate contains no ordinary `PARTIALLY COMPLETE`,
 `INTERFACE ONLY`, or `NOT IMPLEMENTED` capability. This does not change any
-runtime verification flag: semantic quality, live browser/computer/voice/motion,
-Level-3 isolation and production deployment remain unverified until their separate
-acceptance gates pass.
+runtime verification flag: semantic quality, live computer/voice/motion,
+trusted-remote Level-3 isolation and production deployment remain unverified until
+their separate acceptance gates pass. Browser host acceptance is separately recorded
+for the exact current browser build and does not imply those other capabilities.
+
+Browser host acceptance is now recorded for the exact current browser build:
+all six fixed checks passed, the content-free artifact is mode `0600`, and status
+reports the unexpired/unrevoked record separately from current health.
 
 ## Current externally blocked acceptance families
 
@@ -39,7 +44,6 @@ acceptance gates pass.
   retrieval quality before changing `semantic_quality_verified`.
 - **Live model/agent quality:** run the unchanged credentialed benchmark and retain
   task-level validator evidence; do not infer competence from deterministic doubles.
-- **Browser:** real host checks have exercised public HTTPS, output limits, private-address rejection, certificate failure, redirect revalidation, and persistent session lifecycle. The remaining repository defect is durable operator acceptance recording; do not change `live_browser_verified` merely from ad hoc smoke evidence.
 - **Computer/voice/motion:** provide concrete host adapters through `SparkleSystem`,
   grant only required OS/device permissions, and perform live acceptance without
   treating adapter presence as verification.

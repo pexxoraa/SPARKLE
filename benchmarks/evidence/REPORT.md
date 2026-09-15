@@ -40,7 +40,7 @@ Negative controls: {"wrong_known_answer": "rejected", "missing_evidence": "incon
 
 Execution success is not outcome correctness. Scripted choices do not demonstrate autonomous tool selection, teaching, research synthesis or coding quality.
 
-Level 3 BLOCKED. Deployment FROZEN. Real semantic and NVIDIA live evaluation pending.
+Level 3 local worker readiness is verified; trusted remote/restart acceptance remains blocked. Deployment FROZEN. The latest live Nemotron evidence remains 3/12 and is not rerun by this deterministic benchmark.
 
 
 ## Retrieval failures at K=5

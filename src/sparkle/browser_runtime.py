@@ -4,16 +4,21 @@ import http.client
 import ipaddress
 import socket
 import ssl
+import tempfile
 from html.parser import HTMLParser
+from pathlib import Path
 from typing import Callable, Mapping
 from urllib.parse import urljoin, urlsplit
 
+from sparkle import __version__
 from sparkle.interaction import (
     BrowserAdapter,
     BrowserRequest,
     BrowserResult,
     InteractionService,
+    InteractionSessionStore,
 )
+from sparkle.storage import utc_now
 
 
 class BrowserTransportError(RuntimeError):
@@ -323,6 +328,185 @@ class SafeHTTPSBrowserAdapter(BrowserAdapter):
             )
             return BrowserResult(current, title, text, status)
         raise BrowserTransportError("Browser redirect limit exceeded")
+
+
+def run_browser_acceptance(
+    adapter: SafeHTTPSBrowserAdapter | None = None,
+) -> dict[str, object]:
+    """Run the fixed host checkset and return content-free reviewable evidence."""
+
+    browser = adapter or SafeHTTPSBrowserAdapter()
+    if type(browser) is not SafeHTTPSBrowserAdapter:
+        raise ValueError("Browser acceptance requires the safe HTTPS adapter")
+    host_identity_sha256 = InteractionService.browser_host_identity_sha256()
+    checks = {name: False for name in InteractionService.BROWSER_ACCEPTANCE_CHECKS}
+    failures: list[tuple[str, str]] = []
+    started_at = utc_now()
+
+    def observe(name: str, operation: Callable[[], None]) -> None:
+        try:
+            operation()
+        except Exception as exc:
+            failures.append((name, type(exc).__name__))
+        else:
+            checks[name] = True
+
+    def public_https() -> None:
+        result = browser.browse(
+            BrowserRequest(
+                "https://example.com/",
+                ("example.com",),
+                timeout_seconds=15,
+                max_text_chars=5_000,
+            )
+        )
+        if (
+            result.status_code != 200
+            or urlsplit(result.final_url).hostname != "example.com"
+            or not result.text
+        ):
+            raise BrowserTransportError(
+                "Browser public HTTPS acceptance result is invalid"
+            )
+
+    def nonpublic_addresses() -> None:
+        for host in ("127.0.0.1", "10.0.0.1", "192.0.2.1"):
+            try:
+                browser.browse(
+                    BrowserRequest(
+                        f"https://{host}/",
+                        (host,),
+                        timeout_seconds=5,
+                        max_text_chars=1_000,
+                    )
+                )
+            except BrowserTransportError as exc:
+                if str(exc) != "Browser destination resolved to a non-public address":
+                    raise
+            else:
+                raise BrowserTransportError(
+                    "Browser accepted a non-public destination"
+                )
+
+    def tls_hostname() -> None:
+        try:
+            browser.browse(
+                BrowserRequest(
+                    "https://wrong.host.badssl.com/",
+                    ("wrong.host.badssl.com",),
+                    timeout_seconds=15,
+                    max_text_chars=5_000,
+                )
+            )
+        except BrowserTransportError as exc:
+            if "SSLCertVerificationError" not in str(exc):
+                raise
+        else:
+            raise BrowserTransportError(
+                "Browser accepted an invalid TLS hostname"
+            )
+
+    def redirect() -> None:
+        result = browser.browse(
+            BrowserRequest(
+                "https://httpbin.org/redirect-to?url=https%3A%2F%2Fexample.com%2F",
+                ("httpbin.org", "example.com"),
+                timeout_seconds=15,
+                max_text_chars=5_000,
+            )
+        )
+        if (
+            result.status_code != 200
+            or urlsplit(result.final_url).hostname != "example.com"
+        ):
+            raise BrowserTransportError(
+                "Browser redirect acceptance result is invalid"
+            )
+
+    def output_bound() -> None:
+        try:
+            browser.browse(
+                BrowserRequest(
+                    "https://example.com/",
+                    ("example.com",),
+                    timeout_seconds=15,
+                    max_text_chars=32,
+                )
+            )
+        except BrowserTransportError as exc:
+            if str(exc) != "Browser extracted text exceeds the request limit":
+                raise
+        else:
+            raise BrowserTransportError(
+                "Browser failed to enforce the requested output bound"
+            )
+
+    def persistent_session() -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            store_path = Path(directory) / "browser-acceptance.sqlite3"
+            service = InteractionService(
+                browser=browser,
+                session_store=InteractionSessionStore(store_path),
+            )
+            session = service.start_session(
+                "browser", allowed_hosts=["example.com"], ttl_seconds=60
+            )
+            result = service.browse_session(
+                str(session["id"]),
+                "https://example.com/",
+                expected_revision=1,
+                timeout_seconds=15,
+                max_text_chars=5_000,
+            )
+            reopened = InteractionService(
+                browser=browser,
+                session_store=InteractionSessionStore(store_path),
+            )
+            history = reopened.history(str(session["id"]))
+            if (
+                result["session_revision"] != 2
+                or reopened.session(str(session["id"]))["revision"] != 2
+                or len(history) != 1
+                or history[0]["event"] != "browse"
+            ):
+                raise BrowserTransportError(
+                    "Browser session persistence acceptance result is invalid"
+                )
+            closed = reopened.close_session(
+                str(session["id"]), expected_revision=2
+            )
+            if closed["status"] != "closed" or closed["revision"] != 3:
+                raise BrowserTransportError(
+                    "Browser session close acceptance result is invalid"
+                )
+
+    operations = (
+        ("public_https_success", public_https),
+        ("nonpublic_addresses_rejected", nonpublic_addresses),
+        ("tls_hostname_rejected", tls_hostname),
+        ("redirect_revalidated", redirect),
+        ("output_bound_enforced", output_bound),
+        ("persistent_session_lifecycle", persistent_session),
+    )
+    for check, operation in operations:
+        observe(check, operation)
+    passed = all(checks.values())
+    return {
+        "schema": InteractionService.BROWSER_ACCEPTANCE_SCHEMA,
+        "capability": "browser",
+        "checkset_version": InteractionService.BROWSER_ACCEPTANCE_CHECKSET,
+        "sparkle_version": __version__,
+        "build_sha256": InteractionService.browser_build_sha256(),
+        "adapter": InteractionService.BROWSER_ACCEPTANCE_ADAPTER,
+        "approved_hosts_sha256": InteractionService.browser_scope_sha256(),
+        "host_identity_sha256": host_identity_sha256,
+        "checks": checks,
+        "started_at": started_at,
+        "completed_at": utc_now(),
+        "passed": passed,
+        "failure_stage": failures[0][0] if failures else None,
+        "failure_reason": failures[0][1] if failures else None,
+    }
 
 
 class DefaultInteractionService(InteractionService):

@@ -24,7 +24,12 @@ python3 -m pip install -e '.[documents]'
 
 Core execution uses Python 3.12 standard-library modules. Optional document
 extras specify minimum versions in `pyproject.toml`. Runtime databases are
-created automatically on first start.
+created automatically on first start. On POSIX, the configured state root and
+managed subdirectories are enforced as `0700`, while databases and backups are
+enforced as `0600`, including repairs of older permissive modes on next open.
+A symlinked state root/directory/database target or unsafe database ownership/
+hard-link state fails closed; move legacy state to a real operator-owned path
+before retrying.
 
 The wheel contains separated, secret-free application and model defaults.
 Outside a source checkout they are copied on first use to mode-0600 files under

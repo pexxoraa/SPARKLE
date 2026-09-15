@@ -7,7 +7,8 @@ from pathlib import Path
 from unittest.mock import patch
 
 from benchmarks.agents import run_agents
-from benchmarks.live import RUNTIME_FIELDS, run_live, task_evidence
+from benchmarks.live import RUNTIME_FIELDS, call_structure, run_live, task_evidence
+from benchmarks.run import implementation_hashes
 from sparkle.contracts import Message, ModelRequest
 from sparkle.model import ModelError, ModelSelectionError
 from sparkle.providers.nvidia import NVIDIAChatCompletionsAdapter
@@ -68,7 +69,83 @@ class BenchmarkEvidenceTests(unittest.TestCase):
             self.assertEqual(evidence['output_tokens'], 4)
             self.assertEqual(evidence['provider_request_id'], 'fixture-request')
             self.assertGreaterEqual(evidence['latency_ms'], 0)
+            self.assertEqual(
+                event['call_structure']['mismatch_categories'],
+                ['missing_calls'],
+            )
         self.assertNotIn('synthetic-private-key', json.dumps(events))
+
+    def test_call_mismatch_structure_never_exports_argument_content(self):
+        expected_secret = 'synthetic-expected-private-value'
+        observed_secret = 'synthetic-observed-private-value'
+        row = {
+            'expected_outcome': [{
+                'kind': 'equals',
+                'key': 'calls',
+                'expected': [{
+                    'name': 'knowledge_search',
+                    'arguments': {'query': expected_secret, 'limit': 3},
+                }],
+            }],
+            'tool_events': [{
+                'name': 'knowledge_search',
+                'arguments': {'query': observed_secret, 'limit': 5},
+            }],
+        }
+        diagnostic = call_structure(row)
+        self.assertEqual(diagnostic['status'], 'mismatched')
+        self.assertEqual(diagnostic['expected_count'], 1)
+        self.assertEqual(diagnostic['actual_count'], 1)
+        self.assertEqual(diagnostic['mismatch_categories'], ['argument_values'])
+        self.assertEqual(diagnostic['aligned_calls'], [{
+            'position': 0,
+            'name_match': True,
+            'argument_keys_match': True,
+            'argument_types_match': True,
+            'arguments_match': False,
+        }])
+        encoded = json.dumps(diagnostic)
+        self.assertNotIn(expected_secret, encoded)
+        self.assertNotIn(observed_secret, encoded)
+
+    def test_call_mismatch_structure_distinguishes_missing_shape_and_name(self):
+        expected = [{
+            'name': 'workspace_verify',
+            'arguments': {'checks': [{'type': 'python_compile', 'path': 'fixture.py'}]},
+        }]
+        row = {
+            'expected_outcome': [
+                {'kind': 'equals', 'key': 'calls', 'expected': expected},
+            ],
+            'tool_events': [{
+                'name': 'file_read',
+                'arguments': {'path': 7},
+            }, {
+                'name': 'knowledge_search',
+                'arguments': {'query': 'fixture'},
+            }],
+        }
+        diagnostic = call_structure(row)
+        self.assertEqual(
+            diagnostic['mismatch_categories'],
+            ['extra_calls', 'tool_name', 'argument_keys'],
+        )
+        type_mismatch = call_structure({
+            'expected_outcome': [{
+                'kind': 'equals',
+                'key': 'calls',
+                'expected': [{
+                    'name': 'knowledge_search',
+                    'arguments': {'query': 'fixture', 'limit': 3},
+                }],
+            }],
+            'tool_events': [{
+                'name': 'knowledge_search',
+                'arguments': {'query': 'fixture', 'limit': '3'},
+            }],
+        })
+        self.assertEqual(type_mismatch['mismatch_categories'], ['argument_types'])
+        self.assertEqual(call_structure({})['status'], 'unavailable')
 
     def test_timeout_evidence_preserves_failure_and_all_tasks(self):
         events = []
@@ -98,6 +175,8 @@ class BenchmarkEvidenceTests(unittest.TestCase):
             self.assertEqual(run_live(output), 2)
             tasks.assert_not_called()
         events = [json.loads(line) for line in output.read_text().splitlines()]
+        self.assertEqual(events[0]['schema'], 'SPARKLE-LIVE-AGENTS/3')
+        self.assertEqual(events[0]['implementation_sha256'], implementation_hashes())
         self.assertEqual(events[-1]['error_type'], 'configuration_failure')
         self.assertEqual(output.stat().st_mode & 0o777, 0o600)
         self.assertEqual(os.environ['SPARKLE_DATA_DIR'], str(self.root / 'state'))

@@ -140,10 +140,13 @@ This explicit opt-in uses the configured provider and can incur costs. It requir
 real credentials; CI does not set it. Live adapters receive task input and tool
 schemas, never fixture plans/expected answers. The optional test applies the same
 strict outcome criteria. Its success alone would still cover only this small task
-set, not general intelligence or safety. No live request was performed for this
-checkpoint; NVIDIA remains IMPLEMENTED BUT INSUFFICIENTLY VERIFIED.
+set, not general intelligence or safety. The locked deterministic checkpoint does
+not perform a live request. Separate preserved host evidence records completed
+NVIDIA runs; those results are described below and do not upgrade agent competence.
 
-Level 3 remains BLOCKED and parked. Deployment remains FROZEN.
+Level 3 has separate local worker-readiness evidence but remains incomplete
+until trusted remote, lifecycle, full-chain, and genuine restart acceptance pass.
+Deployment remains FROZEN.
 
 ## Durable live-run diagnostics (2026-09-09)
 
@@ -185,6 +188,14 @@ Null token counts mean the provider did not report usage; they are not estimated
 Detailed tool-argument correctness remains part of the unchanged validator; the
 public evidence intentionally omits argument values.
 
+New `SPARKLE-LIVE-AGENTS/3` evidence binds the start event to SHA-256
+hashes of the complete SPARKLE/benchmark Python tree plus runtime configuration
+files. Per-task `call_structure` diagnostics report only call counts and
+booleans for tool-name, argument-key, argument-type and exact-argument agreement.
+They never export expected or observed argument values and do not alter scoring.
+Older preserved `SPARKLE-LIVE-AGENTS/2` files predate these provenance
+and structural-diagnostic fields.
+
 A runtime row proves adapter invocation, not delivery to NVIDIA. Provider response
 metadata supports a completed response; a timeout alone cannot show whether a
 remote server received the request. Existing opt-in transport timing diagnostics
@@ -196,10 +207,11 @@ failed outcomes; exit 2 means blocked/incomplete. Setup/resource failure is not
 model-quality evidence. Do not treat a successful trace or a completed HTTP request
 as outcome correctness. Small fixture success is not autonomous competence.
 
-Current executor: credential unavailable; no live request attempted. The user's
-previous authenticated smoke test remains valid host connectivity evidence. The
-latest host 12-task run remains inconclusive because it failed before provider
-execution. Level 3 remains BLOCKED/PARKED; deployment remains FROZEN.
+Three completed host evidence files are preserved locally as mode-0600, untracked
+files. All record the same task dataset SHA-256 and response-contract version.
+They are real configured-provider attempts, not CI or scripted-harness output.
+Their result is 3/12 validated, 9/12 rejected, so agent competence remains false.
+Level 3 status is tracked separately; deployment remains FROZEN.
 
 ## Live response-protocol investigation (2026-09-09)
 
@@ -261,17 +273,48 @@ and no extra output-only tool is added. Hosted constrained generation and its
 compatibility with reasoning/native tools require a separate capability check.
 The provider-neutral prompt contract and strict parser are usable without it.
 
-### Remaining evidence gate
+### Preserved 3/12 campaign diagnosis (2026-09-12)
 
-The original nine response shapes, specific RuntimeError source and rejected task
-are **not identifiable from the aggregate supplied counts**. The prior evidence
-schema did not retain response structure or per-criterion rejection details. The
-existing host JSONL can still identify task IDs, request status, tool events and
-usage. Attach that content-safe file first. Do not send credentials or private raw
-responses. Missing historical response metadata is unrecoverable unless independently
-retained by the operator; a new test cannot retroactively establish it.
+The later content-safe files are `live-agent-evidence-01.jsonl`,
+`live-agent-evidence-final-02.jsonl`, and `live-agent-evidence-final-03.jsonl`.
+Each completed with cleanup and the unchanged task dataset SHA-256
+`361a79d7fafaffabfe81020e6090d0394074a41bd96f021b66d8d232c8dc689d`.
+All three validated the same three tasks: learning arithmetic, coding read, and
+coding path-escape refusal. Each rejected the other nine tasks.
 
-No live benchmark is rerun during debugging. The real 8.33% result is preserved,
-not relabelled as a connectivity outage or autonomous-competence score. Full
-historical diagnosis remains blocked on evidence. Level 3 stays BLOCKED/PARKED;
-deployment stays FROZEN.
+Across the three files, all 67 recorded NVIDIA requests completed with status
+`success`; none used fallback, retried, or recorded a provider error. In the final
+run all 21 requests included a provider request ID and reported usage. Therefore
+authentication, connectivity, rate limiting, timeout, fallback and external host
+setup are not causes of the 3/12 result.
+
+The final-run failures separate into three observable groups:
+
+- Personal budget, personal refusal, research policy, and learning source omitted
+  the explicit tool evidence required by the task.
+- Personal memory, research Unicode, research no-source, and learning memory used
+  the correct tool family but failed exact call agreement; the two memory tasks
+  also failed exact stored-value agreement.
+- Coding syntax selected the wrong tool plan and produced no verifier record.
+
+An earlier coding-syntax attempt repeatedly selected unhelpful tools and terminated
+at `tool_round_limit`; an earlier learning-source answer violated the response
+protocol. These were orchestration/protocol observations, not provider outages.
+The deterministic scripted harness remains 12/12, which establishes the fixture,
+tool, observation, and validator plumbing but not autonomous model quality.
+
+The strict `calls` criterion compares exact tool names and arguments. Some canonical
+details, such as retrieval limits, memory storage fields/casing, and arithmetic
+expression spelling, are not fully determined by the natural-language request.
+Consequently a task may achieve its semantic outcome yet fail exact call agreement.
+The benchmark definition and score remain unchanged; this is a limit on how the
+failure should be attributed, not a reason to relabel a rejection as a pass. The
+older content-free files intentionally omit arguments, so their precise differing
+fields cannot be recovered.
+
+After the final preserved run, generic production fixes added narrow deterministic
+tool-selection guidance, direct retrieval/memory/verifier instructions, same-signature
+replay suppression, authority-scoped replay caches, and bounded no-progress recovery.
+Focused deterministic regressions cover those mechanisms. No post-fix live evidence
+exists, so the 3/12 result remains the latest live competence evidence and a new full
+campaign must not be claimed until explicitly run with a fresh output file.

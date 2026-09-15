@@ -122,6 +122,25 @@ class DocumentationContractTests(unittest.TestCase):
         self.assertIn("BLOCKED", acceptance)
         self.assertIn("semantic", acceptance.lower())
 
+    def test_current_acceptance_ledgers_preserve_external_boundaries(self):
+        audit = (ROOT / "docs" / "CURRENT_AUDIT.md").read_text(
+            encoding="utf-8",
+        )
+        level3 = (ROOT / "docs" / "LEVEL3_STATUS.md").read_text(
+            encoding="utf-8",
+        )
+        security = (ROOT / "docs" / "SECURITY.md").read_text(
+            encoding="utf-8",
+        )
+        self.assertIn("Live browser host acceptance | VERIFIED", audit)
+        self.assertIn("Level 3 overall: NOT COMPLETE", level3)
+        self.assertIn("Deployment: FROZEN", level3)
+        self.assertIn("zero\nGitHub Environments", level3)
+        self.assertIn("worker listens only on `127.0.0.1:8770`", level3)
+        self.assertIn("stable-host identity digest", security)
+        self.assertIn("0700", security)
+        self.assertIn("0600", security)
+
 
 if __name__ == "__main__":
     unittest.main()

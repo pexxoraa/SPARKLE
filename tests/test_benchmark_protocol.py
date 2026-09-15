@@ -65,6 +65,8 @@ class BenchmarkProtocolTests(unittest.TestCase):
             self.assertTrue(responses[0]['tool_calls_present'])
             self.assertFalse(responses[1]['tool_calls_present'])
             self.assertEqual(responses[1]['format_category'], 'json_object')
+            self.assertEqual(event['call_structure']['status'], 'matched')
+            self.assertEqual(event['call_structure']['mismatch_categories'], [])
 
     def test_markdown_json_is_not_automatically_extracted(self):
         self.assert_protocol_failure('```json\n{"answer":110}\n```', 'markdown_fence')

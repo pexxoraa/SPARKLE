@@ -16,7 +16,10 @@ def project_root() -> Path:
 def data_root() -> Path:
     configured = os.environ.get("SPARKLE_DATA_DIR")
     if configured:
-        return Path(configured).expanduser().resolve()
+        target = Path(os.path.abspath(os.path.expanduser(configured)))
+        if target.is_symlink():
+            raise ValueError("SPARKLE data root cannot be a symlink")
+        return target
     checkout = project_root()
     if (checkout / "application" / "config.json").is_file():
         return checkout / "var"

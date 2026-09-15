@@ -2,6 +2,11 @@
 
 - Secrets are resolved only from process environment references.
 - `.env`, runtime databases, caches, coverage, and builds are ignored by Git.
+- The configured state root and every managed database directory are repaired to
+  owner-only mode `0700`; SQLite databases and backups are repaired to `0600`.
+  Direct root/directory/database symlinks, non-regular database targets, unsafe
+  ownership, and hard-linked database files fail closed. This applies under a
+  normal `umask 022` and to pre-existing state on the next store open.
 - Secret status returns booleans, never values.
 - Error messages omit authorization data.
 - Trace serialization recursively redacts keys containing key/token/secret/auth.
@@ -118,10 +123,10 @@
 - Worker-reported filesystem, network, ephemeral, and resource-limit fields are
   insufficient declarations. SPARKLE pins the expected worker identity and sets
   `isolation_verified` only when the signed response matches the fixed profile,
-  every named canary is true, and filesystem/network claims agree. The current
-  repository still reports false because no named validated worker exists. It contains
-  hardened deployment profiles but no named validated remote worker and
-  performs no automatic submission retries.
+  every named canary is true, and filesystem/network claims agree. The connected
+  `prem-macharla` worker has local service-context readiness evidence, but it is
+  loopback-only and does not satisfy trusted remote acceptance. The repository
+  performs no automatic submission retries and deployment remains unauthorized.
 - Permanent memory, knowledge-source, and automation deletion requires an
   explicit API approval flag.
 - Automation actions are limited to validated SPARKLE agent requests with one
@@ -159,6 +164,12 @@
   credential for a 256-bit opaque, process-local session. Only a SHA-256 digest
   of the session ID is held in bounded memory; sessions have absolute expiry,
   oldest-entry eviction, explicit revocation, and no database representation.
+- Browser host acceptance cannot be set by configuration or session history. The
+  operator command runs a fixed public-HTTPS/non-public-address/TLS/redirect/output/
+  persistence checkset, writes a new owner-only content-free artifact, and requires
+  a separate reviewed import. Status accepts only an unexpired, unrevoked record
+  matching the exact browser code hash, adapter, version, checkset, host-set digest,
+  and a one-way stable-host identity digest; the raw machine identity is not exported.
 - Browser cookies are host-only, HttpOnly, `SameSite=Strict`, path `/`, and
   configurable `Secure`. Every cookie-authenticated mutation requires a separate
   256-bit CSRF token held only in page/server memory. The dashboard never uses

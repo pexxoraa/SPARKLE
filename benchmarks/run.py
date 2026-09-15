@@ -11,19 +11,53 @@ from benchmarks.retrieval import run_retrieval
 from benchmarks.agents import run_agents
 
 
+def benchmark_implementation_files(
+    root_dir: Path | None = None,
+) -> tuple[str, ...]:
+    """Return the complete repository code/config surface that can affect a run."""
+
+    root = root_dir or Path(__file__).resolve().parents[1]
+    paths = {
+        path.relative_to(root).as_posix()
+        for package in (root / 'src' / 'sparkle', root / 'benchmarks')
+        for path in package.rglob('*.py')
+        if path.is_file() and not path.is_symlink()
+    }
+    for relative in (
+        'application/config.json',
+        'ai_environment/configurations/models.json',
+        'pyproject.toml',
+    ):
+        path = root / relative
+        if path.is_file() and not path.is_symlink():
+            paths.add(relative)
+    return tuple(sorted(paths))
+
+
+BENCHMARK_IMPLEMENTATION_FILES = benchmark_implementation_files()
+
+
+def implementation_hashes(root_dir: Path | None = None) -> dict[str, str]:
+    """Hash every repository implementation/config file that can affect a run."""
+
+    root = root_dir or Path(__file__).resolve().parents[1]
+    files = (
+        BENCHMARK_IMPLEMENTATION_FILES
+        if root_dir is None
+        else benchmark_implementation_files(root)
+    )
+    return {
+        path: hashlib.sha256((root / path).read_bytes()).hexdigest()
+        for path in files
+    }
+
+
 def run_all():
     with tempfile.TemporaryDirectory() as directory:
         root=Path(directory)
-        root_dir=Path(__file__).resolve().parents[1]
-        tracked_implementations=[
-            'src/sparkle/storage.py','src/sparkle/context.py','src/sparkle/orchestrator.py',
-            'src/sparkle/retrieval.py','src/sparkle/result_validation.py',
-            'benchmarks/retrieval.py','benchmarks/agents.py','benchmarks/run.py',
-            'benchmarks/protocol.py','benchmarks/live.py',
-        ]
-        hashes={p:hashlib.sha256((root_dir/p).read_bytes()).hexdigest() for p in tracked_implementations}
+        hashes=implementation_hashes()
         return {'schema':'SPARKLE-BENCHMARK/1', 'implementation_sha256':hashes, 'retrieval':run_retrieval(root),
-                'agents':run_agents(root/'agents'), 'level_3':'BLOCKED', 'deployment':'FROZEN'}
+                'agents':run_agents(root/'agents'), 'level_3':'LOCAL_READY_REMOTE_ACCEPTANCE_BLOCKED', 'deployment':'FROZEN'}
 
 
 def markdown(report):
@@ -44,7 +78,7 @@ def markdown(report):
     lines+=['','Validation: '+json.dumps(report['agents']['validation_counts']),
             '','Negative controls: '+json.dumps({k:v['validation_status'] for k,v in report['agents']['negative_controls'].items()}),
             '', 'Execution success is not outcome correctness. Scripted choices do not demonstrate autonomous tool selection, teaching, research synthesis or coding quality.',
-            '', 'Level 3 BLOCKED. Deployment FROZEN. Real semantic and NVIDIA live evaluation pending.','']
+            '', 'Level 3 local worker readiness is verified; trusted remote/restart acceptance remains blocked. Deployment FROZEN. The latest live Nemotron evidence remains 3/12 and is not rerun by this deterministic benchmark.','']
     lines += ['', '## Retrieval failures at K=5', '']
     for name,system in report['retrieval']['systems'].items():
         lines.append(name+': '+json.dumps(system['failures_at_5']))

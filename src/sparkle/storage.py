@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 import sqlite3
+import stat
 import time
 from datetime import UTC, datetime
 from pathlib import Path
@@ -38,13 +40,137 @@ class StorageConnectionError(sqlite3.OperationalError):
 
 
 class SQLiteStore:
+    PRIVATE_DIRECTORY_MODE = 0o700
+    PRIVATE_FILE_MODE = 0o600
+
     def __init__(self, path: Path):
-        self.path = path
-        path.parent.mkdir(parents=True, exist_ok=True)
+        self.path = Path(os.path.abspath(os.path.expanduser(path)))
+        self._prepare_parent(self.path.parent)
+
+    @staticmethod
+    def _configured_state_root() -> Path:
+        configured = os.environ.get("SPARKLE_DATA_DIR")
+        if configured:
+            return Path(os.path.abspath(os.path.expanduser(configured)))
+        return Path(os.path.abspath(data_root()))
+
+    @classmethod
+    def _secure_directory(
+        cls, directory: Path, *, enforce_private: bool
+    ) -> None:
+        descriptor: int | None = None
+        try:
+            if directory.is_symlink():
+                raise OSError("Storage directory cannot be a symlink")
+            metadata = directory.lstat()
+            if not stat.S_ISDIR(metadata.st_mode):
+                raise OSError("Storage directory must be a real directory")
+            if os.name == "posix":
+                flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0)
+                flags |= getattr(os, "O_DIRECTORY", 0)
+                flags |= getattr(os, "O_NOFOLLOW", 0)
+                descriptor = os.open(directory, flags)
+                metadata = os.fstat(descriptor)
+                if (
+                    not stat.S_ISDIR(metadata.st_mode)
+                    or metadata.st_uid != os.geteuid()
+                ):
+                    raise OSError("Storage directory ownership is unsafe")
+                if enforce_private:
+                    os.fchmod(descriptor, cls.PRIVATE_DIRECTORY_MODE)
+                    if (
+                        stat.S_IMODE(os.fstat(descriptor).st_mode)
+                        != cls.PRIVATE_DIRECTORY_MODE
+                    ):
+                        raise OSError(
+                            "Storage directory permissions are not private"
+                        )
+        except OSError:
+            raise StorageConnectionError() from None
+        finally:
+            if descriptor is not None:
+                os.close(descriptor)
+
+    @classmethod
+    def _prepare_parent(cls, directory: Path) -> None:
+        directory = Path(os.path.abspath(os.path.expanduser(directory)))
+        state_root = cls._configured_state_root()
+        try:
+            managed = (
+                directory == state_root
+                or directory.is_relative_to(state_root)
+            )
+            if managed:
+                if state_root.is_symlink():
+                    raise OSError("Storage root cannot be a symlink")
+                state_root.mkdir(
+                    parents=True,
+                    exist_ok=True,
+                    mode=cls.PRIVATE_DIRECTORY_MODE,
+                )
+                cls._secure_directory(state_root, enforce_private=True)
+                current = state_root
+                for part in directory.relative_to(state_root).parts:
+                    current = current / part
+                    if current.is_symlink():
+                        raise OSError(
+                            "Storage directory cannot contain a symlink"
+                        )
+                    current.mkdir(
+                        exist_ok=True,
+                        mode=cls.PRIVATE_DIRECTORY_MODE,
+                    )
+                    cls._secure_directory(current, enforce_private=True)
+            else:
+                if directory.is_symlink():
+                    raise OSError("Storage directory cannot be a symlink")
+                created = not directory.exists()
+                directory.mkdir(
+                    parents=True,
+                    exist_ok=True,
+                    mode=cls.PRIVATE_DIRECTORY_MODE,
+                )
+                cls._secure_directory(
+                    directory, enforce_private=created
+                )
+        except StorageConnectionError:
+            raise
+        except OSError:
+            raise StorageConnectionError() from None
+
+    @classmethod
+    def _prepare_file(cls, path: Path) -> None:
+        descriptor: int | None = None
+        flags = os.O_RDWR | os.O_CREAT | getattr(os, "O_CLOEXEC", 0)
+        flags |= getattr(os, "O_NOFOLLOW", 0)
+        flags |= getattr(os, "O_NONBLOCK", 0)
+        try:
+            if path.is_symlink():
+                raise OSError("Storage file cannot be a symlink")
+            descriptor = os.open(path, flags, cls.PRIVATE_FILE_MODE)
+            metadata = os.fstat(descriptor)
+            if not stat.S_ISREG(metadata.st_mode):
+                raise OSError("Storage file must be regular")
+            if os.name == "posix":
+                if metadata.st_uid != os.geteuid() or metadata.st_nlink != 1:
+                    raise OSError("Storage file ownership is unsafe")
+                os.fchmod(descriptor, cls.PRIVATE_FILE_MODE)
+                if (
+                    stat.S_IMODE(os.fstat(descriptor).st_mode)
+                    != cls.PRIVATE_FILE_MODE
+                ):
+                    raise OSError("Storage file permissions are not private")
+        except OSError:
+            raise StorageConnectionError() from None
+        finally:
+            if descriptor is not None:
+                os.close(descriptor)
 
     def connect(self) -> sqlite3.Connection:
         connection = None
         try:
+            self._prepare_parent(self.path.parent)
+            self._prepare_file(self.path)
             connection = sqlite3.connect(self.path, timeout=10, factory=ClosingConnection)
             connection.row_factory = sqlite3.Row
             connection.create_function("sparkle_now", 0, time.time)
@@ -60,10 +186,17 @@ class SQLiteStore:
             raise
 
     def backup(self, destination: Path) -> Path:
-        target = destination.expanduser().resolve()
-        if target == self.path.resolve():
+        target = Path(os.path.abspath(os.path.expanduser(destination)))
+        if target == self.path:
             raise ValueError("Backup destination must differ from the live database")
-        target.parent.mkdir(parents=True, exist_ok=True)
+        self._prepare_parent(target.parent)
+        if (
+            self.path.exists()
+            and target.exists()
+            and os.path.samefile(target, self.path)
+        ):
+            raise ValueError("Backup destination must differ from the live database")
+        self._prepare_file(target)
         with self.connect() as source, sqlite3.connect(target, factory=ClosingConnection) as backup:
             source.backup(backup)
         return target

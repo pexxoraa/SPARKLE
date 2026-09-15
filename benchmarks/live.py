@@ -11,6 +11,7 @@ from pathlib import Path
 
 from benchmarks.agents import TASKS, run_agents
 from benchmarks.protocol import CONTRACT_VERSION
+from benchmarks.run import implementation_hashes
 from sparkle.config import model_config_path
 from sparkle.model import ModelError
 from sparkle.registry import ModelRegistry
@@ -27,6 +28,103 @@ SAFE_ERRORS = frozenset({
     'connectivity_failure', 'provider_failure', 'timeout', 'malformed_response',
     'model_unavailable', 'rate_limited',
 })
+LIVE_EVIDENCE_SCHEMA = 'SPARKLE-LIVE-AGENTS/3'
+
+
+def _json_type_structure(value):
+    if isinstance(value, dict):
+        return ('object', tuple(sorted(
+            (key, _json_type_structure(child)) for key, child in value.items()
+        )))
+    if isinstance(value, list):
+        return ('array', tuple(_json_type_structure(child) for child in value))
+    if value is None:
+        return 'null'
+    if type(value) is bool:
+        return 'boolean'
+    if type(value) in {int, float}:
+        return 'number'
+    if isinstance(value, str):
+        return 'string'
+    return 'other'
+
+
+def _json_key_structure(value):
+    if isinstance(value, dict):
+        return ('object', tuple(sorted(
+            (key, _json_key_structure(child)) for key, child in value.items()
+        )))
+    if isinstance(value, list):
+        return ('array', tuple(_json_key_structure(child) for child in value))
+    return 'value'
+
+
+def call_structure(row):
+    """Compare expected and observed calls without exporting argument content."""
+    expected = None
+    for criterion in row.get('expected_outcome', []):
+        if (isinstance(criterion, dict) and criterion.get('kind') == 'equals'
+                and criterion.get('key') == 'calls'):
+            expected = criterion.get('expected')
+            break
+    if not isinstance(expected, list):
+        return {'status': 'unavailable'}
+
+    actual = [
+        {'name': event.get('name'), 'arguments': event.get('arguments')}
+        for event in row.get('tool_events', [])
+        if isinstance(event, dict)
+    ]
+    comparisons = []
+    categories = set()
+    if len(actual) < len(expected):
+        categories.add('missing_calls')
+    elif len(actual) > len(expected):
+        categories.add('extra_calls')
+    for position, (wanted, observed) in enumerate(zip(expected, actual)):
+        wanted = wanted if isinstance(wanted, dict) else {}
+        wanted_arguments = wanted.get('arguments')
+        observed_arguments = observed.get('arguments')
+        name_match = wanted.get('name') == observed.get('name')
+        keys_match = (
+            _json_key_structure(wanted_arguments)
+            == _json_key_structure(observed_arguments)
+        )
+        types_match = (
+            _json_type_structure(wanted_arguments)
+            == _json_type_structure(observed_arguments)
+        )
+        arguments_match = (
+            type(wanted_arguments) is type(observed_arguments)
+            and wanted_arguments == observed_arguments
+        )
+        if not name_match:
+            categories.add('tool_name')
+        if not keys_match:
+            categories.add('argument_keys')
+        elif not types_match:
+            categories.add('argument_types')
+        elif not arguments_match:
+            categories.add('argument_values')
+        comparisons.append({
+            'position': position,
+            'name_match': name_match,
+            'argument_keys_match': keys_match,
+            'argument_types_match': types_match,
+            'arguments_match': arguments_match,
+        })
+    order = (
+        'missing_calls', 'extra_calls', 'tool_name',
+        'argument_keys', 'argument_types', 'argument_values',
+    )
+    exact = type(expected) is type(actual) and expected == actual
+    return {
+        'status': 'matched' if exact else 'mismatched',
+        'expected_count': len(expected),
+        'actual_count': len(actual),
+        'mismatch_categories': [name for name in order if name in categories],
+        'aligned_calls': comparisons,
+    }
 
 
 def task_evidence(row, requests):
@@ -56,6 +154,7 @@ def task_evidence(row, requests):
         'diagnostics': row.get('diagnostics', {}),
         'score': row['score'], 'trace_completed': row['trace_completed'],
         'tool_events': [{'name': e['name'] if e['name'] in SAFE_TOOL_NAMES else 'other', 'failed': e['failed']} for e in row['tool_events']],
+        'call_structure': call_structure(row),
         'retrieval_events': row['retrieval_events'], 'memory_count': row['memory_events']['count'],
         # Runtime start proves an adapter call was attempted, NOT HTTP delivery.
         'model_requests': [{k: r[k] for k in RUNTIME_FIELDS} for r in reversed(requests)],
@@ -88,9 +187,10 @@ def run_live(output: Path):
             handle.flush()
             os.fsync(handle.fileno())
 
-        write({'event': 'start', 'schema': 'SPARKLE-LIVE-AGENTS/2',
+        write({'event': 'start', 'schema': LIVE_EVIDENCE_SCHEMA,
                'response_contract': CONTRACT_VERSION,
                'dataset_sha256': hashlib.sha256(TASKS.read_bytes()).hexdigest(),
+               'implementation_sha256': implementation_hashes(),
                'evidence_mode': 'configured_provider_attempt',
                'agent_competence_verified': False})
         previous = os.environ.get('SPARKLE_DATA_DIR')

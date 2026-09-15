@@ -1,4 +1,4 @@
-# SPARKLE Level 3 gate status — 2026-09-14
+# SPARKLE Level 3 gate status — 2026-09-15
 
 This document records the current Level-3 acceptance split. It is an acceptance-gate addendum to `CURRENT_AUDIT.md`; it does not reinterpret deterministic software checks as real-host evidence.
 
@@ -8,6 +8,7 @@ This document records the current Level-3 acceptance split. It is an acceptance-
 - Exact-head SPARKLE CI: run `34858788189` / run number 182 — **PASS**.
 - Python 3.12: **PASS**.
 - Python 3.13: **PASS**; 537 tests run, 1 skipped, 0 failures.
+- Current audit candidate local suite: **PASS**; 546 tests run, 1 skipped, 0 failures.
 - Controlled-execution / Level-3 deterministic software gate: **PASS**; 85 tests run, 0 failures.
 - Worker image: **PASS**.
 - Automation service: **PASS**.
@@ -28,11 +29,18 @@ The real host worker is locally ready: the hardened systemd service is active on
 
 ## Trusted remote acceptance not yet observed
 
-No `SPARKLE Level 3 Worker Acceptance` workflow run exists in the repository Actions history inspected on 2026-09-14. The connected GitHub automation surface can inspect and rerun existing runs/jobs but does not expose `workflow_dispatch`; therefore there is no existing real-host run that can be legitimately rerun from this session.
+No `SPARKLE Level 3 Worker Acceptance` workflow run exists in the repository
+Actions history inspected on 2026-09-14, and the repository currently has zero
+GitHub Environments. The workflow does expose `workflow_dispatch`, but a valid run
+cannot be created until the protected `sparkle-level3-worker` Environment and its
+variables/secret exist. The host also has no trusted public HTTPS ingress: the
+worker listens only on `127.0.0.1:8770`.
 
-The exact required external action is:
+The exact required external actions are:
 
-> Run SPARKLE Level 3 Worker Acceptance against the configured sparkle-level3-worker environment.
+> Provision a named trusted-HTTPS ingress to the loopback worker, create and
+> securely configure the `sparkle-level3-worker` GitHub Environment, then
+> dispatch SPARKLE Level 3 Worker Acceptance.
 
 The GitHub Environment must provide:
 
