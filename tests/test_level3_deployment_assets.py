@@ -16,6 +16,9 @@ class Level3DeploymentAssetTests(unittest.TestCase):
         acceptance_doc = (project / "docs/LEVEL3_ACCEPTANCE.md").read_text(encoding="utf-8")
         readme = (project / "worker_environment/README.md").read_text(encoding="utf-8")
         makefile = (project / "Makefile").read_text(encoding="utf-8")
+        installer = (
+            project / "worker_environment/install-systemd-worker.sh"
+        ).read_text(encoding="utf-8")
 
         self.assertIn('sparkle-worker = "sparkle.level3_worker:entrypoint"', pyproject)
         self.assertNotIn('sparkle-worker = "sparkle.worker_service:entrypoint"', pyproject)
@@ -34,6 +37,7 @@ class Level3DeploymentAssetTests(unittest.TestCase):
         self.assertIn("worker-check:\n\tPYTHONPATH=src python3 -m sparkle.level3_worker --check", makefile)
         self.assertIn("worker-diagnose:\n\tPYTHONPATH=src python3 -m sparkle.level3_worker --diagnose", makefile)
         self.assertIn("worker-dev:\n\tPYTHONPATH=src SPARKLE_WORKER_EXECUTOR=process SPARKLE_WORKER_ALLOW_UNSAFE_PROCESS_EXECUTOR=true python3 -m sparkle.worker_service", makefile)
+        self.assertIn("--upgrade --force-reinstall", installer)
 
         self.assertIn("workflow_dispatch", workflow)
         self.assertIn("vars.SPARKLE_EXTERNAL_WORKER_URL", workflow)

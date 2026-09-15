@@ -49,7 +49,8 @@ install -d -o root -g root -m 0700 /etc/sparkle
 if [ ! -x /opt/sparkle/.venv/bin/python ]; then
     python3 -m venv /opt/sparkle/.venv
 fi
-/opt/sparkle/.venv/bin/python -m pip install --no-deps --upgrade "$wheel"
+/opt/sparkle/.venv/bin/python -m pip install --no-deps \
+    --upgrade --force-reinstall "$wheel"
 
 install -o root -g root -m 0644 \
     "$script_dir/sparkle-worker.service" /etc/systemd/system/sparkle-worker.service

@@ -62,11 +62,11 @@ sudo -u sparkle-worker /opt/sparkle/.venv/bin/sparkle-worker --check
 sudo systemctl enable --now sparkle-worker
 ```
 
-The installer accepts only an absolute regular non-symlink wheel, installs
-without dependencies, creates the dedicated account and directories, installs
-the hardened unit and a non-secret configuration example, and deliberately
-does not create a signing key or start the service. Inject the key separately
-before the preflight and service start.
+The installer accepts only an absolute regular non-symlink wheel, force-reinstalls
+it without dependencies even when the package version is unchanged, creates the
+dedicated account and directories, installs the hardened unit and a non-secret
+configuration example, and deliberately does not create a signing key or start the
+service. Inject the key separately before the preflight and service start.
 
 The systemd unit deliberately does not restrict namespace syscalls because the
 nested sandbox requires them. It explicitly sets `ProtectHostname=no`,
