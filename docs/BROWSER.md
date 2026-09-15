@@ -40,6 +40,8 @@ page text, URL, address, credential, or exception message. It is created as a ne
 owner-only regular file and is bound to the exact browser/interaction/CLI source hash,
 safe-adapter identity, SPARKLE version, fixed approved-host-set digest, stable host
 identity digest, and timestamps. The raw machine identity is never exported.
+Owner-only artifact import currently requires POSIX mode enforcement; unsupported
+platforms fail closed rather than treating generic file mode bits as an ACL proof.
 
 Acceptance records are append-only. Status reports `live_browser_verified=true` only
 for the latest record matching the current build, adapter, and checkset while it is

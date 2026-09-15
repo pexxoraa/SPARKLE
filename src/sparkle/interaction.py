@@ -2,9 +2,12 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import platform
 import re
 import secrets
 import time
+import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
@@ -371,15 +374,43 @@ class InteractionService:
 
     @staticmethod
     def browser_host_identity_sha256() -> str:
+        prefix = b"SPARKLE-BROWSER-HOST/1\0"
         for location in ("/etc/machine-id", "/var/lib/dbus/machine-id"):
             try:
                 raw = Path(location).read_text(encoding="ascii").strip().lower()
             except (OSError, UnicodeError):
                 continue
             if re.fullmatch(r"[0-9a-f]{32}", raw):
+                return hashlib.sha256(prefix + bytes.fromhex(raw)).hexdigest()
+        if os.name == "nt":
+            try:
+                import winreg
+
+                access = winreg.KEY_READ | getattr(winreg, "KEY_WOW64_64KEY", 0)
+                with winreg.OpenKey(
+                    winreg.HKEY_LOCAL_MACHINE,
+                    r"SOFTWARE\Microsoft\Cryptography",
+                    access=access,
+                ) as key:
+                    machine_guid, _ = winreg.QueryValueEx(key, "MachineGuid")
+            except (ImportError, OSError):
+                machine_guid = None
+            if isinstance(machine_guid, str) and re.fullmatch(
+                r"[0-9A-Fa-f-]{32,64}", machine_guid
+            ):
                 return hashlib.sha256(
-                    b"SPARKLE-BROWSER-HOST/1\0" + bytes.fromhex(raw)
+                    prefix + machine_guid.lower().encode("ascii")
                 ).hexdigest()
+        node = platform.node().strip()
+        if node:
+            fallback = (
+                platform.system().lower()
+                + "\0"
+                + node.lower()
+                + "\0"
+                + f"{uuid.getnode():012x}"
+            ).encode("utf-8")
+            return hashlib.sha256(prefix + fallback).hexdigest()
         raise InteractionSessionError(
             "Browser acceptance requires a stable host identity"
         )

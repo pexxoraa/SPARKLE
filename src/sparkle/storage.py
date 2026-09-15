@@ -49,9 +49,6 @@ class SQLiteStore:
 
     @staticmethod
     def _configured_state_root() -> Path:
-        configured = os.environ.get("SPARKLE_DATA_DIR")
-        if configured:
-            return Path(os.path.abspath(os.path.expanduser(configured)))
         return Path(os.path.abspath(data_root()))
 
     @classmethod
@@ -94,8 +91,8 @@ class SQLiteStore:
     @classmethod
     def _prepare_parent(cls, directory: Path) -> None:
         directory = Path(os.path.abspath(os.path.expanduser(directory)))
-        state_root = cls._configured_state_root()
         try:
+            state_root = cls._configured_state_root()
             managed = (
                 directory == state_root
                 or directory.is_relative_to(state_root)
@@ -135,7 +132,7 @@ class SQLiteStore:
                 )
         except StorageConnectionError:
             raise
-        except OSError:
+        except (OSError, ValueError):
             raise StorageConnectionError() from None
 
     @classmethod

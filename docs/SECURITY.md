@@ -170,6 +170,8 @@
   a separate reviewed import. Status accepts only an unexpired, unrevoked record
   matching the exact browser code hash, adapter, version, checkset, host-set digest,
   and a one-way stable-host identity digest; the raw machine identity is not exported.
+  Owner-only artifact import requires POSIX mode enforcement and fails closed where
+  that ownership boundary cannot be proved.
 - Browser cookies are host-only, HttpOnly, `SameSite=Strict`, path `/`, and
   configurable `Secure`. Every cookie-authenticated mutation requires a separate
   256-bit CSRF token held only in page/server memory. The dashboard never uses

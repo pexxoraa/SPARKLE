@@ -242,6 +242,10 @@ class BrowserRuntimeTests(unittest.TestCase):
             self.assertFalse(revoked["verified"])
             self.assertEqual(revoked["reason"], "revoked")
 
+    @unittest.skipUnless(
+        os.name == "posix",
+        "owner-only acceptance artifacts require POSIX mode enforcement",
+    )
     def test_acceptance_artifact_is_owner_only_new_and_not_a_symlink(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
