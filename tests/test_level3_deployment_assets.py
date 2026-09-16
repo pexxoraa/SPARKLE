@@ -63,6 +63,8 @@ class Level3DeploymentAssetTests(unittest.TestCase):
         self.assertIn("export SPARKLE_EXTERNAL_WORKER_ID SPARKLE_EXTERNAL_WORKER_SIGNING_KEY_FILE SSL_CERT_FILE", private_runner)
         self.assertNotIn("SPARKLE_WORKER_SIGNING_KEY=$(cat", private_runner)
         self.assertNotIn("echo $SPARKLE_WORKER_SIGNING_KEY", private_runner)
+        self.assertIn("/opt/sparkle/.venv/bin/sparkle", private_runner)
+        self.assertIn("SPARKLE_PRIVATE_CLI", private_runner)
 
         self.assertIn("workflow_dispatch", workflow)
         self.assertIn("vars.SPARKLE_EXTERNAL_WORKER_URL", workflow)
