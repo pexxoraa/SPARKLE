@@ -57,12 +57,7 @@ class WorkerCancellationClient:
             raise ValueError("Controlled execution identity is invalid")
         if not self.worker.enabled:
             raise ExternalWorkerError("External workspace worker is disabled")
-        try:
-            key = self.worker.secret_resolver.first(self.worker.secret_refs).encode("utf-8")
-        except SecretNotFoundError as exc:
-            raise ExternalWorkerError("External worker signing key is not configured") from exc
-        if len(key) < 32:
-            raise ExternalWorkerError("External worker signing key must contain at least 32 bytes")
+        key = self.worker._signing_key()
         body = ExternalWorkerClient._canonical_json({
             "protocol_version": CANCEL_PROTOCOL,
             "execution_id": execution_id,

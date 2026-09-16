@@ -89,7 +89,7 @@
     "src/sparkle/vector_index.py": "6f5b5142456271aa2bebe57d5377adc6921bab18681eda3dbdfa81d01de35c8e",
     "src/sparkle/voice.py": "c390129cdc260c3558a401daaef7718aa07a0ec9b73e8c2113af715b90596755",
     "src/sparkle/voice_cli.py": "14c70df17c0b692f6a7d83c3e3c439737b09ff3e7ca53d296be0677d3897fe2f",
-    "src/sparkle/worker_cancellation.py": "e7e2d962ed12bdba580786cb48ba4c47908b649b4e2e16a78935a25066054dd0",
+    "src/sparkle/worker_cancellation.py": "69c8b87a3eae8da56d1ed109f1729ebe1fe1ef54d84a3a8c7e82477db0d4100a",
     "src/sparkle/worker_diagnostics.py": "8231fd37209ffa69497c3d9e21f97f3214c873f51927d9c6d8229474ae73fa44",
     "src/sparkle/worker_executor.py": "e2cc41a3b5d97f85cbe035ded07ed320ef3e6a49aedc77e531de0e9a34f22dbe",
     "src/sparkle/worker_service.py": "22dd2afd90f0b3c66ca01b2e248095759de9868a9b13481c2c5579dcc3c74395"

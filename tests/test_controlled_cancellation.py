@@ -59,6 +59,50 @@ class ControlledCancellationTests(unittest.TestCase):
         self.assertEqual(value["execution_id"], execution_id)
         self.assertTrue(value["cancel_requested"])
 
+    def test_cancellation_uses_binary_signing_key_file(self):
+        key = bytes(range(48))
+        key_file = self.root / "client-signing-key"
+        key_file.write_bytes(key)
+        key_file.chmod(0o600)
+        config = WorkerConfig(
+            state_dir=self.root / "file-worker", executor_mode="process",
+            allow_unsafe_process_executor=True,
+        )
+        service = CancellableExternalWorkerService(
+            config, signing_key=key, executor=FakeExecutor(),
+        )
+        execution_id = "SPK-EXEC-" + "C" * 32
+        event = threading.Event()
+        service._cancel_events[execution_id] = event
+
+        class Response:
+            def __init__(self, value):
+                self._value = value
+                self.headers = value.headers
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return False
+
+            def read(self, _size):
+                return self._value.body
+
+        def opener(request, timeout):
+            self.assertGreater(timeout, 0)
+            return Response(service.handle_cancel(dict(request.header_items()), request.data))
+
+        client = ExternalWorkerClient(
+            self.root / "applications",
+            path=self.root / "client-runs.sqlite3",
+            enabled=True, endpoint="https://worker.example/v1/jobs",
+            signing_key_file=key_file, opener=opener,
+        )
+        result = WorkerCancellationClient(client).cancel(execution_id)
+        self.assertTrue(result["cancel_requested"])
+        self.assertTrue(event.is_set())
+
     def test_running_controller_cancel_is_durable_and_terminal(self):
         store = ControlledExecutionStore(self.root / "controlled.sqlite3")
         contract = {
