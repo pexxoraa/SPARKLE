@@ -13,5 +13,12 @@ fi
 export SPARKLE_EXTERNAL_WORKER_ENABLED SPARKLE_EXTERNAL_WORKER_URL
 export SPARKLE_EXTERNAL_WORKER_ID SPARKLE_EXTERNAL_WORKER_SIGNING_KEY_FILE SSL_CERT_FILE
 
-cli=${SPARKLE_PRIVATE_CLI:-sparkle}
+cli=${SPARKLE_PRIVATE_CLI:-}
+if [ -z "$cli" ]; then
+    if [ -x /opt/sparkle/.venv/bin/sparkle ]; then
+        cli=/opt/sparkle/.venv/bin/sparkle
+    else
+        cli=sparkle
+    fi
+fi
 exec "$cli" "$@"
