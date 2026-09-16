@@ -1,6 +1,6 @@
 # SPARKLE current capability audit — 2026-09-15
 
-Published certified software baseline before this documentation reconciliation: `b013d768ddd0a7161a394b4c78afef9a50384eb1` (tree `ac0c9ee9e4972fbda116971577b923aab445e18b`), with SPARKLE CI #192 passing all five jobs.
+Published certified software baseline before the current private/local worker integration: `b56693bb759a9d3e136e594635b50fdf64d1ae85` (tree `a6c3e18ecfc423afbd7b4f076b8f4bad7654cd2a`), with SPARKLE CI #193 passing all five jobs.
 This file replaces the historical 2026-09-09 primary inventory. Earlier benchmark
 reports remain historical evidence; they are not silently reinterpreted as current
 live verification.
@@ -17,7 +17,7 @@ external provider, credential, host, device, hardware driver, production target,
 human/live acceptance environment.
 
 Final software-build result: **zero ordinary software-completable capabilities are
-PARTIALLY COMPLETE, INTERFACE ONLY, or NOT IMPLEMENTED.** Level 3 remains PARKED.
+PARTIALLY COMPLETE, INTERFACE ONLY, or NOT IMPLEMENTED.** Level-3 private/local readiness is the active target; public remote acceptance is deferred.
 Deployment remains FROZEN. No live provider/device/production campaign was performed
 for this audit.
 
@@ -69,7 +69,7 @@ for this audit.
 | Controlled promotion | COMPLETE | identities/digests, approvals, replay/tamper/concurrency defenses, exclusions and atomic records | None in bounded promotion contract |
 | Controlled build | COMPLETE | approval-bound immutable deterministic artifacts and evidence | None in bounded build contract |
 | Controlled execution and cancellation | COMPLETE | authorization, execution lifecycle, results, worker cancellation protocol and API/CLI cancellation | Level-3 worker acceptance remains external |
-| External worker / Level 3 | EXTERNALLY BLOCKED | signed worker protocol plus a real hardened loopback worker on `prem-macharla` with ready executor/preflight, filesystem/network isolation and seven passing canaries | Add trusted HTTPS ingress and protected GitHub Environment, execute remote/lifecycle/full-chain acceptance, genuinely restart the worker service, rerun acceptance, and retain artifacts. Level 3 remains NOT COMPLETE until all pass |
+| External worker / Level 3 private/local | VERIFIED | signed worker protocol plus a real hardened loopback worker on `prem-macharla`, localhost-only TLS, binary signing-key file support, ready executor/preflight, filesystem/network isolation and seven passing canaries | Public GitHub-hosted remote acceptance is **DEFERRED — PUBLIC DEPLOYMENT** and does not block private/local readiness |
 | Trace/evidence | COMPLETE | persistent content-minimized traces, model/tool identities, redaction and lifecycle evidence; cached tool replays are separated from actual executions; benchmark evidence hashes the complete implementation/config surface | Trace success never implies semantic correctness; latest live Nemotron competence remains 3/12 |
 | API | COMPLETE | authenticated/rate-limited local JSON API covering core operator workflows; newer specialist state is exposed through `/api/health` and dedicated CLIs/tools where a duplicate mutation API would add no capability | External service integrations are separate connectors |
 | CLI | COMPLETE | core CLI plus data/content/research/engineering/interaction/voice/worker/automation commands and controlled-build/execution operations | Host/provider commands still need their external runtime |
@@ -109,11 +109,11 @@ Windows/macOS worker capability.
 
 Implementation inspection and focused deterministic test additions were used while
 building. No new live Nemotron, semantic-embedding, microphone, speaker, GUI,
-physical-hardware, mobile-host, trusted-remote Level-3 or production-deployment acceptance
+physical-hardware, mobile-host, public-remote Level-3 or production-deployment acceptance
 was performed here. The connected Level-3 worker host has local readiness evidence only. GitHub CI runs triggered by the final implementation commits are
 supporting regression evidence only and do not change the external classifications.
 
 **Software completion gate: PASS — no ordinary software-completable capability remains
 PARTIALLY COMPLETE, INTERFACE ONLY, or NOT IMPLEMENTED.**
 
-**Level 3: NOT COMPLETE — local real worker ready and a genuine local systemd restart/recovery has been verified; trusted HTTPS, protected GitHub Environment, remote acceptance, and post-restart remote acceptance remain blocked. Deployment: FROZEN.**
+**Level-3 private/local: READY — local hardened worker readiness and genuine systemd restart/recovery are verified; localhost-only TLS and binary HMAC client integration are the private/local acceptance path. Public remote acceptance is DEFERRED — PUBLIC DEPLOYMENT. Deployment: FROZEN.**

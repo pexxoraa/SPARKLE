@@ -40,6 +40,19 @@ database writable storage, keeps port 8770 on an internal network, and
 terminates public TLS at Caddy. The nested Bubblewrap preflight is still
 mandatory; container boundaries alone are not accepted as evidence.
 
+## Private/local hardened worker
+
+For private/local SPARKLE, public DNS and public ingress are not required. Keep the hardened worker bound to `127.0.0.1`. After the systemd worker and signing credential are provisioned, the root-only helper can create or reuse a localhost-only TLS identity and install owner-only client material for one local SPARKLE user:
+
+```bash
+sudo worker_environment/provision-private-local-worker.sh "$USER"
+sudo systemctl restart sparkle-worker.service
+curl --cacert "$HOME/.config/sparkle/worker-ca.crt" https://localhost:8770/health
+worker_environment/run-private-local-sparkle.sh status
+```
+
+The helper never prints the HMAC credential. The application uses `SPARKLE_EXTERNAL_WORKER_SIGNING_KEY_FILE` so arbitrary binary key bytes are not forced through UTF-8 environment encoding. `run-private-local-sparkle.sh` supplies only non-secret configuration plus the path reference and local CA trust. Plain HTTP is not the accepted application transport once direct TLS is configured. Public GitHub-hosted worker acceptance is deferred to a future explicitly authorized public-deployment phase.
+
 ## systemd deployment
 
 Install SPARKLE in `/opt/sparkle/.venv`, create an unprivileged `sparkle-worker`

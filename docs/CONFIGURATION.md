@@ -104,17 +104,13 @@ still requires explicit operator approval. Deploying and validating a
 compatible hardened worker is separate work; setting these values alone does
 not make filesystem or network isolation verified.
 
-Application-side worker settings are `SPARKLE_EXTERNAL_WORKER_URL` for the
-credential-free HTTPS `/v1/jobs` endpoint, `SPARKLE_EXTERNAL_WORKER_ID` for the
-exact expected public worker identity, and the configured secret-reference
-name (by default `SPARKLE_WORKER_SIGNING_KEY`) for HMAC injection. A controlled
-execution is not configured unless all three are present. The key value must be
-injected by the process secret manager and never placed in JSON configuration.
+Application-side worker settings are `SPARKLE_EXTERNAL_WORKER_URL` for the HTTPS `/v1/jobs` endpoint and `SPARKLE_EXTERNAL_WORKER_ID` for the exact expected worker identity. HMAC may use either the configured environment secret-reference name (default `SPARKLE_WORKER_SIGNING_KEY`) or `SPARKLE_EXTERNAL_WORKER_SIGNING_KEY_FILE` for an owner-only raw-byte key file. An explicitly configured file is fail-closed and never falls back silently. Never put the key value in JSON configuration.
 
 The separate `sparkle-worker` process uses its own environment:
 
 | Variable | Purpose | Secret |
 |---|---|---|
+| `SPARKLE_EXTERNAL_WORKER_SIGNING_KEY_FILE` | Application-side owner-only raw-byte HMAC key file; supports binary credentials and fails closed on unsafe files | Reference path |
 | `SPARKLE_WORKER_HOST` / `SPARKLE_WORKER_PORT` | Worker bind address | No |
 | `SPARKLE_WORKER_ID` | Bounded public worker identifier | No |
 | `SPARKLE_WORKER_STATE_DIR` | Independent replay database root | No |

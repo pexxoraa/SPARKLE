@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any
+from pathlib import Path
 
 from sparkle.memory_review import MemoryReview
 from sparkle.agents import AgentRegistry, AgentRouter, GeneratedAgentStore
@@ -167,6 +168,10 @@ class SparkleSystem:
             enabled=self.config.external_worker_enabled,
             endpoint=self.config.external_worker_url,
             secret_refs=self.config.external_worker_secret_refs,
+            signing_key_file=(
+                Path(self.config.external_worker_signing_key_file)
+                if self.config.external_worker_signing_key_file else None
+            ),
             expected_worker_id=self.config.external_worker_id,
             request_timeout_seconds=self.config.external_worker_request_timeout_seconds,
             job_timeout_seconds=self.config.external_worker_job_timeout_seconds,

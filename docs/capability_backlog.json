@@ -1,14 +1,14 @@
 {
   "protocol": "SPARKLE-CAPABILITY-BACKLOG/2",
   "audit_date": "2026-09-15",
-  "software_baseline": "b013d768ddd0a7161a394b4c78afef9a50384eb1",
+  "software_baseline": "b56693bb759a9d3e136e594635b50fdf64d1ae85",
   "software_completion": {
     "status": "COMPLETE",
     "ordinary_software_backlog": [],
     "partial_complete": 0,
     "interface_only": 0,
     "not_implemented": 0,
-    "level_3": "PARKED",
+    "level_3": "READY FOR PRIVATE/LOCAL USE",
     "deployment": "FROZEN"
   },
   "classification_policy": {
@@ -17,7 +17,8 @@
       "EXTERNALLY BLOCKED",
       "PARTIALLY COMPLETE",
       "INTERFACE ONLY",
-      "NOT IMPLEMENTED"
+      "NOT IMPLEMENTED",
+      "DEFERRED — PUBLIC DEPLOYMENT"
     ],
     "complete_meaning": "Ordinary software-completable implementation and repository integration are present; live semantic/provider/hardware/production acceptance is not implied.",
     "external_blocked_meaning": "The repository-side contract/integration is implemented and the remaining gate requires a provider, credential, host, device, hardware driver, target environment, or human/live acceptance evidence."
@@ -127,8 +128,8 @@
       ]
     },
     {
-      "capability": "level_3_external_worker_acceptance",
-      "status": "EXTERNALLY BLOCKED",
+      "capability": "level_3_public_remote_acceptance",
+      "status": "DEFERRED — PUBLIC DEPLOYMENT",
       "software_ready": true,
       "evidence": [
         "src/sparkle/external_worker.py",
@@ -139,12 +140,9 @@
         ".github/workflows/level3-worker-acceptance.yml"
       ],
       "required_acceptance": [
-        "retain the already-proven hardened Linux worker local readiness and genuine local service restart evidence",
-        "provision trusted public HTTPS ingress to the loopback worker without weakening TLS verification",
-        "create and securely configure the protected sparkle-level3-worker GitHub Environment",
-        "run and retain remote, lifecycle and full-chain acceptance evidence",
-        "pair a genuine worker service/container restart with retained pre- and post-restart remote acceptance evidence",
-        "keep Level 3 NOT COMPLETE until all trusted-remote evidence passes"
+        "keep the worker loopback-only for the private/local target",
+        "do not provision public ingress or GitHub remote-worker acceptance until an explicit future public-deployment phase",
+        "if later authorized, run the existing trusted remote/lifecycle/full-chain workflow without weakening TLS or isolation"
       ]
     },
     {
@@ -180,7 +178,7 @@
     },
     {
       "capability": "production_deployment",
-      "status": "EXTERNALLY BLOCKED",
+      "status": "DEFERRED — PUBLIC DEPLOYMENT",
       "software_ready": true,
       "evidence": [
         "src/sparkle/artifacts.py",
@@ -232,6 +230,6 @@
     "GET /api/health exposes vector, platform, voice, interaction, data-analysis, content, research, automation and other subsystem status through SparkleSystem.status().",
     "Browser network authority and computer actions remain operator-owned session boundaries rather than unrestricted agent tools.",
     "Live browser host acceptance is VERIFIED on prem-macharla for the recorded exact browser build/checkset; it is no longer an externally blocked backlog item.",
-    "Level 3 has verified local worker readiness and local systemd restart/recovery on prem-macharla, but trusted-remote acceptance and remote pre/post-restart evidence remain blocked; deployment is FROZEN."
+    "Level-3 private/local readiness uses the hardened loopback worker with localhost-only TLS and genuine local restart/recovery; public GitHub-hosted remote acceptance is DEFERRED — PUBLIC DEPLOYMENT."
   ]
 }

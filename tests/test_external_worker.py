@@ -35,8 +35,9 @@ class FakeResponse:
 
 
 class SignedWorker:
-    def __init__(self, mode: str = "ok"):
+    def __init__(self, mode: str = "ok", signing_key: bytes | None = None):
         self.mode = mode
+        self.signing_key = signing_key or SIGNING_KEY.encode()
         self.request = None
         self.timeout = None
         self.request_body = b""
@@ -78,7 +79,7 @@ class SignedWorker:
             response["output"] = "x" * ExternalWorkerClient.MAX_RESPONSE_BYTES
         body = ExternalWorkerClient._canonical_json(response)
         signature = ExternalWorkerClient._signature(
-            SIGNING_KEY.encode(), timestamp, body,
+            self.signing_key, timestamp, body,
         )
         if self.mode == "bad_signature":
             signature = "sha256=" + "0" * 64
@@ -175,12 +176,54 @@ class ExternalWorkerTests(unittest.TestCase):
             ({"endpoint": "http://worker.example/jobs"}, "must be HTTPS"),
             ({"endpoint": "https://user:pass@worker.example/jobs"}, "must be HTTPS"),
             ({"secret_resolver": SecretResolver({})}, "not configured"),
-            ({"secret_resolver": SecretResolver({"SPARKLE_WORKER_SIGNING_KEY": "short"})}, "32 bytes"),
+            ({"secret_resolver": SecretResolver({"SPARKLE_WORKER_SIGNING_KEY": "short"})}, "32-4096 bytes"),
         ]
         for overrides, message in cases:
             with self.subTest(overrides=overrides):
                 worker = SignedWorker()
                 client = self.client(worker, **overrides)
+                with self.assertRaisesRegex(ExternalWorkerError, message):
+                    client.run("worker_app")
+                self.assertIsNone(worker.request)
+
+    def test_binary_signing_key_file_is_supported_without_text_decoding(self):
+        key = self.root / "worker-signing-key"
+        raw = bytes(range(0xE0, 0xF0)) * 3
+        key.write_bytes(raw)
+        key.chmod(0o600)
+        worker = SignedWorker(signing_key=raw)
+        client = self.client(
+            worker, signing_key_file=key, secret_resolver=SecretResolver({}),
+        )
+        result = client.run("worker_app")
+        self.assertEqual(result["status"], "passed")
+        self.assertTrue(result["response_verified"])
+        self.assertTrue(client.status()["signing_key_file_configured"])
+        self.assertTrue(client.status()["signing_key_configured"])
+
+    def test_signing_key_file_rejects_symlink_permissions_and_bad_length(self):
+        good = self.root / "good-key"
+        good.write_bytes(b"g" * 48)
+        good.chmod(0o600)
+        symlink = self.root / "key-link"
+        symlink.symlink_to(good)
+        loose = self.root / "loose-key"
+        loose.write_bytes(b"l" * 48)
+        loose.chmod(0o644)
+        short = self.root / "short-key"
+        short.write_bytes(b"s" * 8)
+        short.chmod(0o600)
+        for path, message in (
+            (symlink, "unavailable or unsafe"),
+            (loose, "mode 0400 or 0600"),
+            (short, "32-4096 bytes"),
+        ):
+            with self.subTest(path=path.name):
+                worker = SignedWorker()
+                client = self.client(
+                    worker, signing_key_file=path,
+                    secret_resolver=SecretResolver({"SPARKLE_WORKER_SIGNING_KEY": SIGNING_KEY}),
+                )
                 with self.assertRaisesRegex(ExternalWorkerError, message):
                     client.run("worker_app")
                 self.assertIsNone(worker.request)

@@ -133,10 +133,10 @@ class DocumentationContractTests(unittest.TestCase):
             encoding="utf-8",
         )
         self.assertIn("Live browser host acceptance | VERIFIED", audit)
-        self.assertIn("Level 3 overall: NOT COMPLETE", level3)
+        self.assertIn("Level-3 private/local acceptance: READY", level3)
         self.assertIn("Deployment: FROZEN", level3)
-        self.assertIn("zero\nGitHub Environments", level3)
-        self.assertIn("worker listens only on `127.0.0.1:8770`", level3)
+        self.assertIn("DEFERRED — PUBLIC DEPLOYMENT", level3)
+        self.assertIn("worker remains loopback-only", level3)
         self.assertIn("stable-host identity digest", security)
         self.assertIn("0700", security)
         self.assertIn("0600", security)
@@ -152,10 +152,12 @@ class DocumentationContractTests(unittest.TestCase):
         backlog = (ROOT / "docs" / "capability_backlog.json").read_text(encoding="utf-8")
 
         for current in (audit, acceptance, build_state, level3):
-            self.assertIn("b013d768ddd0a7161a394b4c78afef9a50384eb1", current)
+            self.assertIn("b56693bb759a9d3e136e594635b50fdf64d1ae85", current)
             self.assertNotIn("CI #182", current)
             self.assertNotIn("exact-head publication/CI is still pending", current)
         self.assertIn("local worker restart/recovery: VERIFIED", level3)
+        self.assertIn("Level-3 private/local acceptance: READY", level3)
+        self.assertIn("DEFERRED — PUBLIC DEPLOYMENT", level3)
         self.assertIn("signed cancellation through `POST /v1/jobs/cancel`", execution)
         self.assertNotIn("not claimed as implemented", execution)
         self.assertIn("`ProtectKernelLogs=no`", worker)

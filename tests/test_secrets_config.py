@@ -115,6 +115,7 @@ class ConfigTests(unittest.TestCase):
                     "external_worker_enabled": False,
                     "external_worker_url": "",
                     "external_worker_secret_refs": ["WORKER_KEY"],
+                    "external_worker_signing_key_file": "/safe/default-worker-key",
                     "external_worker_id": "worker-primary",
                     "external_worker_request_timeout_seconds": 22,
                     "external_worker_job_timeout_seconds": 14,
@@ -127,6 +128,7 @@ class ConfigTests(unittest.TestCase):
                 "SPARKLE_WORKSPACE_TESTS_ENABLED": "true",
                 "SPARKLE_EXTERNAL_WORKER_ENABLED": "true",
                 "SPARKLE_EXTERNAL_WORKER_URL": "https://worker.example/jobs",
+                "SPARKLE_EXTERNAL_WORKER_SIGNING_KEY_FILE": "/safe/override-worker-key",
             }):
                 config = AppConfig.load(path)
         self.assertEqual(config.port, 1234)
@@ -145,6 +147,7 @@ class ConfigTests(unittest.TestCase):
         self.assertTrue(config.external_worker_enabled)
         self.assertEqual(config.external_worker_url, "https://worker.example/jobs")
         self.assertEqual(config.external_worker_secret_refs, ("WORKER_KEY",))
+        self.assertEqual(config.external_worker_signing_key_file, "/safe/override-worker-key")
         self.assertEqual(config.external_worker_id, "worker-primary")
         self.assertEqual(config.external_worker_request_timeout_seconds, 22)
         self.assertEqual(config.external_worker_job_timeout_seconds, 14)

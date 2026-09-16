@@ -7,6 +7,7 @@ import json
 import os
 import re
 import sqlite3
+import stat
 import time
 import urllib.request
 import uuid
@@ -85,6 +86,7 @@ class ExternalWorkerClient(SQLiteStore):
         job_timeout_seconds: int = 10,
         max_payload_bytes: int = 8_000_000,
         expected_worker_id: str = "",
+        signing_key_file: Path | None = None,
         secret_resolver: SecretResolver | None = None,
         opener: Callable[..., Any] | None = None,
         clock: Callable[[], float] | None = None,
@@ -111,6 +113,10 @@ class ExternalWorkerClient(SQLiteStore):
         self.job_timeout_seconds = job_timeout_seconds
         self.max_payload_bytes = max_payload_bytes
         self.expected_worker_id = expected_worker_id
+        self.signing_key_file = (
+            Path(os.path.abspath(os.path.expanduser(str(signing_key_file))))
+            if signing_key_file else None
+        )
         self.secret_resolver = secret_resolver or SecretResolver()
         self.opener = opener or urllib.request.build_opener(_NoRedirectHandler()).open
         self.clock = clock or time.time
@@ -142,6 +148,43 @@ class ExternalWorkerClient(SQLiteStore):
                 )
             """)
 
+    def _read_signing_key_file(self) -> bytes:
+        path = self.signing_key_file
+        if path is None:
+            raise ExternalWorkerError("External worker signing-key file is not configured")
+        flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0)
+        try:
+            descriptor = os.open(path, flags)
+        except OSError as exc:
+            raise ExternalWorkerError("External worker signing-key file is unavailable or unsafe") from exc
+        try:
+            metadata = os.fstat(descriptor)
+            if not stat.S_ISREG(metadata.st_mode):
+                raise ExternalWorkerError("External worker signing-key file must be regular")
+            if metadata.st_uid not in {os.geteuid(), 0}:
+                raise ExternalWorkerError("External worker signing-key file owner is invalid")
+            if stat.S_IMODE(metadata.st_mode) not in {0o400, 0o600}:
+                raise ExternalWorkerError("External worker signing-key file must use mode 0400 or 0600")
+            if not 32 <= metadata.st_size <= 4096:
+                raise ExternalWorkerError("External worker signing key must contain 32-4096 bytes")
+            value = os.read(descriptor, 4097)
+            if len(value) != metadata.st_size:
+                raise ExternalWorkerError("External worker signing-key file changed while reading")
+            return value
+        finally:
+            os.close(descriptor)
+
+    def _signing_key(self) -> bytes:
+        if self.signing_key_file is not None:
+            return self._read_signing_key_file()
+        try:
+            value = self.secret_resolver.first(self.secret_refs).encode("utf-8")
+        except SecretNotFoundError as exc:
+            raise ExternalWorkerError("External worker signing key is not configured") from exc
+        if not 32 <= len(value) <= 4096:
+            raise ExternalWorkerError("External worker signing key must contain 32-4096 bytes")
+        return value
+
     def _endpoint_is_valid(self) -> bool:
         try:
             parsed = urlparse(self.endpoint)
@@ -168,7 +211,14 @@ class ExternalWorkerClient(SQLiteStore):
     def status(self) -> dict[str, Any]:
         secret_status = self.secret_resolver.status(self.secret_refs)
         endpoint_valid = self._endpoint_is_valid()
-        signing_key_configured = any(secret_status.values())
+        if self.signing_key_file is not None:
+            try:
+                self._read_signing_key_file()
+                signing_key_configured = True
+            except ExternalWorkerError:
+                signing_key_configured = False
+        else:
+            signing_key_configured = any(secret_status.values())
         return {
             "enabled": self.enabled,
             "protocol": self.PROTOCOL,
@@ -176,6 +226,7 @@ class ExternalWorkerClient(SQLiteStore):
             "endpoint_configured": bool(self.endpoint),
             "endpoint_https_valid": endpoint_valid,
             "signing_key_configured": signing_key_configured,
+            "signing_key_file_configured": self.signing_key_file is not None,
             "worker_identity_configured": bool(self.expected_worker_id),
             "expected_worker_id": self.expected_worker_id or None,
             "configured": self.enabled and endpoint_valid and signing_key_configured,
@@ -519,12 +570,7 @@ class ExternalWorkerClient(SQLiteStore):
                 "External workspace worker is disabled; enable it only after deploying and validating a dedicated worker"
             )
         endpoint = self._validated_endpoint()
-        try:
-            signing_key = self.secret_resolver.first(self.secret_refs).encode("utf-8")
-        except SecretNotFoundError as exc:
-            raise ExternalWorkerError("External worker signing key is not configured") from exc
-        if len(signing_key) < 32:
-            raise ExternalWorkerError("External worker signing key must contain at least 32 bytes")
+        signing_key = self._signing_key()
         files, total_bytes, test_files = self._source_bundle(
             project, forbidden_values=(signing_key,),
         )

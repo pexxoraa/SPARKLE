@@ -57,7 +57,7 @@ def run_all():
         root=Path(directory)
         hashes=implementation_hashes()
         return {'schema':'SPARKLE-BENCHMARK/1', 'implementation_sha256':hashes, 'retrieval':run_retrieval(root),
-                'agents':run_agents(root/'agents'), 'level_3':'LOCAL_READY_REMOTE_ACCEPTANCE_BLOCKED', 'deployment':'FROZEN'}
+                'agents':run_agents(root/'agents'), 'level_3':'LOCAL_PRIVATE_READY_PUBLIC_REMOTE_DEFERRED', 'deployment':'FROZEN'}
 
 
 def markdown(report):
@@ -78,7 +78,7 @@ def markdown(report):
     lines+=['','Validation: '+json.dumps(report['agents']['validation_counts']),
             '','Negative controls: '+json.dumps({k:v['validation_status'] for k,v in report['agents']['negative_controls'].items()}),
             '', 'Execution success is not outcome correctness. Scripted choices do not demonstrate autonomous tool selection, teaching, research synthesis or coding quality.',
-            '', 'Level 3 local worker readiness is verified; trusted remote/restart acceptance remains blocked. Deployment FROZEN. The latest live Nemotron evidence remains 3/12 and is not rerun by this deterministic benchmark.','']
+            '', 'Level 3 private/local readiness is verified; public remote/restart acceptance is deferred to a future public-deployment phase. Deployment FROZEN. The latest live Nemotron evidence remains 3/12 and is not rerun by this deterministic benchmark.','']
     lines += ['', '## Retrieval failures at K=5', '']
     for name,system in report['retrieval']['systems'].items():
         lines.append(name+': '+json.dumps(system['failures_at_5']))
