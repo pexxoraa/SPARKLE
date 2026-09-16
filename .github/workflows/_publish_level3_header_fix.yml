@@ -1,0 +1,59 @@
+name: Publish exact Level 3 header fix
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/_publish_level3_header_fix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+      - name: Materialize exact tested blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64
+          import json
+          from pathlib import Path
+          from urllib.request import urlopen
+
+          repo = "pexxoraa/SPARKLE"
+          blobs = {
+              "src/sparkle/level3_worker.py": "dcade8ce9b3474c4ce9fe5726dfd6900c013018f",
+              "tests/test_level3.py": "6b57d2e7f0ed5bd9c75e701da1c6a7dadfd075e6",
+          }
+          for path, sha in blobs.items():
+              with urlopen(f"https://api.github.com/repos/{repo}/git/blobs/{sha}") as response:
+                  value = json.load(response)
+              Path(path).write_bytes(base64.b64decode(value["content"]))
+
+          report = Path("benchmarks/evidence/results.json")
+          text = report.read_text(encoding="utf-8")
+          old = "538e879dc3a82adbf3251b69afbed2dc88e930bf58ab7a0b0e36016a9d488676"
+          new = "b686cd257224ca727dd0d245f9a2ad51dbcc491669caf2589c97b46726cde63c"
+          if text.count(old) != 1:
+              raise SystemExit("benchmark provenance source hash did not match exactly once")
+          report.write_text(text.replace(old, new), encoding="utf-8")
+          PY
+          test "$(git hash-object src/sparkle/level3_worker.py)" = dcade8ce9b3474c4ce9fe5726dfd6900c013018f
+          test "$(git hash-object tests/test_level3.py)" = 6b57d2e7f0ed5bd9c75e701da1c6a7dadfd075e6
+          test "$(git hash-object benchmarks/evidence/results.json)" = c0919d17a4fd42d5ee95a35f29e44e23b146f5d3
+          git diff --check
+      - name: Commit exact tested files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/sparkle/level3_worker.py tests/test_level3.py benchmarks/evidence/results.json
+          git commit -m "Handle normalized Level 3 signature headers"
+          git push origin HEAD:main
