@@ -1,6 +1,6 @@
-# SPARKLE current capability audit — 2026-09-15
+# SPARKLE current capability audit — 2026-09-16
 
-Published certified software baseline before the current private/local worker integration: `b56693bb759a9d3e136e594635b50fdf64d1ae85` (tree `a6c3e18ecfc423afbd7b4f076b8f4bad7654cd2a`), with SPARKLE CI #193 passing all five jobs.
+Current published certified private/local baseline: `32643a826dc394c9a86244fa724932c797fce08a` (tree `11f6e56414b1a3d94bfbaa9b1c133f4f671e8778`), with exact-head SPARKLE CI #199 passing all five jobs.
 This file replaces the historical 2026-09-09 primary inventory. Earlier benchmark
 reports remain historical evidence; they are not silently reinterpreted as current
 live verification.
@@ -17,7 +17,7 @@ external provider, credential, host, device, hardware driver, production target,
 human/live acceptance environment.
 
 Final software-build result: **zero ordinary software-completable capabilities are
-PARTIALLY COMPLETE, INTERFACE ONLY, or NOT IMPLEMENTED.** Level-3 private/local readiness is the active target; public remote acceptance is deferred.
+PARTIALLY COMPLETE, INTERFACE ONLY, or NOT IMPLEMENTED.** Level-3 private/local acceptance is verified; public remote acceptance is deferred.
 Deployment remains FROZEN. No live provider/device/production campaign was performed
 for this audit.
 
@@ -46,7 +46,7 @@ for this audit.
 | Coding Agent software | COMPLETE | repository/file/verifier tools, bounded orchestration and trace integration | Generated patch quality belongs to live-agent acceptance |
 | Software Engineering Agent software | COMPLETE | repository engineering inspection/plans, verifier/tool integration | Representative semantic-change quality belongs to live-agent acceptance |
 | Application Builder | COMPLETE | bounded source workspace materialization, verification, test, package and artifact records | Generated-application quality and target-host acceptance are external evaluation |
-| AI Builder | COMPLETE | blueprint → requirements draft → implementation plan → source candidate → runtime evaluation → promotion → controlled build/execution pipeline | Live model generation quality and Level-3 execution acceptance are external |
+| AI Builder | COMPLETE | blueprint → requirements draft → implementation plan → source candidate → runtime evaluation → promotion → controlled build/execution pipeline; installed private/local signed execution is verified | Live model generation quality remains external; public Level-3 remote acceptance is deferred with public deployment |
 | Agent Builder | COMPLETE | persistent blueprints, schema/tool/routing checks, installation and response-evaluation store | Generated-agent semantic quality is live acceptance evidence |
 | Project system | COMPLETE | versioned projects, milestones/blockers/events/search/status | None in bounded software contract |
 | Project task graph | COMPLETE | persisted task dependencies, readiness, revisions and events | Real task execution remains operator-reported by design |
@@ -58,7 +58,7 @@ for this audit.
 | Proactive engine | COMPLETE | bounded evidence-derived deadline/project/learning/research/schedule alerts | Rule usefulness is acceptance evidence |
 | Tool registry/discovery/permissions | COMPLETE | definitions, execution, unknown-tool rejection, per-agent allowlists and generated-agent validation | External connector tools depend on connector availability |
 | Browser software runtime | COMPLETE | concrete read-only safe HTTPS adapter, public-DNS policy, pinned TLS, redirect revalidation, response bounds, persistent operator sessions, CLI, `SparkleSystem` default integration, and an exact-build acceptance ledger | Point-in-time acceptance is expiring/revocable and current health remains separately `not_probed` |
-| Live browser host acceptance | VERIFIED on `prem-macharla` | fixed `safe-https-host-v1` checkset passed all six checks; owner-only artifact SHA-256 `a09beeba59e2f44a7957affcc817a67c0749cadd0a780a4e7f34a8b90273f3d9` was imported into append-only record `3WhudK9Eq42OK10gFzX2qnJr`, bound to browser build `6c51909a714b660f31309fa0f2fdfd5c54000b644c89441d05feef23068e71a9` and the one-way host identity digest | Acceptance expires after 30 days unless renewed and becomes false on revocation/build/checkset/adapter/host drift; current health remains separately unprobed |
+| Live browser host acceptance | VERIFIED on `prem-macharla` | fixed `safe-https-host-v1` checkset passed all six checks; owner-only artifact SHA-256 `2df38e9259e7114806f84633b5fadd603fa40a1d4e9123e7730190c05347e90c` was imported into append-only record `iEEuy6oDqjWfZhjIFwNCi7e-`, bound to browser build `6c51909a714b660f31309fa0f2fdfd5c54000b644c89441d05feef23068e71a9` and the one-way host identity digest | Acceptance expires after 30 days unless renewed and becomes false on revocation/build/checkset/adapter/host drift; current health remains separately unprobed |
 | Computer interaction | EXTERNALLY BLOCKED | typed bounded actions, persistent permission sessions, optimistic revisions, host-adapter injection through `SparkleSystem` | Supply a concrete `ComputerAdapter`, OS GUI/display permissions and live screenshot/click/type/key acceptance |
 | Voice | EXTERNALLY BLOCKED | bounded persistent voice sessions/events, STT/TTS interfaces, CLI, host-adapter injection through `SparkleSystem` | Supply concrete STT/TTS provider/device adapters plus microphone/speaker/provider permissions; perform live transcript/synthesis acceptance |
 | Multimodal content protocol and image transport | COMPLETE | bounded text/image/audio/document envelopes; modality-aware routing; NVIDIA OpenAI-compatible image payload serialization; configured model records still gate modalities | Live image understanding requires an explicitly image-capable configured model and provider acceptance |
@@ -68,7 +68,7 @@ for this audit.
 | Application/build pipeline | COMPLETE | workspace scaffold, static verifier, bounded tests, package artifacts, immutable controlled build path | External target execution is handled by worker/deployment gates |
 | Controlled promotion | COMPLETE | identities/digests, approvals, replay/tamper/concurrency defenses, exclusions and atomic records | None in bounded promotion contract |
 | Controlled build | COMPLETE | approval-bound immutable deterministic artifacts and evidence | None in bounded build contract |
-| Controlled execution and cancellation | COMPLETE | authorization, execution lifecycle, results, worker cancellation protocol and API/CLI cancellation | Level-3 worker acceptance remains external |
+| Controlled execution and cancellation | COMPLETE | authorization, execution lifecycle, signed results, replay idempotency, timeout/failure taxonomy, running cancellation and API/CLI cancellation are verified on the installed private/local worker | Public remote acceptance is deferred with public deployment |
 | External worker / Level 3 private/local | VERIFIED | signed worker protocol plus a real hardened loopback worker on `prem-macharla`, localhost-only TLS, binary signing-key file support, ready executor/preflight, filesystem/network isolation and seven passing canaries | Public GitHub-hosted remote acceptance is **DEFERRED — PUBLIC DEPLOYMENT** and does not block private/local readiness |
 | Trace/evidence | COMPLETE | persistent content-minimized traces, model/tool identities, redaction and lifecycle evidence; cached tool replays are separated from actual executions; benchmark evidence hashes the complete implementation/config surface | Trace success never implies semantic correctness; latest live Nemotron competence remains 3/12 |
 | API | COMPLETE | authenticated/rate-limited local JSON API covering core operator workflows; newer specialist state is exposed through `/api/health` and dedicated CLIs/tools where a duplicate mutation API would add no capability | External service integrations are separate connectors |
@@ -84,7 +84,7 @@ for this audit.
 | Android/iOS/GrapheneOS host runtime | EXTERNALLY BLOCKED | mobile platform classification/state-layout and external-adapter architecture implemented | Provide an embedded Python/app host with storage/network/device permissions and run platform-specific install/state/API/browser/voice acceptance |
 | Documentation | COMPLETE | current architecture/workflow docs plus this reconciled audit/backlog; historical reports remain explicitly historical | Operator acceptance evidence will be added after the later campaign |
 | Packaging | COMPLETE | `pyproject.toml`, package data and entry points cover implemented runtime/CLI assets | Platform installation acceptance remains external evidence |
-| Production deployment | EXTERNALLY BLOCKED | controlled artifacts/execution records exist; software does not silently deploy | Requires explicit user authorization, target credentials/environment, applicable Level-3 prerequisites, and a separate production acceptance milestone. Deployment remains FROZEN |
+| Production deployment | DEFERRED — PUBLIC DEPLOYMENT | controlled artifacts/execution records exist; software does not silently deploy | Explicitly out of scope for private/local readiness; deployment remains FROZEN until a separately authorized future milestone |
 
 ## API/dashboard exposure decision
 
@@ -110,10 +110,9 @@ Windows/macOS worker capability.
 Implementation inspection and focused deterministic test additions were used while
 building. No new live Nemotron, semantic-embedding, microphone, speaker, GUI,
 physical-hardware, mobile-host, public-remote Level-3 or production-deployment acceptance
-was performed here. The connected Level-3 worker host has local readiness evidence only. GitHub CI runs triggered by the final implementation commits are
-supporting regression evidence only and do not change the external classifications.
+was performed here. The connected Level-3 worker has private/local executed evidence for trusted localhost TLS, binary HMAC, Bubblewrap isolation, signed controlled execution, failure/timeout/replay/cancellation and restart persistence. Exact-head CI is supporting regression evidence and does not change the external provider/device classifications.
 
 **Software completion gate: PASS — no ordinary software-completable capability remains
 PARTIALLY COMPLETE, INTERFACE ONLY, or NOT IMPLEMENTED.**
 
-**Level-3 private/local: READY — local hardened worker readiness and genuine systemd restart/recovery are verified; localhost-only TLS and binary HMAC client integration are the private/local acceptance path. Public remote acceptance is DEFERRED — PUBLIC DEPLOYMENT. Deployment: FROZEN.**
+**Level-3 private/local: READY — the exact installed package matches the published source tree; localhost-only TLS, binary HMAC, signed controlled success/failure/timeout/replay/cancellation, all seven hostile canaries, persistent replay/lifecycle state and a second genuine systemd restart with post-restart signed execution are verified. Public remote acceptance is DEFERRED — PUBLIC DEPLOYMENT. Deployment: FROZEN.**

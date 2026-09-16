@@ -1,7 +1,7 @@
 {
   "protocol": "SPARKLE-CAPABILITY-BACKLOG/2",
-  "audit_date": "2026-09-15",
-  "software_baseline": "b56693bb759a9d3e136e594635b50fdf64d1ae85",
+  "audit_date": "2026-09-16",
+  "software_baseline": "32643a826dc394c9a86244fa724932c797fce08a",
   "software_completion": {
     "status": "COMPLETE",
     "ordinary_software_backlog": [],
@@ -230,6 +230,7 @@
     "GET /api/health exposes vector, platform, voice, interaction, data-analysis, content, research, automation and other subsystem status through SparkleSystem.status().",
     "Browser network authority and computer actions remain operator-owned session boundaries rather than unrestricted agent tools.",
     "Live browser host acceptance is VERIFIED on prem-macharla for the recorded exact browser build/checkset; it is no longer an externally blocked backlog item.",
-    "Level-3 private/local readiness uses the hardened loopback worker with localhost-only TLS and genuine local restart/recovery; public GitHub-hosted remote acceptance is DEFERRED — PUBLIC DEPLOYMENT."
+    "Level-3 private/local readiness is verified on the hardened loopback worker with localhost-only TLS, binary HMAC, signed success/failure/timeout/replay/running-cancellation, persistent replay/lifecycle state and genuine restart/post-restart execution; public GitHub-hosted remote acceptance is DEFERRED — PUBLIC DEPLOYMENT.",
+    "Published private/local baseline 32643a826dc394c9a86244fa724932c797fce08a / tree 11f6e56414b1a3d94bfbaa9b1c133f4f671e8778 passed exact-head CI #199; all 89 installed sparkle package files match the published source."
   ]
 }

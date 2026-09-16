@@ -118,8 +118,9 @@ class DocumentationContractTests(unittest.TestCase):
         acceptance = (ROOT / "docs" / "ACCEPTANCE.md").read_text(
             encoding="utf-8",
         )
-        self.assertIn("PARTIAL", acceptance)
-        self.assertIn("BLOCKED", acceptance)
+        self.assertNotIn("| PARTIAL |", acceptance)
+        self.assertIn("EXTERNALLY BLOCKED", acceptance)
+        self.assertIn("DEFERRED — PUBLIC DEPLOYMENT", acceptance)
         self.assertIn("semantic", acceptance.lower())
 
     def test_current_acceptance_ledgers_preserve_external_boundaries(self):
@@ -152,7 +153,7 @@ class DocumentationContractTests(unittest.TestCase):
         backlog = (ROOT / "docs" / "capability_backlog.json").read_text(encoding="utf-8")
 
         for current in (audit, acceptance, build_state, level3):
-            self.assertIn("b56693bb759a9d3e136e594635b50fdf64d1ae85", current)
+            self.assertIn("32643a826dc394c9a86244fa724932c797fce08a", current)
             self.assertNotIn("CI #182", current)
             self.assertNotIn("exact-head publication/CI is still pending", current)
         self.assertIn("local worker restart/recovery: VERIFIED", level3)

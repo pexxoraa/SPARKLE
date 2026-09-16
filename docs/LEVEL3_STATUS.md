@@ -1,15 +1,15 @@
-# SPARKLE Level 3 gate status — 2026-09-15
+# SPARKLE Level 3 gate status — 2026-09-16
 
 This document records the current Level-3 acceptance split. It is an acceptance-gate addendum to `CURRENT_AUDIT.md`; it does not reinterpret deterministic software checks as real-host evidence.
 
 ## Current authoritative state
 
-- Published certified repository revision before the current private/local worker integration: `b56693bb759a9d3e136e594635b50fdf64d1ae85` (tree `a6c3e18ecfc423afbd7b4f076b8f4bad7654cd2a`).
-- Exact-head SPARKLE CI: run `34984651242` / run number 193 — **PASS** across all five jobs.
+- Current published certified private/local revision: `32643a826dc394c9a86244fa724932c797fce08a` (tree `11f6e56414b1a3d94bfbaa9b1c133f4f671e8778`).
+- Exact-head SPARKLE CI: run `35068307402` / run number 199 — **PASS** across all five jobs.
 - Python 3.12: **PASS**.
 - Python 3.13: **PASS**.
-- Current published-baseline local suite: **PASS**; later private/local integration tests are tracked separately until publication.
-- Controlled-execution / Level-3 deterministic software gate: **PASS** on the published baseline; the private/local integration candidate expands this gate with binary-key/TLS regressions.
+- Current private/local integration is published and exact-head CI-certified; final focused security/worker/browser/documentation regression: **76/76 PASS**; full local `make check`: **552 tests, 1 intentional live-provider skip, 0 failures**.
+- Controlled-execution / Level-3 deterministic software gate: **PASS**; real installed binary-key/TLS controlled execution is also verified.
 - Worker image: **PASS**.
 - Automation service: **PASS**.
 - Credential-free benchmark reproduction: **PASS**.
@@ -27,7 +27,7 @@ The deterministic host diagnostic on the GitHub-hosted runner reports Bubblewrap
 - **Level-3 public remote restart/post-restart acceptance: DEFERRED — PUBLIC DEPLOYMENT**
 - **Deployment: FROZEN**
 
-The real host worker is locally ready: the hardened systemd service is active on loopback, its `/health` reports `ready=true`, executor/preflight/filesystem/network isolation true, all seven hostile canaries true, credentials not exposed, and deployment unauthorized. A genuine `systemctl restart sparkle-worker.service` changed the worker PID from `236382` to `239329`; the new process retained the certified installed source hashes and returned the same complete ready contract. This is private/local service restart/recovery evidence. Public GitHub-hosted remote acceptance is a separate future deployment gate and is not inferred from it.
+The real host worker is locally ready: the hardened systemd service is active on loopback, its `/health` reports `ready=true`, executor/preflight/filesystem/network isolation true, all seven hostile canaries true, credentials not exposed, direct TLS true and deployment unauthorized. The current installed `sparkle` package has 89/89 files matching the published source tree with zero missing, mismatched or extra files. The mandatory second `systemctl restart sparkle-worker.service` changed PID `733750` to `737630`; replay-store count 14 and Level-3 lifecycle counts (`cancelled=1`, `completed=4`, `failed=3`) survived unchanged. A fresh post-restart signed execution `SPK-EXEC-7BDA9E78AC294320ABFF230B1AD110EC` completed and verified with isolation evidence. Public GitHub-hosted remote acceptance is a separate future deployment gate and is not inferred from it.
 
 ## Public remote acceptance — DEFERRED — PUBLIC DEPLOYMENT
 
@@ -45,7 +45,7 @@ The GitHub Environment must provide:
 - `SPARKLE_EXTERNAL_WORKER_ID`
 - secret `SPARKLE_WORKER_SIGNING_KEY`
 
-Any future public remote host must run the same accepted repository revision and satisfy `LEVEL3_ACCEPTANCE.md`; this does not alter the current private/local acceptance target.
+Any future public remote host must run the same accepted repository revision and satisfy `LEVEL3_ACCEPTANCE.md`; this does not alter the current private/local acceptance result.
 
 ## Future public remote evidence
 
@@ -59,7 +59,7 @@ These workflow artifacts do not by themselves prove a worker-service interruptio
 
 ## Private/local worker interruption/restart gate
 
-The local systemd restart/recovery has been demonstrated on `prem-macharla`. For private/local readiness, the current installed build must again survive a genuine service restart and continue to pass localhost TLS health plus signed execution. Pairing the restart with GitHub-hosted remote workflow artifacts is deferred to public deployment.
+The current installed build has survived the required second genuine systemd restart on `prem-macharla`, retained replay and Level-3 lifecycle state, continued to pass localhost TLS health and all seven hostile canaries, and completed a fresh signed execution afterward. Pairing local restart evidence with GitHub-hosted remote workflow artifacts is deferred to public deployment.
 
 Killing a sandbox child or unittest process is not accepted as worker-interruption evidence.
 
@@ -81,4 +81,4 @@ The legacy `sparkle.worker_service` module remains an internal base/test impleme
 
 Nemotron live-agent evidence remains unchanged: 3 of 12 tasks validated, 9 rejected, 25% validation pass rate, `agent_competence_verified=false`. Level-3 acceptance does not alter that benchmark result.
 
-Level-3 **private/local** readiness is complete when the exact installed build passes localhost TLS health, signed execution, isolation canaries and genuine service restart/recovery. Public remote acceptance is **DEFERRED — PUBLIC DEPLOYMENT**. Deployment remains a separate explicit authorization gate and stays **FROZEN**.
+Level-3 **private/local** readiness is **COMPLETE**: trusted localhost TLS, binary HMAC, signed success, execution failure, timeout, exact replay without duplicate worker work, signed running cancellation, isolation validation, persistent worker state and genuine restart/post-restart execution are all observed on the installed build. Public remote acceptance is **DEFERRED — PUBLIC DEPLOYMENT**. Deployment remains a separate explicit authorization gate and stays **FROZEN**.
