@@ -113,6 +113,7 @@ class Level3DeploymentAssetTests(unittest.TestCase):
             )
             fake.chmod(0o755)
             environment = os.environ.copy()
+            environment.pop("XDG_CONFIG_HOME", None)
             environment.update({"HOME": str(root), "SPARKLE_PRIVATE_CLI": str(fake)})
             completed = subprocess.run(
                 [str(runner), "status"], env=environment, capture_output=True,
