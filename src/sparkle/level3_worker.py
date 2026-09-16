@@ -127,7 +127,10 @@ class Level3WorkerRequestValidator(WorkerRequestValidator):
         legacy_payload["execution_context"] = legacy_context
         legacy_body = _canonical(legacy_payload)
         timestamp = self._header(headers, "X-SPARKLE-Worker-Timestamp")
-        synthetic_headers = dict(headers)
+        synthetic_headers = {
+            name: value for name, value in headers.items()
+            if name.lower() != "x-sparkle-worker-signature"
+        }
         synthetic_headers["X-SPARKLE-Worker-Signature"] = ExternalWorkerClient._signature(
             self.signing_key, timestamp, legacy_body,
         )

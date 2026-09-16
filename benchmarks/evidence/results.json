@@ -55,7 +55,7 @@
     "src/sparkle/level3_authority.py": "3224b064599cc583c8ba2727db8e20b4c724f5f2c2b007ce222a16ed84f6b50d",
     "src/sparkle/level3_cli.py": "2636884831985b0d2019dd34b9f04a967d1d4f8b3901df54d1cacfb0d5faa69d",
     "src/sparkle/level3_execution.py": "4666bc237ec70ea99f96566299de1258443170672d0fa536f88dffc0998e9a82",
-    "src/sparkle/level3_worker.py": "538e879dc3a82adbf3251b69afbed2dc88e930bf58ab7a0b0e36016a9d488676",
+    "src/sparkle/level3_worker.py": "b686cd257224ca727dd0d245f9a2ad51dbcc491669caf2589c97b46726cde63c",
     "src/sparkle/mastery.py": "1002edf8d0e81f5ab91d41d6e3e17515b1e50fd2579f342e36285b4efb730aaa",
     "src/sparkle/memory_evidence.py": "cc1531a36055ace348a15db34bb34ea6fed7e804a4ede3350bd38c62dc755918",
     "src/sparkle/memory_lifecycle.py": "8aea93f91f24505d5a96fd106481bbcb6d46b572cc1b0abcc56d4559fcbd01c5",

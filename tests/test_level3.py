@@ -167,6 +167,15 @@ class Level3WorkerContractTests(unittest.TestCase):
         self.assertEqual(job.execution_context["authorized_capabilities"], ["python_unittest"])
         self.assertEqual(job.request_hash, hashlib.sha256(body).hexdigest())
 
+    def test_http_normalized_signature_header_is_accepted(self):
+        payload = self.payload()
+        body, headers = self.signed(payload)
+        signature = headers.pop("X-SPARKLE-Worker-Signature")
+        headers["X-sparkle-worker-signature"] = signature
+        job = self.validator().validate(headers, body)
+        self.assertEqual(job.execution_context["requesting_agent"], "coding")
+        self.assertEqual(job.request_hash, hashlib.sha256(body).hexdigest())
+
     def test_unauthorized_capability_agent_policy_output_and_trace_fail_closed(self):
         mutations = [lambda p: p["execution_context"].update(authorized_capabilities=["host_shell"]),
                      lambda p: p["execution_context"].update(requesting_agent="Coding Agent"),
